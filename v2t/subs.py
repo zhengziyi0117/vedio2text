@@ -20,9 +20,48 @@ def _fmt_ts(x: float, sep: str = ",") -> str:
 
 def _join(a: str, b: str) -> str:
     """中文直接拼；英文单词间补空格。"""
-    if a and b and a[-1].isascii() and a[-1].isalnum() and b[0].isascii() and b[0].isalnum():
+    if a and b and a[-1].isascii() and b[0].isascii() and b[0].isalnum() and \
+       (a[-1].isalnum() or a[-1] in ",.;:!?)]}'\""):
         return a + " " + b
     return a + b
+
+
+def _novel_after_overlap(previous: str, current: str) -> str | None:
+    """返回滚动字幕 ``current`` 中没有出现在 ``previous`` 里的尾部。
+
+    YouTube 的英文自动字幕通常不是简单的连续片段，而是一个不断向右
+    滚动的窗口。中文可以用“新 cue 是旧 cue 的超集”处理，英文则常见为
+    ``previous`` 的后半段与 ``current`` 的前半段重叠，因此需要按词边界
+    找最长后缀/前缀匹配。返回 ``None`` 表示两条 cue 没有可靠重叠。
+    """
+    previous = previous.strip()
+    current = current.strip()
+    if not previous or not current:
+        return current
+    if current.startswith(previous):
+        return current[len(previous):].lstrip()
+    if previous.endswith(current):
+        return ""
+
+    old_words = previous.split()
+    new_words = current.split()
+    for n in range(min(len(old_words), len(new_words)), 0, -1):
+        overlap = " ".join(new_words[:n])
+        if previous.endswith(overlap) and current.startswith(overlap):
+            return current[len(overlap):].lstrip()
+
+    # 中文和没有空格的字幕按字符边界处理；至少两个字符才认为是重叠，
+    # 避免把普通英文单字母/标点巧合当成滚动字幕。
+    for n in range(min(len(previous), len(current)), 1, -1):
+        if previous.endswith(current[:n]):
+            return current[n:].lstrip()
+    return None
+
+
+def _last_sentence_boundary(text: str) -> int | None:
+    """返回最后一个适合切段的句末位置（不含后续空白）。"""
+    hits = [m.end() for m in re.finditer(r"[.!?。！？](?:[\"'”’）)]*)", text)]
+    return hits[-1] if hits else None
 
 
 TS_RE = re.compile(r"(\d+:\d{2}:\d{2}[.,]\d{1,3})\s*-->\s*(\d+:\d{2}:\d{2}[.,]\d{1,3})")
@@ -69,27 +108,78 @@ def parse_subs(text: str) -> list[dict]:
 def merge_segments(segs, max_gap=1.2, max_len=60, max_dur=14.0):
     """归一成句子级：去重、消滚动字幕、合并碎片。时间戳不动，只并区间。"""
     out = []
+    current = None
+    raw_previous = ""
+
+    def flush():
+        nonlocal current
+        if current and current["text"].strip():
+            current["text"] = current["text"].strip()
+            out.append(current)
+        current = None
+
+    def append_new_text(text, start, end):
+        """把去重后的新文本接到当前段，必要时按句末切开。"""
+        nonlocal current
+        start = max(start, out[-1]["end"] if out else start)
+        if not text:
+            if current:
+                current["end"] = max(current["end"], end)
+            return
+        if current is None:
+            current = {"start": start, "end": end, "text": text}
+            return
+
+        # 滚动 cue 在上一句结束后才带出下一句；先落盘上一句，避免把
+        # “inscrutable. Um ...” 拼成一个跨句的超长段落。
+        if _last_sentence_boundary(current["text"]) == len(current["text"].rstrip()):
+            flush()
+            current = {"start": max(start, out[-1]["end"]), "end": end, "text": text}
+            return
+
+        current["text"] = _join(current["text"], text)
+        current["end"] = max(current["end"], end)
+
+        boundary = _last_sentence_boundary(current["text"])
+        if boundary and boundary < len(current["text"].rstrip()):
+            head = current["text"][:boundary].strip()
+            tail = current["text"][boundary:].strip()
+            current["text"] = head
+            flush()
+            current = {"start": max(start, out[-1]["end"]), "end": end, "text": tail}
+        # 滚动字幕的窗口本身可能已经超过 max_len；只要还没有到时间上限，
+        # 继续等句末可以避免把一个长句切在“前半个窗口”上。
+        elif current["end"] - current["start"] > max_dur:
+            flush()
+
     for s in segs:
         t = (s.get("text") or "").strip()
         if not t:
             continue
-        if out:
-            prev = out[-1]
-            # YouTube 滚动字幕：新 cue 是旧 cue 的超集 → 覆盖
-            if t.startswith(prev["text"]) and s["end"] >= prev["start"]:
-                prev["text"] = t
-                prev["end"] = max(prev["end"], s["end"])
-                continue
-            # 旧 cue 已涵盖新 cue → 只延长
-            if prev["text"].endswith(t):
-                prev["end"] = max(prev["end"], s["end"])
-                continue
-            if (t == prev["text"] or s["start"] - prev["end"] < max_gap) and \
-               len(prev["text"]) + len(t) <= max_len and s["end"] - prev["start"] <= max_dur:
-                prev["text"] = _join(prev["text"], t)
-                prev["end"] = max(prev["end"], s["end"])
-                continue
-        out.append({"start": s["start"], "end": s["end"], "text": t})
+        if current is None:
+            current = {"start": s["start"], "end": s["end"], "text": t}
+            raw_previous = t
+            continue
+
+        # 先针对相邻原始 cue 去重。这个判断必须在 max_len 约束之前，
+        # 否则英文长句一旦超过 60 字符，就会把重复窗口原样保留下来。
+        novel = _novel_after_overlap(raw_previous, t) if raw_previous else None
+        if novel is not None:
+            append_new_text(novel, s["start"], s["end"])
+            raw_previous = t
+            continue
+
+        # 非滚动字幕仍按原来的时间间隔和长度规则合并。
+        if (s["start"] - current["end"] < max_gap or t == current["text"]) and \
+           len(current["text"]) + len(t) <= max_len and \
+           s["end"] - current["start"] <= max_dur:
+            append_new_text(t, s["start"], s["end"])
+        else:
+            flush()
+            start = max(s["start"], out[-1]["end"] if out else s["start"])
+            current = {"start": start, "end": s["end"], "text": t}
+        raw_previous = t
+    flush()
     return out
 
 
