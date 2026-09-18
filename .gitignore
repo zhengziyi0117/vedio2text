@@ -19,6 +19,9 @@ work/**/frames/
 work/**/frames.txt
 work/**/sheets/
 
+# 下载的字幕轨：subs.json 就是它的解析结果，需要时 yt-dlp 会重新拉
+work/**/*.vtt
+
 # mdBook 生成物（推 main 时 Actions 自己重建）
 book_src/
 book/

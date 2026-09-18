@@ -1,3 +1,5 @@
+# CS336 第一讲：课程概览与 tokenization
+
 这堂课是 Stanford CS336《Language Modeling from Scratch》2026 年春季的第一讲，内容是课程概览、教学团队介绍、课程安排、五次作业和五个单元的总览，并在最后进入第一个单元：tokenization。
 
 *[00:00](https://www.youtube.com/watch?v=JuoVZkPBiKk&list=PLoROMvodv4rMqXOcazWaTUHhq-yembLCV&t=0)*

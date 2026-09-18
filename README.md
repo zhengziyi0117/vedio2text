@@ -14,7 +14,7 @@ brew install ffmpeg yt-dlp
 uv sync && source .venv/bin/activate
 ```
 
-依赖写在 `pyproject.toml`，`uv sync` 会照 `uv.lock` 建好 `.venv`（`mlx-whisper` 带 Apple Silicon 判断，别的平台自动跳过）。之后跑脚本一律 `uv run v2t.py ...`，不用先 activate。
+依赖写在 `pyproject.toml`，`uv sync` 会照 `uv.lock` 建好 `.venv`（`mlx-whisper` 带 Apple Silicon 判断，别的平台自动跳过）。之后跑脚本一律 `uv run -m v2t ...`，不用先 activate。
 
 模型不用配。脚本按这个顺序找：
 
@@ -36,15 +36,15 @@ uv sync && source .venv/bin/activate
 给一个视频文件或 URL 就行，三步一条龙：
 
 ```bash
-uv run v2t.py ~/Downloads/讲座.mp4
-uv run v2t.py "https://www.youtube.com/watch?v=xxxxxxxx"
+uv run -m v2t ~/Downloads/讲座.mp4
+uv run -m v2t "https://www.youtube.com/watch?v=xxxxxxxx"
 ```
 
 整个播放列表也吃，用 `--list` 看编号、`--ep` 挑一集（一个 work 目录只装一集，别整个列表丢进去）：
 
 ```bash
-uv run v2t.py "<带 list= 的链接>" --list     # 列出分集和编号
-uv run v2t.py "<带 list= 的链接>" --ep 3     # 只处理第 3 集
+uv run -m v2t "<带 list= 的链接>" --list     # 列出分集和编号
+uv run -m v2t "<带 list= 的链接>" --ep 3     # 只处理第 3 集
 ```
 
 产物落在 `work/<课程名>/`：
@@ -57,15 +57,23 @@ uv run v2t.py "<带 list= 的链接>" --ep 3     # 只处理第 3 集
 | `course.md` | 最终文稿，每个自然段末尾带可跳回视频的时间链接 |
 | `assets/` | `--shots` 时的配图 |
 
+一门课分多讲时加 `--series`，产物归到 `work/<系列名>/<讲名>/`，出书时这门课自成一组：
+
+```bash
+uv run -m v2t "<第一讲链接>" --series CS336
+uv run -m v2t "<第二讲链接>" --series CS336   # 系列同名就排在一起
+```
+
 ## 常用参数
 
 ```bash
-uv run v2t.py <src> --shots          # 另下 720p 视频，抽帧给文稿配图（多约 130MB）
-uv run v2t.py <src> --only subs      # 只出字幕，不调 LLM
-uv run v2t.py <src> --from clean     # 跳过下载和转写，只重跑校对+写稿
-uv run v2t.py <src> --from doc       # 只重跑写稿
-uv run v2t.py <src> --work /tmp/w    # 换产物目录（默认 work/）
-uv run v2t.py --selftest             # 解析器自检，不联网
+uv run -m v2t <src> --shots          # 另下 720p 视频，抽帧给文稿配图（多约 130MB）
+uv run -m v2t <src> --only subs      # 只出字幕，不调 LLM
+uv run -m v2t <src> --from clean     # 跳过下载和转写，只重跑校对+写稿
+uv run -m v2t <src> --from doc       # 只重跑写稿
+uv run -m v2t <src> --work /tmp/w    # 换产物目录（默认 work/）
+uv run -m v2t <src> --series CS336   # 归到某门课下面（work/CS336/<讲名>/）
+uv run -m v2t --selftest             # 解析器自检，不联网
 ```
 
 段落时间链接不用 `--shots` 也有，每篇文稿都会生成。源是本地文件时没有地址可跳，只显示 `*12:34*` 这样的纯时间。
@@ -89,8 +97,23 @@ uv run v2t.py --selftest             # 解析器自检，不联网
 推到 `main` 就自动重建，不用手动跑。本地预览：
 
 ```bash
-./scripts/build_book.sh   # work/*/course.md + assets/ → book_src/
+./scripts/build_book.sh   # work/ 下的文稿 + assets/ → book_src/
 mdbook build              # → book/，开 book/index.html
 ```
 
-`scripts/build_book.sh` 每次重新扫 `work/`，新存的课程目录自动进目录（章节名取正文第一个一级标题，没有就用目录名）。想本地装 mdBook：`brew install mdbook`。
+`scripts/build_book.sh` 每次重新扫 `work/`，新存的课程自动进目录。`work/<课程>/` 单独成章；`work/<系列>/<课程>/` 收成子目录，系列名当目录名（想写课程简介就在 `work/<系列>/` 放个 `README.md`，没有就自动生成一张标题页）。章节名取正文第一个一级标题，没有就用目录名；同一系列内按目录名排序，所以 `...Lecture 2...` 排在 `...Lecture 10...` 前面。想本地装 mdBook：`brew install mdbook`。
+
+## 代码结构
+
+```
+v2t/
+  subs.py      字幕文本层：SRT/VTT 解析、句子级归并、时间戳、中文标点
+  media.py     取材：yt-dlp 下载、现成/外挂/内嵌字幕、whisper 转写
+  llm.py       调模型：直连 Anthropic / 回退 Agent SDK，外加字幕校对
+  doc.py       文稿：写讲稿、回填时间链接、抽帧挑图挂进段落
+  cli.py       命令行：参数、选集、按步骤跑
+  selftest.py  --selftest 的纯函数自检
+```
+
+数据一路向上走：`media` 出 `[{start, end, text}]` → `llm` 校对 → `doc` 出 markdown。
+每步的产物都落在 `work/<课程名>/`，中断了用 `--from` 接着跑。
