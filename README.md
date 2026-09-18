@@ -2,7 +2,7 @@
 
 课程视频 → 字幕 + 可读文稿。本地 whisper 转写，Claude 校对并整理成 markdown 讲稿，可选抽帧配图。
 
-产出的文稿自动汇总成在线书：**https://zhengziyi0117.github.io/vedio2text/**
+产出的文稿自动汇总成在线书：<https://zhengziyi0117.github.io/vedio2text/>
 
 ## 装环境
 
@@ -78,4 +78,4 @@ python v2t.py --selftest             # 解析器自检，不联网
 mdbook build              # → book/，开 book/index.html
 ```
 
-`scripts/build_book.sh` 每次重新扫 `work/`，新存的课程目录自动进目录（章节名取正文第一个 `# ` 标题，没有就用目录名）。想本地装 mdBook：`brew install mdbook`。
+`scripts/build_book.sh` 每次重新扫 `work/`，新存的课程目录自动进目录（章节名取正文第一个一级标题，没有就用目录名）。想本地装 mdBook：`brew install mdbook`。
