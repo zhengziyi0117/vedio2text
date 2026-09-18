@@ -3,7 +3,7 @@ import asyncio
 from pathlib import Path
 
 from .doc import PARA_RE, _mmss, _shot_pick, _time_link, _to_sec, finish_doc
-from .llm import _openai_messages, _sdk_prompt, json_array
+from .llm import _openai_input, _sdk_prompt, json_array
 from .media import LANG_PREF, _lang_rank, slugify
 from .subs import _fmt_ts, _parse_ts, fix_cjk_punct, merge_segments, parse_subs, to_srt
 
@@ -74,11 +74,23 @@ world
         {"type": "image", "source": {
             "type": "base64", "media_type": "image/jpeg", "data": "aGk="}},
     ]
-    openai_messages = _openai_messages("系统提示", blocks)
-    assert openai_messages[0] == {"role": "system", "content": "系统提示"}
-    assert openai_messages[1]["content"][0] == {"type": "text", "text": "挑图"}
-    assert openai_messages[1]["content"][1]["type"] == "image_url"
-    assert openai_messages[1]["content"][1]["image_url"]["url"].startswith(
+    openai_input = _openai_input(blocks)
+    assert openai_input == [{
+        "role": "user",
+        "content": [
+            {"type": "input_text", "text": "挑图"},
+            {
+                "type": "input_image",
+                "image_url": "data:image/jpeg;base64,aGk=",
+                "detail": "high",
+            },
+        ],
+    }], openai_input
+    assert _openai_input("纯文本") == [{
+        "role": "user",
+        "content": [{"type": "input_text", "text": "纯文本"}],
+    }]
+    assert openai_input[0]["content"][1]["image_url"].startswith(
         "data:image/jpeg;base64,"
     )
     assert slugify("MIT 6.824 分布式系统/Lecture 1") == "MIT-6-824-分布式系统-Lecture-1"

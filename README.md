@@ -31,7 +31,7 @@ uv sync && source .venv/bin/activate
 
 模型后端通过统一的 `llm()` 接口选择：
 
-1. 设置 `V2T_PROVIDER=openai`，通过 OpenAI Chat Completions 调用 GPT；支持 `OPENAI_BASE_URL`，也支持当前抽帧挑图使用的 base64 图片输入。
+1. 设置 `V2T_PROVIDER=openai`，通过 OpenAI Responses API 调用 GPT；支持 `OPENAI_BASE_URL`，也支持当前抽帧挑图使用的 base64 图片输入。
 2. 设置 `V2T_PROVIDER=codex`，调用本机 `codex exec` 非交互模式；文本和图片都会转成 Codex CLI 可接收的输入。
 3. `V2T_PROVIDER=anthropic` 保留原来的 Anthropic API；`claude-sdk` 仍可显式使用本机 Claude Code。
 4. 默认 `auto` 根据已配置的 key/CLI 自动选择；如果都没有，必须显式配置后端。想先验证配置，运行 `uv run -m v2t --llm-test`。

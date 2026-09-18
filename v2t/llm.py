@@ -146,80 +146,81 @@ def _llm_api(system: str, user, max_tokens: int, think: bool = True) -> str:
     return _llm_anthropic(system, user, max_tokens, think)
 
 
-def _openai_user_content(user):
-    """把 Anthropic content blocks 转成 OpenAI Chat Completions content。"""
+def _openai_input(user):
+    """把现有 content blocks 转成 Responses API 的 input。"""
     if isinstance(user, str):
-        return user
-
-    result = []
-    for block in user:
-        if not isinstance(block, dict):
-            continue
-        kind = block.get("type")
-        if kind == "text":
-            result.append({"type": "text", "text": str(block.get("text", ""))})
-            continue
-        if kind == "image":
-            source = block.get("source") or {}
-            if source.get("type") == "base64":
-                media_type = source.get("media_type", "image/jpeg")
-                url = f"data:{media_type};base64,{source.get('data', '')}"
-            elif source.get("url"):
-                url = source["url"]
-            else:
-                raise LLMConfigError("图片块缺少 base64 data 或 url")
-            result.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": url,
+        blocks = [{"type": "input_text", "text": user}]
+    else:
+        blocks = []
+        for block in user:
+            if not isinstance(block, dict):
+                continue
+            kind = block.get("type")
+            if kind == "text":
+                blocks.append({
+                    "type": "input_text",
+                    "text": str(block.get("text", "")),
+                })
+                continue
+            if kind == "image":
+                source = block.get("source") or {}
+                if source.get("type") == "base64":
+                    media_type = source.get("media_type", "image/jpeg")
+                    url = f"data:{media_type};base64,{source.get('data', '')}"
+                elif source.get("url"):
+                    url = source["url"]
+                else:
+                    raise LLMConfigError("图片块缺少 base64 data 或 url")
+                blocks.append({
+                    "type": "input_image",
+                    "image_url": url,
                     "detail": os.getenv("V2T_IMAGE_DETAIL", "high"),
-                },
-            })
-            continue
-        if kind == "image_url":
-            image_url = block.get("image_url") or {}
-            result.append({"type": "image_url", "image_url": image_url})
-            continue
-        raise LLMConfigError(f"OpenAI 后端不认识 content block 类型：{kind!r}")
-    return result
+                })
+                continue
+            if kind == "image_url":
+                image_url = block.get("image_url") or {}
+                if not isinstance(image_url, dict) or not image_url.get("url"):
+                    raise LLMConfigError("image_url 图片块缺少 url")
+                blocks.append({
+                    "type": "input_image",
+                    "image_url": image_url["url"],
+                    "detail": image_url.get(
+                        "detail", os.getenv("V2T_IMAGE_DETAIL", "high")
+                    ),
+                })
+                continue
+            raise LLMConfigError(f"OpenAI 后端不认识 content block 类型：{kind!r}")
 
-
-def _openai_messages(system: str, user):
     return [
-        {"role": "system", "content": system},
-        {"role": "user", "content": _openai_user_content(user)},
+        {"role": "user", "content": blocks},
     ]
 
 
+def _response_field(value, name, default=None):
+    if isinstance(value, dict):
+        return value.get(name, default)
+    return getattr(value, name, default)
+
+
 def _openai_result_text(response) -> str:
-    choice = response.choices[0]
-    message = choice.message
-    refusal = getattr(message, "refusal", None)
+    """从 Responses 对象取可见文本，并识别拒答。"""
+    refusal = None
+    for item in _response_field(response, "output", []) or []:
+        for content in _response_field(item, "content", []) or []:
+            kind = _response_field(content, "type")
+            if kind == "refusal":
+                refusal = _response_field(content, "refusal", "")
     if refusal:
         _fail(f"OpenAI 模型拒绝了请求：{refusal}")
-    content = getattr(message, "content", None)
-    if isinstance(content, str):
-        return content
-    if isinstance(content, list):
-        return "".join(
-            part.get("text", "") if isinstance(part, dict)
-            else getattr(part, "text", "")
-            for part in content
-        )
-    return str(content or "")
 
-
-def _needs_old_openai_token_arg(error: Exception) -> bool:
-    text = str(error).lower()
-    return (
-        "max_completion_tokens" in text or
-        ("max_tokens" in text and
-         ("unsupported" in text or "unknown" in text or "unexpected" in text))
-    )
+    text = _response_field(response, "output_text", "")
+    if callable(text):
+        text = text()
+    return str(text or "")
 
 
 def _llm_openai(system: str, user, max_tokens: int) -> str:
-    """OpenAI Chat Completions 路径，支持文本和 base64 图片。"""
+    """OpenAI Responses API 路径，支持文本和 base64 图片。"""
     try:
         from openai import OpenAI
     except ImportError as e:
@@ -240,26 +241,28 @@ def _llm_openai(system: str, user, max_tokens: int) -> str:
 
     request = {
         "model": selected_model("openai") or DEFAULT_OPENAI_MODEL,
-        "messages": _openai_messages(system, user),
-        "max_completion_tokens": max_tokens,
+        "instructions": system,
+        "input": _openai_input(user),
+        "max_output_tokens": max_tokens,
     }
     try:
-        response = client.chat.completions.create(**request)
+        response = client.responses.create(**request)
     except Exception as e:
-        if not _needs_old_openai_token_arg(e):
-            _fail(f"OpenAI API 调用失败：{_compact_error(e)}")
-        request["max_tokens"] = request.pop("max_completion_tokens")
-        try:
-            response = client.chat.completions.create(**request)
-        except Exception as retry_error:
-            _fail(f"OpenAI API 调用失败：{_compact_error(retry_error)}")
+        _fail(f"OpenAI Responses API 调用失败：{_compact_error(e)}")
 
-    reason = getattr(response.choices[0], "finish_reason", None)
-    if reason == "length":
-        _fail("OpenAI 输出达到 token 上限，请调大模型输出上限或拆小输入")
+    status = _response_field(response, "status")
+    if status == "incomplete":
+        details = _response_field(response, "incomplete_details")
+        reason = _response_field(details, "reason")
+        suffix = f"（原因：{reason}）" if reason else ""
+        _fail(f"OpenAI 输出未完成{suffix}，请调大 max_output_tokens 或拆小输入")
+    if status in {"failed", "cancelled"}:
+        error = _response_field(response, "error")
+        message = _response_field(error, "message") or _response_field(error, "code")
+        _fail(f"OpenAI Responses API 返回 {status}：{message or '未知错误'}")
     text = _openai_result_text(response).strip()
     if not text:
-        _fail("OpenAI API 返回了空文本")
+        _fail("OpenAI Responses API 返回了空文本")
     return text
 
 
