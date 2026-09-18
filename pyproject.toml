@@ -1,0 +1,15 @@
+[project]
+name = "video-2-text"
+version = "0.1.0"
+description = "课程视频 → 字幕 + 可读文稿"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic",
+    "claude-agent-sdk",
+    # Apple Silicon 专用，别的平台直接跳过（转写走 MLX）
+    "mlx-whisper; sys_platform == 'darwin' and platform_machine == 'arm64'",
+]
+
+# 就是个脚本，不用打包安装
+[tool.uv]
+package = false

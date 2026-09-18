@@ -11,18 +11,17 @@
 ```bash
 brew install ffmpeg yt-dlp
 
-uv venv && source .venv/bin/activate
-uv pip install mlx-whisper anthropic
+uv sync && source .venv/bin/activate
 ```
 
-（不用 uv 的话把上面两行换成 `python3 -m venv .venv && pip install mlx-whisper anthropic` 一样跑。）
+依赖写在 `pyproject.toml`，`uv sync` 会照 `uv.lock` 建好 `.venv`（`mlx-whisper` 带 Apple Silicon 判断，别的平台自动跳过）。之后跑脚本一律 `uv run v2t.py ...`，不用先 activate。
 
 模型不用配。脚本按这个顺序找：
 
 1. 环境里有 `ANTHROPIC_API_KEY` 或 `ANTHROPIC_AUTH_TOKEN` → 直连，`ANTHROPIC_BASE_URL` 一并生效（自建网关只配 auth token 也能用）
-2. 都没有 → 回退到本机 `claude` 命令，用你已登录的额度
+2. 都没有 → 回退到 Claude Agent SDK（底层就是本机 Claude Code，用它已登录的额度）
 
-模型名取 `V2T_MODEL`，没设就跟随 `ANTHROPIC_MODEL`，再没有才落回 `claude-opus-5`。走 CLI 回退时模型是 CLI 自己的默认值，`V2T_MODEL` 不生效。
+模型名取 `V2T_MODEL`，没设就跟随 `ANTHROPIC_MODEL`，再没有才落回 `claude-opus-5`。回退那条路只在显式设了 `V2T_MODEL` 时才把模型名传下去，否则交给 Claude Code 自己挑。
 
 模型权重可选：不手动拉的话，第一次转写会自动从 HuggingFace 下 ~1.6GB（本机 hf-xet 会卡死，见下）。
 
@@ -37,15 +36,15 @@ uv pip install mlx-whisper anthropic
 给一个视频文件或 URL 就行，三步一条龙：
 
 ```bash
-python v2t.py ~/Downloads/讲座.mp4
-python v2t.py "https://www.youtube.com/watch?v=xxxxxxxx"
+uv run v2t.py ~/Downloads/讲座.mp4
+uv run v2t.py "https://www.youtube.com/watch?v=xxxxxxxx"
 ```
 
 整个播放列表也吃，用 `--list` 看编号、`--ep` 挑一集（一个 work 目录只装一集，别整个列表丢进去）：
 
 ```bash
-python v2t.py "<带 list= 的链接>" --list     # 列出分集和编号
-python v2t.py "<带 list= 的链接>" --ep 3     # 只处理第 3 集
+uv run v2t.py "<带 list= 的链接>" --list     # 列出分集和编号
+uv run v2t.py "<带 list= 的链接>" --ep 3     # 只处理第 3 集
 ```
 
 产物落在 `work/<课程名>/`：
@@ -55,19 +54,21 @@ python v2t.py "<带 list= 的链接>" --ep 3     # 只处理第 3 集
 | `subs.json` | 原始字幕（whisper 转写，或 yt-dlp/外挂/内嵌字幕复用） |
 | `clean.json` | Claude 校对后的字幕 |
 | `transcript.srt` | 校对后的 srt，可直接挂播放器 |
-| `course.md` | 最终文稿 |
+| `course.md` | 最终文稿，每个自然段末尾带可跳回视频的时间链接 |
 | `assets/` | `--shots` 时的配图 |
 
 ## 常用参数
 
 ```bash
-python v2t.py <src> --shots          # 另下 720p 视频，抽帧给文稿配图（多约 130MB）
-python v2t.py <src> --only subs      # 只出字幕，不调 LLM
-python v2t.py <src> --from clean     # 跳过下载和转写，只重跑校对+写稿
-python v2t.py <src> --from doc       # 只重跑写稿
-python v2t.py <src> --work /tmp/w    # 换产物目录（默认 work/）
-python v2t.py --selftest             # 解析器自检，不联网
+uv run v2t.py <src> --shots          # 另下 720p 视频，抽帧给文稿配图（多约 130MB）
+uv run v2t.py <src> --only subs      # 只出字幕，不调 LLM
+uv run v2t.py <src> --from clean     # 跳过下载和转写，只重跑校对+写稿
+uv run v2t.py <src> --from doc       # 只重跑写稿
+uv run v2t.py <src> --work /tmp/w    # 换产物目录（默认 work/）
+uv run v2t.py --selftest             # 解析器自检，不联网
 ```
+
+段落时间链接不用 `--shots` 也有，每篇文稿都会生成。源是本地文件时没有地址可跳，只显示 `*12:34*` 这样的纯时间。
 
 改完 prompt 想重跑不用重转写，`--from clean` 或 `--from doc` 直接吃已有中间产物。已存在的步骤产物会自动跳过，删掉对应文件即可强制重跑。
 
@@ -75,7 +76,7 @@ python v2t.py --selftest             # 解析器自检，不联网
 
 | 变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` | — | 二选一即可，都没有才走本机 `claude` 命令 |
+| `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` | — | 二选一即可，都没有才走 Claude Agent SDK（本机 Claude Code） |
 | `ANTHROPIC_BASE_URL` | — | 走自建网关时 SDK 会自动认 |
 | `V2T_MODEL` | 跟随 `ANTHROPIC_MODEL` | 不设就用你 Claude Code 里配的模型，最后才落 `claude-opus-5` |
 | `V2T_ASR_MODEL` | `mlx-community/whisper-large-v3-turbo` | HF repo，或 `models/` 下的目录名 |
