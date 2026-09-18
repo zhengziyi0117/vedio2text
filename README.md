@@ -1,10 +1,23 @@
 # video-2-text
 
-课程视频 → 字幕 + 可读文稿。本地 whisper 转写，Claude 校对并整理成 markdown 讲稿，可选抽帧配图。
+课程视频 → 字幕 + 可读文稿。本地 whisper/现成字幕转写，支持 Anthropic、OpenAI GPT、Codex CLI 等模型后端，可选抽帧配图。
 
 产出的文稿自动汇总成在线书：<https://zhengziyi0117.github.io/vedio2text/>
 
 ## 装环境
+
+模型后端不是写死的。最简单的 GPT API 配置：
+
+    export V2T_PROVIDER=openai
+    export OPENAI_API_KEY=sk-...
+    export OPENAI_MODEL=gpt-4o-mini
+
+如果本机已经登录 Codex CLI，可以不配置 API key：
+
+    export V2T_PROVIDER=codex
+    uv run -m v2t --llm-test
+
+没有设置 V2T_PROVIDER 时，auto 会按 OpenAI API、Anthropic API、Codex CLI 的顺序选择；都没有时明确报错，不会暗中调用 Claude。
 
 需要 macOS（Apple Silicon）+ Python 3.10+。转写走 MLX，Intel Mac / Linux 跑不了。
 
@@ -16,12 +29,14 @@ uv sync && source .venv/bin/activate
 
 依赖写在 `pyproject.toml`，`uv sync` 会照 `uv.lock` 建好 `.venv`（`mlx-whisper` 带 Apple Silicon 判断，别的平台自动跳过）。之后跑脚本一律 `uv run -m v2t ...`，不用先 activate。
 
-模型不用配。脚本按这个顺序找：
+模型后端通过统一的 `llm()` 接口选择：
 
-1. 环境里有 `ANTHROPIC_API_KEY` 或 `ANTHROPIC_AUTH_TOKEN` → 直连，`ANTHROPIC_BASE_URL` 一并生效（自建网关只配 auth token 也能用）
-2. 都没有 → 回退到 Claude Agent SDK（底层就是本机 Claude Code，用它已登录的额度）
+1. 设置 `V2T_PROVIDER=openai`，通过 OpenAI Chat Completions 调用 GPT；支持 `OPENAI_BASE_URL`，也支持当前抽帧挑图使用的 base64 图片输入。
+2. 设置 `V2T_PROVIDER=codex`，调用本机 `codex exec` 非交互模式；文本和图片都会转成 Codex CLI 可接收的输入。
+3. `V2T_PROVIDER=anthropic` 保留原来的 Anthropic API；`claude-sdk` 仍可显式使用本机 Claude Code。
+4. 默认 `auto` 根据已配置的 key/CLI 自动选择；如果都没有，必须显式配置后端。想先验证配置，运行 `uv run -m v2t --llm-test`。
 
-模型名取 `V2T_MODEL`，没设就跟随 `ANTHROPIC_MODEL`，再没有才落回 `claude-opus-5`。回退那条路只在显式设了 `V2T_MODEL` 时才把模型名传下去，否则交给 Claude Code 自己挑。
+模型名优先取 `V2T_MODEL`，然后按后端取 `OPENAI_MODEL`、`CODEX_MODEL` 或 `ANTHROPIC_MODEL`。
 
 模型权重可选：不手动拉的话，第一次转写会自动从 HuggingFace 下 ~1.6GB（本机 hf-xet 会卡死，见下）。
 
@@ -52,7 +67,7 @@ uv run -m v2t "<带 list= 的链接>" --ep 3     # 只处理第 3 集
 | 文件 | 说明 |
 | --- | --- |
 | `subs.json` | 原始字幕（whisper 转写，或 yt-dlp/外挂/内嵌字幕复用） |
-| `clean.json` | Claude 校对后的字幕 |
+| `clean.json` | 当前模型后端校对后的字幕 |
 | `transcript.srt` | 校对后的 srt，可直接挂播放器 |
 | `course.md` | 最终文稿，每个自然段末尾带可跳回视频的时间链接 |
 | `assets/` | `--shots` 时的配图 |
@@ -74,6 +89,7 @@ uv run -m v2t <src> --from doc       # 只重跑写稿
 uv run -m v2t <src> --work /tmp/w    # 换产物目录（默认 work/）
 uv run -m v2t <src> --series CS336   # 归到某门课下面（work/CS336/<讲名>/）
 uv run -m v2t --selftest             # 解析器自检，不联网
+uv run -m v2t --llm-test             # 用当前后端发送一次真实最小请求
 ```
 
 段落时间链接不用 `--shots` 也有，每篇文稿都会生成。源是本地文件时没有地址可跳，只显示 `*12:34*` 这样的纯时间。
@@ -84,9 +100,17 @@ uv run -m v2t --selftest             # 解析器自检，不联网
 
 | 变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` | — | 二选一即可，都没有才走 Claude Agent SDK（本机 Claude Code） |
-| `ANTHROPIC_BASE_URL` | — | 走自建网关时 SDK 会自动认 |
-| `V2T_MODEL` | 跟随 `ANTHROPIC_MODEL` | 不设就用你 Claude Code 里配的模型，最后才落 `claude-opus-5` |
+| `V2T_PROVIDER` / `V2T_LLM_PROVIDER` | `auto` | `auto`、`openai`、`codex`、`anthropic` 或 `claude-sdk` |
+| `OPENAI_API_KEY` | — | 使用 OpenAI GPT API 时必填 |
+| `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI 后端默认模型 |
+| `OPENAI_BASE_URL` | OpenAI 默认地址 | 可选的 OpenAI 兼容网关地址 |
+| `V2T_IMAGE_DETAIL` | `high` | GPT 视觉模型接收配图时的细节级别 |
+| `V2T_MODEL` | 按后端决定 | 统一覆盖当前后端的模型名 |
+| `CODEX_MODEL` | Codex 本地配置 | `V2T_PROVIDER=codex` 时可选 |
+| `V2T_CODEX_BIN` | `codex` | Codex CLI 可执行文件名或路径 |
+| `V2T_CODEX_TIMEOUT` | `900` | Codex CLI 单次请求超时秒数 |
+| `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` | — | 保留的 Anthropic API 配置 |
+| `ANTHROPIC_BASE_URL` | — | Anthropic 自建网关地址 |
 | `V2T_ASR_MODEL` | `mlx-community/whisper-large-v3-turbo` | HF repo，或 `models/` 下的目录名 |
 | `V2T_LANG` | 自动检测 | 源语言。设了它，抢字幕时该语言优先于 `LANG_PREF` 里的中文默认值 |
 | `V2T_DOC_LANG` | `中文` | 文稿写成什么语言 |
@@ -109,7 +133,7 @@ mdbook build              # → book/，开 book/index.html
 v2t/
   subs.py      字幕文本层：SRT/VTT 解析、句子级归并、时间戳、中文标点
   media.py     取材：yt-dlp 下载、现成/外挂/内嵌字幕、whisper 转写
-  llm.py       调模型：直连 Anthropic / 回退 Agent SDK，外加字幕校对
+  llm.py       统一调模型：OpenAI / Codex / Anthropic / Claude SDK，外加字幕校对
   doc.py       文稿：写讲稿、回填时间链接、抽帧挑图挂进段落
   cli.py       命令行：参数、选集、按步骤跑
   selftest.py  --selftest 的纯函数自检

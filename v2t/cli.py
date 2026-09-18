@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from .doc import extract_frames, finish_doc, make_doc
-from .llm import clean_subs
+from .llm import LLMConfigError, clean_subs, llm, selected_model, selected_provider
 from .media import YTDLP, build_subs, fetch_video, has_video_stream, playlist_entries, run, slugify
 from .selftest import run_selftest
 from .subs import to_srt
@@ -27,10 +27,22 @@ def main():
                     help="归到某门课下面（work/<NAME>/<讲名>/），出书时这门课自成一组")
     ap.add_argument("--work", default="work")
     ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--llm-test", action="store_true",
+                    help="用当前配置发送一次最小模型请求，检查后端是否真的可用")
     a = ap.parse_args()
 
     if a.selftest:
         return run_selftest()
+    if a.llm_test:
+        try:
+            provider = selected_provider()
+        except LLMConfigError as e:
+            ap.error(str(e))
+        model = selected_model(provider) or "Codex 本地配置"
+        print(f"[LLM] 后端={provider} 模型={model}")
+        print(llm("只返回字符串 OK，不要解释。",
+                  "请严格回复 OK。", max_tokens=16, think=False))
+        return
     if not a.src:
         ap.error("需要 src（或 --selftest）")
 
