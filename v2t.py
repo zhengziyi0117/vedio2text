@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """video-2-text — 课程视频 → 字幕 + 可读文案。
 
-  python v2t.py <本地视频|URL>          # 全流程
-  python v2t.py <src> --from clean      # 跳过下载/ASR，只重跑 LLM 校对
-  python v2t.py <src> --only subs       # 只出字幕，不写文案
-  python v2t.py --selftest              # 解析器自检，不联网
+  uv run v2t.py <本地视频|URL>          # 全流程
+  uv run v2t.py <src> --from clean      # 跳过下载/ASR，只重跑 LLM 校对
+  uv run v2t.py <src> --only subs       # 只出字幕，不写文案
+  uv run v2t.py --selftest              # 解析器自检，不联网
 
 产物在 work/<课程名>/：subs.json(原始) clean.json(校对后) transcript.srt course.md
 """
 from __future__ import annotations
 
 import argparse
+import asyncio
 import base64
 import concurrent.futures as cf
 import json
@@ -30,7 +31,8 @@ DOC_LANG = os.getenv("V2T_DOC_LANG", "中文")  # 文稿写成什么语言
 CHUNK = 40          # 每块送 LLM 的字幕条数
 WORKERS = 4
 STEPS = ["subs", "clean", "doc"]
-SCENE_THRESHOLD = 0.4   # 场景切换灵敏度
+SCENE_THRESHOLD = 0.1   # 场景切换灵敏度（白底幻灯片之间差异小，压低了才不漏）
+SETTLE_BEFORE = 0.5     # 取切换点前多少秒的帧（切换点那帧多半在过渡动画中间）
 SHEET = 9               # 每张拼图放几帧（3x3）
 SHOT_BATCH = SHEET * 3  # 每批送审的帧数
 ASSETS_DIR = "assets"   # 配图目录（相对 course.md）
@@ -191,8 +193,11 @@ def fetch_video(src: str, work: Path, want_video: bool = False) -> Path:
         print(f"[下载] 复用 {got.name}")
     else:
         fmt = "bv*[height<=720]+ba/b[height<=720]" if want_video else "ba/b"
+        # 视频单独一个文件名：先跑过纯音轨的话 source.webm 已存在，
+        # yt-dlp 见了同名文件直接跳过，720p 永远下不来。
+        out = work / ("source.video.%(ext)s" if want_video else "source.%(ext)s")
         print(f"[下载] yt-dlp（{'720p 视频' if want_video else '仅音轨'}，限速 {RATE_LIMIT or '关'}）…")
-        run([*YTDLP, "-f", fmt, *_limit_rate(), "-o", str(work / "source.%(ext)s"), src])
+        run([*YTDLP, "-f", fmt, *_limit_rate(), "-o", str(out), src])
 
     # 字幕是「有则省事、无则 ASR」的降级路径，拿不到不能拖垮主流程。
     # 本地已有字幕文件就不再联网请求一次（YouTube 对这个接口限流很凶）。
@@ -312,15 +317,15 @@ def llm(system: str, user, max_tokens: int = 16000, think: bool = True) -> str:
 
     有 API key 或 auth token 就直连（ANTHROPIC_BASE_URL 会一并生效，
     所以走自建网关、只配 ANTHROPIC_AUTH_TOKEN 的情况也能用）；
-    两者都没有才回退到本机 claude CLI。
+    两者都没有才回退到 Claude Agent SDK（底层就是本机 Claude Code）。
 
     think=False 关掉思考链。校对、列术语这类机械 JSON 任务不需要推理，
     而有些模型（实测 claude-deepseek-v4.1-flash）会一路想到 max_tokens
-    耗尽、正文一个字都不吐。
+    耗尽、正文一个字都不吐。max_tokens 只有直连那条路认，见 _llm_sdk。
     """
     if os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN"):
         return _llm_api(system, user, max_tokens, think)
-    return _llm_cli(system, user)
+    return _llm_sdk(system, user, think)
 
 
 def _llm_api(system: str, user, max_tokens: int, think: bool = True) -> str:
@@ -341,30 +346,63 @@ def _llm_api(system: str, user, max_tokens: int, think: bool = True) -> str:
     return "".join(b.text for b in msg.content if b.type == "text")
 
 
-def _llm_cli(system: str, user) -> str:
-    """最后的兜底：本机 claude CLI，用你已登录的额度。
+def _sdk_prompt(user):
+    """字符串直接给；图文块要走流式输入 —— Agent SDK 只在这条路上收图。"""
+    if isinstance(user, str):
+        return user
 
-    --system-prompt 顶掉它默认的编码 agent 人设，--strict-mcp-config
-    少带一堆 MCP 工具定义；模型是 CLI 自己的默认值，V2T_MODEL 在这里不生效。
+    async def gen():
+        yield {"type": "user", "message": {"role": "user", "content": user}}
 
-    ponytail: 每次调用仍会带 Claude Code 的系统提示和内置工具定义（实测
-    ~15k token，直连只要几十），能命中它的 prompt cache 所以不算太离谱。
-    真嫌贵就配 ANTHROPIC_AUTH_TOKEN 走直连。
+    return gen()
+
+
+def _llm_sdk(system: str, user, think: bool = True) -> str:
+    """最后的兜底：Claude Agent SDK，用你已登录的额度。
+
+    不给 system_prompt=preset 就是精简系统提示（不是 Claude Code 那套完整
+    preset）；再把工具全禁掉、只留一轮、不加载 CLAUDE.md，拿它当纯文本模型用。
+    模型名照传 V2T_MODEL，不认就落回 SDK 自己的默认值。
+
+    ponytail: Agent SDK 没有 max_tokens（temperature/top_p 也没有），这条路上
+    输出长度卡不住；要卡得死只能配 ANTHROPIC_AUTH_TOKEN 走直连。
     """
-    if not isinstance(user, str):
-        sys.exit("本地 claude CLI 不支持图文混排，配 ANTHROPIC_API_KEY 或去掉 --shots")
-    if not shutil.which("claude"):
-        sys.exit("既没有 ANTHROPIC_API_KEY，也找不到 claude 命令。二选一装上。")
-    # user 走 stdin：整篇字幕能到几十万字符，塞 argv 会撞 ARG_MAX
-    r = subprocess.run(["claude", "-p", "--output-format", "json",
-                        "--system-prompt", system, "--strict-mcp-config"],
-                       input=user, capture_output=True, text=True)
-    if r.returncode:
-        sys.exit(f"claude CLI 调用失败：{(r.stderr or r.stdout).strip()[-300:]}")
+    from claude_agent_sdk import (
+        ClaudeAgentOptions, ClaudeSDKError, ResultMessage, query,
+    )
+
+    opts = ClaudeAgentOptions(
+        system_prompt=system,
+        # 只认显式设的 V2T_MODEL；没设就别传，让 CLI 自己从配置/ANTHROPIC_MODEL
+        # 里挑 —— 显式传一个网关专用模型名会被它当成 unrecognized_model 警告
+        model=os.getenv("V2T_MODEL"),
+        disallowed_tools=["*"],       # 全禁，别让它去 Read/Bash
+        setting_sources=[],           # 不读 CLAUDE.md 和本地 settings
+        max_turns=1,
+        thinking={"type": "adaptive" if think else "disabled"},
+    )
+
+    async def go():
+        # 让 query() 自己跑完：中途 break/return 会触发 SDK 内部生成器的
+        # aclose()，它自己会报 "asynchronous generator is already running" 刷屏
+        res = None
+        async for m in query(prompt=_sdk_prompt(user), options=opts):
+            if isinstance(m, ResultMessage):
+                res = m
+        return res
+
     try:
-        return json.loads(r.stdout)["result"]
-    except (json.JSONDecodeError, KeyError):
-        sys.exit(f"claude CLI 返回不是预期 JSON：{r.stdout[:300]}")
+        res = asyncio.run(go())
+    except ClaudeSDKError as e:
+        # 没登录、没装 CLI、CLI 报错都从这走。CLI 出错时是先 yield 一个
+        # is_error 的 ResultMessage，再抛 ResultError，所以这里是主要出口
+        sys.exit(f"Claude Agent SDK 调用失败：{e}"[:400])
+    if res is None:
+        sys.exit("Claude Agent SDK 没返回结果")
+    if res.subtype != "success" or res.is_error:
+        sys.exit(f"Claude Agent SDK 调用失败（{res.subtype}）："
+                 f"{res.errors or res.result or ''}"[:400])
+    return res.result or ""
 
 
 def _json_array(s: str):
@@ -454,8 +492,8 @@ DOC_SYS = f"""你在把一门课的完整字幕整理成一篇能替代看视频
 - 听不清或不确定的内容不要编，宁可不写
 - 文稿用{DOC_LANG}写；源字幕是别的语言就翻译过来，专业术语首次出现时括注原文"""
 
-# 配图对齐用：每个自然段回填它的时间，代码据此把截图挂到讲那段的段落后面
-DOC_SHOTS_HINT = """
+# 每段末尾回填时间标记：渲染成能跳回视频的时间链接，也是配图的对齐锚点
+DOC_TIME_HINT = """
 
 输入的字幕每行带 [MM:SS] 时间标记。在此之上额外要求：
 - 在**每一个自然段的末尾**附上该段对应的时间标记 `<!-- MM:SS -->`，
@@ -468,21 +506,22 @@ def _mmss(sec: float) -> str:
     return f"{m:02d}:{s:02d}"
 
 
-def make_doc(segs, title: str, want_shots: bool = False) -> str:
-    body = "\n".join((f"[{_mmss(s['start'])}] " if want_shots else "") + s["text"]
-                     for s in segs)
+def make_doc(segs, title: str) -> str:
+    """每行字幕前面挂 [MM:SS]，并要求模型逐段回填 <!-- MM:SS -->。"""
+    body = "\n".join(f"[{_mmss(s['start'])}] {s['text']}" for s in segs)
     print(f"[文案] 全文 {len(body)} 字，送模型…")
-    md = llm(DOC_SYS + (DOC_SHOTS_HINT if want_shots else ""),
+    md = llm(DOC_SYS + DOC_TIME_HINT,
              f"课程标题：{title}\n\n完整字幕：\n{body}", 48000)
     return fix_cjk_punct(md.strip())
 
 
 # ---------------------------------------------------------------- 步骤 4: 配图
 
-# 自然段 + 紧随其后的时间标记（由 DOC_SHOTS_HINT 让模型产出）。
+# 自然段 + 紧随其后的时间标记（由 DOC_TIME_HINT 让模型产出）。
 # 它既是配图的对齐锚点，最终也会渲染成能跳回视频的时间链接。
 # 不用 ^ 锚定行首：段落可以是正文也可以是列表项，只要下一行是标记就算。
-PARA_RE = re.compile(r"([^\n]+)\n<!--\s*(\d{1,2}:\d{2})\s*-->")
+# 模型一半时候把标记甩在段尾同一行，所以两者都收。
+PARA_RE = re.compile(r"([^\n]+?)\s*<!--\s*(\d{1,2}:\d{2})\s*-->")
 
 
 def _to_sec(mmss: str) -> float:
@@ -500,18 +539,31 @@ def _time_link(sec: float, url: str | None) -> str:
 
 
 def extract_frames(video: Path, work: Path, threshold: float = SCENE_THRESHOLD) -> list[dict]:
-    """在场景切换处抽帧。返回 [{t, path}] 按时间升序。"""
+    """在场景切换处抽帧。返回 [{t, path}] 按时间升序。
+
+    切换点本身是淡入/翻页的中间态（半透明、两页叠着），干净的画面在切换**前**，
+    所以取切换点前 SETTLE 秒那一帧。阈值压得低：这套白底幻灯片的切换，
+    ffmpeg 给的分往往到不了 0.4，漏掉的比误报的多得多。
+    """
     out = work / "frames"
     if (work / "frames.txt").exists():
         times = [float(t) for t in (work / "frames.txt").read_text().split()]
         return [{"t": t, "path": p} for t, p in zip(times, sorted(out.glob("*.jpg")))]
     out.mkdir(parents=True, exist_ok=True)
     print(f"[配图] 场景检测抽帧（阈值 {threshold}）…")
-    r = run(["ffmpeg", "-v", "info", "-i", str(video),
-             "-vf", f"select='gt(scene,{threshold})',showinfo",
-             "-fps_mode", "vfr", str(out / "f%04d.jpg")], check=False)
-    times = re.findall(r"pts_time:([\d.]+)", r.stderr)
-    (work / "frames.txt").write_text("\n".join(times))
+    r = run(["ffmpeg", "-v", "info", "-i", str(video), "-an",
+             "-vf", f"select='gt(scene,{threshold})',showinfo", "-f", "null", "-"], check=False)
+    cuts = [float(t) for t in re.findall(r"pts_time:([\d.]+)", r.stderr)]
+    # 逐个 -ss 取帧：webm 快进够快，比再整段解码一遍便宜
+    times = []
+    for t in cuts:
+        at = max(0.0, t - SETTLE_BEFORE)
+        dst = out / f"f{len(times) + 1:04d}.jpg"
+        run(["ffmpeg", "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(video),
+             "-frames:v", "1", "-q:v", "3", str(dst)], check=False)
+        if dst.exists():
+            times.append(at)
+    (work / "frames.txt").write_text("\n".join(f"{t:.2f}" for t in times))
     frames = [{"t": t, "path": p} for t, p in zip(times, sorted(out.glob("*.jpg")))]
     if not frames:
         print("[配图] 没抽到场景切换点", file=sys.stderr)
@@ -572,7 +624,7 @@ def judge_shots(cand: list[dict], work: Path, title: str) -> set:
         content = [_img_block(s) for s in make_sheets(chunk, work)]
         content.append({"type": "text",
                         "text": f"课程：{title}\n本批 {len(chunk)} 个候选，编号 1-{len(chunk)}。"})
-        arr = _json_array(llm(SHOT_SYS, content, 8000))
+        arr = _json_array(llm(SHOT_SYS, content, 8000, think=False))
         if not arr:
             print(f"  ! 第 {base // SHOT_BATCH + 1} 批挑图失败，跳过", file=sys.stderr)
             continue
@@ -588,21 +640,24 @@ def judge_shots(cand: list[dict], work: Path, title: str) -> set:
     return keep
 
 
-def attach_shots(md: str, frames: list[dict], work: Path, title: str, src: str | None) -> str:
-    """按时间把值得配的截图挂到对应段落后，并把时间标记渲染成可跳回视频的链接。
+def finish_doc(md: str, frames: list[dict], work: Path, title: str,
+               src: str | None, want_shots: bool = True) -> str:
+    """收尾：每段渲染可跳回视频的时间链接；want_shots 时再按时间挂截图。
 
-    不按章节配额 —— 配几张由模型看画面内容自己决定。
+    时间链接跟配图是两回事，所以每篇文稿都做；frames 为空或
+    want_shots=False 就只做链接。配几张由模型看画面内容自己决定，不按章节配额。
     """
     matches = list(PARA_RE.finditer(md))
     if not matches:
-        print("[配图] 文档里没有段落时间标记，跳过配图", file=sys.stderr)
+        print("[时间] 文稿里没有段落时间标记 —— 模型没按格式回填，"
+              "这篇既没有时间链接也不会有配图", file=sys.stderr)
         return md
 
-    keep = judge_shots(frames, work, title) if frames else set()
+    keep = judge_shots(frames, work, title) if (want_shots and frames) else set()
     assets = work / ASSETS_DIR
-    if assets.exists():
-        shutil.rmtree(assets)
-    assets.mkdir()
+    if keep:
+        shutil.rmtree(assets, ignore_errors=True)
+        assets.mkdir()
 
     # 帧归到"讲到这里"的那个段落：第一个结束时间 ≥ 帧时间的段落。
     # 同一段落只留最早的那张 —— 一个段落后堆好几张图会把正文冲散。
@@ -626,8 +681,11 @@ def attach_shots(md: str, frames: list[dict], work: Path, title: str, src: str |
             tail += f"\n\n![]({ASSETS_DIR}/{name})"
         out = out[:m.start()] + m.group(1) + tail + "\n" + out[m.end():]
 
-    n = sum(len(v) for v in by_para.values())
-    print(f"[配图] 保留 {n} 张，分布在 {len(by_para)}/{len(matches)} 个段落 → {assets}")
+    print(f"[时间] {len(matches)} 个段落都带上了时间链接"
+          + ("（源是本地文件，只显示时间不可跳转）" if not (src or "").startswith("http") else ""))
+    if keep:
+        print(f"[配图] 保留 {sum(len(v) for v in by_para.values())} 张，"
+              f"分布在 {len(by_para)}/{len(matches)} 个段落 → {assets}")
     return out
 
 
@@ -693,12 +751,34 @@ world
     # 段落时间标记的解析（配图对齐 + 时间链接都靠它）
     doc = "# 标题\n\n## 小节\n\n老师讲的第一段话。\n<!-- 01:30 -->\n\n第二段话。\n<!-- 05:45 -->\n"
     assert PARA_RE.findall(doc) == [("老师讲的第一段话。", "01:30"), ("第二段话。", "05:45")]
+    # 标记甩在段尾同一行也得认（模型两种写法随机出）
+    assert PARA_RE.findall("第一段。 <!-- 01:30 -->\n\n第二段。\n<!-- 05:45 -->\n") == [
+        ("第一段。", "01:30"), ("第二段。", "05:45")]
     assert _to_sec("05:45") == 345
     assert _mmss(90) == "01:30" and _mmss(3661) == "61:01"
     # 时间链接：有视频地址就做成可跳转的，没有就只显示时间
     assert _time_link(345, "https://youtu.be/abc") == "[05:45](https://youtu.be/abc?t=345)"
     assert _time_link(345, "https://x.com/v?a=1") == "[05:45](https://x.com/v?a=1&t=345)"
     assert _time_link(345, None) == "05:45"
+
+    # 不配图也每段带时间：frames 为空时只渲染链接，不碰 assets
+    doc2 = finish_doc(doc, [], Path("/tmp"), "t", "https://youtu.be/x", want_shots=False)
+    assert "*[01:30](https://youtu.be/x?t=90)*" in doc2, doc2
+    assert "*[05:45](https://youtu.be/x?t=345)*" in doc2, doc2
+    assert "![](" not in doc2, doc2
+    # 本地文件没地址可跳，退化成纯时间
+    assert "*05:45*" in finish_doc(doc, [], Path("/tmp"), "t", None, want_shots=False)
+
+    # 兜底走 Agent SDK：纯文本直接透传，图文块得包成流式输入的信封才收
+    assert _sdk_prompt("hi") == "hi"
+
+    async def _drain(g):
+        return [m async for m in g]
+
+    blocks = [{"type": "text", "text": "挑图"}]
+    env = asyncio.run(_drain(_sdk_prompt(blocks)))
+    assert env == [{"type": "user", "message": {"role": "user", "content": blocks}}], env
+
     print("selftest ok")
 
 
@@ -780,12 +860,12 @@ def main():
     print(f"[字幕] → {work / 'transcript.srt'}")
 
     doc_p = work / "course.md"
-    # 配图靠章节时间标记对齐，所以 --shots 时文案得重生成一次
+    # 先不带 --shots 跑过、后来才加 --shots 的，得重生成一次才有配图
     if step("doc") or not doc_p.exists() or (a.shots and "](assets/" not in doc_p.read_text()):
-        md = make_doc(clean, title, want_shots=a.shots)
-        if a.shots:
-            md = attach_shots(md, extract_frames(video, work), work, title,
-                              src if src.startswith("http") else None)
+        md = make_doc(clean, title)
+        # 时间链接每篇都做；抽帧只有 --shots 才值得（多下 720p 视频）
+        md = finish_doc(md, extract_frames(video, work) if a.shots else [],
+                        work, title, src if src.startswith("http") else None, a.shots)
         doc_p.write_text(md)
     print(f"[文案] → {doc_p}")
 

@@ -14,6 +14,11 @@ work/**/*.wav
 work/**/*.m4a
 work/**/_sheet_in/
 
+# 抽帧中间产物（几十 MB，书里只用 assets/）：候选帧、时间缓存、送审拼图
+work/**/frames/
+work/**/frames.txt
+work/**/sheets/
+
 # mdBook 生成物（推 main 时 Actions 自己重建）
 book_src/
 book/
