@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+
+# 下载的模型权重（1.5G，跑 scripts/fetch_model.sh 重新拉）
+models/
+
+# 运行产物：原视频、音频、抽帧、字幕
+work/
