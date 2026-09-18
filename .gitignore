@@ -5,5 +5,14 @@ __pycache__/
 # 下载的模型权重（1.5G，跑 scripts/fetch_model.sh 重新拉）
 models/
 
-# 运行产物：原视频、音频、抽帧、字幕
-work/
+# 运行产物里的大文件：原视频/音频，书里用不到
+work/**/*.webm
+work/**/*.mp4
+work/**/*.mkv
+work/**/*.wav
+work/**/*.m4a
+work/**/_sheet_in/
+
+# mdBook 生成物（推 main 时 Actions 自己重建）
+book_src/
+book/

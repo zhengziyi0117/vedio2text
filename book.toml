@@ -1,0 +1,7 @@
+[book]
+title = "视频转文稿"
+language = "zh-CN"
+src = "book_src"
+
+[output.html]
+git-repository-url = "https://github.com/zhengziyi0117/vedio2text"
