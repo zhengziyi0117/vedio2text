@@ -23,7 +23,8 @@ from pathlib import Path
 
 MODEL = os.getenv("V2T_MODEL", "claude-opus-5")
 ASR_MODEL = os.getenv("V2T_ASR_MODEL", "mlx-community/whisper-large-v3-turbo")
-LANG = os.getenv("V2T_LANG") or None  # None = whisper 自动检测
+LANG = os.getenv("V2T_LANG") or None  # 源语言，None = whisper 自动检测 / 字幕按 LANG_PREF 挑
+DOC_LANG = os.getenv("V2T_DOC_LANG", "中文")  # 文稿写成什么语言
 CHUNK = 40          # 每块送 LLM 的字幕条数
 WORKERS = 4
 STEPS = ["subs", "clean", "doc"]
@@ -34,6 +35,8 @@ ASSETS_DIR = "assets"   # 配图目录（相对 course.md）
 # 下载限速：跑满带宽容易招来 429（YouTube 字幕接口尤其敏感）。
 # 设成 0 或空串即不限速。
 RATE_LIMIT = os.getenv("V2T_RATE_LIMIT", "2M")
+# 带 list= 的 YouTube 链接默认会拖整个播放列表下来 —— 一个 work 目录只装一讲，必须掐掉
+YTDLP = ["yt-dlp", "--no-playlist"]
 
 
 # ---------------------------------------------------------------- 基础工具
@@ -187,12 +190,12 @@ def fetch_video(src: str, work: Path, want_video: bool = False) -> Path:
     else:
         fmt = "bv*[height<=720]+ba/b[height<=720]" if want_video else "ba/b"
         print(f"[下载] yt-dlp（{'720p 视频' if want_video else '仅音轨'}，限速 {RATE_LIMIT or '关'}）…")
-        run(["yt-dlp", "-f", fmt, *_limit_rate(), "-o", str(work / "source.%(ext)s"), src])
+        run([*YTDLP, "-f", fmt, *_limit_rate(), "-o", str(work / "source.%(ext)s"), src])
 
     # 字幕是「有则省事、无则 ASR」的降级路径，拿不到不能拖垮主流程。
     # 本地已有字幕文件就不再联网请求一次（YouTube 对这个接口限流很凶）。
     if not (list(work.glob("source*.vtt")) or list(work.glob("source*.srt"))):
-        r = run(["yt-dlp", "--skip-download", "--write-subs", "--write-auto-subs",
+        r = run([*YTDLP, "--skip-download", "--write-subs", "--write-auto-subs",
                  "--sub-langs", "zh.*,en.*", "--sub-format", "vtt", "--convert-subs", "vtt",
                  *_limit_rate(), "-o", str(work / "source.%(ext)s"), src], check=False)
         if r.returncode:
@@ -209,8 +212,14 @@ LANG_PREF = ["zh-Hans", "zh-CN", "zh", "zh-TW", "zh-Hant", "en"]
 
 
 def _lang_rank(p: Path) -> int:
-    """source.zh-CN.vtt → 0（最想要）；认不出的语言排最后。"""
+    """source.zh-CN.vtt → 0（最想要）；认不出的语言排最后。
+
+    V2T_LANG 指定了源语言就以它为准：英文课上的 zh.* 是 YouTube 机翻，
+    拿机翻当原文再校对，等于白劣化一遍。
+    """
     lang = p.stem.split(".", 1)[1] if "." in p.stem else ""
+    if LANG and (lang == LANG or lang.split("-")[0] == LANG.split("-")[0]):
+        return -1
     return LANG_PREF.index(lang) if lang in LANG_PREF else len(LANG_PREF)
 
 
@@ -370,7 +379,7 @@ def clean_subs(segs, title: str):
 
 # ---------------------------------------------------------------- 步骤 3: 文案
 
-DOC_SYS = """你在把一门课的完整字幕整理成一篇能替代看视频的文章。
+DOC_SYS = f"""你在把一门课的完整字幕整理成一篇能替代看视频的文章。
 
 核心要求：**忠实转写，不是提炼**。老师讲了什么就写什么 —— 不归纳、不压缩、
 不补充自己的总结或评论。读者要的是"老师讲过的话"，不是你的读书笔记。
@@ -383,7 +392,8 @@ DOC_SYS = """你在把一门课的完整字幕整理成一篇能替代看视频�
 - 只去掉真正的口水词和口吃重复（嗯、啊、那个）
 - 用 `##` 分小节，标题写具体，别用"第一部分"这种
 - 开头一句话说明这堂课讲什么
-- 听不清或不确定的内容不要编，宁可不写"""
+- 听不清或不确定的内容不要编，宁可不写
+- 文稿用{DOC_LANG}写；源字幕是别的语言就翻译过来，专业术语首次出现时括注原文"""
 
 # 配图对齐用：每个自然段回填它的时间，代码据此把截图挂到讲那段的段落后面
 DOC_SHOTS_HINT = """
@@ -653,7 +663,7 @@ def main():
 
     src = a.src
     if src.startswith(("http://", "https://")):
-        r = run(["yt-dlp", "--print", "%(title)s", "--skip-download", src], check=False)
+        r = run([*YTDLP, "--print", "%(title)s", "--skip-download", src], check=False)
         title = r.stdout.strip() or src
     else:
         p = Path(src).expanduser()

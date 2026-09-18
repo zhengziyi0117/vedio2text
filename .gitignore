@@ -1,6 +1,7 @@
 .venv/
 __pycache__/
 *.pyc
+.env
 
 # 下载的模型权重（1.5G，跑 scripts/fetch_model.sh 重新拉）
 models/
