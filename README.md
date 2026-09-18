@@ -13,11 +13,16 @@ brew install ffmpeg yt-dlp
 
 uv venv && source .venv/bin/activate
 uv pip install mlx-whisper anthropic
-
-export ANTHROPIC_API_KEY=sk-ant-...        # 校对和写稿要调 Claude
 ```
 
 （不用 uv 的话把上面两行换成 `python3 -m venv .venv && pip install mlx-whisper anthropic` 一样跑。）
+
+模型不用配。脚本按这个顺序找：
+
+1. 环境里有 `ANTHROPIC_API_KEY` 或 `ANTHROPIC_AUTH_TOKEN` → 直连，`ANTHROPIC_BASE_URL` 一并生效（自建网关只配 auth token 也能用）
+2. 都没有 → 回退到本机 `claude` 命令，用你已登录的额度
+
+模型名取 `V2T_MODEL`，没设就跟随 `ANTHROPIC_MODEL`，再没有才落回 `claude-opus-5`。走 CLI 回退时模型是 CLI 自己的默认值，`V2T_MODEL` 不生效。
 
 模型权重可选：不手动拉的话，第一次转写会自动从 HuggingFace 下 ~1.6GB（本机 hf-xet 会卡死，见下）。
 
@@ -34,6 +39,13 @@ export ANTHROPIC_API_KEY=sk-ant-...        # 校对和写稿要调 Claude
 ```bash
 python v2t.py ~/Downloads/讲座.mp4
 python v2t.py "https://www.youtube.com/watch?v=xxxxxxxx"
+```
+
+整个播放列表也吃，用 `--list` 看编号、`--ep` 挑一集（一个 work 目录只装一集，别整个列表丢进去）：
+
+```bash
+python v2t.py "<带 list= 的链接>" --list     # 列出分集和编号
+python v2t.py "<带 list= 的链接>" --ep 3     # 只处理第 3 集
 ```
 
 产物落在 `work/<课程名>/`：
@@ -63,10 +75,12 @@ python v2t.py --selftest             # 解析器自检，不联网
 
 | 变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | — | 必填 |
-| `V2T_MODEL` | `claude-opus-5` | 校对/写稿用的模型 |
+| `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` | — | 二选一即可，都没有才走本机 `claude` 命令 |
+| `ANTHROPIC_BASE_URL` | — | 走自建网关时 SDK 会自动认 |
+| `V2T_MODEL` | 跟随 `ANTHROPIC_MODEL` | 不设就用你 Claude Code 里配的模型，最后才落 `claude-opus-5` |
 | `V2T_ASR_MODEL` | `mlx-community/whisper-large-v3-turbo` | HF repo，或 `models/` 下的目录名 |
-| `V2T_LANG` | 自动检测 | 指定源语言，如 `zh` |
+| `V2T_LANG` | 自动检测 | 源语言。设了它，抢字幕时该语言优先于 `LANG_PREF` 里的中文默认值 |
+| `V2T_DOC_LANG` | `中文` | 文稿写成什么语言 |
 | `V2T_RATE_LIMIT` | `2M` | 下载限速，跑满带宽容易招 429；`0` 为不限速 |
 
 ## 出书

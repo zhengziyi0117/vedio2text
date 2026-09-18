@@ -1,0 +1,4387 @@
+[
+ {
+  "start": 0.0,
+  "end": 10.0,
+  "text": "Welcome everyone to CS3336, Language Models from Scratch."
+ },
+ {
+  "start": 10.0,
+  "end": 16.0,
+  "text": "This is the teaching staff. I'm Percy. This is Tatsu, Marcel, Herman, and Steven."
+ },
+ {
+  "start": 16.0,
+  "end": 21.0,
+  "text": "And we're bringing you the third edition of 336. So we'll just do a quick round of introductions."
+ },
+ {
+  "start": 21.0,
+  "end": 29.0,
+  "text": "So I like to say that I've been doing language models for 20 years, but most of that time was small language models."
+ },
+ {
+  "start": 29.0,
+  "end": 32.0,
+  "text": "Actually, this is still small in the grand scheme of things."
+ },
+ {
+  "start": 32.0,
+  "end": 40.0,
+  "text": "I think when Tatsu and I started teaching this class two years ago, we weren't really sure what we were going to expect."
+ },
+ {
+  "start": 40.0,
+  "end": 45.0,
+  "text": "But we were very pleasantly surprised that so many people wanted to learn how to build language models from scratch,"
+ },
+ {
+  "start": 45.0,
+  "end": 49.0,
+  "text": "especially in these days when a coding agent could probably zero shot a language model."
+ },
+ {
+  "start": 49.0,
+  "end": 55.0,
+  "text": "I'm really glad to see all of you here to actually want to learn how they work."
+ },
+ {
+  "start": 55.0,
+  "end": 58.0,
+  "text": "Yeah, thanks. I'm Tatsu. I'm one of the co-instructors."
+ },
+ {
+  "start": 58.0,
+  "end": 63.0,
+  "text": "I'll be talking to you once we get to architectures and scaling and all these other very fun things."
+ },
+ {
+  "start": 63.0,
+  "end": 67.0,
+  "text": "I'm really excited. This is the most fun class I've taught in my time here."
+ },
+ {
+  "start": 67.0,
+  "end": 70.0,
+  "text": "I think every year, you know, Percy makes fun of me because he says,"
+ },
+ {
+  "start": 70.0,
+  "end": 74.0,
+  "text": "you have to redo all your lectures because you took on architectures and everything changes every time."
+ },
+ {
+  "start": 74.0,
+  "end": 78.0,
+  "text": "But it's actually pretty fun for me to do it. And it's kind of the first time that I've had that experience."
+ },
+ {
+  "start": 78.0,
+  "end": 81.0,
+  "text": "I'm looking forward to going through this experience again with you all."
+ },
+ {
+  "start": 81.0,
+  "end": 89.0,
+  "text": "Hello, I'm Marcel. I've CA'd this class once before and I'm returning because it was so much fun last time."
+ },
+ {
+  "start": 89.0,
+  "end": 97.0,
+  "text": "It's a lot of work though. In my research, I do architecture stuff, I do higher-order gradients, and I do training."
+ },
+ {
+  "start": 97.0,
+  "end": 99.0,
+  "text": "Yeah, looking forward to working with you guys."
+ },
+ {
+  "start": 99.0,
+  "end": 105.0,
+  "text": "Hello everyone, I'm Herman. A year ago, I didn't really know how LLMs worked."
+ },
+ {
+  "start": 105.0,
+  "end": 113.0,
+  "text": "So I think for me, tokens were the things you collect in video games and attention was the thing you had like the attention economy."
+ },
+ {
+  "start": 113.0,
+  "end": 120.0,
+  "text": "Then after spending a lot of time on this course last year, I'm now doing LLM research and I'm really excited to TA this year."
+ },
+ {
+  "start": 120.0,
+  "end": 128.0,
+  "text": "Hi everyone, I'm Steven. I am a first time CA for this course and I'm very excited about it."
+ },
+ {
+  "start": 128.0,
+  "end": 135.0,
+  "text": "I think it'll be a lot of fun. Broadly in my research, I work on language models, theory, and some data efficiency stuff."
+ },
+ {
+  "start": 135.0,
+  "end": 138.0,
+  "text": "And I'm excited to meet you all."
+ },
+ {
+  "start": 138.0,
+  "end": 142.0,
+  "text": "Alright, so let's go into things."
+ },
+ {
+  "start": 142.0,
+  "end": 146.0,
+  "text": "So this is the third time we're offering it."
+ },
+ {
+  "start": 146.0,
+  "end": 151.0,
+  "text": "Last year we decided to put all our lectures on YouTube, so some of you have seen it."
+ },
+ {
+  "start": 151.0,
+  "end": 153.0,
+  "text": "So what's new?"
+ },
+ {
+  "start": 153.0,
+  "end": 156.0,
+  "text": "Well, what hasn't changed is the from scratch philosophy."
+ },
+ {
+  "start": 156.0,
+  "end": 164.0,
+  "text": "We still believe strongly that by building everything from the ground up, you really learn how everything works."
+ },
+ {
+  "start": 164.0,
+  "end": 172.0,
+  "text": "Of course, we don't actually build everything up from scratch because that wouldn't fit in a quarter."
+ },
+ {
+  "start": 172.0,
+  "end": 180.0,
+  "text": "So over the last two years we've been refining our recipe and figuring out what are the things that you build up from scratch that are most high value."
+ },
+ {
+  "start": 180.0,
+  "end": 186.0,
+  "text": "And then finally, as Tatsu alluded to, even in a year, a lot has changed."
+ },
+ {
+  "start": 186.0,
+  "end": 192.0,
+  "text": "I think this year we're going to spend maybe a bit more time on mixture of experts."
+ },
+ {
+  "start": 192.0,
+  "end": 202.0,
+  "text": "And of course, agents are very popular these days, so getting a handle on long context and what is needed for that are going to be important."
+ },
+ {
+  "start": 202.0,
+  "end": 206.0,
+  "text": "So why do we make this course?"
+ },
+ {
+  "start": 206.0,
+  "end": 215.0,
+  "text": "And I think the problem two years ago was that researchers were becoming disconnected from the underlying technology."
+ },
+ {
+  "start": 215.0,
+  "end": 223.0,
+  "text": "It used to be the case maybe ten years ago, all AI researchers would just implement and train their own models."
+ },
+ {
+  "start": 223.0,
+  "end": 231.0,
+  "text": "And then even eight years ago, people would download pre-trained models such as BERT and fine tune them."
+ },
+ {
+  "start": 231.0,
+  "end": 237.0,
+  "text": "And I think a lot of today, you can get by by simply prompting a model."
+ },
+ {
+  "start": 237.0,
+  "end": 240.0,
+  "text": "And of course there's nothing wrong with prompting models."
+ },
+ {
+  "start": 240.0,
+  "end": 243.0,
+  "text": "You know, I think you can do amazing things with it."
+ },
+ {
+  "start": 243.0,
+  "end": 249.0,
+  "text": "I think moving up the abstraction in general is a great thing, but abstractions are leaky."
+ },
+ {
+  "start": 249.0,
+  "end": 255.0,
+  "text": "And sometimes, I'm sure all of you have prompting models, you run into situations where something is,"
+ },
+ {
+  "start": 255.0,
+  "end": 260.0,
+  "text": "you wanted to do something but you just can't do it and there's no recourse."
+ },
+ {
+  "start": 260.0,
+  "end": 266.0,
+  "text": "And I would argue that if you're really interested in fundamental research,"
+ },
+ {
+  "start": 266.0,
+  "end": 270.0,
+  "text": "by simply prompting a model, you're sort of vastly constraining the set of options,"
+ },
+ {
+  "start": 270.0,
+  "end": 272.0,
+  "text": "the design space you're looking at."
+ },
+ {
+  "start": 272.0,
+  "end": 278.0,
+  "text": "And by looking at fundamental research, you really need to tear up the whole stack."
+ },
+ {
+  "start": 278.0,
+  "end": 283.0,
+  "text": "So, I would argue that full understanding of how language models work is really necessary for"
+ },
+ {
+  "start": 283.0,
+  "end": 285.0,
+  "text": "fundamental research."
+ },
+ {
+  "start": 285.0,
+  "end": 289.0,
+  "text": "And the way that we're going to get our understanding is by building."
+ },
+ {
+  "start": 289.0,
+  "end": 291.0,
+  "text": "That's the philosophy of their class."
+ },
+ {
+  "start": 291.0,
+  "end": 298.0,
+  "text": "But there's one small problem, which is that industrialization of language models has happened."
+ },
+ {
+  "start": 298.0,
+  "end": 300.0,
+  "text": "Frontier models are really, really expensive."
+ },
+ {
+  "start": 300.0,
+  "end": 307.0,
+  "text": "Even, this is three years ago, GPT-4 was supposedly costing $100 million to train."
+ },
+ {
+  "start": 307.0,
+  "end": 313.0,
+  "text": "And now, costs probably are on the order of a billion, although that's speculative."
+ },
+ {
+  "start": 313.0,
+  "end": 318.0,
+  "text": "And the number of GPUs that all the big labs are building is just kind of immense."
+ },
+ {
+  "start": 318.0,
+  "end": 322.0,
+  "text": "Furthermore, there's no details on how many of these models are built."
+ },
+ {
+  "start": 322.0,
+  "end": 328.0,
+  "text": "So, even back in 2023, the GPT-4 paper explicitly says that due to competitive landscape and"
+ },
+ {
+  "start": 328.0,
+  "end": 333.0,
+  "text": "safety implications, we're not going to share anything about how the models are being built."
+ },
+ {
+  "start": 333.0,
+  "end": 337.0,
+  "text": "So, these frontier models are in some sense out of the reach for us."
+ },
+ {
+  "start": 337.0,
+  "end": 343.0,
+  "text": "Now, we could build small language models, and we will build small language models."
+ },
+ {
+  "start": 343.0,
+  "end": 349.0,
+  "text": "But, this, I think it's important to remember that these might not representative of the actual frontier models."
+ },
+ {
+  "start": 349.0,
+  "end": 354.0,
+  "text": "And I'll give you two examples why this might be the case."
+ },
+ {
+  "start": 354.0,
+  "end": 356.0,
+  "text": "So, here's one post."
+ },
+ {
+  "start": 356.0,
+  "end": 358.0,
+  "text": "This is from actually quite a long time ago."
+ },
+ {
+  "start": 358.0,
+  "end": 361.0,
+  "text": "I think back in 2021."
+ },
+ {
+  "start": 361.0,
+  "end": 366.0,
+  "text": "We're going to spend more time on flop counting and looking at where the compute is being spent."
+ },
+ {
+  "start": 366.0,
+  "end": 374.0,
+  "text": "But if you look at small scales, the fraction of flops spent in the MLP layers is about 44%."
+ },
+ {
+  "start": 374.0,
+  "end": 379.0,
+  "text": "And if you scale up to 175B, then it goes to 80%."
+ },
+ {
+  "start": 379.0,
+  "end": 385.0,
+  "text": "So, what you optimize and what matters at large scale is going to be different from small scale."
+ },
+ {
+  "start": 385.0,
+  "end": 392.0,
+  "text": "So, if you did a bunch of small scale stuff here on the attention, you might not experience the same benefits at large scale."
+ },
+ {
+  "start": 392.0,
+  "end": 401.0,
+  "text": "The second example is that we know of emergence of behavior with scale."
+ },
+ {
+  "start": 401.0,
+  "end": 411.0,
+  "text": "So, small models, this is again for a while ago, but even back then, if you have zero shot or few shot learning of various tasks,"
+ },
+ {
+  "start": 411.0,
+  "end": 414.0,
+  "text": "it basically seemed like nothing was working."
+ },
+ {
+  "start": 414.0,
+  "end": 420.0,
+  "text": "And only when you reach a critical scale, do you suddenly see a lot of improvement."
+ },
+ {
+  "start": 420.0,
+  "end": 428.0,
+  "text": "So, again, if you're working on small scale, you might not see certain types of phenomenon compared to if you were working at full scale."
+ },
+ {
+  "start": 428.0,
+  "end": 432.0,
+  "text": "Okay, so that might be a little bit disheartening."
+ },
+ {
+  "start": 432.0,
+  "end": 435.0,
+  "text": "But, fear not, we're going to learn something in this class."
+ },
+ {
+  "start": 435.0,
+  "end": 439.0,
+  "text": "And the question is, what can we learn that actually transfers?"
+ },
+ {
+  "start": 439.0,
+  "end": 444.0,
+  "text": "Okay, and I think it's important to break this down into three types of knowledge."
+ },
+ {
+  "start": 444.0,
+  "end": 449.0,
+  "text": "First, there's the mechanics of how things work, what a transformer is,"
+ },
+ {
+  "start": 449.0,
+  "end": 452.0,
+  "text": "how model parallelism works, right?"
+ },
+ {
+  "start": 452.0,
+  "end": 457.0,
+  "text": "There's mindset, which is how do you go about approaching building a language model."
+ },
+ {
+  "start": 457.0,
+  "end": 461.0,
+  "text": "We're going to talk about how you want to squeeze the most out of your hardware,"
+ },
+ {
+  "start": 461.0,
+  "end": 462.0,
+  "text": "taking scaling seriously."
+ },
+ {
+  "start": 462.0,
+  "end": 468.0,
+  "text": "And finally, intuitions, which data modeling decisions are going to yield good performance."
+ },
+ {
+  "start": 468.0,
+  "end": 474.0,
+  "text": "So, now, in this class, I think we can do a pretty good job of teaching the mechanics,"
+ },
+ {
+  "start": 474.0,
+  "end": 477.0,
+  "text": "which is how things work, and the mindset."
+ },
+ {
+  "start": 477.0,
+  "end": 483.0,
+  "text": "And we're going to really emphasize that you profile and benchmark everything and try to optimize for efficiency."
+ },
+ {
+  "start": 483.0,
+  "end": 486.0,
+  "text": "These things do transfer to a larger scale."
+ },
+ {
+  "start": 486.0,
+  "end": 496.0,
+  "text": "Now, the intuitions about what modeling decisions and what data decisions do work might not necessarily transfer across scales."
+ },
+ {
+  "start": 496.0,
+  "end": 501.0,
+  "text": "For that, you actually have to go somewhere where you can do things at scale."
+ },
+ {
+  "start": 501.0,
+  "end": 513.0,
+  "text": "So, on the note of intuitions, it is worth remarking that some design decisions are just not justifiable,"
+ },
+ {
+  "start": 513.0,
+  "end": 515.0,
+  "text": "and just purely come from experimentation."
+ },
+ {
+  "start": 515.0,
+  "end": 520.0,
+  "text": "Whereas, mechanics, you can kind of, by construction, see how the parallelism and"
+ },
+ {
+  "start": 520.0,
+  "end": 523.0,
+  "text": "how kernels are going to speed things up and so on."
+ },
+ {
+  "start": 523.0,
+  "end": 529.0,
+  "text": "But for intuitions about what modeling changes work, I think you just have to run experiments."
+ },
+ {
+  "start": 529.0,
+  "end": 533.0,
+  "text": "There's this famous Noam Chazier paper that introduces the Swigloo activation,"
+ },
+ {
+  "start": 533.0,
+  "end": 535.0,
+  "text": "which we're going to look about."
+ },
+ {
+  "start": 535.0,
+  "end": 541.0,
+  "text": "And in the conclusion section, he very honestly has this final sentence, which says,"
+ },
+ {
+  "start": 541.0,
+  "end": 543.0,
+  "text": "we offer no explanation."
+ },
+ {
+  "start": 543.0,
+  "end": 547.0,
+  "text": "We attribute their success of these architectures, all else, to divine benevolence."
+ },
+ {
+  "start": 547.0,
+  "end": 553.0,
+  "text": "So, that in some sense is something that you just have to gain from experience."
+ },
+ {
+  "start": 553.0,
+  "end": 562.0,
+  "text": "Final note about the bitter lesson, which I think has been circulating and people talk about it."
+ },
+ {
+  "start": 562.0,
+  "end": 567.0,
+  "text": "I think there's a sort of a common misconception here, what it means."
+ },
+ {
+  "start": 567.0,
+  "end": 570.0,
+  "text": "I think the wrong interpretation is that scale is all that matters."
+ },
+ {
+  "start": 570.0,
+  "end": 574.0,
+  "text": "Algorithms don't matter.But that's not correct."
+ },
+ {
+  "start": 574.0,
+  "end": 579.0,
+  "text": "The right interpretation is that algorithms that scale are what matters."
+ },
+ {
+  "start": 579.0,
+  "end": 588.0,
+  "text": "And you can think about very simply that the accuracy of your model is basically your efficiency times the resources."
+ },
+ {
+  "start": 588.0,
+  "end": 591.0,
+  "text": "So efficiency is output over input and resources is the input."
+ },
+ {
+  "start": 591.0,
+  "end": 598.0,
+  "text": "And efficiency is actually in some sense way more important at larger scale."
+ },
+ {
+  "start": 598.0,
+  "end": 599.0,
+  "text": "Right?"
+ },
+ {
+  "start": 599.0,
+  "end": 608.0,
+  "text": "If you're doing a small scale experiment, if your run takes twice as long, maybe you just wait twice as long and then you come back later."
+ },
+ {
+  "start": 608.0,
+  "end": 613.0,
+  "text": "But if you're doing things at scale, you know, that could be hundreds of millions of dollars."
+ },
+ {
+  "start": 613.0,
+  "end": 615.0,
+  "text": "And you definitely don't want to do that."
+ },
+ {
+  "start": 615.0,
+  "end": 618.0,
+  "text": "Even like a 5% improvement might be a big deal."
+ },
+ {
+  "start": 618.0,
+  "end": 621.0,
+  "text": "So in fact, efficiency is actually really, really critical."
+ },
+ {
+  "start": 621.0,
+  "end": 628.0,
+  "text": "And I hope to bake that into your kind of mindset as one of the consequences of this class."
+ },
+ {
+  "start": 628.0,
+  "end": 641.0,
+  "text": "And empirically, if you look at this paper from OpenAI in 2020 that showed there's a 44x algorithmic efficiency on ImageNet between 2012 and 2019."
+ },
+ {
+  "start": 641.0,
+  "end": 645.0,
+  "text": "And it's surely the case that hardware did get a lot better."
+ },
+ {
+  "start": 645.0,
+  "end": 649.0,
+  "text": "But that also comes with algorithmic improvements."
+ },
+ {
+  "start": 649.0,
+  "end": 659.0,
+  "text": "And of course, when you multiply them together, that's when you see like a huge bump in efficiency and accuracy."
+ },
+ {
+  "start": 659.0,
+  "end": 669.0,
+  "text": "So the framing with all that said is, what is the best model one can build with a certain data and compute budget?"
+ },
+ {
+  "start": 669.0,
+  "end": 677.0,
+  "text": "For pre-training, it's mostly we're going to talk about compute budget because we're going to try and assume that we have a lot more data than we have compute."
+ },
+ {
+  "start": 677.0,
+  "end": 689.0,
+  "text": "But if you're in a setting where you're data limited or you have stashed away actually tons of B200s, then you might be data bound."
+ },
+ {
+  "start": 689.0,
+  "end": 691.0,
+  "text": "So in other words, maximize efficiency."
+ },
+ {
+  "start": 691.0,
+  "end": 694.0,
+  "text": "And we're going to see this theme come up throughout the class."
+ },
+ {
+  "start": 694.0,
+  "end": 696.0,
+  "text": "Okay."
+ },
+ {
+  "start": 696.0,
+  "end": 706.0,
+  "text": "So next, I want to spend a bit of time talking about language models and a bit of a history and just contextualization before we jump into the,"
+ },
+ {
+  "start": 706.0,
+  "end": 709.0,
+  "text": "more technical details."
+ },
+ {
+  "start": 709.0,
+  "end": 711.0,
+  "text": "So language models have been around for a while."
+ },
+ {
+  "start": 711.0,
+  "end": 717.0,
+  "text": "Shannon back in the 50s was using language models to measure the entropy of English."
+ },
+ {
+  "start": 717.0,
+  "end": 725.0,
+  "text": "And for a long time, n-gram models were used actually in machine translation and speech recognition systems."
+ },
+ {
+  "start": 725.0,
+  "end": 732.0,
+  "text": "And they weren't the whole system, but they were an important part of making sure that you generate a fluid text."
+ },
+ {
+  "start": 732.0,
+  "end": 740.0,
+  "text": "I would say that the lineage of the modern language models comes from neural architectures."
+ },
+ {
+  "start": 740.0,
+  "end": 747.0,
+  "text": "And so there is a bunch of ideas, I think, which are important to this development."
+ },
+ {
+  "start": 747.0,
+  "end": 751.0,
+  "text": "So in the 90s, there was LSTMs."
+ },
+ {
+  "start": 751.0,
+  "end": 758.0,
+  "text": "Joshua Benjo actually wrote the first neural language model in paper back in 2003."
+ },
+ {
+  "start": 758.0,
+  "end": 759.0,
+  "text": "This was actually not LSTM."
+ },
+ {
+  "start": 759.0,
+  "end": 763.0,
+  "text": "This was just a feedforward network that looked at the small context."
+ },
+ {
+  "start": 763.0,
+  "end": 773.0,
+  "text": "And then there was a seek to seek modeling, which boldly said we can actually compress a whole sentence into a vector."
+ },
+ {
+  "start": 773.0,
+  "end": 778.0,
+  "text": "The atom optimizer attention mechanism, which was developed for machine translation."
+ },
+ {
+  "start": 778.0,
+  "end": 783.0,
+  "text": "The transformer architecture, which built on top of that, which was also developed for machine translation."
+ },
+ {
+  "start": 783.0,
+  "end": 788.0,
+  "text": "And then scaling up to a mixture of experts, model parallelism."
+ },
+ {
+  "start": 788.0,
+  "end": 794.0,
+  "text": "You see a lot of different architecture and also systems and optimizer ideas."
+ },
+ {
+  "start": 794.0,
+  "end": 797.0,
+  "text": "And developed in the 2010s."
+ },
+ {
+  "start": 797.0,
+  "end": 803.0,
+  "text": "And then by the late 2010s, I think things were starting to get really interesting."
+ },
+ {
+  "start": 803.0,
+  "end": 807.0,
+  "text": "So there was the Elmold and Burt."
+ },
+ {
+  "start": 807.0,
+  "end": 811.0,
+  "text": "These are language models that were trained on lots of text."
+ },
+ {
+  "start": 811.0,
+  "end": 815.0,
+  "text": "And then you could fine tune them on some downstream tasks like question answering."
+ },
+ {
+  "start": 815.0,
+  "end": 818.0,
+  "text": "And it would show a huge improvement on that."
+ },
+ {
+  "start": 818.0,
+  "end": 823.0,
+  "text": "So the model there was, you know, take one of these models and then fine tune."
+ },
+ {
+  "start": 823.0,
+  "end": 831.0,
+  "text": "And then Google had a paper that was really, I think, foreshadowing this view of prompt and response out."
+ },
+ {
+  "start": 831.0,
+  "end": 839.0,
+  "text": "So it was really, I think, OpenAI that really opened up the floodgates here by embracing scaling."
+ },
+ {
+  "start": 839.0,
+  "end": 843.0,
+  "text": "So they had a GPT paper back in 2018 or so."
+ },
+ {
+  "start": 843.0,
+  "end": 845.0,
+  "text": "They scaled up to GPT-2."
+ },
+ {
+  "start": 845.0,
+  "end": 852.0,
+  "text": "And then they really figured out, you know, or embraced the idea of scaling laws,"
+ },
+ {
+  "start": 852.0,
+  "end": 859.0,
+  "text": "which we're going to talk about in a second, which enabled them to train GPT-3,"
+ },
+ {
+  "start": 859.0,
+  "end": 866.0,
+  "text": "which was a much more massive, almost more than 10x the larger model at the time."
+ },
+ {
+  "start": 866.0,
+  "end": 869.0,
+  "text": "And it could show emergent behavior like in context learning."
+ },
+ {
+  "start": 869.0,
+  "end": 876.0,
+  "text": "At that point, you know, Google was saying, okay, we need to do something too."
+ },
+ {
+  "start": 876.0,
+  "end": 878.0,
+  "text": "So they trained a massive model."
+ },
+ {
+  "start": 878.0,
+  "end": 880.0,
+  "text": "It turned out to be kind of under-trained."
+ },
+ {
+  "start": 880.0,
+  "end": 884.0,
+  "text": "And it turned out that their deep mine, which was not integrated with Google at the time,"
+ },
+ {
+  "start": 884.0,
+  "end": 888.0,
+  "text": "had figured out, you know, optimal, compute optimal scaling laws."
+ },
+ {
+  "start": 888.0,
+  "end": 891.0,
+  "text": "So all this was happening."
+ },
+ {
+  "start": 891.0,
+  "end": 898.0,
+  "text": "And after GPT-3 came out, I think for many folks, this was sort of kind of a wake-up call."
+ },
+ {
+  "start": 898.0,
+  "end": 903.0,
+  "text": "And at that time, there were a lot of early attempts to, let's try to replicate this."
+ },
+ {
+  "start": 903.0,
+  "end": 908.0,
+  "text": "So there was a grassroots organization called Luther that created some open data sets and models."
+ },
+ {
+  "start": 908.0,
+  "end": 911.0,
+  "text": "They weren't very large because they didn't have much compute."
+ },
+ {
+  "start": 911.0,
+  "end": 920.0,
+  "text": "Meta, a first LLM, you could see, tell that it was a replication because it was like 175 billion parameters."
+ },
+ {
+  "start": 920.0,
+  "end": 923.0,
+  "text": "But it was not a very good model."
+ },
+ {
+  "start": 923.0,
+  "end": 926.0,
+  "text": "They ran into a lot of hardware issues."
+ },
+ {
+  "start": 926.0,
+  "end": 931.0,
+  "text": "And then there was another Hugging Face, a big science project."
+ },
+ {
+  "start": 931.0,
+  "end": 935.0,
+  "text": "So these models were, I would say, not very strong."
+ },
+ {
+  "start": 935.0,
+  "end": 940.0,
+  "text": "Then in the last three years, I think the open model ecosystem has changed quite a bit."
+ },
+ {
+  "start": 940.0,
+  "end": 946.0,
+  "text": "With Meta kind of leading the way with a LLM series of models, LLM, LLM2, LLM3."
+ },
+ {
+  "start": 946.0,
+  "end": 948.0,
+  "text": "Mr. O got in the game."
+ },
+ {
+  "start": 948.0,
+  "end": 953.0,
+  "text": "And then a whole set of Chinese models."
+ },
+ {
+  "start": 953.0,
+  "end": 957.0,
+  "text": "I think I'm missing some, like ByteDance has something."
+ },
+ {
+  "start": 957.0,
+  "end": 960.0,
+  "text": "And I think Tencent probably has some other stuff."
+ },
+ {
+  "start": 960.0,
+  "end": 962.0,
+  "text": "So it's hard to keep track of everything."
+ },
+ {
+  "start": 962.0,
+  "end": 964.0,
+  "text": "But everyone's heard of DeepSeq and Quen."
+ },
+ {
+  "start": 964.0,
+  "end": 967.0,
+  "text": "So I think I got the main ones."
+ },
+ {
+  "start": 967.0,
+  "end": 974.0,
+  "text": "But I think what's interesting and exciting about these is now we have open weight models that are approaching closed models."
+ },
+ {
+  "start": 974.0,
+  "end": 979.0,
+  "text": "So depending on who you ask and how you benchmark, they might be a little bit behind or comparable."
+ },
+ {
+  "start": 979.0,
+  "end": 985.0,
+  "text": "But there are definitely very, very credible models that are being widely used in industry."
+ },
+ {
+  "start": 985.0,
+  "end": 992.0,
+  "text": "Now there's another line of work which is going beyond just releasing open weight models."
+ },
+ {
+  "start": 992.0,
+  "end": 997.0,
+  "text": "AI2, NVIDIA, and the Marin project which I work on."
+ },
+ {
+  "start": 997.0,
+  "end": 1011.0,
+  "text": "We try to provide not just the weights but the paper and the code and the data so that we can understand how these models are built in a more thorough way."
+ },
+ {
+  "start": 1011.0,
+  "end": 1015.0,
+  "text": "Why do I emphasize this open ecosystem so much?"
+ },
+ {
+  "start": 1015.0,
+  "end": 1020.0,
+  "text": "Mostly because this course would not be possible I think without these models."
+ },
+ {
+  "start": 1020.0,
+  "end": 1030.0,
+  "text": "By the fact that there are still many papers that are being published about how these big old MOEs and RL systems are working."
+ },
+ {
+  "start": 1030.0,
+  "end": 1037.0,
+  "text": "Enables us to at least glimpse into how these frontier models are being built and trying to triangulate the pieces."
+ },
+ {
+  "start": 1037.0,
+  "end": 1042.0,
+  "text": "Now I think of course a lot of the details even with these like Quen papers."
+ },
+ {
+  "start": 1042.0,
+  "end": 1045.0,
+  "text": "I think they're missing a lot of details so you can't reproduce them."
+ },
+ {
+  "start": 1045.0,
+  "end": 1048.0,
+  "text": "Notably the data mixture is something that we don't know."
+ },
+ {
+  "start": 1048.0,
+  "end": 1052.0,
+  "text": "But I think it's better, much better than nothing."
+ },
+ {
+  "start": 1052.0,
+  "end": 1060.0,
+  "text": "Okay, so in the last decade I think the idea of what a language model has changed, right?"
+ },
+ {
+  "start": 1060.0,
+  "end": 1063.0,
+  "text": "It used to be something that you fine-tuned."
+ },
+ {
+  "start": 1063.0,
+  "end": 1065.0,
+  "text": "And then it was something you prompt."
+ },
+ {
+  "start": 1065.0,
+  "end": 1070.0,
+  "text": "And now in the ChatGPT era it was something you talk to and that you can have a, you know,"
+ },
+ {
+  "start": 1070.0,
+  "end": 1072.0,
+  "text": "conversation with."
+ },
+ {
+  "start": 1072.0,
+  "end": 1078.0,
+  "text": "And now, okay, I guess I don't have internet.That's fine."
+ },
+ {
+  "start": 1078.0,
+  "end": 1081.0,
+  "text": "And now we're in the era of agents."
+ },
+ {
+  "start": 1081.0,
+  "end": 1084.0,
+  "text": "If you click on this link it basically shows you a giant agent trace."
+ },
+ {
+  "start": 1084.0,
+  "end": 1091.0,
+  "text": "And I'm still kind of, it's mind boggling how strong some of these models are."
+ },
+ {
+  "start": 1091.0,
+  "end": 1096.0,
+  "text": "You give it like a page of text and it does some really complicated agentic coding task."
+ },
+ {
+  "start": 1096.0,
+  "end": 1105.0,
+  "text": "So, you know, what we demand of our language models today is probably beyond the imagination of anyone back, you know, ten years ago."
+ },
+ {
+  "start": 1105.0,
+  "end": 1110.0,
+  "text": "That said, I think the fundamentals, I think, haven't changed that much."
+ },
+ {
+  "start": 1110.0,
+  "end": 1113.0,
+  "text": "Largely we still build on GPUs and kernels."
+ },
+ {
+  "start": 1113.0,
+  "end": 1118.0,
+  "text": "We still optimize using gradient or stochastic gradient like approaches."
+ },
+ {
+  "start": 1118.0,
+  "end": 1123.0,
+  "text": "We still have the transformer in attention and, you know, we'll talk a little bit more about architectures."
+ },
+ {
+  "start": 1123.0,
+  "end": 1126.0,
+  "text": "But it hasn't changed that much."
+ },
+ {
+  "start": 1126.0,
+  "end": 1128.0,
+  "text": "I think the specs are different."
+ },
+ {
+  "start": 1128.0,
+  "end": 1134.0,
+  "text": "Now we demand greater context lengths, which means that inference efficiency matters even more."
+ },
+ {
+  "start": 1134.0,
+  "end": 1138.0,
+  "text": "So the good news for us is that we didn't have to completely change this class."
+ },
+ {
+  "start": 1138.0,
+  "end": 1143.0,
+  "text": "Only Tatsu section on the latest, you know, Chinese architectures."
+ },
+ {
+  "start": 1143.0,
+  "end": 1148.0,
+  "text": "But the fundamentals, I think, are here to stay, at least for now."
+ },
+ {
+  "start": 1148.0,
+  "end": 1149.0,
+  "text": "Okay."
+ },
+ {
+  "start": 1149.0,
+  "end": 1155.0,
+  "text": "Maybe I'll pause there in case there's any questions or thoughts."
+ },
+ {
+  "start": 1155.0,
+  "end": 1169.0,
+  "text": "Okay.So let's go on."
+ },
+ {
+  "start": 1169.0,
+  "end": 1172.0,
+  "text": "So a brief interlude.So what is this program?"
+ },
+ {
+  "start": 1172.0,
+  "end": 1175.0,
+  "text": "So this is what I call an executable lecture."
+ },
+ {
+  "start": 1175.0,
+  "end": 1181.0,
+  "text": "This is a, if you think it looks like a Python program, it is because it is actually a Python program."
+ },
+ {
+  "start": 1181.0,
+  "end": 1185.0,
+  "text": "But it has been rendered for your viewing pleasure."
+ },
+ {
+  "start": 1185.0,
+  "end": 1190.0,
+  "text": "So when I step through it, it is actually executing the lecture."
+ },
+ {
+  "start": 1190.0,
+  "end": 1197.0,
+  "text": "And it makes us, if possible, to basically step through code, and which will be hopefully interesting and important later."
+ },
+ {
+  "start": 1197.0,
+  "end": 1200.0,
+  "text": "And you can also see the hierarchical structure of this lecture."
+ },
+ {
+  "start": 1200.0,
+  "end": 1202.0,
+  "text": "For example, we're done with this function."
+ },
+ {
+  "start": 1202.0,
+  "end": 1206.0,
+  "text": "We go back to main.Okay.So let's talk about the course."
+ },
+ {
+  "start": 1206.0,
+  "end": 1210.0,
+  "text": "Logistics and the syllabus, which I think is going to take the,"
+ },
+ {
+  "start": 1210.0,
+  "end": 1215.0,
+  "text": "a good chunk of time.Okay."
+ },
+ {
+  "start": 1215.0,
+  "end": 1221.0,
+  "text": "So all the information is online on this website or cs336.sanford.edu."
+ },
+ {
+  "start": 1221.0,
+  "end": 1223.0,
+  "text": "This is a five-unit class."
+ },
+ {
+  "start": 1223.0,
+  "end": 1228.0,
+  "text": "I think this probably class has a certain reputation, so I don't need to belabor the point too much."
+ },
+ {
+  "start": 1228.0,
+  "end": 1232.0,
+  "text": "But, you know, this is, we have five assignments."
+ },
+ {
+  "start": 1232.0,
+  "end": 1234.0,
+  "text": "They are pretty intense."
+ },
+ {
+  "start": 1234.0,
+  "end": 1244.0,
+  "text": "Even the first assignment, according to this one review is actually, you know, equivalent to the five assignments for CS224N."
+ },
+ {
+  "start": 1244.0,
+  "end": 1249.0,
+  "text": "I've been told also this is like, wait, this is exaggerated."
+ },
+ {
+  "start": 1249.0,
+  "end": 1253.0,
+  "text": "But better to, I guess, be conservative in your estimates."
+ },
+ {
+  "start": 1253.0,
+  "end": 1258.0,
+  "text": "So why should you, so why should you take this course?Okay."
+ },
+ {
+  "start": 1258.0,
+  "end": 1262.0,
+  "text": "So first you have an obsessive need like me to understand how things work."
+ },
+ {
+  "start": 1262.0,
+  "end": 1264.0,
+  "text": "That should be your primary objective."
+ },
+ {
+  "start": 1264.0,
+  "end": 1268.0,
+  "text": "I think just pure curiosity on how language models work."
+ },
+ {
+  "start": 1268.0,
+  "end": 1273.0,
+  "text": "And then in doing the class, you'll develop a much stronger research, you know,"
+ },
+ {
+  "start": 1273.0,
+  "end": 1282.0,
+  "text": "engineering muscles and have the confidence to go into a new setting and be equipped to deal with whatever situation comes up."
+ },
+ {
+  "start": 1282.0,
+  "end": 1288.0,
+  "text": "So, I think when I started at Sanford, I created this class called, you know, statistical learning theory,"
+ },
+ {
+  "start": 1288.0,
+  "end": 1292.0,
+  "text": "which was basically teaching the theoretical side of machine learning."
+ },
+ {
+  "start": 1292.0,
+  "end": 1297.0,
+  "text": "And that was nice because it equipped people so when you read a paper you can understand all the math."
+ },
+ {
+  "start": 1297.0,
+  "end": 1302.0,
+  "text": "And now since the field has kind of shifted a lot more towards this more systems and empirical side of things,"
+ },
+ {
+  "start": 1302.0,
+  "end": 1312.0,
+  "text": "this is sort of the kind of analogous class which gives people enough depth that they feel that everything else seems kind of easy."
+ },
+ {
+  "start": 1312.0,
+  "end": 1315.0,
+  "text": "So why should you not take this course?"
+ },
+ {
+  "start": 1315.0,
+  "end": 1318.0,
+  "text": "This is important because there's reasons you shouldn't take this course."
+ },
+ {
+  "start": 1318.0,
+  "end": 1322.0,
+  "text": "First, you actually want to get some research done this quarter."
+ },
+ {
+  "start": 1322.0,
+  "end": 1324.0,
+  "text": "You should probably talk to your advisor."
+ },
+ {
+  "start": 1324.0,
+  "end": 1325.0,
+  "text": "They should know you're taking this course."
+ },
+ {
+  "start": 1325.0,
+  "end": 1328.0,
+  "text": "Otherwise, there might be some surprises."
+ },
+ {
+  "start": 1328.0,
+  "end": 1333.0,
+  "text": "You're interested in learning the hottest new techniques in AI."
+ },
+ {
+  "start": 1333.0,
+  "end": 1340.0,
+  "text": "I think there are many other great courses, seminar courses, topics courses that are good for that."
+ },
+ {
+  "start": 1340.0,
+  "end": 1343.0,
+  "text": "We don't do many of the things.We don't do multimodality."
+ },
+ {
+  "start": 1343.0,
+  "end": 1347.0,
+  "text": "We don't talk about agents in any depth."
+ },
+ {
+  "start": 1347.0,
+  "end": 1351.0,
+  "text": "So if you want to learn about this, that stuff, this is not the right course for that."
+ },
+ {
+  "start": 1351.0,
+  "end": 1358.0,
+  "text": "If you come in and say, I have an application domain, I want to get good results on it."
+ },
+ {
+  "start": 1358.0,
+  "end": 1361.0,
+  "text": "Probably this is not the right course, at least to start."
+ },
+ {
+  "start": 1361.0,
+  "end": 1367.0,
+  "text": "I always recommend just product model, fine tune the model, and then as a last resort,"
+ },
+ {
+  "start": 1367.0,
+  "end": 1373.0,
+  "text": "you pre-train your own model because it is a pain and it's also expensive."
+ },
+ {
+  "start": 1373.0,
+  "end": 1376.0,
+  "text": "But it's a lot of fun."
+ },
+ {
+  "start": 1376.0,
+  "end": 1383.0,
+  "text": "Okay, so if you are not taking the class, you can follow along at home."
+ },
+ {
+  "start": 1383.0,
+  "end": 1386.0,
+  "text": "So all the lecture materials will be posted on the website."
+ },
+ {
+  "start": 1386.0,
+  "end": 1390.0,
+  "text": "Oops.And they are also recorded through CGOE."
+ },
+ {
+  "start": 1390.0,
+  "end": 1392.0,
+  "text": "So thank you CGOE for doing that."
+ },
+ {
+  "start": 1392.0,
+  "end": 1395.0,
+  "text": "And later they will be published to YouTube."
+ },
+ {
+  "start": 1395.0,
+  "end": 1404.0,
+  "text": "Now, of course, following at home and watching the lectures is great, but you learn really by doing the assignments."
+ },
+ {
+  "start": 1404.0,
+  "end": 1408.0,
+  "text": "So you'll have to figure out how to motivate yourself to do that."
+ },
+ {
+  "start": 1408.0,
+  "end": 1412.0,
+  "text": "Okay, so speaking of assignments, we have five assignments."
+ },
+ {
+  "start": 1412.0,
+  "end": 1422.0,
+  "text": "The philosophy of the assignment is, you know, how do we do the from scratch, but not just, you know, say, build a language model and that's the assignment."
+ },
+ {
+  "start": 1422.0,
+  "end": 1431.0,
+  "text": "So we don't provide scaffolding code, but we do provide a bunch of unit tests to make sure that whatever you're building is actually correct."
+ },
+ {
+  "start": 1431.0,
+  "end": 1438.0,
+  "text": "So that you don't get the sparse rewards setting where you submit a homework and it's either correct or not."
+ },
+ {
+  "start": 1438.0,
+  "end": 1449.0,
+  "text": "What I recommend is that you can, the assignments are structured so that much of the assignment can actually be done locally on your laptop."
+ },
+ {
+  "start": 1449.0,
+  "end": 1452.0,
+  "text": "You can implement it and check for correctness."
+ },
+ {
+  "start": 1452.0,
+  "end": 1465.0,
+  "text": "And then we are providing a cluster so that you can do an actual training run to see what the accuracy is or get a bunch of GPUs to actually benchmark the performance of some kernel."
+ },
+ {
+  "start": 1465.0,
+  "end": 1474.0,
+  "text": "And then for fun, we will have, you know, some leaderboards for most of the assignments at least."
+ },
+ {
+  "start": 1474.0,
+  "end": 1482.0,
+  "text": "And they will look something like, well, now that you've learned about this topic, try to minimize the perplexities given some sort of budget."
+ },
+ {
+  "start": 1482.0,
+  "end": 1491.0,
+  "text": "And, and both Marcel and Herman were masters of leader boarding back in the day, which was last year or the year before."
+ },
+ {
+  "start": 1491.0,
+  "end": 1495.0,
+  "text": "So, if you want tips on that, I'm sure they're really happy."
+ },
+ {
+  "start": 1495.0,
+  "end": 1499.0,
+  "text": "Actually, I don't know if they will tell you their secrets, but you can try."
+ },
+ {
+  "start": 1499.0,
+  "end": 1507.0,
+  "text": "Okay, so, you know, last year we were thinking about, well, what can AI do?"
+ },
+ {
+  "start": 1507.0,
+  "end": 1516.0,
+  "text": "It's like, okay, well, I mean, yes, everyone can use AI, but, but, but, you know, just try to do your best."
+ },
+ {
+  "start": 1516.0,
+  "end": 1522.0,
+  "text": "I think now, I think coding agents have gotten so good that they can just all solve all the assignments, right?"
+ },
+ {
+  "start": 1522.0,
+  "end": 1531.0,
+  "text": "But to state the obvious, obviously you're not going to learn anything if you just feed in the PDF assignment one into our cloud code."
+ },
+ {
+  "start": 1531.0,
+  "end": 1535.0,
+  "text": "At the same time, AI can be very useful for answering questions and tutoring."
+ },
+ {
+  "start": 1535.0,
+  "end": 1541.0,
+  "text": "So, we have to find a way to, you know, leverage AI."
+ },
+ {
+  "start": 1541.0,
+  "end": 1549.0,
+  "text": "So, what we've decided to do is we provide you agents.md file or, equivalently, a prompt,"
+ },
+ {
+  "start": 1549.0,
+  "end": 1553.0,
+  "text": "which asks the AI to be pedagogically minded."
+ },
+ {
+  "start": 1553.0,
+  "end": 1556.0,
+  "text": "You can read more about in our AI policy guide."
+ },
+ {
+  "start": 1556.0,
+  "end": 1562.0,
+  "text": "And the requirement is that if you're going to use AI, use it with this prompt."
+ },
+ {
+  "start": 1562.0,
+  "end": 1565.0,
+  "text": "And so, it will answer questions about code."
+ },
+ {
+  "start": 1565.0,
+  "end": 1573.0,
+  "text": "It will clarify any understanding, but it won't accidentally generate like the transformer for you when the homework is to implement the transformer."
+ },
+ {
+  "start": 1573.0,
+  "end": 1574.0,
+  "text": "Okay."
+ },
+ {
+  "start": 1574.0,
+  "end": 1583.0,
+  "text": "And this is the first year we're trying to do this, so please try it out and give us feedback if it's working or not working."
+ },
+ {
+  "start": 1583.0,
+  "end": 1585.0,
+  "text": "Okay.So, compute."
+ },
+ {
+  "start": 1585.0,
+  "end": 1593.0,
+  "text": "So, this year we have, thanks to modal, they have provided us with compute credits on their platform."
+ },
+ {
+  "start": 1593.0,
+  "end": 1601.0,
+  "text": "It's actually quite nice, you can get a number of, unlike last year, well, I guess you didn't take the class last year."
+ },
+ {
+  "start": 1601.0,
+  "end": 1603.0,
+  "text": "Last year we had a cluster you SSH into."
+ },
+ {
+  "start": 1603.0,
+  "end": 1612.0,
+  "text": "This is using more of an API to, which I was initially skeptical of, but, you know, looking at it actually is pretty pleasant to use."
+ },
+ {
+  "start": 1612.0,
+  "end": 1618.0,
+  "text": "So, again, try it out and give us feedback on how it is."
+ },
+ {
+  "start": 1618.0,
+  "end": 1625.0,
+  "text": "So, we've written a guide on how to access and use the compute."
+ },
+ {
+  "start": 1625.0,
+  "end": 1639.0,
+  "text": "Okay.Any questions about course logistics?Okay.All right."
+ },
+ {
+  "start": 1639.0,
+  "end": 1642.0,
+  "text": "So, let's talk about what we're going to cover in this class."
+ },
+ {
+  "start": 1642.0,
+  "end": 1650.0,
+  "text": "So, there's basically five parts mirroring the five assignments that you'll have."
+ },
+ {
+  "start": 1650.0,
+  "end": 1653.0,
+  "text": "Basic systems, scaling laws, data, and alignment."
+ },
+ {
+  "start": 1653.0,
+  "end": 1661.0,
+  "text": "So, I'm going to now go through each part and just give you a taste of what you will learn."
+ },
+ {
+  "start": 1661.0,
+  "end": 1662.0,
+  "text": "Okay."
+ },
+ {
+  "start": 1662.0,
+  "end": 1668.0,
+  "text": "So, in the basics, this is basically the first two weeks."
+ },
+ {
+  "start": 1668.0,
+  "end": 1672.0,
+  "text": "The goal is to just be able to train a language model and build it from scratch."
+ },
+ {
+  "start": 1672.0,
+  "end": 1680.0,
+  "text": "So, the components here are, we're going to tokenize the data, we're going to define architecture, and then we're going to implement optimizer and train it."
+ },
+ {
+  "start": 1680.0,
+  "end": 1681.0,
+  "text": "Okay?"
+ },
+ {
+  "start": 1681.0,
+  "end": 1684.0,
+  "text": "So, then you wonder, like, what are the rest of the classes for?"
+ },
+ {
+  "start": 1684.0,
+  "end": 1688.0,
+  "text": "Well, we'll get to there.So, let's start with tokenization."
+ },
+ {
+  "start": 1688.0,
+  "end": 1694.0,
+  "text": "The tokenization is really about what are the atoms that the model operates on."
+ },
+ {
+  "start": 1694.0,
+  "end": 1707.0,
+  "text": "And, you know, formally a tokenizer converts between raw inputs, which are just bytes, and a sequence of integers, which represent the tokens."
+ },
+ {
+  "start": 1707.0,
+  "end": 1711.0,
+  "text": "Conceptually, it's a segmentation of the text."
+ },
+ {
+  "start": 1711.0,
+  "end": 1721.0,
+  "text": "We're going to talk about the ByPair encoding, BPE tokenizer, which intuitively breaks the input into frequently occurring chunks."
+ },
+ {
+  "start": 1721.0,
+  "end": 1725.0,
+  "text": "And then, remember, this class is about maximizing efficiency."
+ },
+ {
+  "start": 1725.0,
+  "end": 1735.0,
+  "text": "So, through an efficiency lens, tokenization is good because it takes a long sequence, if you just think about the raw byte stream, and reduces it into a smaller number of tokens."
+ },
+ {
+  "start": 1735.0,
+  "end": 1741.0,
+  "text": "But more suddenly, but maybe more importantly, it allows you to do adaptive computation."
+ },
+ {
+  "start": 1741.0,
+  "end": 1754.0,
+  "text": "So, some, maybe some places are actually a lot of bytes, but actually it should be compressed into one token, where some of the more rare or interesting parts of input should be left as multiple tokens."
+ },
+ {
+  "start": 1754.0,
+  "end": 1757.0,
+  "text": "Okay, we'll talk more about this."
+ },
+ {
+  "start": 1757.0,
+  "end": 1763.0,
+  "text": "I just want to mention that, you know, every year I'm hoping that I don't have to teach tokenization."
+ },
+ {
+  "start": 1763.0,
+  "end": 1769.0,
+  "text": "Because the dream is to really have an end-to-end way of that directly operates on bytes."
+ },
+ {
+  "start": 1769.0,
+  "end": 1779.0,
+  "text": "And there's been a number of work, including, you know, recently, there's been this, this Hnet work that seems promising."
+ },
+ {
+  "start": 1779.0,
+  "end": 1785.0,
+  "text": "But so far these have not been scaled to the frontier, and since the frontier models are still using tokenizers,"
+ },
+ {
+  "start": 1785.0,
+  "end": 1790.0,
+  "text": "we felt like it would be still wise to teach tokenizers."
+ },
+ {
+  "start": 1790.0,
+  "end": 1796.0,
+  "text": "Okay, so, now, after you tokenize your input, you have a bunch of tokens."
+ },
+ {
+  "start": 1796.0,
+  "end": 1798.0,
+  "text": "Now you define a model on top."
+ },
+ {
+  "start": 1798.0,
+  "end": 1802.0,
+  "text": "And everyone, I think, has a familiarity with the original, the transformer."
+ },
+ {
+  "start": 1802.0,
+  "end": 1809.0,
+  "text": "And if you take in 224N, the NLP class, then you've seen transformers."
+ },
+ {
+  "start": 1809.0,
+  "end": 1816.0,
+  "text": "Since then, I think there have been a lot of improvements or refinements to transformers,"
+ },
+ {
+  "start": 1816.0,
+  "end": 1818.0,
+  "text": "which I think are important."
+ },
+ {
+  "start": 1818.0,
+  "end": 1820.0,
+  "text": "And Tatsu is going to talk more about this in a bit."
+ },
+ {
+  "start": 1820.0,
+  "end": 1826.0,
+  "text": "But just to run through a set of types of things that one might have to think about."
+ },
+ {
+  "start": 1826.0,
+  "end": 1831.0,
+  "text": "So, the activation functions have evolved."
+ },
+ {
+  "start": 1831.0,
+  "end": 1834.0,
+  "text": "How do you positional encodings has evolved."
+ },
+ {
+  "start": 1834.0,
+  "end": 1842.0,
+  "text": "How you normalize the different layers to prevent blowup has evolved."
+ },
+ {
+  "start": 1842.0,
+  "end": 1849.0,
+  "text": "Instead of doing full tension, there's many ways to basically reduce the attention computation"
+ },
+ {
+  "start": 1849.0,
+  "end": 1855.0,
+  "text": "because the tension is N squared and it's, where N is a sequence length and that gets really expensive."
+ },
+ {
+  "start": 1855.0,
+  "end": 1858.0,
+  "text": "So, there's a bunch of ideas around that."
+ },
+ {
+  "start": 1858.0,
+  "end": 1866.0,
+  "text": "If you're more ambitious, you can look at these state-space models or, you know, equivalently linear attention,"
+ },
+ {
+  "start": 1866.0,
+  "end": 1868.0,
+  "text": "like Mamba and gated delta net."
+ },
+ {
+  "start": 1868.0,
+  "end": 1872.0,
+  "text": "These have been popular in the last, you know, few years."
+ },
+ {
+  "start": 1872.0,
+  "end": 1877.0,
+  "text": "And usually some hybrid between these models and attention seems to work, you know, quite well."
+ },
+ {
+  "start": 1877.0,
+  "end": 1880.0,
+  "text": "So, we'll be exploring some of that."
+ },
+ {
+  "start": 1880.0,
+  "end": 1887.0,
+  "text": "And then within the MLP layers of the transformer, the original transformer was just a dense MLP."
+ },
+ {
+  "start": 1887.0,
+  "end": 1895.0,
+  "text": "And now, mixture of experts has become the sort of dominant paradigm for building compute efficient transformers."
+ },
+ {
+  "start": 1895.0,
+  "end": 1897.0,
+  "text": "So, we're going to talk about that."
+ },
+ {
+  "start": 1897.0,
+  "end": 1902.0,
+  "text": "And of course, with MLP, mixture of experts, you know, it's not just defining architecture,"
+ },
+ {
+  "start": 1902.0,
+  "end": 1908.0,
+  "text": "but we'll see that we'll also need different techniques for training the model."
+ },
+ {
+  "start": 1908.0,
+  "end": 1913.0,
+  "text": "And then finally, perhaps somewhat boringly, but an important question is, you know,"
+ },
+ {
+  "start": 1913.0,
+  "end": 1916.0,
+  "text": "what is the shape of your transformer?How many layers?"
+ },
+ {
+  "start": 1916.0,
+  "end": 1920.0,
+  "text": "How many heads?What is hidden dimension number of experts?"
+ },
+ {
+  "start": 1920.0,
+  "end": 1928.0,
+  "text": "This might come in more as we talk about scaling laws, but setting these is actually, seems kind of, you know, almost trivial."
+ },
+ {
+  "start": 1928.0,
+  "end": 1936.0,
+  "text": "It's a hyperparameter, but actually in the context of scaling of language models has a huge, huge implication."
+ },
+ {
+  "start": 1936.0,
+  "end": 1937.0,
+  "text": "Okay."
+ },
+ {
+  "start": 1937.0,
+  "end": 1942.0,
+  "text": "So, once you define your model architecture, how do you train the model?"
+ },
+ {
+  "start": 1942.0,
+  "end": 1947.0,
+  "text": "And here, there's a bunch of design decisions around the loss function."
+ },
+ {
+  "start": 1947.0,
+  "end": 1951.0,
+  "text": "There's next word, next token prediction, which is the default."
+ },
+ {
+  "start": 1951.0,
+  "end": 1960.0,
+  "text": "But people have found that looking, predicting more than one token seems to be helpful for improving the model."
+ },
+ {
+  "start": 1960.0,
+  "end": 1964.0,
+  "text": "And there's optimizers."
+ },
+ {
+  "start": 1964.0,
+  "end": 1970.0,
+  "text": "People used to use Atom, but increasingly, Muon has been used, especially with some of the latest open"
+ },
+ {
+  "start": 1970.0,
+  "end": 1976.0,
+  "text": "models, such as the Kimi K2 models."
+ },
+ {
+  "start": 1976.0,
+  "end": 1988.0,
+  "text": "Initialization, which is, again, sounds kind of boring, but turns out to have a huge impact on how your ability and the training stability of larger models."
+ },
+ {
+  "start": 1988.0,
+  "end": 1997.0,
+  "text": "Learning rates, schedule, regularization, batch size, and then MOE specific things."
+ },
+ {
+  "start": 1997.0,
+  "end": 2001.0,
+  "text": "So, you know, you look at this list and you might think, well, these are just hyperparameters."
+ },
+ {
+  "start": 2001.0,
+  "end": 2004.0,
+  "text": "I'm going to try a bunch of different options out."
+ },
+ {
+  "start": 2004.0,
+  "end": 2019.0,
+  "text": "But it turns out that, you know, really being very careful about setting these hyperparameters in a principled way will make the difference between a run that just blows up and is useless between a run that is achieving state of the art."
+ },
+ {
+  "start": 2019.0,
+  "end": 2025.0,
+  "text": "Okay, I'll come back to that point when we talk about scaling loss."
+ },
+ {
+  "start": 2025.0,
+  "end": 2035.0,
+  "text": "Okay, so then in assignment one, what you're going to do is you're going to implement the BP tokenizer, implement the transformer, the loss function, optimizer, the whole training staff."
+ },
+ {
+  "start": 2035.0,
+  "end": 2041.0,
+  "text": "We're going to make you do a bunch of resource accounting so you understand where your flops are going."
+ },
+ {
+  "start": 2041.0,
+  "end": 2046.0,
+  "text": "You're going to train some models on these data sets like tiny stories and open web text."
+ },
+ {
+  "start": 2046.0,
+  "end": 2055.0,
+  "text": "And then there's going to be a leaderboard that where you're going to try to drive down perplexity as fast as you can."
+ },
+ {
+  "start": 2055.0,
+  "end": 2062.0,
+  "text": "So, for those of you familiar with the nano GPT speedruns, it's kind of similar to that."
+ },
+ {
+  "start": 2062.0,
+  "end": 2072.0,
+  "text": "Okay, so by the end of assignment one, you should be able to walk away and build a language model from scratch."
+ },
+ {
+  "start": 2072.0,
+  "end": 2074.0,
+  "text": "So that's very exciting."
+ },
+ {
+  "start": 2074.0,
+  "end": 2081.0,
+  "text": "The, you know, if you have a, if I have a high level takeaway here, it's that, you know,"
+ },
+ {
+  "start": 2081.0,
+  "end": 2090.0,
+  "text": "while the tokenizer and modeling and training are sort of presented as distinct pieces, it is actually, you know,"
+ },
+ {
+  "start": 2090.0,
+  "end": 2093.0,
+  "text": "everything is about kind of balancing the following."
+ },
+ {
+  "start": 2093.0,
+  "end": 2098.0,
+  "text": "So you want expressive models because you want to represent the complexities of the data."
+ },
+ {
+  "start": 2098.0,
+  "end": 2104.0,
+  "text": "But at the same time, you want to, you're trained to be stable."
+ },
+ {
+  "start": 2104.0,
+  "end": 2111.0,
+  "text": "And we're going to see, talk a lot about how do you keep the parameter and gradient norms in this sort of"
+ },
+ {
+  "start": 2111.0,
+  "end": 2113.0,
+  "text": "Goldilocks zone so they don't blow up and don't vanish."
+ },
+ {
+  "start": 2113.0,
+  "end": 2119.0,
+  "text": "It turns out a lot of training language models is about just, you know, stability."
+ },
+ {
+  "start": 2119.0,
+  "end": 2125.0,
+  "text": "And then finally efficiency, which is somewhat more straightforward."
+ },
+ {
+  "start": 2125.0,
+  "end": 2127.0,
+  "text": "You just make it run fast on hardware."
+ },
+ {
+  "start": 2127.0,
+  "end": 2132.0,
+  "text": "But you're going to see interesting things like, you know, if we change the architecture,"
+ },
+ {
+  "start": 2132.0,
+  "end": 2137.0,
+  "text": "a lot of the architecture decisions are, well, we can make it faster by, let's say,"
+ },
+ {
+  "start": 2137.0,
+  "end": 2141.0,
+  "text": "reducing the, the projecting of a lower dimensional space."
+ },
+ {
+  "start": 2141.0,
+  "end": 2143.0,
+  "text": "But then the question is, does it work as well?"
+ },
+ {
+  "start": 2143.0,
+  "end": 2151.0,
+  "text": "And so making those trade offs is something that is going to, is sort of the name of the game here."
+ },
+ {
+  "start": 2151.0,
+  "end": 2153.0,
+  "text": "Okay."
+ },
+ {
+  "start": 2153.0,
+  "end": 2161.0,
+  "text": "So, in assignment two, we're going to dive more deeply into, you know, systems."
+ },
+ {
+  "start": 2161.0,
+  "end": 2165.0,
+  "text": "And the goal here is just to get most out of your hardware."
+ },
+ {
+  "start": 2165.0,
+  "end": 2169.0,
+  "text": "So we're going to talk about kernels, how you parallelize across multiple GPUs,"
+ },
+ {
+  "start": 2169.0,
+  "end": 2171.0,
+  "text": "and, and how do you do inference."
+ },
+ {
+  "start": 2171.0,
+  "end": 2177.0,
+  "text": "So, the basics which we're actually going to start on next lecture,"
+ },
+ {
+  "start": 2177.0,
+  "end": 2179.0,
+  "text": "I mentioned resource accounting."
+ },
+ {
+  "start": 2179.0,
+  "end": 2186.0,
+  "text": "And I think, you know, you've all probably, you know, built models before."
+ },
+ {
+  "start": 2186.0,
+  "end": 2193.0,
+  "text": "But this is really about kind of keeping track of all, where all the flops go."
+ },
+ {
+  "start": 2193.0,
+  "end": 2195.0,
+  "text": "And where all the memory is being spent."
+ },
+ {
+  "start": 2195.0,
+  "end": 2199.0,
+  "text": "So we're going to spend some time basically doing the resource accounting."
+ },
+ {
+  "start": 2199.0,
+  "end": 2203.0,
+  "text": "We're going to see, you know, this, this formula that comes up."
+ },
+ {
+  "start": 2203.0,
+  "end": 2207.0,
+  "text": "How do you, how many flops is training SMDB on model on one trillion tokens?"
+ },
+ {
+  "start": 2207.0,
+  "end": 2210.0,
+  "text": "Well, it's six times N times D roughly."
+ },
+ {
+  "start": 2210.0,
+  "end": 2212.0,
+  "text": "And where does that come from?"
+ },
+ {
+  "start": 2212.0,
+  "end": 2217.0,
+  "text": "And then we're going to look at, you know, the hardware."
+ },
+ {
+  "start": 2217.0,
+  "end": 2223.0,
+  "text": "And here's a very cartoon, you know, picture of what, what to remark about hardware."
+ },
+ {
+  "start": 2223.0,
+  "end": 2226.0,
+  "text": "Is that your memory is not where your compute is."
+ },
+ {
+  "start": 2226.0,
+  "end": 2231.0,
+  "text": "And you have to move, you're either your parameters or activations into,"
+ },
+ {
+  "start": 2231.0,
+  "end": 2234.0,
+  "text": "from the memory to compute, do the compute, and move it back."
+ },
+ {
+  "start": 2234.0,
+  "end": 2238.0,
+  "text": "Right?And that often is the bottleneck."
+ },
+ {
+  "start": 2238.0,
+  "end": 2244.0,
+  "text": "So, you know, for example, B200s, which we'll have the opportunity to play with."
+ },
+ {
+  "start": 2244.0,
+  "end": 2253.0,
+  "text": "It has 2.25 petaflops per second, BF16, and it has 8 terabytes a second of memory."
+ },
+ {
+  "start": 2253.0,
+  "end": 2255.0,
+  "text": "So, you know, what does that mean?"
+ },
+ {
+  "start": 2255.0,
+  "end": 2258.0,
+  "text": "I think when we, I think I'll do this next lecture."
+ },
+ {
+  "start": 2258.0,
+  "end": 2269.0,
+  "text": "We're going to break this down and use this information to do some calculations and see how long different types of algorithms will need to take."
+ },
+ {
+  "start": 2269.0,
+  "end": 2277.0,
+  "text": "We're going to talk about roofline analysis, which allows us to understand whether a computation is bottlenecked by either compute or memory."
+ },
+ {
+  "start": 2277.0,
+  "end": 2281.0,
+  "text": "In general, it is, you know, memory."
+ },
+ {
+  "start": 2281.0,
+  "end": 2286.0,
+  "text": "And then, talk a little bit about benchmarking and profiling."
+ },
+ {
+  "start": 2286.0,
+  "end": 2293.0,
+  "text": "Okay. So, here's what, you know, DGXP 200 looks like."
+ },
+ {
+  "start": 2293.0,
+  "end": 2299.0,
+  "text": "You have eight GPUs, they're connected via, you know, MB link."
+ },
+ {
+  "start": 2299.0,
+  "end": 2308.0,
+  "text": "And then, if you have many, if you have a thousand GPUs, then you would have multiple of these, and they're, you know, connected either in Finiband or Ethernet."
+ },
+ {
+  "start": 2308.0,
+  "end": 2312.0,
+  "text": "So, the next two parts when we talk about system is, you know, kernels."
+ },
+ {
+  "start": 2312.0,
+  "end": 2315.0,
+  "text": "So, kernel is basically a function that runs on the GPU."
+ },
+ {
+  "start": 2315.0,
+  "end": 2327.0,
+  "text": "And when you're just using plain PyTorch, you know, the, all the PyTorch primitives actually correspond to launching particular kernels, which are built in."
+ },
+ {
+  "start": 2327.0,
+  "end": 2334.0,
+  "text": "So, you're already using kernels, this, you know, whether you know it or not."
+ },
+ {
+  "start": 2334.0,
+  "end": 2346.0,
+  "text": "But the point is that, if, for certain types of computation, if you look at it, you can actually write custom kernels to make the GPUs go faster."
+ },
+ {
+  "start": 2346.0,
+  "end": 2352.0,
+  "text": "And the main principle here is organizing the compute to minimize data movement."
+ },
+ {
+  "start": 2352.0,
+  "end": 2362.0,
+  "text": "So, remember this picture, moving data from, from memory is expensive, so you want to try to minimize that."
+ },
+ {
+  "start": 2362.0,
+  "end": 2367.0,
+  "text": "So, just as a kind of a simple example, suppose you wanted to compute A and B."
+ },
+ {
+  "start": 2367.0,
+  "end": 2376.0,
+  "text": "So, often you would have to read from your high bandwidth memory, HPM, compute it, write it back, and then read again, compute it, write it back."
+ },
+ {
+  "start": 2376.0,
+  "end": 2380.0,
+  "text": "Right? So, then you're basically sending the data back and forth twice."
+ },
+ {
+  "start": 2380.0,
+  "end": 2387.0,
+  "text": "And there's this idea called fusion where you read it once, do both of the computations, and you write it back."
+ },
+ {
+  "start": 2387.0,
+  "end": 2392.0,
+  "text": "And that will save you a lot of time."
+ },
+ {
+  "start": 2392.0,
+  "end": 2393.0,
+  "text": "So, that's operator fusion."
+ },
+ {
+  "start": 2393.0,
+  "end": 2399.0,
+  "text": "Tiling is, is kind of a more sophisticated variant around the same idea."
+ },
+ {
+  "start": 2399.0,
+  "end": 2403.0,
+  "text": "There's also, GPUs have also gotten a lot more complicated."
+ },
+ {
+  "start": 2403.0,
+  "end": 2408.0,
+  "text": "And I'm not sure how many of these details we'll have time to get into, but at least we want to expose you to some of the,"
+ },
+ {
+  "start": 2408.0,
+  "end": 2420.0,
+  "text": "sort of the, the peculiarities, I would say, of GPUs and the, and give you appreciation for the types of things that one has to consider in order to squeeze as much juice out of them as possible."
+ },
+ {
+  "start": 2420.0,
+  "end": 2425.0,
+  "text": "And we'll write some kernels in and, and try it."
+ },
+ {
+  "start": 2425.0,
+  "end": 2429.0,
+  "text": "So, what happens if you have thousands of GPUs?"
+ },
+ {
+  "start": 2429.0,
+  "end": 2436.0,
+  "text": "So, the principle of minimize data movement is still, you know, the same."
+ },
+ {
+  "start": 2436.0,
+  "end": 2444.0,
+  "text": "The only thing is that moving data between different GPUs is even more expensive."
+ },
+ {
+  "start": 2444.0,
+  "end": 2454.0,
+  "text": "We're going to talk about how these very classic collective operations like gather and reduce and all reduce are the way to kind of think about,"
+ },
+ {
+  "start": 2454.0,
+  "end": 2457.0,
+  "text": "basically, distributed, you know, training."
+ },
+ {
+  "start": 2457.0,
+  "end": 2464.0,
+  "text": "The general game is that we have these model parameters, we have activations, gradients, and optimizer states,"
+ },
+ {
+  "start": 2464.0,
+  "end": 2468.0,
+  "text": "and they need to be sharded or split across multiple GPUs."
+ },
+ {
+  "start": 2468.0,
+  "end": 2473.0,
+  "text": "And, of course, you need to bring the right data to the right nodes to make the compute and write it back."
+ },
+ {
+  "start": 2473.0,
+  "end": 2483.0,
+  "text": "So, there's a whole kind of orchestration that, and how to do that efficiently is going to be the topic of this, this unit."
+ },
+ {
+  "start": 2483.0,
+  "end": 2486.0,
+  "text": "And there's multiple ways to shard."
+ },
+ {
+  "start": 2486.0,
+  "end": 2491.0,
+  "text": "You can shard by, you know, splitting up your data, splitting up your model, splitting up different layers in the model,"
+ },
+ {
+  "start": 2491.0,
+  "end": 2497.0,
+  "text": "splitting up the sequences, splitting up between experts, and we'll talk about the trade-offs that come with each of these."
+ },
+ {
+  "start": 2497.0,
+  "end": 2506.0,
+  "text": "Okay, and then finally, we're going to talk about inference, which, as I mentioned, is growing in importance."
+ },
+ {
+  "start": 2506.0,
+  "end": 2509.0,
+  "text": "So, the goal of inference is to actually use the model."
+ },
+ {
+  "start": 2509.0,
+  "end": 2511.0,
+  "text": "So, you know, minor detail here."
+ },
+ {
+  "start": 2511.0,
+  "end": 2516.0,
+  "text": "So, inference is, of course, you need to use inference when you're chatting with the model,"
+ },
+ {
+  "start": 2516.0,
+  "end": 2520.0,
+  "text": "but it also is useful for reinforcement learning."
+ },
+ {
+  "start": 2520.0,
+  "end": 2527.0,
+  "text": "It's useful for doing the rollouts, test time compute, generating synthetic data, evaluation."
+ },
+ {
+  "start": 2527.0,
+  "end": 2535.0,
+  "text": "So, inference is a very critical part of what it means to, you know, do language modeling work."
+ },
+ {
+  "start": 2535.0,
+  "end": 2545.0,
+  "text": "So, we're probably not going to spend as much time as I like on this because the course is already kind of filled up, but we'll see what we can do."
+ },
+ {
+  "start": 2545.0,
+  "end": 2552.0,
+  "text": "There was some discussion around whether we should make you write inference from scratch, but we'll see."
+ },
+ {
+  "start": 2552.0,
+  "end": 2560.0,
+  "text": "So, the way to think about inference is that there's two phases, a pre-fill and a decode."
+ },
+ {
+  "start": 2560.0,
+  "end": 2566.0,
+  "text": "In the pre-fill, you take the prompt, and then you feed all the tokens forward and build key-value pairs."
+ },
+ {
+  "start": 2566.0,
+  "end": 2569.0,
+  "text": "This is very much like what happens in training."
+ },
+ {
+  "start": 2569.0,
+  "end": 2575.0,
+  "text": "And then, in the decoding part, tokens are generated one at a time."
+ },
+ {
+  "start": 2575.0,
+  "end": 2584.0,
+  "text": "And this is the part that becomes quickly memory bound, and this is why inference is hard."
+ },
+ {
+  "start": 2584.0,
+  "end": 2588.0,
+  "text": "And so, there's many things you can do to speed up inference."
+ },
+ {
+  "start": 2588.0,
+  "end": 2592.0,
+  "text": "You can try to use a cheaper model by pruning a larger model."
+ },
+ {
+  "start": 2592.0,
+  "end": 2596.0,
+  "text": "You can quantize, you can distill, you can use this technique called speculative decoding,"
+ },
+ {
+  "start": 2596.0,
+  "end": 2601.0,
+  "text": "where you use a cheaper model to sort of run ahead and guess a bunch of tokens."
+ },
+ {
+  "start": 2601.0,
+  "end": 2608.0,
+  "text": "And now, you use the full model, which can operate on those tokens in parallel to see if it's good."
+ },
+ {
+  "start": 2608.0,
+  "end": 2614.0,
+  "text": "And if you got lucky, then you can accept all those tokens, and you're much faster than if you're doing one token at a time."
+ },
+ {
+  "start": 2614.0,
+  "end": 2617.0,
+  "text": "And of course, you can do systems optimizations."
+ },
+ {
+  "start": 2617.0,
+  "end": 2622.0,
+  "text": "There's a bunch of kernels that are designed specifically for inference."
+ },
+ {
+  "start": 2622.0,
+  "end": 2626.0,
+  "text": "And then, one of the interesting things about inference is that if you're running a service,"
+ },
+ {
+  "start": 2626.0,
+  "end": 2631.0,
+  "text": "queries are coming at you at potentially different times."
+ },
+ {
+  "start": 2631.0,
+  "end": 2634.0,
+  "text": "And then, you have to figure out how to batch them up."
+ },
+ {
+  "start": 2634.0,
+  "end": 2640.0,
+  "text": "Whereas, in training, you basically are already defined your batches, and everything is much more predictable."
+ },
+ {
+  "start": 2640.0,
+  "end": 2654.0,
+  "text": "So, in assignment two, there's going to be implementing kernels in Triton, and doing some sort of parallel training."
+ },
+ {
+  "start": 2654.0,
+  "end": 2663.0,
+  "text": "The details here might actually change as the CAs have grand plans of revamping the systems."
+ },
+ {
+  "start": 2663.0,
+  "end": 2672.0,
+  "text": "So, the assignment might look a bit different from last year's, but it will cover roughly the same material."
+ },
+ {
+  "start": 2672.0,
+  "end": 2679.0,
+  "text": "One thing I will mention is that there's this wonderful book out of some Google people called How to Scale Your Model."
+ },
+ {
+  "start": 2679.0,
+  "end": 2690.0,
+  "text": "And I think it's really nice for providing a conceptual understanding of roofline analysis and transformer math and doing LMS conceptually."
+ },
+ {
+  "start": 2690.0,
+  "end": 2694.0,
+  "text": "So, I highly recommend you take a look at that."
+ },
+ {
+  "start": 2694.0,
+  "end": 2699.0,
+  "text": "Now, the only thing is that it is from Google, so it's about TPUs."
+ },
+ {
+  "start": 2699.0,
+  "end": 2703.0,
+  "text": "But a lot of the high-level concepts are similar."
+ },
+ {
+  "start": 2703.0,
+  "end": 2706.0,
+  "text": "And now, they have a new chapter on how to think about GPUs."
+ },
+ {
+  "start": 2709.0,
+  "end": 2716.0,
+  "text": "Okay.So, the third assignment is about scaling laws."
+ },
+ {
+  "start": 2716.0,
+  "end": 2720.0,
+  "text": "So, by now, you've trained a language model."
+ },
+ {
+  "start": 2720.0,
+  "end": 2726.0,
+  "text": "You can make it go really fast by optimizing kernels in parallel."
+ },
+ {
+  "start": 2726.0,
+  "end": 2730.0,
+  "text": "Now, you want to scale up.So, how do you scale up?"
+ },
+ {
+  "start": 2730.0,
+  "end": 2732.0,
+  "text": "So, imagine the following setting."
+ },
+ {
+  "start": 2732.0,
+  "end": 2741.0,
+  "text": "If you had 1e25 flops, so this is tens of millions of dollars of compute, what model would you train?"
+ },
+ {
+  "start": 2741.0,
+  "end": 2742.0,
+  "text": "Okay."
+ },
+ {
+  "start": 2742.0,
+  "end": 2749.0,
+  "text": "So, this is, I think, kind of a daunting task because if you mess up, well, that's a lot of money down the drain."
+ },
+ {
+  "start": 2749.0,
+  "end": 2758.0,
+  "text": "So, and you can't do your probably typical hyperparameter tuning at that scale because you only get to train one model."
+ },
+ {
+  "start": 2758.0,
+  "end": 2771.0,
+  "text": "And so, this is like the key problem that you have to deal with in language model, large language model training that you don't have to really deal with if you're just fine tuning a model or doing small scale stuff."
+ },
+ {
+  "start": 2771.0,
+  "end": 2780.0,
+  "text": "And so, the key conceptual shift here is that we shouldn't think about a single model that we're training, but really think about a scaling recipe."
+ },
+ {
+  "start": 2780.0,
+  "end": 2789.0,
+  "text": "And a scaling recipe is a mapping from a flood budget, let's say 1e25 or 1e24, to a set of hyperparameters, basically a config file."
+ },
+ {
+  "start": 2789.0,
+  "end": 2802.0,
+  "text": "And for a given scaling recipe, what we will do is run a bunch of experiments to compute the loss that you get at smaller scales."
+ },
+ {
+  "start": 2802.0,
+  "end": 2808.0,
+  "text": "And then you fit a scaling law and that enables you to predict the loss at a target scale."
+ },
+ {
+  "start": 2808.0,
+  "end": 2816.0,
+  "text": "So, maybe you run some small experiments, you fit the scaling law, and then you predict out what you're going to get at larger scale."
+ },
+ {
+  "start": 2816.0,
+  "end": 2818.0,
+  "text": "Okay.So, that's the primitive."
+ },
+ {
+  "start": 2818.0,
+  "end": 2829.0,
+  "text": "Now, using this, what you can do is now you can optimize the target, the scaling recipe, targeting at a larger scale using smaller scale experiments, which is wonderful."
+ },
+ {
+  "start": 2829.0,
+  "end": 2838.0,
+  "text": "And second of all, you can predict the loss that you're going to, in theory, achieve before actually running the experiment."
+ },
+ {
+  "start": 2838.0,
+  "end": 2849.0,
+  "text": "Which goes, allows you to go, you know, raise money and you say, well, look, I ran the small scale experiments and I think I can get a really, like a GPT-5 level model."
+ },
+ {
+  "start": 2849.0,
+  "end": 2852.0,
+  "text": "Please give me a lot of money so I can train that model."
+ },
+ {
+  "start": 2852.0,
+  "end": 2863.0,
+  "text": "So, one thing I think is maybe another misconception is that scaling laws are not laws of nature."
+ },
+ {
+  "start": 2863.0,
+  "end": 2866.0,
+  "text": "They don't just happen automatically."
+ },
+ {
+  "start": 2866.0,
+  "end": 2869.0,
+  "text": "You kind of have to will them into existence."
+ },
+ {
+  "start": 2869.0,
+  "end": 2874.0,
+  "text": "And this happens by careful construction of a scaling recipe, right?"
+ },
+ {
+  "start": 2874.0,
+  "end": 2877.0,
+  "text": "And a scaling recipe, remember, it has to extrapolate."
+ },
+ {
+  "start": 2877.0,
+  "end": 2890.0,
+  "text": "So, what this typically means is that you have a sequence of hyperparameters, which say as the scale increases, maybe the learning rate is a constant, maybe it drops, maybe the batch size increases, but how much?"
+ },
+ {
+  "start": 2890.0,
+  "end": 2894.0,
+  "text": "And these are things that a scaling recipe has to figure out."
+ },
+ {
+  "start": 2894.0,
+  "end": 2910.0,
+  "text": "And so you parameterize, so then, in order to get these predictable scaling laws, one thing that you actually have to think about is, how do you parameterize the model in a way to get what's called hyperparameter transfer?"
+ },
+ {
+  "start": 2910.0,
+  "end": 2917.0,
+  "text": "Right, meaning that this hyperparameters you use at small scale are either the ones that you use at larger scale or are predictable functions of it."
+ },
+ {
+  "start": 2917.0,
+  "end": 2930.0,
+  "text": "Right, because at every scale, your learning rate is like sometimes one e negative five and sometimes one e negative four, then you're not going to be able to magically guess the right learning rate when you are at larger scale."
+ },
+ {
+  "start": 2930.0,
+  "end": 2936.0,
+  "text": "So, one shift in thinking is that the predictability is actually at least as important as optimality."
+ },
+ {
+  "start": 2936.0,
+  "end": 2945.0,
+  "text": "So, you normally think, oh, we're trying to optimize for efficiency here and we want to hyperparameter tune and make things optimal."
+ },
+ {
+  "start": 2945.0,
+  "end": 2952.0,
+  "text": "And, yes, you do want to do that, but you also want this predictability so that you don't get surprised at larger scale."
+ },
+ {
+  "start": 2952.0,
+  "end": 2956.0,
+  "text": "Okay, so that's, this is kind of a stage setting."
+ },
+ {
+  "start": 2956.0,
+  "end": 2962.0,
+  "text": "The actual scaling laws we're going to look at are fairly, you know, classic."
+ },
+ {
+  "start": 2962.0,
+  "end": 2971.0,
+  "text": "So these are, you know, some of you might have seen this idea of, well, if I give you a flops budget, should you train,"
+ },
+ {
+  "start": 2971.0,
+  "end": 2975.0,
+  "text": "how should you balance training a larger model versus training on more tokens?"
+ },
+ {
+  "start": 2975.0,
+  "end": 2979.0,
+  "text": "And this is where the classic compute optimal scaling laws from Klapp and et al."
+ },
+ {
+  "start": 2979.0,
+  "end": 2982.0,
+  "text": "And the chinchilla, so-called chinchilla scaling laws comes in."
+ },
+ {
+  "start": 2982.0,
+  "end": 3003.0,
+  "text": "The basic idea is that you, for each flops budget, so let's say 6E18 all the way to 3E21, you sweep across different, you know, model sizes."
+ },
+ {
+  "start": 3003.0,
+  "end": 3008.0,
+  "text": "And you choose the best one, so think about minimizing each of these."
+ },
+ {
+  "start": 3008.0,
+  "end": 3016.0,
+  "text": "And then you fit a curve that allows you to basically predict the number of parameters given a flops budget."
+ },
+ {
+  "start": 3016.0,
+  "end": 3020.0,
+  "text": "And if you're lucky, it will lie on a, roughly on a line."
+ },
+ {
+  "start": 3020.0,
+  "end": 3027.0,
+  "text": "And if you're unlucky, it's going to be all over the place, which means that you should have no confidence that you're going to be able to predict reliably."
+ },
+ {
+  "start": 3027.0,
+  "end": 3039.0,
+  "text": "And so, you know, the upshot of this is, this is quite crude, but, you know, a rule of thumb is,"
+ },
+ {
+  "start": 3039.0,
+  "end": 3045.0,
+  "text": "the 20 times the number of parameters is the number of data points you should train on."
+ },
+ {
+  "start": 3045.0,
+  "end": 3050.0,
+  "text": "So, this MDB parameter model should be trained on roughly 1.4 trillion tokens."
+ },
+ {
+  "start": 3050.0,
+  "end": 3056.0,
+  "text": "Of course, depending on the data set and architecture, this number will actually vary."
+ },
+ {
+  "start": 3056.0,
+  "end": 3061.0,
+  "text": "Okay, also this doesn't take you into account the inference costs."
+ },
+ {
+  "start": 3061.0,
+  "end": 3066.0,
+  "text": "A lot of models these days are small, but they're trained on way more tokens than is compute optimal,"
+ },
+ {
+  "start": 3066.0,
+  "end": 3069.0,
+  "text": "because you want a smaller model for inference reasons."
+ },
+ {
+  "start": 3069.0,
+  "end": 3076.0,
+  "text": "Okay, so one fun thing that we've been doing in the Marin project is pre-registering our results."
+ },
+ {
+  "start": 3076.0,
+  "end": 3082.0,
+  "text": "So we fit a bunch of scaling, you know, plots at different compute budgets."
+ },
+ {
+  "start": 3082.0,
+  "end": 3090.0,
+  "text": "We fit a scaling law, and we basically made these predictions out to 1E22 flops."
+ },
+ {
+  "start": 3090.0,
+  "end": 3091.0,
+  "text": "This one is actually training."
+ },
+ {
+  "start": 3091.0,
+  "end": 3094.0,
+  "text": "If you go to a Marin site, you can follow along."
+ },
+ {
+  "start": 3094.0,
+  "end": 3097.0,
+  "text": "It should actually be done maybe as early as tonight."
+ },
+ {
+  "start": 3097.0,
+  "end": 3106.0,
+  "text": "So maybe on Wednesday I'll report back on how we did and see how we match the pre-registered loss."
+ },
+ {
+  "start": 3106.0,
+  "end": 3111.0,
+  "text": "So the idea here is that we made a prediction on if we were to train this large model,"
+ },
+ {
+  "start": 3111.0,
+  "end": 3115.0,
+  "text": "which we've never trained before, if we can predict how well it's going to do,"
+ },
+ {
+  "start": 3115.0,
+  "end": 3119.0,
+  "text": "then that's really nice."
+ },
+ {
+  "start": 3119.0,
+  "end": 3126.0,
+  "text": "Okay, so in assignment three, I think this is a kind of a either fun or, you know,"
+ },
+ {
+  "start": 3126.0,
+  "end": 3128.0,
+  "text": "actually it's a fun assignment."
+ },
+ {
+  "start": 3128.0,
+  "end": 3130.0,
+  "text": "Let's just say it's a fun assignment."
+ },
+ {
+  "start": 3130.0,
+  "end": 3138.0,
+  "text": "So we're going to define this training API, which basically you give us hyperparameters,"
+ },
+ {
+  "start": 3138.0,
+  "end": 3140.0,
+  "text": "and we're going to give you a loss back."
+ },
+ {
+  "start": 3140.0,
+  "end": 3145.0,
+  "text": "So what we're going to try to do is simulate what happens if you could do a lot of"
+ },
+ {
+  "start": 3145.0,
+  "end": 3146.0,
+  "text": "training runs."
+ },
+ {
+  "start": 3146.0,
+  "end": 3150.0,
+  "text": "And of course we don't have enough compute to actually allow everyone to train their"
+ },
+ {
+  "start": 3150.0,
+  "end": 3153.0,
+  "text": "own, you know, 8B model or anything."
+ },
+ {
+  "start": 3153.0,
+  "end": 3159.0,
+  "text": "So basically we train a bunch of models offline and we basically provide this cache"
+ },
+ {
+  "start": 3159.0,
+  "end": 3161.0,
+  "text": "so it looks like you're training."
+ },
+ {
+  "start": 3161.0,
+  "end": 3164.0,
+  "text": "And what you're going to do is submit training jobs."
+ },
+ {
+  "start": 3164.0,
+  "end": 3169.0,
+  "text": "You give us a config, basically we give you a loss back."
+ },
+ {
+  "start": 3169.0,
+  "end": 3171.0,
+  "text": "And then you can do whatever you want."
+ },
+ {
+  "start": 3171.0,
+  "end": 3177.0,
+  "text": "We would recommend you fit scaling laws to these points, and then you extrapolate,"
+ },
+ {
+  "start": 3177.0,
+  "end": 3184.0,
+  "text": "and then we give you a budget and you're, we basically evaluate how well your model landed."
+ },
+ {
+  "start": 3184.0,
+  "end": 3189.0,
+  "text": "So it is meant to, I was going to say, it's meant to kind of replicate the high stress"
+ },
+ {
+  "start": 3189.0,
+  "end": 3196.0,
+  "text": "scenarios if you actually had a budget that, like, you know, $100 million that you did to spend."
+ },
+ {
+  "start": 3196.0,
+  "end": 3200.0,
+  "text": "And you have to be very careful about what, how you spend this."
+ },
+ {
+  "start": 3200.0,
+  "end": 3207.0,
+  "text": "Of course this is low stakes."
+ },
+ {
+  "start": 3207.0,
+  "end": 3213.0,
+  "text": "Okay. So, so at this point you will have, you train a model,"
+ },
+ {
+  "start": 3213.0,
+  "end": 3216.0,
+  "text": "you know how to make it fast, you know how to scale up."
+ },
+ {
+  "start": 3216.0,
+  "end": 3219.0,
+  "text": "You know, now what's missing?"
+ },
+ {
+  "start": 3219.0,
+  "end": 3222.0,
+  "text": "You know, what do you train the model on?"
+ },
+ {
+  "start": 3222.0,
+  "end": 3228.0,
+  "text": "And that's going to be the subject of the data section, which is, you know,"
+ },
+ {
+  "start": 3228.0,
+  "end": 3234.0,
+  "text": "arguably one of the most important things because data quality is, is basically"
+ },
+ {
+  "start": 3234.0,
+  "end": 3237.0,
+  "text": "specifies how good your model is going to be."
+ },
+ {
+  "start": 3237.0,
+  "end": 3242.0,
+  "text": "One way to also frame it is, you know, what do you want your model to do?"
+ },
+ {
+  "start": 3242.0,
+  "end": 3247.0,
+  "text": "Right? Data basically is, reflects what your model wants."
+ },
+ {
+  "start": 3247.0,
+  "end": 3250.0,
+  "text": "So do you want to speak multiple languages?"
+ },
+ {
+  "start": 3250.0,
+  "end": 3253.0,
+  "text": "Be good at, you know, having a conversation?"
+ },
+ {
+  "start": 3253.0,
+  "end": 3257.0,
+  "text": "Do you want to do, run long agentic coding tasks?"
+ },
+ {
+  "start": 3257.0,
+  "end": 3262.0,
+  "text": "And so part of that is also going to, you know, so we're going to start by"
+ },
+ {
+  "start": 3262.0,
+  "end": 3267.0,
+  "text": "talking about evaluation, which basically defines the capabilities that you would"
+ },
+ {
+  "start": 3267.0,
+  "end": 3269.0,
+  "text": "like your model to have."
+ },
+ {
+  "start": 3269.0,
+  "end": 3275.0,
+  "text": "You know, one thing we'll talk about is, evaluation is a fairly, you know,"
+ },
+ {
+  "start": 3275.0,
+  "end": 3277.0,
+  "text": "deep topic."
+ },
+ {
+  "start": 3277.0,
+  "end": 3281.0,
+  "text": "Not just, it's not just about like, you know, running on some benchmarks."
+ },
+ {
+  "start": 3281.0,
+  "end": 3286.0,
+  "text": "There are internal evaluation metrics for model development."
+ },
+ {
+  "start": 3286.0,
+  "end": 3292.0,
+  "text": "And what matters here is that, you know, smoothness across scales so that there,"
+ },
+ {
+  "start": 3292.0,
+  "end": 3295.0,
+  "text": "you know, remember we want things to be predictable."
+ },
+ {
+  "start": 3295.0,
+  "end": 3297.0,
+  "text": "Relative performance matters."
+ },
+ {
+  "start": 3297.0,
+  "end": 3303.0,
+  "text": "You don't care necessarily how well this, you know, does in absolute terms because,"
+ },
+ {
+  "start": 3303.0,
+  "end": 3309.0,
+  "text": "you know, let's say perplexity number is just like, what is a perplexity 1.2 on some,"
+ },
+ {
+  "start": 3309.0,
+  "end": 3312.0,
+  "text": "you know, held out data really mean?"
+ },
+ {
+  "start": 3312.0,
+  "end": 3314.0,
+  "text": "And then there's external metrics."
+ },
+ {
+  "start": 3314.0,
+  "end": 3321.0,
+  "text": "These are things that you report to your customers or your reviewers or whoever you're"
+ },
+ {
+  "start": 3321.0,
+  "end": 3323.0,
+  "text": "presenting your thing to."
+ },
+ {
+  "start": 3323.0,
+  "end": 3326.0,
+  "text": "And here ecologically, validity really matters."
+ },
+ {
+  "start": 3326.0,
+  "end": 3331.0,
+  "text": "And I think sometimes these two things get conflated, but I think they really serve two distinct purposes."
+ },
+ {
+  "start": 3331.0,
+  "end": 3338.0,
+  "text": "And so you can think about perplexity as something that is really helpful for internal development."
+ },
+ {
+  "start": 3338.0,
+  "end": 3347.0,
+  "text": "And still to this day, you know, perplexity is a very good way of capturing the intrinsic quality of a model"
+ },
+ {
+  "start": 3347.0,
+  "end": 3351.0,
+  "text": "without getting, kind of worrying about bench-maxing."
+ },
+ {
+  "start": 3351.0,
+  "end": 3356.0,
+  "text": "Now, there's a separate question of what you run your evals on."
+ },
+ {
+  "start": 3356.0,
+  "end": 3361.0,
+  "text": "And the recommended thing is, well, if you have some data that's not on the Internet,"
+ },
+ {
+  "start": 3361.0,
+  "end": 3365.0,
+  "text": "that would be good because you can avoid contamination."
+ },
+ {
+  "start": 3365.0,
+  "end": 3376.0,
+  "text": "Okay, so, and then there's advanced use cases which are more representative of external facing use cases."
+ },
+ {
+  "start": 3376.0,
+  "end": 3383.0,
+  "text": "So, one thing to also note is that, you know, language models are purportedly very general purpose."
+ },
+ {
+  "start": 3383.0,
+  "end": 3390.0,
+  "text": "Right? So, it's suitable, it's only fitting that we actually need a very diverse set of evaluations."
+ },
+ {
+  "start": 3390.0,
+  "end": 3396.0,
+  "text": "And I would always recommend having many evaluations that look at, you can average them into a single number,"
+ },
+ {
+  "start": 3396.0,
+  "end": 3399.0,
+  "text": "but often that average conflates a lot of different things."
+ },
+ {
+  "start": 3399.0,
+  "end": 3405.0,
+  "text": "Okay, so now after we set up the evals, we know what we're building."
+ },
+ {
+  "start": 3405.0,
+  "end": 3408.0,
+  "text": "How do you get the data?"
+ },
+ {
+  "start": 3408.0,
+  "end": 3413.0,
+  "text": "Well, first thing is that data does not just fall from the sky."
+ },
+ {
+  "start": 3413.0,
+  "end": 3416.0,
+  "text": "It has to be actively, you know, curated."
+ },
+ {
+  "start": 3416.0,
+  "end": 3422.0,
+  "text": "Often, I think, you know, in, you know, especially in, in classes and also in research,"
+ },
+ {
+  "start": 3422.0,
+  "end": 3427.0,
+  "text": "sometimes you're just given a data set and then it's like, okay, well, now I do stuff on the data set."
+ },
+ {
+  "start": 3427.0,
+  "end": 3431.0,
+  "text": "But a lot of language models, especially if you want to collect these large data sets,"
+ },
+ {
+  "start": 3431.0,
+  "end": 3434.0,
+  "text": "you have to go and actively look at it."
+ },
+ {
+  "start": 3434.0,
+  "end": 3436.0,
+  "text": "So, web pages are called from the internet."
+ },
+ {
+  "start": 3436.0,
+  "end": 3440.0,
+  "text": "There's books, I guess, which is controversial at this, at this point, but"
+ },
+ {
+  "start": 3440.0,
+  "end": 3443.0,
+  "text": "archive papers, GitHub code, and, and so on."
+ },
+ {
+  "start": 3443.0,
+  "end": 3447.0,
+  "text": "This is an old figure from the, the pile from 2021."
+ },
+ {
+  "start": 3447.0,
+  "end": 3452.0,
+  "text": "And you can see, you know, language modeling data sets are fairly diverse."
+ },
+ {
+  "start": 3452.0,
+  "end": 3461.0,
+  "text": "There's, especially these days, I think, a lot of contention around, is it fair use to train on copyrighted data?"
+ },
+ {
+  "start": 3461.0,
+  "end": 3465.0,
+  "text": "Maybe sometimes you have to license data and so on."
+ },
+ {
+  "start": 3465.0,
+  "end": 3470.0,
+  "text": "So, there's legal issues around data, which I think are quite, you know, important."
+ },
+ {
+  "start": 3470.0,
+  "end": 3473.0,
+  "text": "For example, a lot of GitHub code doesn't have a license."
+ },
+ {
+  "start": 3473.0,
+  "end": 3475.0,
+  "text": "So, how do you interpret that?"
+ },
+ {
+  "start": 3475.0,
+  "end": 3480.0,
+  "text": "Do you think, assume it's permissive or do you be conservative and assume it's not permissive?"
+ },
+ {
+  "start": 3480.0,
+  "end": 3489.0,
+  "text": "So, there's also, the fact is that data is not even text, right?"
+ },
+ {
+  "start": 3489.0,
+  "end": 3492.0,
+  "text": "It's either HTML or PDFs or code is directories."
+ },
+ {
+  "start": 3492.0,
+  "end": 3498.0,
+  "text": "And this requires processing to turn it into actual text to be usable for training."
+ },
+ {
+  "start": 3498.0,
+  "end": 3501.0,
+  "text": "So, that's the topic of data processing."
+ },
+ {
+  "start": 3501.0,
+  "end": 3504.0,
+  "text": "There's a few steps that has to happen here."
+ },
+ {
+  "start": 3504.0,
+  "end": 3508.0,
+  "text": "Transformation, converting some non-texting into text."
+ },
+ {
+  "start": 3508.0,
+  "end": 3513.0,
+  "text": "Filtering, keeping only the good stuff."
+ },
+ {
+  "start": 3513.0,
+  "end": 3523.0,
+  "text": "If the random internet document in Common Crawl is extremely bad and you don't want to train on it, most likely."
+ },
+ {
+  "start": 3523.0,
+  "end": 3528.0,
+  "text": "You want to duplicate.There's multiple sources."
+ },
+ {
+  "start": 3528.0,
+  "end": 3531.0,
+  "text": "So, how do you combine the different sources?"
+ },
+ {
+  "start": 3531.0,
+  "end": 3538.0,
+  "text": "And then finally, more recently, there's been a lot of work on generating synthetic data,"
+ },
+ {
+  "start": 3538.0,
+  "end": 3544.0,
+  "text": "which could mean taking the real data and just rewriting it into things that are more like the downstream task"
+ },
+ {
+  "start": 3544.0,
+  "end": 3549.0,
+  "text": "or just more Wikipedia-like or whatever you want."
+ },
+ {
+  "start": 3549.0,
+  "end": 3553.0,
+  "text": "So, this is an accurate area of research."
+ },
+ {
+  "start": 3553.0,
+  "end": 3558.0,
+  "text": "Also, data can be used both for pre-training, something called mid-training,"
+ },
+ {
+  "start": 3558.0,
+  "end": 3565.0,
+  "text": "which is usually the high-quality data that you put at the end of the pre-training step."
+ },
+ {
+  "start": 3565.0,
+  "end": 3571.0,
+  "text": "And this includes long context data such as maybe big code repositories or books."
+ },
+ {
+  "start": 3571.0,
+  "end": 3577.0,
+  "text": "And then finally, there's post-training data, which are maybe conversations or"
+ },
+ {
+  "start": 3577.0,
+  "end": 3580.0,
+  "text": "agentic traces with tool calling."
+ },
+ {
+  "start": 3580.0,
+  "end": 3589.0,
+  "text": "So, in assignment four, we're going to make you start with a very raw corpus,"
+ },
+ {
+  "start": 3589.0,
+  "end": 3600.0,
+  "text": "like a raw web crawl, and do all the work to filter and to dedupe and make the data clean."
+ },
+ {
+  "start": 3600.0,
+  "end": 3608.0,
+  "text": "So, this is, I would say, I don't know if I would call it not fun, but it is certainly, I think,"
+ },
+ {
+  "start": 3608.0,
+  "end": 3613.0,
+  "text": "a lot of, you know, what people would call, you know, dirty work."
+ },
+ {
+  "start": 3613.0,
+  "end": 3617.0,
+  "text": "But that is, I think, part of, an important part of building a language model from scratch."
+ },
+ {
+  "start": 3617.0,
+  "end": 3619.0,
+  "text": "So, you have to get the full experience."
+ },
+ {
+  "start": 3619.0,
+  "end": 3625.0,
+  "text": "Okay. So, finally, alignment."
+ },
+ {
+  "start": 3625.0,
+  "end": 3630.0,
+  "text": "So far, we've basically trained a model using full supervision."
+ },
+ {
+  "start": 3630.0,
+  "end": 3632.0,
+  "text": "Predict the next token or the next few tokens."
+ },
+ {
+  "start": 3632.0,
+  "end": 3637.0,
+  "text": "Now, at this point, the model should already be reasonable."
+ },
+ {
+  "start": 3637.0,
+  "end": 3643.0,
+  "text": "But we can improve it further by using weak supervision."
+ },
+ {
+  "start": 3643.0,
+  "end": 3650.0,
+  "text": "And why we supervision it? It's because sometimes it's easier to critique than it is to generate."
+ },
+ {
+  "start": 3650.0,
+  "end": 3654.0,
+  "text": "So, you can't always have data that says, this is the right response to this prompt,"
+ },
+ {
+  "start": 3654.0,
+  "end": 3658.0,
+  "text": "but maybe you can have a way of specifying what good looks like."
+ },
+ {
+  "start": 3658.0,
+  "end": 3662.0,
+  "text": "So, then, the basic template is that you generate responses from a model."
+ },
+ {
+  "start": 3662.0,
+  "end": 3669.0,
+  "text": "You score them either with a human or verify or alarm judge, and then you update the model to prefer better responses."
+ },
+ {
+  "start": 3669.0,
+  "end": 3677.0,
+  "text": "This can be instantiated either through various RL algorithms such as PPO or GRPO, or in a simpler,"
+ },
+ {
+  "start": 3677.0,
+  "end": 3682.0,
+  "text": "if for preference data, DPO."
+ },
+ {
+  "start": 3682.0,
+  "end": 3692.0,
+  "text": "So, the challenges around RL are that RL algorithms are unstable and hard to tune."
+ },
+ {
+  "start": 3692.0,
+  "end": 3696.0,
+  "text": "Some of you probably know this from first-hand experience."
+ },
+ {
+  "start": 3696.0,
+  "end": 3700.0,
+  "text": "Personally, I prefer to keep things as much in the full,"
+ },
+ {
+  "start": 3700.0,
+  "end": 3704.0,
+  "text": "suly-supervised case as long as possible, and then finally, okay, fine, I have to do RL."
+ },
+ {
+  "start": 3704.0,
+  "end": 3709.0,
+  "text": "But, you know, some people, for whatever reason, like doing RL."
+ },
+ {
+  "start": 3709.0,
+  "end": 3718.0,
+  "text": "Also, what we'll hopefully talk about this year is that if you do RL at scale and try to maximize your throughput,"
+ },
+ {
+  "start": 3718.0,
+  "end": 3721.0,
+  "text": "there's actually a lot of systems challenges."
+ },
+ {
+  "start": 3721.0,
+  "end": 3727.0,
+  "text": "You have to have an inference server and a training server, and then the inference server has to generate these rollouts,"
+ },
+ {
+  "start": 3727.0,
+  "end": 3731.0,
+  "text": "especially if you do RL against environments that involve code execution."
+ },
+ {
+  "start": 3731.0,
+  "end": 3733.0,
+  "text": "It's a whole kind of orchestration game."
+ },
+ {
+  "start": 3733.0,
+  "end": 3748.0,
+  "text": "And then, if your workers lag behind, or then you get into off-policy issues, and then you're constantly kind of juggling this on-policy-ness with a desire to kind of maximize throughput."
+ },
+ {
+  "start": 3748.0,
+  "end": 3753.0,
+  "text": "So, to put, it's a big, wonderful mess, which hopefully we'll talk more about when we come to that."
+ },
+ {
+  "start": 3753.0,
+  "end": 3756.0,
+  "text": "So, assignment five."
+ },
+ {
+  "start": 3756.0,
+  "end": 3760.0,
+  "text": "We're still deciding what exactly we want to do."
+ },
+ {
+  "start": 3760.0,
+  "end": 3766.0,
+  "text": "Last year it was implement DPO and GRPO and get it working for some, you know, math benchmark."
+ },
+ {
+  "start": 3766.0,
+  "end": 3773.0,
+  "text": "But, we'll see how much farther we can push it on the realistic dimension this year."
+ },
+ {
+  "start": 3773.0,
+  "end": 3778.0,
+  "text": "Okay.So, again, remember it's about efficiency."
+ },
+ {
+  "start": 3778.0,
+  "end": 3783.0,
+  "text": "And efficiency can be either data efficiency or compute efficiency."
+ },
+ {
+  "start": 3783.0,
+  "end": 3786.0,
+  "text": "So, the way to think about it, you have all these resources."
+ },
+ {
+  "start": 3786.0,
+  "end": 3792.0,
+  "text": "You have data, you have the hardware, which has compute cores, you have memory, communication bandwidth."
+ },
+ {
+  "start": 3792.0,
+  "end": 3800.0,
+  "text": "And you're just trying to figure out how do you build the best model according to some evaluation given a fixed set of resources."
+ },
+ {
+  "start": 3800.0,
+  "end": 3809.0,
+  "text": "So, you can, through this lens, I think you can actually think about a lot of these design decisions as optimizing for this."
+ },
+ {
+  "start": 3809.0,
+  "end": 3813.0,
+  "text": "So, systems, clearly that's about compute efficiency."
+ },
+ {
+  "start": 3813.0,
+  "end": 3822.0,
+  "text": "Tokenization, as I mentioned before, it's, you know, you can just work with raw bytes, but that's going to be very compute inefficient."
+ },
+ {
+  "start": 3822.0,
+  "end": 3826.0,
+  "text": "And, at least with today's model architectures."
+ },
+ {
+  "start": 3826.0,
+  "end": 3830.0,
+  "text": "And so, a lot of tokenization is about improving compute efficiency."
+ },
+ {
+  "start": 3830.0,
+  "end": 3838.0,
+  "text": "Model architecture, many of the changes that we'll see are motivated by reducing the memory or flops."
+ },
+ {
+  "start": 3838.0,
+  "end": 3843.0,
+  "text": "In fact, a lot of them are influenced by the need to have faster inference."
+ },
+ {
+  "start": 3843.0,
+  "end": 3853.0,
+  "text": "Data filtering, you can also view as, through efficiency lens, we don't want to waste time updating gradients on a bunch of redundant bad data."
+ },
+ {
+  "start": 3853.0,
+  "end": 3860.0,
+  "text": "Even if it might not hurt you, but it hurts you in the sense that if you have a fixed compute budget, more time on bad data means less time on good data."
+ },
+ {
+  "start": 3860.0,
+  "end": 3870.0,
+  "text": "And then finally, scaling laws is explicitly about how you can essentially do effective hyperparamary tuning on much smaller models."
+ },
+ {
+  "start": 3870.0,
+  "end": 3878.0,
+  "text": "And now, tomorrow we might become data constrained, and the calculus of what design decisions you should take might change."
+ },
+ {
+  "start": 3878.0,
+  "end": 3885.0,
+  "text": "But I think the overall mindset, which we're trying to teach you, is, you know, think about the efficiency of your approach."
+ },
+ {
+  "start": 3885.0,
+  "end": 3889.0,
+  "text": "Okay.Let me stop there."
+ },
+ {
+  "start": 3889.0,
+  "end": 3906.0,
+  "text": "Are there any questions about any of these assignments or topics?"
+ },
+ {
+  "start": 3906.0,
+  "end": 3910.0,
+  "text": "Okay.So now let's do tokenization."
+ },
+ {
+  "start": 3910.0,
+  "end": 3915.0,
+  "text": "So this is, we're jumping into our first unit here."
+ },
+ {
+  "start": 3915.0,
+  "end": 3918.0,
+  "text": "So Andre Karpathy has this really good video on tokenization."
+ },
+ {
+  "start": 3918.0,
+  "end": 3921.0,
+  "text": "You should check it out."
+ },
+ {
+  "start": 3921.0,
+  "end": 3926.0,
+  "text": "So, the starting point is, raw text is, what is text?"
+ },
+ {
+  "start": 3926.0,
+  "end": 3928.0,
+  "text": "It's Unicode strings."
+ },
+ {
+  "start": 3928.0,
+  "end": 3936.0,
+  "text": "And on the other hand, the language model places the distribution over sequences of tokens, usually represent as indices."
+ },
+ {
+  "start": 3936.0,
+  "end": 3945.0,
+  "text": "So we need a procedure that encodes these strings into tokens, and also a procedure that decodes tokens back into strings."
+ },
+ {
+  "start": 3945.0,
+  "end": 3950.0,
+  "text": "So a tokenizer is basically something that can do this round trip."
+ },
+ {
+  "start": 3950.0,
+  "end": 3954.0,
+  "text": "So here are some examples to give you a flavor for how tokenizers work."
+ },
+ {
+  "start": 3954.0,
+  "end": 3958.0,
+  "text": "Actually, I should have tried to get internet earlier, so this is not going to work."
+ },
+ {
+  "start": 3958.0,
+  "end": 3959.0,
+  "text": "Okay."
+ },
+ {
+  "start": 3959.0,
+  "end": 3963.0,
+  "text": "If you go to the site, you can play around with different tokenizers."
+ },
+ {
+  "start": 3963.0,
+  "end": 3968.0,
+  "text": "So some observations here."
+ },
+ {
+  "start": 3968.0,
+  "end": 3974.0,
+  "text": "And you'll appreciate why tokenizers are kind of annoying and why people want to get rid of them."
+ },
+ {
+  "start": 3974.0,
+  "end": 3984.0,
+  "text": "So a word and its, and a word with conglomerate with its preceding space are different, you know, tokens."
+ },
+ {
+  "start": 3984.0,
+  "end": 3991.0,
+  "text": "So many tokens you'll actually see are space a word, which is, you know, fine but kind of strange."
+ },
+ {
+  "start": 3991.0,
+  "end": 4000.0,
+  "text": "So this hello and this hello is actually two completely different indices that have nothing to do with each other."
+ },
+ {
+  "start": 4000.0,
+  "end": 4007.0,
+  "text": "So, and sometimes depending on tokenizer you use, numbers are represented with,"
+ },
+ {
+  "start": 4007.0,
+  "end": 4010.0,
+  "text": "every few digits is a token."
+ },
+ {
+  "start": 4010.0,
+  "end": 4012.0,
+  "text": "Sometimes it's predictable and sometimes it's not."
+ },
+ {
+  "start": 4012.0,
+  "end": 4017.0,
+  "text": "Some tokenizers try to make every digit a token, but then you're blowing up the number of tokens you have."
+ },
+ {
+  "start": 4017.0,
+  "end": 4019.0,
+  "text": "So there's some trade-off there."
+ },
+ {
+  "start": 4019.0,
+  "end": 4024.0,
+  "text": "So here's the GPT-5 tokenizer."
+ },
+ {
+  "start": 4024.0,
+  "end": 4033.0,
+  "text": "So you can take this string and convert it into, you know, these indices."
+ },
+ {
+  "start": 4033.0,
+  "end": 4041.0,
+  "text": "And then you can decode it back into the string and assume tokenizers should round trip."
+ },
+ {
+  "start": 4041.0,
+  "end": 4043.0,
+  "text": "If you implement tokenizers, it doesn't round trip, you have a problem."
+ },
+ {
+  "start": 4043.0,
+  "end": 4052.0,
+  "text": "So the compression ratio here is the number of bytes per token."
+ },
+ {
+  "start": 4052.0,
+  "end": 4058.0,
+  "text": "So in this case, we have the number of bytes is, of this string is 20."
+ },
+ {
+  "start": 4058.0,
+  "end": 4060.0,
+  "text": "The number of tokens is 8."
+ },
+ {
+  "start": 4060.0,
+  "end": 4063.0,
+  "text": "And you do 20 divided by 8, so the compression ratio is 2.5."
+ },
+ {
+  "start": 4063.0,
+  "end": 4066.0,
+  "text": "Okay, so 2.5 bytes per token."
+ },
+ {
+  "start": 4066.0,
+  "end": 4072.0,
+  "text": "The larger the compression ratio, that means the shorter the sentence, which is good because attention is quadratic and you want to make sure the sentence is"
+ },
+ {
+  "start": 4072.0,
+  "end": 4073.0,
+  "text": "shorter."
+ },
+ {
+  "start": 4073.0,
+  "end": 4079.0,
+  "text": "Now you can obviously increase the compression ratio by increasing the vocab size."
+ },
+ {
+  "start": 4079.0,
+  "end": 4089.0,
+  "text": "But then you get into sparsity where more and more, because every element of vocab is treated like a distinct element."
+ },
+ {
+  "start": 4089.0,
+  "end": 4101.0,
+  "text": "So these days, tokenizers, especially multilingual tokenizers, have 100k or 200k tokens, distinct tokens."
+ },
+ {
+  "start": 4101.0,
+  "end": 4105.0,
+  "text": "So you can look at the GPT token vocabulary."
+ },
+ {
+  "start": 4105.0,
+  "end": 4108.0,
+  "text": "I think we'll skip it in the interest of time."
+ },
+ {
+  "start": 4108.0,
+  "end": 4110.0,
+  "text": "Okay, so how do you build a tokenizer?"
+ },
+ {
+  "start": 4110.0,
+  "end": 4113.0,
+  "text": "So I'm going to go through this fast."
+ },
+ {
+  "start": 4113.0,
+  "end": 4120.0,
+  "text": "But so the first thing you might do is like, well, Unicode string, that's a sequence already of Unicode characters."
+ },
+ {
+  "start": 4120.0,
+  "end": 4126.0,
+  "text": "And each character is an integer, which you can call ORD in Python and you get some number out."
+ },
+ {
+  "start": 4126.0,
+  "end": 4129.0,
+  "text": "And this can be converted into characters."
+ },
+ {
+  "start": 4129.0,
+  "end": 4135.0,
+  "text": "So let's just build a character level tokenizer, which basically breaks up each character and"
+ },
+ {
+  "start": 4135.0,
+  "end": 4139.0,
+  "text": "encodes it in a token.And then this can decode back."
+ },
+ {
+  "start": 4139.0,
+  "end": 4144.0,
+  "text": "Life is good.So now, there are 150k Unicode characters."
+ },
+ {
+  "start": 4144.0,
+  "end": 4152.0,
+  "text": "So your vocab size could be 150k, which is, which is, you know, a lot."
+ },
+ {
+  "start": 4152.0,
+  "end": 4153.0,
+  "text": "I mean, it's not crazy."
+ },
+ {
+  "start": 4153.0,
+  "end": 4159.0,
+  "text": "But I think the bigger problem is that many characters are actually rare, which means that"
+ },
+ {
+  "start": 4159.0,
+  "end": 4163.0,
+  "text": "it's really an inefficient use of a vocabulary."
+ },
+ {
+  "start": 4163.0,
+  "end": 4169.0,
+  "text": "And, and also the compression ratio, which kind of reflects this, is not that great."
+ },
+ {
+  "start": 4169.0,
+  "end": 4175.0,
+  "text": "So most of the time you're actually using a lot of tokens to represent your, your sequence."
+ },
+ {
+  "start": 4175.0,
+  "end": 4181.0,
+  "text": "And many of the, the, the indices are actually not being very used."
+ },
+ {
+  "start": 4181.0,
+  "end": 4184.0,
+  "text": "So this is like not a very good tokenizer."
+ },
+ {
+  "start": 4184.0,
+  "end": 4187.0,
+  "text": "So here's another attempt."
+ },
+ {
+  "start": 4187.0,
+  "end": 4193.0,
+  "text": "So you can turn strings into bytes.So Unicode has a UTF-8."
+ },
+ {
+  "start": 4193.0,
+  "end": 4202.0,
+  "text": "Unicode encoding, which means that you can sometimes, a string like A is just one byte."
+ },
+ {
+  "start": 4202.0,
+  "end": 4206.0,
+  "text": "And sometimes a string is, you know, multiple bytes."
+ },
+ {
+  "start": 4206.0,
+  "end": 4209.0,
+  "text": "So let's build a tokenizer around that."
+ },
+ {
+  "start": 4209.0,
+  "end": 4215.0,
+  "text": "So we can take this string and convert it into a sequence of bytes."
+ },
+ {
+  "start": 4215.0,
+  "end": 4218.0,
+  "text": "And notice that this is a longer sequence now."
+ },
+ {
+  "start": 4218.0,
+  "end": 4227.0,
+  "text": "But all the, all the numbers are between 0 and 255 because that's what a byte means."
+ },
+ {
+  "start": 4227.0,
+  "end": 4234.0,
+  "text": "And the compression ratio is, is one, which is, which is not great."
+ },
+ {
+  "start": 4234.0,
+  "end": 4238.0,
+  "text": "Right?So byte sequences are, can be very long."
+ },
+ {
+  "start": 4238.0,
+  "end": 4242.0,
+  "text": "But the vocab size is small."
+ },
+ {
+  "start": 4242.0,
+  "end": 4247.0,
+  "text": "Okay, so now, okay, so these, both of these are like really bad."
+ },
+ {
+  "start": 4247.0,
+  "end": 4250.0,
+  "text": "So here's, let's try to make some progress."
+ },
+ {
+  "start": 4250.0,
+  "end": 4255.0,
+  "text": "So this is what actually people used to do in NLP, if people remember."
+ },
+ {
+  "start": 4255.0,
+  "end": 4259.0,
+  "text": "So if you take a string, I can just chunk it up into,"
+ },
+ {
+  "start": 4259.0,
+  "end": 4262.0,
+  "text": "break it up by spaces or some regular expression."
+ },
+ {
+  "start": 4262.0,
+  "end": 4269.0,
+  "text": "Um, and let's just call each of these chunks, uh, a token."
+ },
+ {
+  "start": 4269.0,
+  "end": 4279.0,
+  "text": "Okay, so what is good about this one is that each token is meaningful because humans invented words and words tend to have a stable semantic meaning."
+ },
+ {
+  "start": 4279.0,
+  "end": 4285.0,
+  "text": "Um, so then, but your vocab size is a number of distinct chunks in the training data, which could be a, a lot."
+ },
+ {
+  "start": 4285.0,
+  "end": 4293.0,
+  "text": "And also your, uh, compression ratio, I mean, is, is, is quite, you know, good, but the vocabulary can be huge."
+ },
+ {
+  "start": 4293.0,
+  "end": 4300.0,
+  "text": "Actually, it's worse than that because, um, the, uh, the vocabulary could be actually unbounded."
+ },
+ {
+  "start": 4300.0,
+  "end": 4301.0,
+  "text": "Right?"
+ },
+ {
+  "start": 4301.0,
+  "end": 4307.0,
+  "text": "Because at test time you might get some sequence and you tokenize and then you have a token you've never seen before."
+ },
+ {
+  "start": 4307.0,
+  "end": 4315.0,
+  "text": "And people used to assign these, like, unk token, but that's, like, really ugly and can mess up your perplexity, uh, calculations."
+ },
+ {
+  "start": 4315.0,
+  "end": 4318.0,
+  "text": "So, um, this is also not, not great."
+ },
+ {
+  "start": 4318.0,
+  "end": 4323.0,
+  "text": "Okay, so what we're actually going to do is called bi-pair encoding."
+ },
+ {
+  "start": 4323.0,
+  "end": 4332.0,
+  "text": "And this was introduced a long time ago for data compression, way before language models, um, uh, were really on the scene, really."
+ },
+ {
+  "start": 4332.0,
+  "end": 4345.0,
+  "text": "Uh, it was first introduced to NLP for doing neural machine translation, um, and the first, uh, paper that, uh, used BPE to, uh, for, uh,"
+ },
+ {
+  "start": 4345.0,
+  "end": 4347.0,
+  "text": "LMS was, uh, GBT2."
+ },
+ {
+  "start": 4347.0,
+  "end": 4355.0,
+  "text": "So the basic idea is you're, you're going to train the tokenizer on raw text to construct a vocabulary that's tailored to the data."
+ },
+ {
+  "start": 4355.0,
+  "end": 4365.0,
+  "text": "And you're also going to have this property that everything becomes, can be tokenized if it's rare, then it just breaks up into smaller units rather than having this unk token."
+ },
+ {
+  "start": 4365.0,
+  "end": 4372.0,
+  "text": "Um, so, so common sequences can be, um, are going to be represented as one token."
+ },
+ {
+  "start": 4372.0,
+  "end": 4374.0,
+  "text": "Rare sequences are going to be split into multiple tokens."
+ },
+ {
+  "start": 4374.0,
+  "end": 4375.0,
+  "text": "That's the idea."
+ },
+ {
+  "start": 4375.0,
+  "end": 4379.0,
+  "text": "Okay, so the algorithm is fairly, uh, simple conceptually."
+ },
+ {
+  "start": 4379.0,
+  "end": 4383.0,
+  "text": "So you start basically with your, your corpus."
+ },
+ {
+  "start": 4383.0,
+  "end": 4385.0,
+  "text": "Let's assume it's one long sequence."
+ },
+ {
+  "start": 4385.0,
+  "end": 4388.0,
+  "text": "Um, you get a byte sequence.Each byte starts as a token."
+ },
+ {
+  "start": 4388.0,
+  "end": 4396.0,
+  "text": "And then we're going to merge, um, successive pairs of adjacent tokens that occur the most frequently."
+ },
+ {
+  "start": 4396.0,
+  "end": 4400.0,
+  "text": "Okay, so let's step through how this is going to work in code."
+ },
+ {
+  "start": 4400.0,
+  "end": 4403.0,
+  "text": "So here's a simple string, the cat and the hat."
+ },
+ {
+  "start": 4403.0,
+  "end": 4407.0,
+  "text": "And, uh, here's the implementation of the VPE algorithm."
+ },
+ {
+  "start": 4407.0,
+  "end": 4412.0,
+  "text": "Um, so we're going to, uh, turn that into a sequence of bytes."
+ },
+ {
+  "start": 4412.0,
+  "end": 4422.0,
+  "text": "Um, and then we're going to, um, first we're going to basically count the number of times successive tokens appear."
+ },
+ {
+  "start": 4422.0,
+  "end": 4428.0,
+  "text": "So 116, 104 shows up twice.Um, so we get this."
+ },
+ {
+  "start": 4428.0,
+  "end": 4436.0,
+  "text": "And then we're going to find the, um, the pair that, uh, happens the most number of times."
+ },
+ {
+  "start": 4436.0,
+  "end": 4438.0,
+  "text": "So that's 116, 104."
+ },
+ {
+  "start": 4438.0,
+  "end": 4441.0,
+  "text": "I guess there's a few ties, but we'll just take the first one."
+ },
+ {
+  "start": 4441.0,
+  "end": 4443.0,
+  "text": "And then we're going to merge that pair."
+ },
+ {
+  "start": 4443.0,
+  "end": 4448.0,
+  "text": "And by merging that pair, what we do is we create a new token."
+ },
+ {
+  "start": 4448.0,
+  "end": 4453.0,
+  "text": "In this case, um, this is going to be called token 256."
+ },
+ {
+  "start": 4453.0,
+  "end": 4456.0,
+  "text": "It's going to represent this pair."
+ },
+ {
+  "start": 4456.0,
+  "end": 4459.0,
+  "text": "And we're going to add it to our vocabulary."
+ },
+ {
+  "start": 4459.0,
+  "end": 4463.0,
+  "text": "So 256 is going to represent the sequence th."
+ },
+ {
+  "start": 4463.0,
+  "end": 4465.0,
+  "text": "So th and h have been merged."
+ },
+ {
+  "start": 4465.0,
+  "end": 4470.0,
+  "text": "And we're going to call every time we see th, that's going to, we're going to use 256 to represent that."
+ },
+ {
+  "start": 4470.0,
+  "end": 4477.0,
+  "text": "And then we go through indices and then we replace every occurrence of 116, 104 with 256."
+ },
+ {
+  "start": 4477.0,
+  "end": 4481.0,
+  "text": "So those two places have been replaced.And then we iterate."
+ },
+ {
+  "start": 4481.0,
+  "end": 4488.0,
+  "text": "So the next time, uh, we do this, we're going to find 256 and 101."
+ },
+ {
+  "start": 4488.0,
+  "end": 4492.0,
+  "text": "We're going to merge that.And now we have 257."
+ },
+ {
+  "start": 4492.0,
+  "end": 4498.0,
+  "text": "And then, uh, we're going to merge that, um, one more time and we're going to get 258."
+ },
+ {
+  "start": 4498.0,
+  "end": 4505.0,
+  "text": "So over time, the sequence is, uh, shrinking, um, and the vocabulary size is growing."
+ },
+ {
+  "start": 4505.0,
+  "end": 4507.0,
+  "text": "Okay."
+ },
+ {
+  "start": 4507.0,
+  "end": 4520.0,
+  "text": "So, um, let me, and the compression ratio, uh, here is, that we get for this, I mean, this toy example is 1.5."
+ },
+ {
+  "start": 4520.0,
+  "end": 4527.0,
+  "text": "Um, okay, so now that you have a tokenizer, um, how do you tokenize new text?"
+ },
+ {
+  "start": 4527.0,
+  "end": 4531.0,
+  "text": "Well, um, you take a new string and you encode it."
+ },
+ {
+  "start": 4531.0,
+  "end": 4539.0,
+  "text": "And conceptually what happens is that, um, you basically go through the set of merges, uh, that you've made."
+ },
+ {
+  "start": 4539.0,
+  "end": 4544.0,
+  "text": "And then you just apply, uh, the merges to your, your string."
+ },
+ {
+  "start": 4544.0,
+  "end": 4547.0,
+  "text": "Okay.Let me actually not step through that code."
+ },
+ {
+  "start": 4547.0,
+  "end": 4551.0,
+  "text": "Um, so that will give you a sequence."
+ },
+ {
+  "start": 4551.0,
+  "end": 4556.0,
+  "text": "Um, so this is a sequence, uh, encoding of the Quick Brown Fox."
+ },
+ {
+  "start": 4556.0,
+  "end": 4560.0,
+  "text": "And then, uh, when you decode it, you get the same thing, you know, back."
+ },
+ {
+  "start": 4560.0,
+  "end": 4565.0,
+  "text": "So, um, I, I went through this a bit fast, just in the interest of time."
+ },
+ {
+  "start": 4565.0,
+  "end": 4571.0,
+  "text": "Um, I will say that this, uh,implementation works."
+ },
+ {
+  "start": 4571.0,
+  "end": 4575.0,
+  "text": "This is a full-blown PP implementation.It's extremely slow."
+ },
+ {
+  "start": 4575.0,
+  "end": 4582.0,
+  "text": "So in assignment one, we're going to ask you to, um, basically make it, uh, faster."
+ },
+ {
+  "start": 4582.0,
+  "end": 4588.0,
+  "text": "Um, so currently encode, uh, loops over all the, you know, merges,"
+ },
+ {
+  "start": 4588.0,
+  "end": 4592.0,
+  "text": "which is very slow because you might have, the number of merges you have is essentially,"
+ },
+ {
+  "start": 4592.0,
+  "end": 4596.0,
+  "text": "essentially, um, the vocab size minus, you know, 256."
+ },
+ {
+  "start": 4596.0,
+  "end": 4600.0,
+  "text": "Um, so you only want to loop over the merges that, that matter."
+ },
+ {
+  "start": 4600.0,
+  "end": 4604.0,
+  "text": "Um, and you have to build some indices to make that, you know, happen."
+ },
+ {
+  "start": 4604.0,
+  "end": 4608.0,
+  "text": "Um, there's some, you know, details around special tokens."
+ },
+ {
+  "start": 4608.0,
+  "end": 4611.0,
+  "text": "Conceptually not deep, but important to building a modern tokenizer."
+ },
+ {
+  "start": 4611.0,
+  "end": 4616.0,
+  "text": "Um, another thing is that I've presented the tokenizer just for simplicity,"
+ },
+ {
+  "start": 4616.0,
+  "end": 4619.0,
+  "text": "as you take an entire string and then you try to tokenize it."
+ },
+ {
+  "start": 4619.0,
+  "end": 4628.0,
+  "text": "Really what happens is that you break it up into, uh, your text into chunks and then you apply tokenizer on each, uh, chunk."
+ },
+ {
+  "start": 4628.0,
+  "end": 4630.0,
+  "text": "So that's going to be much faster."
+ },
+ {
+  "start": 4630.0,
+  "end": 4635.0,
+  "text": "Um, and then, you know, and then try to make it as fast as possible."
+ },
+ {
+  "start": 4635.0,
+  "end": 4641.0,
+  "text": "Um, at some point you might realize that Python is just not very fast and if you want to implement it in, you know,"
+ },
+ {
+  "start": 4641.0,
+  "end": 4648.0,
+  "text": "some of your favorite language, uh, Rust or C or something, then go for it."
+ },
+ {
+  "start": 4648.0,
+  "end": 4651.0,
+  "text": "Okay, so quick summary."
+ },
+ {
+  "start": 4651.0,
+  "end": 4656.0,
+  "text": "Tokenizers convert between strings and tokens or indices."
+ },
+ {
+  "start": 4656.0,
+  "end": 4664.0,
+  "text": "Um, the previous character base, byte base, word base are highly suboptimal in this, uh, in their own way."
+ },
+ {
+  "start": 4664.0,
+  "end": 4673.0,
+  "text": "So BPE is, is, um, effective heuristic that is data driven so, uh, um, it seems to be, uh, pretty effective."
+ },
+ {
+  "start": 4673.0,
+  "end": 4680.0,
+  "text": "Now, like I said before, uh, maybe next year I don't have to teach this but, uh, for this year we're stuck with tokenization."
+ },
+ {
+  "start": 4680.0,
+  "end": 4691.0,
+  "text": "Um, you know, even if we get rid of tokenization though, um, I think whatever solution replaces it, I think has to satisfy the following properties."
+ },
+ {
+  "start": 4691.0,
+  "end": 4698.0,
+  "text": "Right? If you have the model, the transformer needs to operate on some sort of abstractions of the sequence."
+ },
+ {
+  "start": 4698.0,
+  "end": 4706.0,
+  "text": "And this is most evident if you think about, you know, um, not just text but video or, or DNA, um, sequences where, um, you know,"
+ },
+ {
+  "start": 4706.0,
+  "end": 4714.0,
+  "text": "the individual, um, bytes or units are actually quite kind of low signal to noise."
+ },
+ {
+  "start": 4714.0,
+  "end": 4720.0,
+  "text": "Um, and, and you have to do some sort of abstraction to lift it into a place where you can do modeling on that."
+ },
+ {
+  "start": 4720.0,
+  "end": 4725.0,
+  "text": "Um, and then finally, as I mentioned, um, chunks should be kind of variable."
+ },
+ {
+  "start": 4725.0,
+  "end": 4727.0,
+  "text": "You want adaptive computation."
+ },
+ {
+  "start": 4727.0,
+  "end": 4730.0,
+  "text": "Um, not all, you know, bytes are created the same."
+ },
+ {
+  "start": 4730.0,
+  "end": 4733.0,
+  "text": "And if you don't do that, I think you're going to be suboptimal."
+ },
+ {
+  "start": 4733.0,
+  "end": 4737.0,
+  "text": "So if any end-to-end solution also, I think, has to have these properties."
+ },
+ {
+  "start": 4737.0,
+  "end": 4741.0,
+  "text": "Okay. So with that, I will end."
+ },
+ {
+  "start": 4741.0,
+  "end": 4745.0,
+  "text": "Next time on Wednesday, we're going to start the unit on resource accounting."
+ },
+ {
+  "start": 4745.0,
+  "end": 4750.0,
+  "text": "So which is sort of a, you know, a baby systems, I would say."
+ },
+ {
+  "start": 4750.0,
+  "end": 4754.0,
+  "text": "And then after that, we're going to go back into architectures and, um, go from there."
+ },
+ {
+  "start": 4754.0,
+  "end": 4762.0,
+  "text": "All right."
+ }
+]

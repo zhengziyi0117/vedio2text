@@ -21,7 +21,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-MODEL = os.getenv("V2T_MODEL", "claude-opus-5")
+# 优先跟随 Claude Code 已配好的 ANTHROPIC_MODEL（走自建网关时通常就是这个），
+# 免得脚本自己写死的模型名把用户的配置顶掉、还多花钱
+MODEL = os.getenv("V2T_MODEL") or os.getenv("ANTHROPIC_MODEL") or "claude-opus-5"
 ASR_MODEL = os.getenv("V2T_ASR_MODEL", "mlx-community/whisper-large-v3-turbo")
 LANG = os.getenv("V2T_LANG") or None  # 源语言，None = whisper 自动检测 / 字幕按 LANG_PREF 挑
 DOC_LANG = os.getenv("V2T_DOC_LANG", "中文")  # 文稿写成什么语言
@@ -208,6 +210,22 @@ def fetch_video(src: str, work: Path, want_video: bool = False) -> Path:
     return got
 
 
+def playlist_entries(url: str) -> list[dict]:
+    """播放列表的分集 [{index, title, url}]；不是播放列表就返回空。
+
+    这里故意不用 YTDLP —— 它带 --no-playlist，会把列表压成单个视频。
+    """
+    r = run(["yt-dlp", "--flat-playlist",
+             "--print", "%(playlist_index)s\t%(title)s\t%(url)s", url], check=False)
+    eps = []
+    for line in r.stdout.splitlines():
+        idx, _, rest = line.partition("\t")
+        title, _, link = rest.partition("\t")
+        if idx.strip().isdigit() and link.strip():
+            eps.append({"index": int(idx), "title": title, "url": link.strip()})
+    return eps
+
+
 LANG_PREF = ["zh-Hans", "zh-CN", "zh", "zh-TW", "zh-Hant", "en"]
 
 
@@ -289,13 +307,28 @@ def build_subs(video: Path, work: Path) -> list[dict]:
 
 # ---------------------------------------------------------------- 步骤 2: LLM
 
-def llm(system: str, user, max_tokens: int = 16000) -> str:
-    """user 传字符串，或 content blocks 列表（图文混排）。"""
+def llm(system: str, user, max_tokens: int = 16000, think: bool = True) -> str:
+    """user 传字符串，或 content blocks 列表（图文混排）。
+
+    有 API key 或 auth token 就直连（ANTHROPIC_BASE_URL 会一并生效，
+    所以走自建网关、只配 ANTHROPIC_AUTH_TOKEN 的情况也能用）；
+    两者都没有才回退到本机 claude CLI。
+
+    think=False 关掉思考链。校对、列术语这类机械 JSON 任务不需要推理，
+    而有些模型（实测 claude-deepseek-v4.1-flash）会一路想到 max_tokens
+    耗尽、正文一个字都不吐。
+    """
+    if os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN"):
+        return _llm_api(system, user, max_tokens, think)
+    return _llm_cli(system, user)
+
+
+def _llm_api(system: str, user, max_tokens: int, think: bool = True) -> str:
     import anthropic
     client = anthropic.Anthropic()
     with client.messages.stream(
         model=MODEL, max_tokens=max_tokens,
-        thinking={"type": "adaptive"},
+        thinking={"type": "adaptive" if think else "disabled"},
         system=system,
         messages=[{"role": "user", "content": user}],
     ) as st:
@@ -306,6 +339,32 @@ def llm(system: str, user, max_tokens: int = 16000) -> str:
     if msg.stop_reason == "max_tokens":
         sys.exit("输出被 max_tokens 截断，调小 CHUNK 或调大 max_tokens")
     return "".join(b.text for b in msg.content if b.type == "text")
+
+
+def _llm_cli(system: str, user) -> str:
+    """最后的兜底：本机 claude CLI，用你已登录的额度。
+
+    --system-prompt 顶掉它默认的编码 agent 人设，--strict-mcp-config
+    少带一堆 MCP 工具定义；模型是 CLI 自己的默认值，V2T_MODEL 在这里不生效。
+
+    ponytail: 每次调用仍会带 Claude Code 的系统提示和内置工具定义（实测
+    ~15k token，直连只要几十），能命中它的 prompt cache 所以不算太离谱。
+    真嫌贵就配 ANTHROPIC_AUTH_TOKEN 走直连。
+    """
+    if not isinstance(user, str):
+        sys.exit("本地 claude CLI 不支持图文混排，配 ANTHROPIC_API_KEY 或去掉 --shots")
+    if not shutil.which("claude"):
+        sys.exit("既没有 ANTHROPIC_API_KEY，也找不到 claude 命令。二选一装上。")
+    # user 走 stdin：整篇字幕能到几十万字符，塞 argv 会撞 ARG_MAX
+    r = subprocess.run(["claude", "-p", "--output-format", "json",
+                        "--system-prompt", system, "--strict-mcp-config"],
+                       input=user, capture_output=True, text=True)
+    if r.returncode:
+        sys.exit(f"claude CLI 调用失败：{(r.stderr or r.stdout).strip()[-300:]}")
+    try:
+        return json.loads(r.stdout)["result"]
+    except (json.JSONDecodeError, KeyError):
+        sys.exit(f"claude CLI 返回不是预期 JSON：{r.stdout[:300]}")
 
 
 def _json_array(s: str):
@@ -338,7 +397,7 @@ CLEAN_SYS = """你是课程字幕校对员。输入是 ASR 生成的带编号字
 
 def make_glossary(segs, title: str) -> str:
     sample = "\n".join(s["text"] for s in segs[:120])
-    arr = _json_array(llm(GLOSSARY_SYS, f"课程标题：{title}\n\n开头文本：\n{sample}", 4000))
+    arr = _json_array(llm(GLOSSARY_SYS, f"课程标题：{title}\n\n开头文本：\n{sample}", 4000, think=False))
     return "\n".join(str(x) for x in arr) if arr else ""
 
 
@@ -347,7 +406,7 @@ def _clean_block(block, gloss):
     user = (f"术语表：\n{gloss}\n\n" if gloss else "") + \
            f"待校对片段（{len(block)} 条）：\n{src}"
     for _ in range(2):
-        arr = _json_array(llm(CLEAN_SYS, user, 8000))
+        arr = _json_array(llm(CLEAN_SYS, user, 8000, think=False))
         if arr and len(arr) == len(block):
             return [str(x or "").strip() for x in arr]
     print(f"  ! 一块校对失败（{len(block)} 条），保留原文", file=sys.stderr)
@@ -652,6 +711,9 @@ def main():
     ap.add_argument("--only", choices=["subs", "doc"], help="只跑到该步")
     ap.add_argument("--shots", action="store_true",
                     help="下载 720p 视频并给笔记配图（比只下音轨多约 130MB）")
+    ap.add_argument("--list", action="store_true",
+                    help="列出播放列表的分集和编号，不下载")
+    ap.add_argument("--ep", type=int, metavar="N", help="只处理播放列表第 N 集")
     ap.add_argument("--work", default="work")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
@@ -662,6 +724,20 @@ def main():
         ap.error("需要 src（或 --selftest）")
 
     src = a.src
+    if a.list or a.ep:
+        eps = playlist_entries(src)
+        if not eps:
+            sys.exit("取不到播放列表分集，确认链接里带 list= 参数")
+        if a.list:
+            for e in eps:
+                print(f"{e['index']:>3}  {e['title']}")
+            return
+        hit = next((e for e in eps if e["index"] == a.ep), None)
+        if not hit:
+            sys.exit(f"没有第 {a.ep} 集（共 {len(eps)} 集，用 --list 看编号）")
+        print(f"[选集] 第 {a.ep}/{len(eps)} 集：{hit['title']}")
+        src = hit["url"]
+
     if src.startswith(("http://", "https://")):
         r = run([*YTDLP, "--print", "%(title)s", "--skip-download", src], check=False)
         title = r.stdout.strip() or src
