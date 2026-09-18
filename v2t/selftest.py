@@ -33,6 +33,29 @@ Language: zh
     assert m[0]["text"] == "大家好我们今天讲神经网络反向传播算法", m[0]["text"]
     assert m[0]["start"] == 1.0 and m[0]["end"] == 8.0, m[0]
 
+    # YouTube 英文自动字幕常把上一条 cue 的尾部滚动到下一条开头，
+    # 不能因为英文长句超过 max_len 就把重复窗口保留下来。
+    rolling_en = """WEBVTT
+
+00:00:01.000 --> 00:00:02.000
+So today we talk about
+
+00:00:02.000 --> 00:00:03.000
+So today we talk about architecture,
+
+00:00:03.000 --> 00:00:04.000
+architecture, which is difficult.
+
+00:00:04.000 --> 00:00:05.000
+which is difficult. Now we continue.
+"""
+    rolling = merge_segments(parse_subs(rolling_en))
+    assert [s["text"] for s in rolling] == [
+        "So today we talk about architecture, which is difficult.",
+        "Now we continue.",
+    ], rolling
+    assert all(a["end"] <= b["start"] for a, b in zip(rolling, rolling[1:])), rolling
+
     srt = """1
 00:00:01,000 --> 00:00:02,000
 Hello there
