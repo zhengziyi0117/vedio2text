@@ -1,6 +1,6 @@
 1
 00:00:00,000 --> 00:00:10,000
-Welcome everyone to CS336, Language Modeling from Scratch.
+Welcome everyone to CS3336, Language Models from Scratch.
 
 2
 00:00:10,000 --> 00:00:16,000
@@ -28,7 +28,7 @@ But we were very pleasantly surprised that so many people wanted to learn how to
 
 8
 00:00:45,000 --> 00:00:49,000
-especially in these days when a coding agent could probably zero-shot a language model.
+especially in these days when a coding agent could probably zero shot a language model.
 
 9
 00:00:49,000 --> 00:00:55,000
@@ -64,7 +64,7 @@ I'm looking forward to going through this experience again with you all.
 
 17
 00:01:21,000 --> 00:01:29,000
-Hello, I'm Marcel. I've TA'd this class once before and I'm returning because it was so much fun last time.
+Hello, I'm Marcel. I've CA'd this class once before and I'm returning because it was so much fun last time.
 
 18
 00:01:29,000 --> 00:01:37,000
@@ -88,7 +88,7 @@ Then after spending a lot of time on this course last year, I'm now doing LLM re
 
 23
 00:02:00,000 --> 00:02:08,000
-Hi everyone, I'm Steven. I am a first time TA for this course and I'm very excited about it.
+Hi everyone, I'm Steven. I am a first time CA for this course and I'm very excited about it.
 
 24
 00:02:08,000 --> 00:02:15,000
@@ -176,7 +176,7 @@ I think moving up the abstraction in general is a great thing, but abstractions 
 
 45
 00:04:09,000 --> 00:04:15,000
-And sometimes, I'm sure all of you have prompting models, you run into situations where something is,
+And sometimes, I'm sure all of you have prompted models, you run into situations where something is,
 
 46
 00:04:15,000 --> 00:04:20,000
@@ -212,7 +212,7 @@ And the way that we're going to get our understanding is by building.
 
 54
 00:04:49,000 --> 00:04:51,000
-That's the philosophy of their class.
+That's the philosophy of this class.
 
 55
 00:04:51,000 --> 00:04:58,000
@@ -256,7 +256,7 @@ Now, we could build small language models, and we will build small language mode
 
 65
 00:05:43,000 --> 00:05:49,000
-But, this, I think it's important to remember that these might not representative of the actual frontier models.
+But, this, I think it's important to remember that these might not be representative of the actual frontier models.
 
 66
 00:05:49,000 --> 00:05:54,000
@@ -276,7 +276,7 @@ I think back in 2021.
 
 70
 00:06:01,000 --> 00:06:06,000
-We're going to spend more time on FLOP counting and looking at where the compute is being spent.
+We're going to spend more time on flop counting and looking at where the compute is being spent.
 
 71
 00:06:06,000 --> 00:06:14,000
@@ -296,11 +296,11 @@ So, if you did a bunch of small scale stuff here on the attention, you might not
 
 75
 00:06:32,000 --> 00:06:41,000
-The second example is that we know of emergence of behaviors with scale.
+The second example is that we know of emergence of behavior with scale.
 
 76
 00:06:41,000 --> 00:06:51,000
-So, small models, this is again for a while ago, but even back then, if you have zero-shot or few shot learning of various tasks,
+So, small models, this is again from a while ago, but even back then, if you have zero shot or few shot learning of various tasks,
 
 77
 00:06:51,000 --> 00:06:54,000
@@ -312,7 +312,7 @@ And only when you reach a critical scale, do you suddenly see a lot of improveme
 
 79
 00:07:00,000 --> 00:07:08,000
-So, again, if you're working on small scale, you might not see certain types of phenomenon compared to if you were working at full scale.
+So, again, if you're working on small scale, you might not see certain types of phenomena compared to if you were working at full scale.
 
 80
 00:07:08,000 --> 00:07:12,000
@@ -320,7 +320,7 @@ Okay, so that might be a little bit disheartening.
 
 81
 00:07:12,000 --> 00:07:15,000
-But, fear not, we're going to learn something in this class.
+But fear not, we're going to learn something in this class.
 
 82
 00:07:15,000 --> 00:07:19,000
@@ -332,7 +332,7 @@ Okay, and I think it's important to break this down into three types of knowledg
 
 84
 00:07:24,000 --> 00:07:29,000
-First, there's the mechanics of how things work, what a transformer is,
+First, there's the mechanics of how things work, what a Transformer is,
 
 85
 00:07:29,000 --> 00:07:32,000
@@ -356,7 +356,7 @@ And finally, intuitions, which data modeling decisions are going to yield good p
 
 90
 00:07:48,000 --> 00:07:54,000
-So, now, in this class, I think we can do a pretty good job of teaching the mechanics,
+So now, in this class, I think we can do a pretty good job of teaching the mechanics,
 
 91
 00:07:54,000 --> 00:07:57,000
@@ -388,7 +388,7 @@ and just purely come from experimentation.
 
 98
 00:08:35,000 --> 00:08:40,000
-Whereas, mechanics, you can kind of, by construction, see how the parallelism and
+Whereas mechanics, you can kind of, by construction, see how the parallelism and
 
 99
 00:08:40,000 --> 00:08:43,000
@@ -420,7 +420,7 @@ We attribute their success of these architectures, all else, to divine benevolen
 
 106
 00:09:07,000 --> 00:09:13,000
-So, that in some sense is something that you just have to gain from experience.
+So that in some sense is something that you just have to gain from experience.
 
 107
 00:09:13,000 --> 00:09:22,000
@@ -480,7 +480,7 @@ So in fact, efficiency is actually really, really critical.
 
 121
 00:10:21,000 --> 00:10:28,000
-And I hope to bake that into your mindset as one of the consequences of this class.
+And I hope to bake that into your kind of mindset as one of the consequences of this class.
 
 122
 00:10:28,000 --> 00:10:41,000
@@ -496,7 +496,7 @@ But that also comes with algorithmic improvements.
 
 125
 00:10:49,000 --> 00:10:59,000
-And of course, when you multiply them together, that's when you see a huge bump in efficiency and accuracy.
+And of course, when you multiply them together, that's when you see like a huge bump in efficiency and accuracy.
 
 126
 00:10:59,000 --> 00:11:09,000
@@ -524,7 +524,7 @@ Okay.
 
 132
 00:11:36,000 --> 00:11:46,000
-So next, I want to spend a bit of time talking about language models and a bit of a history and just contextualization before we jump into the
+So next, I want to spend a bit of time talking about language models and a bit of a history and just contextualization before we jump into the,
 
 133
 00:11:46,000 --> 00:11:49,000
@@ -544,7 +544,7 @@ And for a long time, n-gram models were used actually in machine translation and
 
 137
 00:12:05,000 --> 00:12:12,000
-And they weren't the whole system, but they were an important part of making sure that you generate fluid text.
+And they weren't the whole system, but they were an important part of making sure that you generate a fluid text.
 
 138
 00:12:12,000 --> 00:12:20,000
@@ -556,11 +556,11 @@ And so there is a bunch of ideas, I think, which are important to this developme
 
 140
 00:12:27,000 --> 00:12:31,000
-So in the 90s, there were LSTMs.
+So in the 90s, there was LSTMs.
 
 141
 00:12:31,000 --> 00:12:38,000
-Joshua Bengio actually wrote the first neural language model paper back in 2003.
+Joshua Bengio actually wrote the first neural language model in paper back in 2003.
 
 142
 00:12:38,000 --> 00:12:39,000
@@ -568,15 +568,15 @@ This was actually not LSTM.
 
 143
 00:12:39,000 --> 00:12:43,000
-This was just a feedforward network that looked at a small context.
+This was just a feedforward network that looked at the small context.
 
 144
 00:12:43,000 --> 00:12:53,000
-And then there was sequence-to-sequence modeling, which boldly said we can actually compress a whole sentence into a vector.
+And then there was a seq2seq modeling, which boldly said we can actually compress a whole sentence into a vector.
 
 145
 00:12:53,000 --> 00:12:58,000
-The attention mechanism, which was developed for machine translation.
+The Atom optimizer attention mechanism, which was developed for machine translation.
 
 146
 00:12:58,000 --> 00:13:03,000
@@ -588,7 +588,7 @@ And then scaling up to a mixture of experts, model parallelism.
 
 148
 00:13:08,000 --> 00:13:14,000
-You see a lot of different architectures and also systems and optimizer ideas.
+You see a lot of different architecture and also systems and optimizer ideas.
 
 149
 00:13:14,000 --> 00:13:17,000
@@ -600,7 +600,7 @@ And then by the late 2010s, I think things were starting to get really interesti
 
 151
 00:13:23,000 --> 00:13:27,000
-So there was ELMo and BERT.
+So there was the ELMo and BERT.
 
 152
 00:13:27,000 --> 00:13:31,000
@@ -608,7 +608,7 @@ These are language models that were trained on lots of text.
 
 153
 00:13:31,000 --> 00:13:35,000
-And then you could fine-tune them on some downstream tasks like question answering.
+And then you could fine tune them on some downstream tasks like question answering.
 
 154
 00:13:35,000 --> 00:13:38,000
@@ -616,11 +616,11 @@ And it would show a huge improvement on that.
 
 155
 00:13:38,000 --> 00:13:43,000
-So the model there was, you know, take one of these models and then fine-tune.
+So the model there was, you know, take one of these models and then fine tune.
 
 156
 00:13:43,000 --> 00:13:51,000
-And then Google had a paper that was really, I think, foreshadowing this view of prompt and response.
+And then Google had a paper that was really, I think, foreshadowing this view of prompt and response out.
 
 157
 00:13:51,000 --> 00:13:59,000
@@ -644,7 +644,7 @@ which we're going to talk about in a second, which enabled them to train GPT-3,
 
 162
 00:14:19,000 --> 00:14:26,000
-which was much more massive, almost more than 10x larger than the model at the time.
+which was a much more massive, almost more than 10x the larger model at the time.
 
 163
 00:14:26,000 --> 00:14:29,000
@@ -668,7 +668,7 @@ And it turned out that their DeepMind, which was not integrated with Google at t
 
 168
 00:14:44,000 --> 00:14:48,000
-had figured out, you know, optimal, compute-optimal scaling laws.
+had figured out, you know, optimal, compute optimal scaling laws.
 
 169
 00:14:48,000 --> 00:14:51,000
@@ -692,7 +692,7 @@ They weren't very large because they didn't have much compute.
 
 174
 00:15:11,000 --> 00:15:20,000
-Meta's first LLM, you could tell that it was a replication because it was like 175 billion parameters.
+Meta's first LLM, you could see, tell that it was a replication because it was like 175 billion parameters.
 
 175
 00:15:20,000 --> 00:15:23,000
@@ -704,7 +704,7 @@ They ran into a lot of hardware issues.
 
 177
 00:15:26,000 --> 00:15:31,000
-And then there was another Hugging Face, a BigScience project.
+And then there was another Hugging Face, a big science project.
 
 178
 00:15:31,000 --> 00:15:35,000
@@ -716,7 +716,7 @@ Then in the last three years, I think the open model ecosystem has changed quite
 
 180
 00:15:40,000 --> 00:15:46,000
-With Meta kind of leading the way with the Llama series of models, Llama, Llama 2, Llama 3.
+With Meta kind of leading the way with a LLM series of models, LLM, LLM2, LLM3.
 
 181
 00:15:46,000 --> 00:15:48,000
@@ -804,7 +804,7 @@ But I think it's better, much better than nothing.
 
 202
 00:17:32,000 --> 00:17:40,000
-Okay, so in the last decade I think the idea of what a language model has changed, right?
+Okay, so in the last decade I think the idea of what a language model is has changed, right?
 
 203
 00:17:40,000 --> 00:17:43,000
@@ -880,7 +880,7 @@ So the good news for us is that we didn't have to completely change this class.
 
 221
 00:18:58,000 --> 00:19:03,000
-Only Tatsu's section on the latest, you know, Chinese architectures.
+Only Tatsu section on the latest, you know, Chinese architectures.
 
 222
 00:19:03,000 --> 00:19:08,000
@@ -980,7 +980,7 @@ So why should you, so why should you take this course? Okay.
 
 246
 00:20:58,000 --> 00:21:02,000
-So first, you have an obsessive need like me to understand how things work.
+So first you have an obsessive need like me to understand how things work.
 
 247
 00:21:02,000 --> 00:21:04,000
@@ -1024,7 +1024,7 @@ So why should you not take this course?
 
 257
 00:21:55,000 --> 00:21:58,000
-This is important because there's reasons you shouldn't take this course.
+This is important because there are reasons you shouldn't take this course.
 
 258
 00:21:58,000 --> 00:22:02,000
@@ -1128,7 +1128,7 @@ So that you don't get the sparse rewards setting where you submit a homework and
 
 283
 00:23:58,000 --> 00:24:09,000
-What I recommend is that you can, the assignments are structured so that much of the assignment can actually be done locally on your laptop.
+What I recommend is that, the assignments are structured so that much of the assignment can actually be done locally on your laptop.
 
 284
 00:24:09,000 --> 00:24:12,000
@@ -1136,15 +1136,15 @@ You can implement it and check for correctness.
 
 285
 00:24:12,000 --> 00:24:25,000
-And then we are providing a cluster so that you can do an actual training run to see what the accuracy is or get a bunch of GPUs to actually benchmark the performance of some kernel.
+And then we are providing a cluster so that you can do an actual training run to see what the accuracy is, or get a bunch of GPUs to actually benchmark the performance of some kernel.
 
 286
 00:24:25,000 --> 00:24:34,000
-And then for fun, we will have, you know, some leaderboards for most of the assignments at least.
+And then for fun, we will have some leaderboards for most of the assignments, at least.
 
 287
 00:24:34,000 --> 00:24:42,000
-And they will look something like, well, now that you've learned about this topic, try to minimize the perplexities given some sort of budget.
+And they will look something like, well, now that you've learned about this topic, try to minimize the perplexity given some sort of budget.
 
 288
 00:24:42,000 --> 00:24:51,000
@@ -1160,7 +1160,7 @@ Actually, I don't know if they will tell you their secrets, but you can try.
 
 291
 00:24:59,000 --> 00:25:07,000
-Okay, so, you know, last year we were thinking about, well, what can AI do?
+Okay, so last year we were thinking about, well, what can AI do?
 
 292
 00:25:07,000 --> 00:25:16,000
@@ -1172,7 +1172,7 @@ I think now, I think coding agents have gotten so good that they can just solve 
 
 294
 00:25:22,000 --> 00:25:31,000
-But to state the obvious, obviously you're not going to learn anything if you just feed in the PDF assignment one into our Claude Code.
+But to state the obvious, obviously you're not going to learn anything if you just feed in the PDF assignment one into Claude Code.
 
 295
 00:25:31,000 --> 00:25:35,000
@@ -1180,11 +1180,11 @@ At the same time, AI can be very useful for answering questions and tutoring.
 
 296
 00:25:35,000 --> 00:25:41,000
-So we have to find a way to, you know, leverage AI.
+So we have to find a way to leverage AI.
 
 297
 00:25:41,000 --> 00:25:49,000
-So what we've decided to do is we provide you agents.md file or, equivalently, a prompt,
+So what we've decided to do is we provide you an agents.md file or, equivalently, a prompt,
 
 298
 00:25:49,000 --> 00:25:53,000
@@ -1192,7 +1192,7 @@ which asks the AI to be pedagogically minded.
 
 299
 00:25:53,000 --> 00:25:56,000
-You can read more about in our AI policy guide.
+You can read more about it in our AI policy guide.
 
 300
 00:25:56,000 --> 00:26:02,000
@@ -1204,7 +1204,7 @@ And so it will answer questions about code.
 
 302
 00:26:05,000 --> 00:26:13,000
-It will clarify any understanding, but it won't accidentally generate like the transformer for you when the homework is to implement the transformer.
+It will clarify any understanding, but it won't accidentally generate the Transformer for you when the homework is to implement the Transformer.
 
 303
 00:26:13,000 --> 00:26:14,000
@@ -1232,7 +1232,7 @@ Last year we had a cluster you SSH into.
 
 309
 00:26:43,000 --> 00:26:52,000
-This is using more of an API to, which I was initially skeptical of, but, you know, looking at it actually is pretty pleasant to use.
+This is using more of an API, which I was initially skeptical of, but looking at it, actually it is pretty pleasant to use.
 
 310
 00:26:52,000 --> 00:26:58,000
@@ -1304,7 +1304,7 @@ Conceptually, it's a segmentation of the text.
 
 327
 00:28:31,000 --> 00:28:41,000
-We're going to talk about the byte pair encoding, BPE tokenizer, which intuitively breaks the input into frequently occurring chunks.
+We're going to talk about the byte-pair encoding, BPE tokenizer, which intuitively breaks the input into frequently occurring chunks.
 
 328
 00:28:41,000 --> 00:28:45,000
@@ -1320,7 +1320,7 @@ But more subtly, but maybe more importantly, it allows you to do adaptive comput
 
 331
 00:29:01,000 --> 00:29:14,000
-So some places are actually a lot of bytes, but actually it should be compressed into one token, whereas some of the more rare or interesting parts of the input should be left as multiple tokens.
+So some, maybe some places are actually a lot of bytes, but actually it should be compressed into one token, whereas some of the more rare or interesting parts of input should be left as multiple tokens.
 
 332
 00:29:14,000 --> 00:29:17,000
@@ -1344,7 +1344,7 @@ But so far these have not been scaled to the frontier, and since the frontier mo
 
 337
 00:29:45,000 --> 00:29:50,000
-we felt like it would be still wise to teach tokenizers.
+we felt like it would still be wise to teach tokenizers.
 
 338
 00:29:50,000 --> 00:29:56,000
@@ -1356,15 +1356,15 @@ Now you define a model on top.
 
 340
 00:29:58,000 --> 00:30:02,000
-And everyone, I think, has a familiarity with the original transformer.
+And everyone, I think, has a familiarity with the original, the Transformer.
 
 341
 00:30:02,000 --> 00:30:09,000
-And if you take CS224N, the NLP class, then you've seen transformers.
+And if you take CS224N, the NLP class, then you've seen Transformers.
 
 342
 00:30:09,000 --> 00:30:16,000
-Since then, I think there have been a lot of improvements or refinements to transformers,
+Since then, I think there have been a lot of improvements or refinements to Transformers,
 
 343
 00:30:16,000 --> 00:30:18,000
@@ -1380,11 +1380,11 @@ But just to run through a set of types of things that one might have to think ab
 
 346
 00:30:26,000 --> 00:30:31,000
-So the activation functions have evolved.
+So, the activation functions have evolved.
 
 347
 00:30:31,000 --> 00:30:34,000
-How you do positional encodings has evolved.
+How do you positional encodings—has evolved.
 
 348
 00:30:34,000 --> 00:30:42,000
@@ -1396,7 +1396,7 @@ Instead of doing full attention, there's many ways to basically reduce the atten
 
 350
 00:30:49,000 --> 00:30:55,000
-because attention is N squared, where N is a sequence length, and that gets really expensive.
+because the attention is N squared and it's, where N is a sequence length, and that gets really expensive.
 
 351
 00:30:55,000 --> 00:30:58,000
@@ -1424,11 +1424,11 @@ So we'll be exploring some of that.
 
 357
 00:31:20,000 --> 00:31:27,000
-And then within the MLP layers of the transformer, the original transformer was just a dense MLP.
+And then within the MLP layers of the Transformer, the original Transformer was just a dense MLP.
 
 358
 00:31:27,000 --> 00:31:35,000
-And now, mixture of experts has become the sort of dominant paradigm for building compute-efficient transformers.
+And now, mixture of experts has become the sort of dominant paradigm for building compute-efficient Transformers.
 
 359
 00:31:35,000 --> 00:31:37,000
@@ -1452,11 +1452,11 @@ what is the shape of your transformer? How many layers?
 
 364
 00:31:56,000 --> 00:32:00,000
-How many heads? What is the hidden dimension, number of experts?
+How many heads? What is hidden dimension, number of experts?
 
 365
 00:32:00,000 --> 00:32:08,000
-This might come in more as we talk about scaling laws, but setting these actually seems kind of, you know, almost trivial.
+This might come in more as we talk about scaling laws, but setting these is actually, seems kind of, you know, almost trivial.
 
 366
 00:32:08,000 --> 00:32:16,000
@@ -1480,7 +1480,7 @@ There's next word, next token prediction, which is the default.
 
 371
 00:32:31,000 --> 00:32:40,000
-But people have found that predicting more than one token seems to be helpful for improving the model.
+But people have found that looking, predicting more than one token seems to be helpful for improving the model.
 
 372
 00:32:40,000 --> 00:32:44,000
@@ -1496,11 +1496,11 @@ models, such as the Kimi K2 models.
 
 375
 00:32:56,000 --> 00:33:08,000
-Initialization, which is, again, sounds kind of boring, but turns out to have a huge impact on your ability and the training stability of larger models.
+Initialization, which is, again, sounds kind of boring, but turns out to have a huge impact on how your ability and the training stability of larger models.
 
 376
 00:33:08,000 --> 00:33:17,000
-Learning rates, schedule, regularization, batch size, and then MoE specific things.
+Learning rates, schedule, regularization, batch size, and then MOE specific things.
 
 377
 00:33:17,000 --> 00:33:21,000
@@ -1512,11 +1512,11 @@ I'm going to try a bunch of different options out.
 
 379
 00:33:24,000 --> 00:33:39,000
-But it turns out that, you know, really being very careful about setting these hyperparameters in a principled way will make the difference between a run that just blows up and is useless and a run that is achieving state of the art.
+But it turns out that, you know, really being very careful about setting these hyperparameters in a principled way will make the difference between a run that just blows up and is useless between a run that is achieving state of the art.
 
 380
 00:33:39,000 --> 00:33:45,000
-Okay, I'll come back to that point when we talk about scaling laws.
+Okay, I'll come back to that point when we talk about scaling loss.
 
 381
 00:33:45,000 --> 00:33:55,000
@@ -1528,15 +1528,15 @@ We're going to make you do a bunch of resource accounting so you understand wher
 
 383
 00:34:01,000 --> 00:34:06,000
-You're going to train some models on these data sets like TinyStories and OpenWebText.
+You're going to train some models on these data sets like tiny stories and open web text.
 
 384
 00:34:06,000 --> 00:34:15,000
-And then there's going to be a leaderboard where you're going to try to drive down perplexity as fast as you can.
+And then there's going to be a leaderboard that where you're going to try to drive down perplexity as fast as you can.
 
 385
 00:34:15,000 --> 00:34:22,000
-So, for those of you familiar with the nanoGPT speedruns, it's kind of similar to that.
+So, for those of you familiar with the nano GPT speedruns, it's kind of similar to that.
 
 386
 00:34:22,000 --> 00:34:32,000
@@ -1604,7 +1604,7 @@ But then the question is, does it work as well?
 
 402
 00:35:43,000 --> 00:35:51,000
-And so making those trade-offs is something that is going to, is sort of the name of the game here.
+And so making those trade-offs is something that is going to be sort of the name of the game here.
 
 403
 00:35:51,000 --> 00:35:53,000
@@ -1640,7 +1640,7 @@ And I think, you know, you've all probably built models before.
 
 411
 00:36:26,000 --> 00:36:33,000
-But this is really about keeping track of where all the FLOPs go.
+But this is really about keeping track of all, where all the flops go.
 
 412
 00:36:33,000 --> 00:36:35,000
@@ -1652,11 +1652,11 @@ So we're going to spend some time basically doing the resource accounting.
 
 414
 00:36:39,000 --> 00:36:43,000
-We're going to see this formula that comes up.
+We're going to see, you know, this formula that comes up.
 
 415
 00:36:43,000 --> 00:36:47,000
-How many FLOPs is training a model on one trillion tokens?
+How do you, how many flops is training a model on one trillion tokens?
 
 416
 00:36:47,000 --> 00:36:50,000
@@ -1692,7 +1692,7 @@ Right? And that often is the bottleneck.
 
 424
 00:37:18,000 --> 00:37:24,000
-So, for example, B200s, which we'll have the opportunity to play with.
+So, you know, for example, B200s, which we'll have the opportunity to play with.
 
 425
 00:37:24,000 --> 00:37:33,000
@@ -1700,11 +1700,11 @@ It has 2.25 petaflops per second, BF16, and it has 8 terabytes a second of memor
 
 426
 00:37:33,000 --> 00:37:35,000
-So, what does that mean?
+So, you know, what does that mean?
 
 427
 00:37:35,000 --> 00:37:38,000
-I think I'll do this next lecture.
+I think when we, I think I'll do this next lecture.
 
 428
 00:37:38,000 --> 00:37:49,000
@@ -1716,7 +1716,7 @@ We're going to talk about roofline analysis, which allows us to understand wheth
 
 430
 00:37:57,000 --> 00:38:01,000
-In general, it is memory.
+In general, it is, you know, memory.
 
 431
 00:38:01,000 --> 00:38:06,000
@@ -1724,19 +1724,19 @@ And then, talk a little bit about benchmarking and profiling.
 
 432
 00:38:06,000 --> 00:38:13,000
-Okay. So, here's what DGX P200 looks like.
+Okay. So, here's what, you know, DGX H200 looks like.
 
 433
 00:38:13,000 --> 00:38:19,000
-You have eight GPUs, they're connected via NVLink.
+You have eight GPUs, they're connected via, you know, NVLink.
 
 434
 00:38:19,000 --> 00:38:28,000
-And then, if you have many, if you have a thousand GPUs, then you would have multiple of these, and they're connected either in InfiniBand or Ethernet.
+And then, if you have many, if you have a thousand GPUs, then you would have multiple of these, and they're, you know, connected either in InfiniBand or Ethernet.
 
 435
 00:38:28,000 --> 00:38:32,000
-So, the next two parts when we talk about systems is kernels.
+So, the next two parts when we talk about systems is, you know, kernels.
 
 436
 00:38:32,000 --> 00:38:35,000
@@ -1744,7 +1744,7 @@ So, a kernel is basically a function that runs on the GPU.
 
 437
 00:38:35,000 --> 00:38:47,000
-And when you're just using plain PyTorch, all the PyTorch primitives actually correspond to launching particular kernels, which are built in.
+And when you're just using plain PyTorch, you know, all the PyTorch primitives actually correspond to launching particular kernels, which are built in.
 
 438
 00:38:47,000 --> 00:38:54,000
@@ -1752,7 +1752,7 @@ So, you're already using kernels, whether you know it or not.
 
 439
 00:38:54,000 --> 00:39:06,000
-But the point is that, for certain types of computation, if you look at it, you can actually write custom kernels to make the GPUs go faster.
+But the point is that, if, for certain types of computation, if you look at it, you can actually write custom kernels to make the GPUs go faster.
 
 440
 00:39:06,000 --> 00:39:12,000
@@ -1760,7 +1760,7 @@ And the main principle here is organizing the compute to minimize data movement.
 
 441
 00:39:12,000 --> 00:39:22,000
-So, remember this picture: moving data from memory is expensive, so you want to try to minimize that.
+So, remember this picture, moving data from, from memory is expensive, so you want to try to minimize that.
 
 442
 00:39:22,000 --> 00:39:27,000
@@ -1792,11 +1792,11 @@ Tiling is kind of a more sophisticated variant around the same idea.
 
 449
 00:39:59,000 --> 00:40:03,000
-GPUs have also gotten a lot more complicated.
+There's also, GPUs have also gotten a lot more complicated.
 
 450
 00:40:03,000 --> 00:40:08,000
-And I'm not sure how many of these details we'll have time to get into, but at least we want to expose you to some of the
+And I'm not sure how many of these details we'll have time to get into, but at least we want to expose you to some of the,
 
 451
 00:40:08,000 --> 00:40:20,000
@@ -1804,7 +1804,7 @@ sort of the peculiarities, I would say, of GPUs and give you appreciation for th
 
 452
 00:40:20,000 --> 00:40:25,000
-And we'll write some kernels and try it.
+And we'll write some kernels in and try it.
 
 453
 00:40:25,000 --> 00:40:29,000
@@ -1820,7 +1820,7 @@ The only thing is that moving data between different GPUs is even more expensive
 
 456
 00:40:44,000 --> 00:40:54,000
-We're going to talk about how these very classic collective operations like gather and reduce and all-reduce are the way to kind of think about
+We're going to talk about how these very classic collective operations like gather and reduce and all reduce are the way to kind of think about,
 
 457
 00:40:54,000 --> 00:40:57,000
@@ -1956,7 +1956,7 @@ And then, you have to figure out how to batch them up.
 
 490
 00:43:54,000 --> 00:44:00,000
-Whereas, in training, you basically have already defined your batches, and everything is much more predictable.
+Whereas, in training, you basically are already defined your batches, and everything is much more predictable.
 
 491
 00:44:00,000 --> 00:44:14,000
@@ -1964,7 +1964,7 @@ So, in assignment two, there's going to be implementing kernels in Triton, and d
 
 492
 00:44:14,000 --> 00:44:23,000
-The details here might actually change as the TAs have grand plans of revamping the systems.
+The details here might actually change as the CAs have grand plans of revamping the systems.
 
 493
 00:44:23,000 --> 00:44:32,000
@@ -1976,7 +1976,7 @@ One thing I will mention is that there's this wonderful book out of some Google 
 
 495
 00:44:39,000 --> 00:44:50,000
-And I think it's really nice for providing a conceptual understanding of roofline analysis and transformer math and doing LLMs conceptually.
+And I think it's really nice for providing a conceptual understanding of roofline analysis and transformer math and doing LMS conceptually.
 
 496
 00:44:50,000 --> 00:44:54,000
@@ -2016,7 +2016,7 @@ So, imagine the following setting.
 
 505
 00:45:32,000 --> 00:45:41,000
-If you had 1e25 FLOPs, so this is tens of millions of dollars of compute, what model would you train?
+If you had 1e25 flops, so this is tens of millions of dollars of compute, what model would you train?
 
 506
 00:45:41,000 --> 00:45:42,000
@@ -2032,7 +2032,7 @@ So, and you can't do your probably typical hyperparameter tuning at that scale b
 
 509
 00:45:58,000 --> 00:46:11,000
-And so, this is like the key problem that you have to deal with in large language model training that you don't have to really deal with if you're just fine-tuning a model or doing small scale stuff.
+And so, this is like the key problem that you have to deal with in language model, large language model training that you don't have to really deal with if you're just fine tuning a model or doing small scale stuff.
 
 510
 00:46:11,000 --> 00:46:20,000
@@ -2040,7 +2040,7 @@ And so, the key conceptual shift here is that we shouldn't think about a single 
 
 511
 00:46:20,000 --> 00:46:29,000
-And a scaling recipe is a mapping from a FLOP budget, let's say 1e25 or 1e24, to a set of hyperparameters, basically a config file.
+And a scaling recipe is a mapping from a flood budget, let's say 1e25 or 1e24, to a set of hyperparameters, basically a config file.
 
 512
 00:46:29,000 --> 00:46:42,000
@@ -2108,7 +2108,7 @@ And so you parameterize, so then, in order to get these predictable scaling laws
 
 528
 00:48:30,000 --> 00:48:37,000
-Right, meaning that the hyperparameters you use at small scale are either the ones that you use at larger scale or are predictable functions of it.
+Right, meaning that these hyperparameters you use at small scale are either the ones that you use at larger scale or are predictable functions of it.
 
 529
 00:48:37,000 --> 00:48:50,000
@@ -2136,7 +2136,7 @@ The actual scaling laws we're going to look at are fairly, you know, classic.
 
 535
 00:49:22,000 --> 00:49:31,000
-So these are, you know, some of you might have seen this idea of, well, if I give you a FLOP counting budget, should you train,
+So these are, you know, some of you might have seen this idea of, well, if I give you a flops budget, should you train,
 
 536
 00:49:31,000 --> 00:49:35,000
@@ -2148,11 +2148,11 @@ And this is where the classic compute optimal scaling laws from Kaplan et al.
 
 538
 00:49:39,000 --> 00:49:42,000
-And the Chinchilla, so-called Chinchilla scaling laws comes in.
+And the chinchilla, so-called chinchilla scaling laws comes in.
 
 539
 00:49:42,000 --> 00:50:03,000
-The basic idea is that you, for each FLOP counting budget, so let's say 6E18 all the way to 3E21, you sweep across different, you know, model sizes.
+The basic idea is that you, for each flops budget, so let's say 6E18 all the way to 3E21, you sweep across different, you know, model sizes.
 
 540
 00:50:03,000 --> 00:50:08,000
@@ -2160,7 +2160,7 @@ And you choose the best one, so think about minimizing each of these.
 
 541
 00:50:08,000 --> 00:50:16,000
-And then you fit a curve that allows you to basically predict the number of parameters given a FLOP counting budget.
+And then you fit a curve that allows you to basically predict the number of parameters given a flops budget.
 
 542
 00:50:16,000 --> 00:50:20,000
@@ -2216,7 +2216,7 @@ This one is actually training.
 
 555
 00:51:31,000 --> 00:51:34,000
-If you go to a Marin site, you can follow along.
+If you go to the Marin site, you can follow along.
 
 556
 00:51:34,000 --> 00:51:37,000
@@ -2240,7 +2240,7 @@ then that's really nice.
 
 561
 00:51:59,000 --> 00:52:06,000
-Okay, so in assignment three, I think this is kind of either fun, or, you know,
+Okay, so in assignment three, I think this is a kind of either fun or, you know,
 
 562
 00:52:06,000 --> 00:52:08,000
@@ -2300,7 +2300,7 @@ We would recommend you fit scaling laws to these points, and then you extrapolat
 
 576
 00:52:57,000 --> 00:53:04,000
-and then we give you a budget and we basically evaluate how well your model landed.
+and then we give you a budget and you're, we basically evaluate how well your model landed.
 
 577
 00:53:04,000 --> 00:53:09,000
@@ -2308,7 +2308,7 @@ So it is meant to, I was going to say, it's meant to kind of replicate the high 
 
 578
 00:53:09,000 --> 00:53:16,000
-scenarios if you actually had a budget that, like, you know, $100 million that you had to spend.
+scenarios if you actually had a budget that, like, you know, $100 million that you did to spend.
 
 579
 00:53:16,000 --> 00:53:20,000
@@ -2352,7 +2352,7 @@ One way to also frame it is, you know, what do you want your model to do?
 
 589
 00:54:02,000 --> 00:54:07,000
-Right? Data basically reflects what your model wants.
+Right? Data basically is, reflects what your model wants.
 
 590
 00:54:07,000 --> 00:54:10,000
@@ -2364,7 +2364,7 @@ Be good at, you know, having a conversation?
 
 592
 00:54:13,000 --> 00:54:17,000
-Do you want to run long agentic coding tasks?
+Do you want to do, run long agentic coding tasks?
 
 593
 00:54:17,000 --> 00:54:22,000
@@ -2400,7 +2400,7 @@ And what matters here is that, you know, smoothness across scales so that there,
 
 601
 00:54:52,000 --> 00:54:55,000
-you know, remember we want things to be predictable.
+You know, remember we want things to be predictable.
 
 602
 00:54:55,000 --> 00:54:57,000
@@ -2412,11 +2412,11 @@ You don't care necessarily how well this, you know, does in absolute terms becau
 
 604
 00:55:03,000 --> 00:55:09,000
-you know, let's say perplexity number is just like, what is a perplexity 1.2 on some,
+you know, let's say a perplexity number is just like, what does a perplexity of 1.2 on some
 
 605
 00:55:09,000 --> 00:55:12,000
-you know, held out data really mean?
+you know, held-out data really mean?
 
 606
 00:55:12,000 --> 00:55:14,000
@@ -2432,7 +2432,7 @@ presenting your thing to.
 
 609
 00:55:23,000 --> 00:55:26,000
-And here ecologically, validity really matters.
+And here, ecological validity really matters.
 
 610
 00:55:26,000 --> 00:55:31,000
@@ -2448,7 +2448,7 @@ And still to this day, you know, perplexity is a very good way of capturing the 
 
 613
 00:55:47,000 --> 00:55:51,000
-without getting, kind of worrying about bench-maxing.
+without getting, kind of worrying about benchmark-maxing.
 
 614
 00:55:51,000 --> 00:55:56,000
@@ -2464,11 +2464,11 @@ that would be good because you can avoid contamination.
 
 617
 00:56:05,000 --> 00:56:16,000
-Okay, so, and then there's advanced use cases which are more representative of external facing use cases.
+Okay, so, and then there's advanced use cases which are more representative of external-facing use cases.
 
 618
 00:56:16,000 --> 00:56:23,000
-So, one thing to also note is that, you know, language models are purportedly very general purpose.
+So, one thing to also note is that, you know, language models are purportedly very general-purpose.
 
 619
 00:56:23,000 --> 00:56:30,000
@@ -2500,7 +2500,7 @@ It has to be actively, you know, curated.
 
 626
 00:56:56,000 --> 00:57:02,000
-Often, I think, you know, in, you know, especially in, in classes and also in research,
+Often, I think, you know, especially in classes and also in research,
 
 627
 00:57:02,000 --> 00:57:07,000
@@ -2516,19 +2516,19 @@ you have to go and actively look at it.
 
 630
 00:57:14,000 --> 00:57:16,000
-So, web pages are called from the internet.
+So, web pages are crawled from the Internet.
 
 631
 00:57:16,000 --> 00:57:20,000
-There's books, I guess, which is controversial at this, at this point, but
+There's books, I guess, which is controversial at this point, but
 
 632
 00:57:20,000 --> 00:57:23,000
-archive papers, GitHub code, and, and so on.
+archive papers, GitHub code, and so on.
 
 633
 00:57:23,000 --> 00:57:27,000
-This is an old figure from the, the pile from 2021.
+This is an old figure from the Pile from 2021.
 
 634
 00:57:27,000 --> 00:57:32,000
@@ -2564,7 +2564,7 @@ So, there's also the fact that data is not even text, right?
 
 642
 00:58:09,000 --> 00:58:12,000
-It's either HTML or PDFs or code, or directories.
+It's either HTML or PDFs or code or directories.
 
 643
 00:58:12,000 --> 00:58:18,000
@@ -2592,7 +2592,7 @@ If the random internet document in Common Crawl is extremely bad and you don't w
 
 649
 00:58:43,000 --> 00:58:48,000
-You want to deduplicate. There are multiple sources.
+You want to deduplicate. There's multiple sources.
 
 650
 00:58:48,000 --> 00:58:51,000
@@ -2652,7 +2652,7 @@ a lot of, you know, what people would call, you know, dirty work.
 
 664
 01:00:13,000 --> 01:00:17,000
-But that is, I think, part of an important part of building a language model from scratch.
+But that is, I think, part of, an important part of building a language model from scratch.
 
 665
 01:00:17,000 --> 01:00:19,000
@@ -2680,7 +2680,7 @@ But we can improve it further by using weak supervision.
 
 671
 01:00:43,000 --> 01:00:50,000
-And why weak supervision? It's because sometimes it's easier to critique than it is to generate.
+And why use weak supervision? It's because sometimes it's easier to critique than it is to generate.
 
 672
 01:00:50,000 --> 01:00:54,000
@@ -2704,7 +2704,7 @@ This can be instantiated either through various RL algorithms such as PPO or GRP
 
 677
 01:01:17,000 --> 01:01:22,000
-case, preference data, DPO.
+if for preference data, DPO.
 
 678
 01:01:22,000 --> 01:01:32,000
@@ -2720,7 +2720,7 @@ Personally, I prefer to keep things as much in the full,
 
 681
 01:01:40,000 --> 01:01:44,000
-sully-supervised case as long as possible, and then finally, okay, fine, I have to do RL.
+supervised case as long as possible, and then finally, okay, fine, I have to do RL.
 
 682
 01:01:44,000 --> 01:01:49,000
@@ -2891,613 +2891,617 @@ So here are some examples to give you a flavor for how tokenizers work.
 Actually, I should have tried to get internet earlier, so this is not going to work.
 
 724
+01:05:58,000 --> 01:05:59,000
+Okay.
+
+725
 01:05:59,000 --> 01:06:03,000
 If you go to the site, you can play around with different tokenizers.
 
-725
+726
 01:06:03,000 --> 01:06:08,000
 So some observations here.
 
-726
+727
 01:06:08,000 --> 01:06:14,000
 And you'll appreciate why tokenizers are kind of annoying and why people want to get rid of them.
 
-727
-01:06:14,000 --> 01:06:24,000
-So a word and its, and a word conglomerated with its preceding space are different tokens.
-
 728
-01:06:24,000 --> 01:06:31,000
-So many tokens you'll actually see are space plus a word, which is fine but kind of strange.
+01:06:14,000 --> 01:06:24,000
+So a word and its, and a word conglomerated with its preceding space are different, you know, tokens.
 
 729
-01:06:31,000 --> 01:06:40,000
-So this hello and this hello are actually two completely different indices that have nothing to do with each other.
+01:06:24,000 --> 01:06:31,000
+So many tokens you'll actually see are space a word, which is, you know, fine but kind of strange.
 
 730
-01:06:40,000 --> 01:06:47,000
-So, and sometimes depending on the tokenizer you use, numbers are represented with,
+01:06:31,000 --> 01:06:40,000
+So this hello and this hello is actually two completely different indices that have nothing to do with each other.
 
 731
+01:06:40,000 --> 01:06:47,000
+So, and sometimes depending on tokenizer you use, numbers are represented with,
+
+732
 01:06:47,000 --> 01:06:50,000
 every few digits is a token.
 
-732
+733
 01:06:50,000 --> 01:06:52,000
 Sometimes it's predictable and sometimes it's not.
 
-733
+734
 01:06:52,000 --> 01:06:57,000
 Some tokenizers try to make every digit a token, but then you're blowing up the number of tokens you have.
 
-734
+735
 01:06:57,000 --> 01:06:59,000
 So there's some trade-off there.
 
-735
+736
 01:06:59,000 --> 01:07:04,000
 So here's the GPT-5 tokenizer.
 
-736
-01:07:04,000 --> 01:07:13,000
-So you can take this string and convert it into these indices.
-
 737
-01:07:13,000 --> 01:07:21,000
-And then you can decode it back into the string, and ideally tokenizers should round trip.
+01:07:04,000 --> 01:07:13,000
+So you can take this string and convert it into, you know, these indices.
 
 738
-01:07:21,000 --> 01:07:23,000
-If you implement tokenizers, and it doesn't round trip, you have a problem.
+01:07:13,000 --> 01:07:21,000
+And then you can decode it back into the string and assume tokenizers should round trip.
 
 739
+01:07:21,000 --> 01:07:23,000
+If you implement tokenizers, it doesn't round trip, you have a problem.
+
+740
 01:07:23,000 --> 01:07:32,000
 So the compression ratio here is the number of bytes per token.
 
-740
-01:07:32,000 --> 01:07:38,000
-So in this case, we have the number of bytes of this string is 20.
-
 741
+01:07:32,000 --> 01:07:38,000
+So in this case, we have the number of bytes is, of this string is 20.
+
+742
 01:07:38,000 --> 01:07:40,000
 The number of tokens is 8.
 
-742
+743
 01:07:40,000 --> 01:07:43,000
 And you do 20 divided by 8, so the compression ratio is 2.5.
 
-743
+744
 01:07:43,000 --> 01:07:46,000
 Okay, so 2.5 bytes per token.
 
-744
+745
 01:07:46,000 --> 01:07:52,000
 The larger the compression ratio, that means the shorter the sentence, which is good because attention is quadratic and you want to make sure the sentence is
 
-745
+746
 01:07:52,000 --> 01:07:53,000
 shorter.
 
-746
+747
 01:07:53,000 --> 01:07:59,000
 Now you can obviously increase the compression ratio by increasing the vocab size.
 
-747
+748
 01:07:59,000 --> 01:08:09,000
 But then you get into sparsity where more and more, because every element of vocab is treated like a distinct element.
 
-748
+749
 01:08:09,000 --> 01:08:21,000
 So these days, tokenizers, especially multilingual tokenizers, have 100k or 200k tokens, distinct tokens.
 
-749
+750
 01:08:21,000 --> 01:08:25,000
 So you can look at the GPT token vocabulary.
 
-750
+751
 01:08:25,000 --> 01:08:28,000
 I think we'll skip it in the interest of time.
 
-751
+752
 01:08:28,000 --> 01:08:30,000
 Okay, so how do you build a tokenizer?
 
-752
+753
 01:08:30,000 --> 01:08:33,000
 So I'm going to go through this fast.
 
-753
-01:08:33,000 --> 01:08:40,000
-But so the first thing you might do is like, well, a Unicode string, that's a sequence already of Unicode characters.
-
 754
+01:08:33,000 --> 01:08:40,000
+But so the first thing you might do is like, well, Unicode string, that's a sequence already of Unicode characters.
+
+755
 01:08:40,000 --> 01:08:46,000
 And each character is an integer, which you can call ORD in Python and you get some number out.
 
-755
+756
 01:08:46,000 --> 01:08:49,000
 And this can be converted into characters.
 
-756
-01:08:49,000 --> 01:08:55,000
-So let's just build a character-level tokenizer, which basically breaks up each character and
-
 757
+01:08:49,000 --> 01:08:55,000
+So let's just build a character level tokenizer, which basically breaks up each character and
+
+758
 01:08:55,000 --> 01:08:59,000
 encodes it in a token. And then this can decode back.
 
-758
+759
 01:08:59,000 --> 01:09:04,000
 Life is good. So now, there are 150k Unicode characters.
 
-759
+760
 01:09:04,000 --> 01:09:12,000
 So your vocab size could be 150k, which is, which is, you know, a lot.
 
-760
+761
 01:09:12,000 --> 01:09:13,000
 I mean, it's not crazy.
 
-761
+762
 01:09:13,000 --> 01:09:19,000
 But I think the bigger problem is that many characters are actually rare, which means that
 
-762
+763
 01:09:19,000 --> 01:09:23,000
 it's really an inefficient use of a vocabulary.
 
-763
+764
 01:09:23,000 --> 01:09:29,000
 And also the compression ratio, which kind of reflects this, is not that great.
 
-764
+765
 01:09:29,000 --> 01:09:35,000
 So most of the time you're actually using a lot of tokens to represent your sequence.
 
-765
-01:09:35,000 --> 01:09:41,000
-And many of the indices are actually not being used very much.
-
 766
+01:09:35,000 --> 01:09:41,000
+And many of the indices are actually not being very used.
+
+767
 01:09:41,000 --> 01:09:44,000
 So this is like not a very good tokenizer.
 
-767
+768
 01:09:44,000 --> 01:09:47,000
 So here's another attempt.
 
-768
+769
 01:09:47,000 --> 01:09:53,000
 So you can turn strings into bytes. So Unicode has a UTF-8
 
-769
+770
 01:09:53,000 --> 01:10:02,000
 Unicode encoding, which means that you can sometimes, a string like A is just one byte.
 
-770
+771
 01:10:02,000 --> 01:10:06,000
 And sometimes a string is, you know, multiple bytes.
 
-771
+772
 01:10:06,000 --> 01:10:09,000
 So let's build a tokenizer around that.
 
-772
+773
 01:10:09,000 --> 01:10:15,000
 So we can take this string and convert it into a sequence of bytes.
 
-773
+774
 01:10:15,000 --> 01:10:18,000
 And notice that this is a longer sequence now.
 
-774
+775
 01:10:18,000 --> 01:10:27,000
 But all the numbers are between 0 and 255 because that's what a byte means.
 
-775
+776
 01:10:27,000 --> 01:10:34,000
 And the compression ratio is one, which is not great.
 
-776
+777
 01:10:34,000 --> 01:10:38,000
 Right? So byte sequences can be very long.
 
-777
+778
 01:10:38,000 --> 01:10:42,000
 But the vocab size is small.
 
-778
-01:10:42,000 --> 01:10:47,000
-Okay, so now, okay, so both of these are like really bad.
-
 779
+01:10:42,000 --> 01:10:47,000
+Okay, so now, okay, so these both of these are like really bad.
+
+780
 01:10:47,000 --> 01:10:50,000
 So here's, let's try to make some progress.
 
-780
+781
 01:10:50,000 --> 01:10:55,000
 So this is what actually people used to do in NLP, if people remember.
 
-781
+782
 01:10:55,000 --> 01:10:59,000
 So if you take a string, I can just chunk it up into,
 
-782
+783
 01:10:59,000 --> 01:11:02,000
 break it up by spaces or some regular expression.
 
-783
+784
 01:11:02,000 --> 01:11:09,000
 And let's just call each of these chunks a token.
 
-784
+785
 01:11:09,000 --> 01:11:19,000
 Okay, so what is good about this one is that each token is meaningful because humans invented words and words tend to have a stable semantic meaning.
 
-785
+786
 01:11:19,000 --> 01:11:25,000
 So then, but your vocab size is a number of distinct chunks in the training data, which could be a lot.
 
-786
-01:11:25,000 --> 01:11:33,000
-And also your compression ratio, I mean, is quite, you know, good, but the vocabulary can be huge.
-
 787
+01:11:25,000 --> 01:11:33,000
+And also your compression ratio, I mean, is quite good, but the vocabulary can be huge.
+
+788
 01:11:33,000 --> 01:11:40,000
 Actually, it's worse than that because the vocabulary could be actually unbounded.
 
-788
+789
 01:11:40,000 --> 01:11:41,000
 Right?
 
-789
+790
 01:11:41,000 --> 01:11:47,000
 Because at test time you might get some sequence and you tokenize and then you have a token you've never seen before.
 
-790
-01:11:47,000 --> 01:11:55,000
-And people used to assign these, like, unk token, but that's, like, really ugly and can mess up your perplexity calculations.
-
 791
+01:11:47,000 --> 01:11:55,000
+And people used to assign these like unk token, but that's like really ugly and can mess up your perplexity calculations.
+
+792
 01:11:55,000 --> 01:11:58,000
 So this is also not great.
 
-792
-01:11:58,000 --> 01:12:03,000
-Okay, so what we're actually going to do is called byte pair encoding.
-
 793
+01:11:58,000 --> 01:12:03,000
+Okay, so what we're actually going to do is called byte-pair encoding.
+
+794
 01:12:03,000 --> 01:12:12,000
 And this was introduced a long time ago for data compression, way before language models were really on the scene, really.
 
-794
-01:12:12,000 --> 01:12:25,000
-It was first introduced to NLP for doing neural machine translation, and the first paper that used BPE to, for,
-
 795
-01:12:25,000 --> 01:12:27,000
-LMs was GPT-2.
+01:12:12,000 --> 01:12:25,000
+It was first introduced to NLP for doing neural machine translation, and the first paper that used BPE for
 
 796
+01:12:25,000 --> 01:12:27,000
+LMs was GPT2.
+
+797
 01:12:27,000 --> 01:12:35,000
 So the basic idea is you're going to train the tokenizer on raw text to construct a vocabulary that's tailored to the data.
 
-797
+798
 01:12:35,000 --> 01:12:45,000
 And you're also going to have this property that everything becomes, can be tokenized if it's rare, then it just breaks up into smaller units rather than having this unk token.
 
-798
-01:12:45,000 --> 01:12:52,000
-So common sequences can be, are going to be represented as one token.
-
 799
+01:12:45,000 --> 01:12:52,000
+So common sequences are going to be represented as one token.
+
+800
 01:12:52,000 --> 01:12:54,000
 Rare sequences are going to be split into multiple tokens.
 
-800
+801
 01:12:54,000 --> 01:12:55,000
 That's the idea.
 
-801
+802
 01:12:55,000 --> 01:12:59,000
 Okay, so the algorithm is fairly simple conceptually.
 
-802
+803
 01:12:59,000 --> 01:13:03,000
 So you start basically with your corpus.
 
-803
+804
 01:13:03,000 --> 01:13:05,000
 Let's assume it's one long sequence.
 
-804
+805
 01:13:05,000 --> 01:13:08,000
 You get a byte sequence. Each byte starts as a token.
 
-805
+806
 01:13:08,000 --> 01:13:16,000
 And then we're going to merge successive pairs of adjacent tokens that occur the most frequently.
 
-806
+807
 01:13:16,000 --> 01:13:20,000
 Okay, so let's step through how this is going to work in code.
 
-807
+808
 01:13:20,000 --> 01:13:23,000
 So here's a simple string, the cat and the hat.
 
-808
+809
 01:13:23,000 --> 01:13:27,000
 And here's the implementation of the BPE algorithm.
 
-809
+810
 01:13:27,000 --> 01:13:32,000
 So we're going to turn that into a sequence of bytes.
 
-810
+811
 01:13:32,000 --> 01:13:42,000
 And then we're going to first basically count the number of times successive tokens appear.
 
-811
+812
 01:13:42,000 --> 01:13:48,000
 So 116, 104 shows up twice. So we get this.
 
-812
+813
 01:13:48,000 --> 01:13:56,000
 And then we're going to find the pair that happens the most number of times.
 
-813
+814
 01:13:56,000 --> 01:13:58,000
 So that's 116, 104.
 
-814
+815
 01:13:58,000 --> 01:14:01,000
 I guess there's a few ties, but we'll just take the first one.
 
-815
+816
 01:14:01,000 --> 01:14:03,000
 And then we're going to merge that pair.
 
-816
+817
 01:14:03,000 --> 01:14:08,000
 And by merging that pair, what we do is we create a new token.
 
-817
+818
 01:14:08,000 --> 01:14:13,000
 In this case, this is going to be called token 256.
 
-818
+819
 01:14:13,000 --> 01:14:16,000
 It's going to represent this pair.
 
-819
+820
 01:14:16,000 --> 01:14:19,000
 And we're going to add it to our vocabulary.
 
-820
+821
 01:14:19,000 --> 01:14:23,000
 So 256 is going to represent the sequence th.
 
-821
+822
 01:14:23,000 --> 01:14:25,000
 So t and h have been merged.
 
-822
+823
 01:14:25,000 --> 01:14:30,000
 And we're going to call every time we see th, that's going to, we're going to use 256 to represent that.
 
-823
+824
 01:14:30,000 --> 01:14:37,000
 And then we go through indices and then we replace every occurrence of 116, 104 with 256.
 
-824
+825
 01:14:37,000 --> 01:14:41,000
 So those two places have been replaced. And then we iterate.
 
-825
+826
 01:14:41,000 --> 01:14:48,000
 So the next time we do this, we're going to find 256 and 101.
 
-826
+827
 01:14:48,000 --> 01:14:52,000
 We're going to merge that. And now we have 257.
 
-827
+828
 01:14:52,000 --> 01:14:58,000
 And then we're going to merge that one more time and we're going to get 258.
 
-828
+829
 01:14:58,000 --> 01:15:05,000
 So over time, the sequence is shrinking, and the vocabulary size is growing.
 
-829
+830
 01:15:05,000 --> 01:15:07,000
 Okay.
 
-830
-01:15:07,000 --> 01:15:20,000
-So, let me, and the compression ratio here is, that we get for this, I mean, this toy example is 1.5.
-
 831
+01:15:07,000 --> 01:15:20,000
+So let me, and the compression ratio here is, that we get for this, I mean, this toy example is 1.5.
+
+832
 01:15:20,000 --> 01:15:27,000
 Okay, so now that you have a tokenizer, how do you tokenize new text?
 
-832
+833
 01:15:27,000 --> 01:15:31,000
 Well, you take a new string and you encode it.
 
-833
+834
 01:15:31,000 --> 01:15:39,000
 And conceptually what happens is that you basically go through the set of merges that you've made.
 
-834
+835
 01:15:39,000 --> 01:15:44,000
 And then you just apply the merges to your string.
 
-835
-01:15:44,000 --> 01:15:47,000
-Okay. Let me actually now step through that code.
-
 836
+01:15:44,000 --> 01:15:47,000
+Okay. Let me actually not step through that code.
+
+837
 01:15:47,000 --> 01:15:51,000
 So that will give you a sequence.
 
-837
+838
 01:15:51,000 --> 01:15:56,000
 So this is a sequence encoding of the Quick Brown Fox.
 
-838
+839
 01:15:56,000 --> 01:16:00,000
 And then when you decode it, you get the same thing back.
 
-839
+840
 01:16:00,000 --> 01:16:05,000
 So, I went through this a bit fast, just in the interest of time.
 
-840
-01:16:05,000 --> 01:16:11,000
-我会说，这个实现是可行的。
-
 841
-01:16:11,000 --> 01:16:15,000
-这是一个完整的流水线并行实现。它极其缓慢。
+01:16:05,000 --> 01:16:11,000
+I will say that this implementation works.
 
 842
-01:16:15,000 --> 01:16:22,000
-所以在作业一中，我们会要求你把它做得更快。
+01:16:11,000 --> 01:16:15,000
+This is a full-blown PP implementation. It's extremely slow.
 
 843
-01:16:22,000 --> 01:16:28,000
-目前 encode 会遍历所有的合并操作，
+01:16:15,000 --> 01:16:22,000
+So in assignment one, we're going to ask you to basically make it faster.
 
 844
-01:16:28,000 --> 01:16:32,000
-这非常慢，因为你的合并数量本质上就是
+01:16:22,000 --> 01:16:28,000
+So currently encode loops over all the merges,
 
 845
-01:16:32,000 --> 01:16:36,000
-词表大小减去 256。
+01:16:28,000 --> 01:16:32,000
+which is very slow because the number of merges you have is essentially,
 
 846
-01:16:36,000 --> 01:16:40,000
-所以你只想遍历那些真正重要的合并操作。
+01:16:32,000 --> 01:16:36,000
+essentially, the vocab size minus 256.
 
 847
-01:16:40,000 --> 01:16:44,000
-你需要构建一些索引来实现这一点。
+01:16:36,000 --> 01:16:40,000
+So you only want to loop over the merges that matter.
 
 848
-01:16:44,000 --> 01:16:48,000
-关于特殊 token 还有一些细节。
+01:16:40,000 --> 01:16:44,000
+And you have to build some indices to make that happen.
 
 849
-01:16:48,000 --> 01:16:51,000
-概念上不深奥，但对构建现代 tokenizer 很重要。
+01:16:44,000 --> 01:16:48,000
+There's some details around special tokens.
 
 850
-01:16:51,000 --> 01:16:56,000
-另一件事是，为了简洁，我此前展示 tokenizer 时，
+01:16:48,000 --> 01:16:51,000
+Conceptually not deep, but important to building a modern tokenizer.
 
 851
-01:16:56,000 --> 01:16:59,000
-是假设你拿一整个字符串然后去 tokenize 它。
+01:16:51,000 --> 01:16:56,000
+Another thing is that I've presented the tokenizer just for simplicity,
 
 852
-01:16:59,000 --> 01:17:08,000
-实际上发生的是你把文本切分成多个块，然后对每个块应用 tokenizer。
+01:16:56,000 --> 01:16:59,000
+as you take an entire string and then you try to tokenize it.
 
 853
-01:17:08,000 --> 01:17:10,000
-这样会快得多。
+01:16:59,000 --> 01:17:08,000
+Really what happens is that you break up your text into chunks and then you apply tokenizer on each chunk.
 
 854
-01:17:10,000 --> 01:17:15,000
-然后尽量让它尽可能快。
+01:17:08,000 --> 01:17:10,000
+So that's going to be much faster.
 
 855
-01:17:15,000 --> 01:17:21,000
-某个时刻你可能会意识到 Python 就是不够快，如果你想用
+01:17:10,000 --> 01:17:15,000
+And then try to make it as fast as possible.
 
 856
-01:17:21,000 --> 01:17:28,000
-你喜欢的语言，比如 Rust 或 C 之类来实现，那就去做吧。
+01:17:15,000 --> 01:17:21,000
+At some point you might realize that Python is just not very fast and if you want to implement it in,
 
 857
-01:17:28,000 --> 01:17:31,000
-好，快速总结一下。
+01:17:21,000 --> 01:17:28,000
+some of your favorite language, Rust or C or something, then go for it.
 
 858
-01:17:31,000 --> 01:17:36,000
-Tokenizer 在字符串和 token 或索引之间转换。
+01:17:28,000 --> 01:17:31,000
+Okay, so quick summary.
 
 859
-01:17:36,000 --> 01:17:44,000
-之前的字符级、字节级、词级方法各自都有很大的不足。
+01:17:31,000 --> 01:17:36,000
+Tokenizers convert between strings and tokens or indices.
 
 860
-01:17:44,000 --> 01:17:53,000
-BPE 是一种有效的数据驱动启发式方法，所以它似乎相当有效。
+01:17:36,000 --> 01:17:44,000
+The previous character base, byte base, word base are highly suboptimal in their own way.
 
 861
-01:17:53,000 --> 01:18:00,000
-就像我之前说的，也许明年我就不用教这个了，但今年我们还得讲 tokenization。
+01:17:44,000 --> 01:17:53,000
+So BPE is an effective heuristic that is data driven so it seems to be pretty effective.
 
 862
-01:18:00,000 --> 01:18:11,000
-即使我们摆脱了 tokenization，我认为任何替代它的方案都必须满足以下性质。
+01:17:53,000 --> 01:18:00,000
+Now, like I said before, maybe next year I don't have to teach this but for this year we're stuck with tokenization.
 
 863
-01:18:11,000 --> 01:18:18,000
-对吧？如果你有模型，transformer 需要作用于序列的某种抽象表示。
+01:18:00,000 --> 01:18:11,000
+Even if we get rid of tokenization though, I think whatever solution replaces it, I think has to satisfy the following properties.
 
 864
-01:18:18,000 --> 01:18:26,000
-这一点在你不只考虑文本，还考虑视频或 DNA 序列时最为明显，
+01:18:11,000 --> 01:18:18,000
+Right? If you have the model, the Transformer needs to operate on some sort of abstractions of the sequence.
 
 865
-01:18:26,000 --> 01:18:34,000
-其中单个字节或单元的信噪比其实相当低。
+01:18:18,000 --> 01:18:26,000
+And this is most evident if you think about not just text but video or DNA sequences where,
 
 866
-01:18:34,000 --> 01:18:40,000
-你必须做某种抽象，把它提升到一个可以进行建模的层次。
+01:18:26,000 --> 01:18:34,000
+the individual bytes or units are actually quite kind of low signal to noise.
 
 867
-01:18:40,000 --> 01:18:45,000
-最后，正如我提到的，块应该是可变的。
+01:18:34,000 --> 01:18:40,000
+And you have to do some sort of abstraction to lift it into a place where you can do modeling on that.
 
 868
-01:18:45,000 --> 01:18:47,000
-你需要自适应计算。
+01:18:40,000 --> 01:18:45,000
+And then finally, as I mentioned, chunks should be kind of variable.
 
 869
-01:18:47,000 --> 01:18:50,000
-并非所有字节都是一样的。
+01:18:45,000 --> 01:18:47,000
+You want adaptive computation.
 
 870
-01:18:50,000 --> 01:18:53,000
-如果你不这样做，我认为你会是次优的。
+01:18:47,000 --> 01:18:50,000
+Not all bytes are created the same.
 
 871
-01:18:53,000 --> 01:18:57,000
-所以我认为任何端到端方案也必须具备这些性质。
+01:18:50,000 --> 01:18:53,000
+And if you don't do that, I think you're going to be suboptimal.
 
 872
-01:18:57,000 --> 01:19:01,000
-好，那么我就讲到这里。
+01:18:53,000 --> 01:18:57,000
+So if any end-to-end solution also, I think, has to have these properties.
 
 873
-01:19:01,000 --> 01:19:05,000
-下周三，我们将开始资源核算这一单元。
+01:18:57,000 --> 01:19:01,000
+Okay. So with that, I will end.
 
 874
-01:19:05,000 --> 01:19:10,000
-这算是一个入门级的系统话题吧。
+01:19:01,000 --> 01:19:05,000
+Next time on Wednesday, we're going to start the unit on resource accounting.
 
 875
-01:19:10,000 --> 01:19:14,000
-之后我们会回到架构，然后从那里继续。
+01:19:05,000 --> 01:19:10,000
+So which is sort of a baby systems, I would say.
 
 876
+01:19:10,000 --> 01:19:14,000
+And then after that, we're going to go back into architectures and go from there.
+
+877
 01:19:14,000 --> 01:19:22,000
-好的。
+All right.
