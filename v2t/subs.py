@@ -6,8 +6,11 @@ import re
 
 
 def _parse_ts(s: str) -> float:
-    h, m, rest = s.split(":")
-    return int(h) * 3600 + int(m) * 60 + float(rest.replace(",", "."))
+    parts = s.replace(",", ".").split(":")
+    if len(parts) == 2:          # WebVTT 允许省掉小时位：12:34.567
+        parts.insert(0, "0")
+    h, m, rest = parts
+    return int(h) * 3600 + int(m) * 60 + float(rest)
 
 
 def _fmt_ts(x: float, sep: str = ",") -> str:
@@ -64,7 +67,9 @@ def _last_sentence_boundary(text: str) -> int | None:
     return hits[-1] if hits else None
 
 
-TS_RE = re.compile(r"(\d+:\d{2}:\d{2}[.,]\d{1,3})\s*-->\s*(\d+:\d{2}:\d{2}[.,]\d{1,3})")
+# 小时位可省：WebVTT 允许 MM:SS.mmm（ffmpeg 转出来的字幕后半段才带小时，
+# 只认 H:MM:SS 会把一小时内整段 cue 静默丢光，文稿直接从 1:00:02 开始）
+TS_RE = re.compile(r"((?:\d+:)?\d{1,2}:\d{2}[.,]\d{1,3})\s*-->\s*((?:\d+:)?\d{1,2}:\d{2}[.,]\d{1,3})")
 # SRT 序号行不在这里挡：它在 cue 之外，已被 cur is None 的逻辑跳过。
 # 若在此匹配 \d+$，会把内容为纯数字的字幕行（"3"）一起吃掉。
 SKIP_RE = re.compile(r"^(WEBVTT|NOTE|STYLE|Kind:|Language:)")

@@ -99,6 +99,8 @@ world
     assert slugify(t % 1) != slugify(t % 2), slugify(t % 1)
     assert _lang_rank(Path("source.zh-CN.vtt")) < _lang_rank(Path("source.en.vtt"))
     assert _lang_rank(Path("source.zh-Hans-ar.vtt")) == len(LANG_PREF)  # 认不出的排最后
+    # B 站的机翻码 ai-zh 得认成中文，不然设了 V2T_LANG 就被丢掉
+    assert _lang_rank(Path("source.ai-zh.vtt")) < _lang_rank(Path("source.en.vtt"))
 
     # 内容为纯数字的字幕不能被当成 SRT 序号吞掉（讲数字识别的课满地都是）
     srt_num = "1\n00:00:01,000 --> 00:00:02,000\n3\n\n2\n00:00:02,000 --> 00:00:03,000\n是一个数字\n"
@@ -108,6 +110,20 @@ world
     assert _fmt_ts(59.9999) == "00:01:00,000", _fmt_ts(59.9999)
     assert _fmt_ts(3661.5) == "01:01:01,500", _fmt_ts(3661.5)
     assert _parse_ts("01:01:01,500") == 3661.5
+    # WebVTT 省掉小时位（ffmpeg 转出来的字幕：一小时内是 MM:SS.mmm，
+    # 之后才带小时）。只认 H:MM:SS 会把前半段 cue 全丢光。
+    short_vtt = """WEBVTT
+
+00:00.920 --> 00:03.000
+前半段
+
+01:00:02.590 --> 01:00:11.729
+后半段
+"""
+    assert parse_subs(short_vtt) == [
+        {"start": 0.92, "end": 3.0, "text": "前半段"},
+        {"start": 3602.59, "end": 3611.729, "text": "后半段"},
+    ], parse_subs(short_vtt)
 
     # 中文间的半角标点转全角，但不能误伤数字和英文
     assert fix_cjk_punct("交叉熵,那么") == "交叉熵，那么"

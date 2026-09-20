@@ -29,6 +29,9 @@ DOC_SYS = f"""你在把一门课的完整字幕整理成一篇能替代看视频
 - 保留老师的例子、比喻、演示步骤、强调语气和第一人称（"我们来看"、"我演示一下"）
 - 保留所有实质内容。宁可长，也不要为了简洁丢信息
 - 只去掉真正的口水词和口吃重复（嗯、啊、那个）
+- 源字幕可能是没标点的机翻／ASR（B 站 ai-zh 那种），带叠字重复（"再再再再"）、
+  同音错字、一逗到底。这些由你在文稿里消化掉：补标点断句、合并重复，写成通顺的
+  书面段落。字幕原文保留在 subs.json / transcript.srt 里，不必照搬进文稿
 - 第一行用 `#` 写一句话标题（出书的章节目录取这行），第二行再用一句话说明这堂课讲什么
 - 用 `##` 分小节，标题写具体，别用"第一部分"这种
 - 听不清或不确定的内容不要编，宁可不写
@@ -276,5 +279,7 @@ def finish_doc(md: str, frames: list[dict], work: Path, title: str,
     print(f"[时间] {len(matches)} 个段落都带上了时间链接"
           + ("（源是本地文件，只显示时间不可跳转）" if not (src or "").startswith("http") else ""))
     if keep:
-        print(f"[配图] 保留 {len(keep)} 张，落在 {len(by_para)}/{len(matches)} 个段落 → {assets}")
+        # 一段最多一张，所以落盘数看 by_para 而不是 keep（keep 是去重前的候选数）
+        print(f"[配图] 模型选中 {len(keep)} 个候选，一段一张后挂上 {len(by_para)} 张"
+              f"（共 {len(matches)} 段）→ {assets}")
     return out

@@ -115,6 +115,8 @@ uv run -m v2t --llm-test             # 用当前后端发送一次真实最小�
 | `V2T_LANG` | 自动检测 | 源语言。设了它，抢字幕时该语言优先于 `LANG_PREF` 里的中文默认值 |
 | `V2T_DOC_LANG` | `中文` | 文稿写成什么语言 |
 | `V2T_RATE_LIMIT` | `2M` | 下载限速，跑满带宽容易招 429；`0` 为不限速 |
+| `V2T_COOKIES` | — | 需要登录的站点（B 站的 CC 字幕等）：浏览器名 `chrome`/`safari`，或 cookies.txt 路径 |
+| `V2T_FORCE_ASR` | — | 置 `1` 无视现成字幕、强制 whisper 转写。现成字幕快但常是机翻/没标点，whisper 通常更准 |
 
 ## 出书
 

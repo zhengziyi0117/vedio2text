@@ -15,8 +15,24 @@ LANG = os.getenv("V2T_LANG") or None  # 源语言，None = whisper 自动检测 
 # 下载限速：跑满带宽容易招来 429（YouTube 字幕接口尤其敏感）。
 # 设成 0 或空串即不限速。
 RATE_LIMIT = os.getenv("V2T_RATE_LIMIT", "2M")
+# 登录态：B 站的 CC/AI 字幕、会员清晰度都要 cookie，匿名拿不到（yt-dlp 会警告
+# "Subtitles are only available when logged in" 然后降级走 ASR）。值填浏览器名
+# （chrome / safari / firefox…）走 --cookies-from-browser，填 cookies.txt 路径走 --cookies。
+COOKIES = os.getenv("V2T_COOKIES", "")
+# 有现成字幕默认就复用（快，B 站字幕秒级；ASR 98 分钟音频要 8 分钟）。
+# 但现成字幕常是机翻/无标点，whisper 转写通常更准 —— 要更准就置 1 强制走 ASR。
+FORCE_ASR = os.getenv("V2T_FORCE_ASR", "").strip() not in ("", "0")
+
+
+def _cookies() -> list:
+    if not COOKIES:
+        return []
+    p = Path(COOKIES).expanduser()
+    return ["--cookies", str(p)] if p.exists() else ["--cookies-from-browser", COOKIES]
+
+
 # 带 list= 的 YouTube 链接默认会拖整个播放列表下来 —— 一个 work 目录只装一讲，必须掐掉
-YTDLP = ["yt-dlp", "--no-playlist"]
+YTDLP = ["yt-dlp", "--no-playlist", *_cookies()]
 VIDEO_EXT = {".mp4", ".mkv", ".webm", ".flv", ".mov", ".avi", ".m4a", ".mp3", ".opus", ".wav"}
 LANG_PREF = ["zh-Hans", "zh-CN", "zh", "zh-TW", "zh-Hant", "en"]
 
@@ -57,6 +73,10 @@ def _pick_source(work: Path, want_video: bool) -> Path | None:
     return None
 
 
+def _sub_files(work: Path) -> list[Path]:
+    return list(work.glob("source*.vtt")) + list(work.glob("source*.srt"))
+
+
 def fetch_video(src: str, work: Path, want_video: bool = False) -> Path:
     """本地文件直接返回；URL 走 yt-dlp + 顺手拽字幕。
 
@@ -81,12 +101,25 @@ def fetch_video(src: str, work: Path, want_video: bool = False) -> Path:
 
     # 字幕是「有则省事、无则 ASR」的降级路径，拿不到不能拖垮主流程。
     # 本地已有字幕文件就不再联网请求一次（YouTube 对这个接口限流很凶）。
-    if not (list(work.glob("source*.vtt")) or list(work.glob("source*.srt"))):
-        r = run([*YTDLP, "--skip-download", "--write-subs", "--write-auto-subs",
-                 "--sub-langs", "zh.*,en.*", "--sub-format", "vtt", "--convert-subs", "vtt",
-                 *_limit_rate(), "-o", str(work / "source.%(ext)s"), src], check=False)
-        if r.returncode:
-            last = next((l for l in reversed(r.stderr.strip().splitlines()) if l.strip()), "")
+    if not _sub_files(work):
+        # 第一趟只要首选语种（--sub-langs 是正则 fullmatch，不是 glob：B 站的
+        # 机翻码 ai-zh 得写 ai-.*，写成 ai-* 匹配不到且返回码仍是 0，静默一条都不下）。
+        # 一条没捞着就退一步抓任意语种 —— 日语课只挂 ja 轨也比回去跑 ASR 强，
+        # 文稿那步会按 V2T_DOC_LANG 翻译。danmaku 是弹幕不是字幕，排掉。
+        for langs in ("zh.*,ai-.*,en.*", "all,-danmaku"):
+            r = run([*YTDLP, "--skip-download", "--write-subs", "--write-auto-subs",
+                     "--sub-langs", langs, "--sub-format", "vtt", "--convert-subs", "vtt",
+                     *_limit_rate(), "-o", str(work / "source.%(ext)s"), src], check=False)
+            if _sub_files(work):
+                if langs != "zh.*,ai-.*,en.*":
+                    print("[下载] 没有首选语种字幕，退而抓了其它语种（文稿会翻译）")
+                break
+        if not _sub_files(work):
+            # 语种没匹配上时 yt-dlp 返回 0 且一个字幕都不下（stderr 还是空的），
+            # 只看返回码会一路静默走 ASR —— 这时那句 "no subtitles for the requested
+            # languages" 在 stdout 里。
+            last = next((l for l in reversed((r.stderr or r.stdout).strip().splitlines())
+                         if l.strip()), "")
             print(f"[下载] 字幕拿不到，走 ASR。原因：{last[:140]}")
 
     got = _pick_source(work, want_video)
@@ -100,7 +133,7 @@ def playlist_entries(url: str) -> list[dict]:
 
     这里故意不用 YTDLP —— 它带 --no-playlist，会把列表压成单个视频。
     """
-    r = run(["yt-dlp", "--flat-playlist",
+    r = run(["yt-dlp", "--flat-playlist", *_cookies(),
              "--print", "%(playlist_index)s\t%(title)s\t%(url)s", url], check=False)
     eps = []
     for line in r.stdout.splitlines():
@@ -118,19 +151,23 @@ def _lang_rank(p: Path) -> int:
     拿机翻当原文再校对，等于白劣化一遍。
     """
     lang = p.stem.split(".", 1)[1] if "." in p.stem else ""
+    # B 站的机翻字幕码是 ai-zh / ai-en，去掉前缀才认得出语种，
+    # 否则设了 V2T_LANG 时它会被当成「认不出的语种」丢掉，白下载一趟。
+    lang = lang.removeprefix("ai-")
     if LANG and (lang == LANG or lang.split("-")[0] == LANG.split("-")[0]):
         return -1
     return LANG_PREF.index(lang) if lang in LANG_PREF else len(LANG_PREF)
 
 
 def existing_subs(video: Path, work: Path) -> list[dict] | None:
-    """按优先级找现成字幕：yt-dlp 下载的 → 同名外挂 → 内嵌。都没有返回 None。"""
-    files = list(work.glob("source*.vtt")) + list(work.glob("source*.srt"))
-    # 指定了源语言就只认那个语种的文件。排序管不着这件事：磁盘上只剩一条
-    # zh.* 时它照样排第一，机翻就被当成原文送下去了 —— 宁可不复用，回去跑 ASR。
-    if LANG:
-        files = [p for p in files if _lang_rank(p) == -1]
-    for p in sorted(files, key=lambda p: (_lang_rank(p), p.name)):
+    """按优先级找现成字幕：yt-dlp 下载的 → 同名外挂 → 内嵌。都没有返回 None。
+
+    V2T_LANG 指定了源语言时它排最前（英文课上的 zh.* 是 YouTube 机翻）；
+    但指定语种一条都没有时不会回去跑 ASR —— 拿剩下的最好那条，
+    文稿那步会按 V2T_DOC_LANG 翻译过来。
+    """
+    files = sorted(_sub_files(work), key=lambda p: (_lang_rank(p), p.name))
+    for p in files:
         segs = parse_subs(p.read_text(errors="ignore"))
         if len(segs) >= 10:
             print(f"[字幕] 用 yt-dlp 字幕 {p.name}")
@@ -148,12 +185,16 @@ def existing_subs(video: Path, work: Path) -> list[dict] | None:
     probe = run(["ffprobe", "-v", "error", "-select_streams", "s",
                  "-show_entries", "stream=index", "-of", "csv=p=0", str(video)], check=False)
     if probe.stdout.strip():
+        # 内嵌字幕轨常是坏的字幕流（尤其 webm/flv 的乱码轨），ffmpeg 抽不出来
+        # 不能把整条流程带走 —— 抽失败就当没有，回去跑 ASR。
         out = work / "embedded.srt"
-        run(["ffmpeg", "-y", "-i", str(video), "-map", "0:s:0", "-c:s", "srt", str(out)])
-        segs = parse_subs(out.read_text(errors="ignore"))
-        if len(segs) >= 10:
-            print(f"[字幕] 用内嵌字幕 {len(segs)} 条")
-            return segs
+        r = run(["ffmpeg", "-y", "-i", str(video), "-map", "0:s:0", "-c:s", "srt", str(out)],
+                check=False)
+        if r.returncode == 0 and out.exists():
+            segs = parse_subs(out.read_text(errors="ignore"))
+            if len(segs) >= 10:
+                print(f"[字幕] 用内嵌字幕 {len(segs)} 条")
+                return segs
     return None
 
 
@@ -177,7 +218,10 @@ def asr(audio: Path) -> list[dict]:
 
 
 def build_subs(video: Path, work: Path) -> list[dict]:
-    segs = existing_subs(video, work)
+    # 字幕源只影响转写这一步，ASR 是不是更准见 AGENTS.md
+    segs = None if FORCE_ASR else existing_subs(video, work)
+    if FORCE_ASR and _sub_files(work):
+        print("[字幕] V2T_FORCE_ASR=1，无视现成字幕，强制转写")
     if segs:
         print(f"[字幕] 复用已有字幕 {len(segs)} 条 cue")
     else:
