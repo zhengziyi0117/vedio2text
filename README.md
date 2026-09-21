@@ -19,15 +19,18 @@
 
 没有设置 V2T_PROVIDER 时，auto 会按 OpenAI API、Anthropic API、Codex CLI 的顺序选择；都没有时明确报错，不会暗中调用 Claude。
 
-需要 macOS（Apple Silicon）+ Python 3.10+。转写走 MLX，Intel Mac / Linux 跑不了。
+需要 Python 3.10+。转写按平台自动挑后端，Apple Silicon 走 MLX，别的平台走 whisper.cpp 或
+faster-whisper，见下面的「转写后端」。
 
 ```bash
-brew install ffmpeg yt-dlp
+brew install ffmpeg yt-dlp        # Linux 用 apt/dnf 装同名包
 
 uv sync && source .venv/bin/activate
 ```
 
-依赖写在 `pyproject.toml`，`uv sync` 会照 `uv.lock` 建好 `.venv`（`mlx-whisper` 带 Apple Silicon 判断，别的平台自动跳过）。之后跑脚本一律 `uv run -m v2t ...`，不用先 activate。
+依赖写在 `pyproject.toml`，`uv sync` 会照 `uv.lock` 建好 `.venv`（`mlx-whisper` 和
+`faster-whisper` 都带平台判断，各自只在对应平台上装，不用手动挑）。之后跑脚本一律
+`uv run -m v2t ...`，不用先 activate。
 
 模型后端通过统一的 `llm()` 接口选择：
 
@@ -38,13 +41,58 @@ uv sync && source .venv/bin/activate
 
 模型名优先取 `V2T_MODEL`，然后按后端取 `OPENAI_MODEL`、`CODEX_MODEL` 或 `ANTHROPIC_MODEL`。
 
-模型权重可选：不手动拉的话，第一次转写会自动从 HuggingFace 下 ~1.6GB（本机 hf-xet 会卡死，见下）。
+MLX 的模型权重可选（Apple Silicon）：不手动拉的话，第一次转写会自动从 HuggingFace 下 ~1.6GB（本机 hf-xet 会卡死，见下）。
 
 ```bash
 ./scripts/fetch_model.sh mlx-community/whisper-large-v3-turbo
 ```
 
 > 为什么不直接让 mlx_whisper 自己下：本机 `huggingface-hub 1.31.0 + hf-xet 1.6.0` 下 safetensors 会创建 0 字节 `.incomplete` 后永久卡死，`HF_HUB_DISABLE_XET=1` 也没用。`fetch_model.sh` 绕开 hf_hub 用 curl 分段拉，脚本会检测到 `models/<名字>/` 并优先用本地权重。
+
+## 转写后端
+
+转写这步按平台自动挑（`v2t/media.py` 的 `asr()`），正常情况下不用配：
+
+| 平台 | 后端 | 备注 |
+| --- | --- | --- |
+| Apple Silicon | `mlx-whisper` | 默认，`large-v3-turbo`，权重见上 |
+| 其他平台 | `whisper.cpp` | 编好了 `build/bin/whisper-cli` 且模型在位就用，可走 CUDA / Vulkan / CPU |
+| 其他平台 | `faster-whisper` | 没编 whisper.cpp 时的兜底，`uv sync` 会装好，CPU 默认 int8 |
+
+三个后端都返回同一个 `[{start, end, text}]`，换后端不影响后面的校对和写稿。
+
+### whisper.cpp（非 Apple Silicon 想用显卡时）
+
+`.tools/whisper.cpp` 是 submodule，而且只存了指向 upstream 的指针 —— 主仓库里没有它的内容，
+得自己拉一次再编（Apple Silicon 用 MLX，不需要这一步）：
+
+```bash
+git submodule update --init .tools/whisper.cpp
+
+# 按显卡选一个；纯 CPU 就把 -DGGML_* 整段去掉
+cmake -B .tools/whisper.cpp/build -S .tools/whisper.cpp -DGGML_VULKAN=ON   # AMD / Intel 核显
+cmake -B .tools/whisper.cpp/build -S .tools/whisper.cpp -DGGML_CUDA=ON     # NVIDIA
+cmake --build .tools/whisper.cpp/build -j
+
+# 模型 ~1.6GB，脚本会存到它自己所在的 models/ 下
+.tools/whisper.cpp/models/download-ggml-model.sh large-v3-turbo
+```
+
+编出来是 `build/bin/whisper-cli`。它和 `models/ggml-large-v3-turbo.bin` 都在默认位置就自动
+生效；想用系统装的 whisper-cli 或把模型放别处，用 `V2T_WHISPER_CPP_BIN` /
+`V2T_WHISPER_CPP_MODEL` 指过去。
+
+### faster-whisper
+
+什么都不用配，`uv sync` 在非 Apple Silicon 上就装了。想上显卡或换模型：
+
+```bash
+export V2T_FW_DEVICE=cuda        # 默认 cpu
+export V2T_FW_COMPUTE=float16    # 默认：cpu 用 int8，显卡用 float16
+export V2T_FW_MODEL=large-v3     # 默认跟着 V2T_ASR_MODEL 里有没有 turbo 走
+```
+
+第一次转写自己下模型，缓存在 `~/.cache/huggingface`。
 
 ## 跑
 
@@ -111,12 +159,17 @@ uv run -m v2t --llm-test             # 用当前后端发送一次真实最小�
 | `V2T_CODEX_TIMEOUT` | `900` | Codex CLI 单次请求超时秒数 |
 | `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` | — | 保留的 Anthropic API 配置 |
 | `ANTHROPIC_BASE_URL` | — | Anthropic 自建网关地址 |
-| `V2T_ASR_MODEL` | `mlx-community/whisper-large-v3-turbo` | HF repo，或 `models/` 下的目录名 |
+| `V2T_ASR_MODEL` | `mlx-community/whisper-large-v3-turbo` | MLX 的 HF repo，或 `models/` 下的目录名 |
 | `V2T_LANG` | 自动检测 | 源语言。设了它，抢字幕时该语言优先于 `LANG_PREF` 里的中文默认值 |
 | `V2T_DOC_LANG` | `中文` | 文稿写成什么语言 |
 | `V2T_RATE_LIMIT` | `2M` | 下载限速，跑满带宽容易招 429；`0` 为不限速 |
 | `V2T_COOKIES` | — | 需要登录的站点（B 站的 CC 字幕等）：浏览器名 `chrome`/`safari`，或 cookies.txt 路径 |
 | `V2T_FORCE_ASR` | — | 置 `1` 无视现成字幕、强制 whisper 转写。现成字幕快但常是机翻/没标点，whisper 通常更准 |
+| `V2T_WHISPER_CPP_BIN` | `.tools/whisper.cpp/build/bin/whisper-cli` | whisper.cpp 可执行文件（非 Apple Silicon 优先用它） |
+| `V2T_WHISPER_CPP_MODEL` | `.tools/whisper.cpp/models/ggml-large-v3-turbo.bin` | whisper.cpp 模型，两个都在位才走它 |
+| `V2T_FW_MODEL` | 跟 `V2T_ASR_MODEL` 推 | faster-whisper 模型名 |
+| `V2T_FW_DEVICE` | `cpu` | faster-whisper 设备，`cuda` 走 N 卡 |
+| `V2T_FW_COMPUTE` | CPU `int8` / GPU `float16` | CTranslate2 计算精度 |
 
 ## 出书
 

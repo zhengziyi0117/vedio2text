@@ -20,9 +20,17 @@ uv run -m v2t <src> --from doc     # 只重跑写稿
 
 产物在 `work/<课程>/`，已存在的步骤产物会自动跳过，删掉对应文件即可强制重跑。
 
+`.tools/whisper.cpp` 是 submodule，主仓库里只有一个指针，内容得 `git submodule update --init`
+自己拉（Apple Silicon 走 MLX，用不到它）。
+
 ## 字幕从哪来
 
 优先级：yt-dlp 下载的字幕 → 同名外挂字幕 → 内嵌字幕 → whisper 转写。
+
+转写后端按平台自动挑（`media.py` 的 `asr()`）：Apple Silicon → mlx-whisper；其他平台 →
+编好的 whisper.cpp（`V2T_WHISPER_CPP_BIN` / `_MODEL` 两个路径都在才用）→ faster-whisper 兜底。
+三个后端都返回同样的 `[{start, end, text}]`，加/换后端别动上层，也别在新代码里直接 import
+某个后端。
 
 **质量上 whisper（mlx large-v3-turbo）通常比现成字幕准**：B 站 AI 字幕（`ai-zh`）、YouTube
 机翻轨普遍没标点、口吃重复多、有同音错字；whisper 带标点、断句正常。现成字幕的唯一优势是快
