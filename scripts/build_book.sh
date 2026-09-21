@@ -43,7 +43,10 @@ for d in $(dirs work); do
   fi
 
   # 系列目录：下面一讲都没有就不算系列
-  n=$(ls -d "$d"*/course.md 2>/dev/null | wc -l)
+  # `|| true` 不能省：set -o pipefail 下 ls 匹配不到文件会返回 2，命令替换把它
+  # 带出来变成赋值语句的退出码，set -e 直接把脚本杀掉 —— 而且一个字都不打印。
+  # 目录被清空（course.md 和子目录都没了）时就会踩到。
+  n=$(ls -d "$d"*/course.md 2>/dev/null | wc -l || true)
   if [ "$n" -eq 0 ]; then
     continue
   fi

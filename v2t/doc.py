@@ -12,7 +12,12 @@ from .subs import fix_cjk_punct
 
 DOC_LANG = os.getenv("V2T_DOC_LANG", "中文")  # 文稿写成什么语言
 ASSETS_DIR = "assets"   # 配图目录（相对 course.md）
-SCENE_THRESHOLD = 0.1   # 场景切换灵敏度（白底幻灯片之间差异小，压低了才不漏）
+# 场景切换灵敏度。同一个分值在不同录制方式下差着量级：CS336 前两讲白底幻灯片
+# 切换能到 0.1 以上，第 4 讲同门课同一套幻灯片却连 0.02 都过不去（淡入切换），
+# 固定在 0.1 会让整堂 86 分钟只抽到 20 帧、最后配图个位数。压到 0.01，
+# 再用 MIN_GAP 去掉动画/播放视频那种等距密集检测。
+SCENE_THRESHOLD = 0.01
+MIN_GAP = 10.0          # 两个候选帧之间至少隔这么久（见 thin_cuts）
 SETTLE_BEFORE = 0.5     # 取切换点前多少秒的帧（切换点那帧多半在过渡动画中间）
 SHEET = 9               # 每张拼图放几帧（3x3）
 SHOT_BATCH = SHEET * 3  # 每批送审的帧数
@@ -81,12 +86,25 @@ def _time_link(sec: float, url: str | None) -> str:
     return t
 
 
+def thin_cuts(cuts: list[float], gap: float = MIN_GAP) -> list[float]:
+    """去掉间隔小于 gap 的密集检测，每个簇只留最早那个。
+
+    阈值压低后，讲者出镜的小动作、幻灯片里的动画、课上播放的视频会给出成串
+    等距"切换"（实测有 5~6 秒一串连着一分钟的），留着只会占满候选名额、
+    把真正的幻灯片切换挤掉。留最早那个：它前面 0.5 秒那帧是上一张完整幻灯片。
+    """
+    out: list[float] = []
+    for t in cuts:
+        if not out or t - out[-1] >= gap:
+            out.append(t)
+    return out
+
+
 def extract_frames(video: Path, work: Path, threshold: float = SCENE_THRESHOLD) -> list[dict]:
     """在场景切换处抽帧。返回 [{t, path}] 按时间升序。
 
     切换点本身是淡入/翻页的中间态（半透明、两页叠着），干净的画面在切换**前**，
-    所以取切换点前 SETTLE 秒那一帧。阈值压得低：这套白底幻灯片的切换，
-    ffmpeg 给的分往往到不了 0.4，漏掉的比误报的多得多。
+    所以取切换点前 SETTLE 秒那一帧。
     """
     out = work / "frames"
     if (work / "frames.txt").exists():
@@ -96,7 +114,7 @@ def extract_frames(video: Path, work: Path, threshold: float = SCENE_THRESHOLD) 
     print(f"[配图] 场景检测抽帧（阈值 {threshold}）…")
     r = run(["ffmpeg", "-v", "info", "-i", str(video), "-an",
              "-vf", f"select='gt(scene,{threshold})',showinfo", "-f", "null", "-"], check=False)
-    cuts = [float(t) for t in re.findall(r"pts_time:([\d.]+)", r.stderr)]
+    cuts = thin_cuts([float(t) for t in re.findall(r"pts_time:([\d.]+)", r.stderr)])
     # 逐个 -ss 取帧：webm 快进够快，比再整段解码一遍便宜
     times = []
     for t in cuts:

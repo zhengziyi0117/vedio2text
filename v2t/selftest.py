@@ -2,7 +2,7 @@
 import asyncio
 from pathlib import Path
 
-from .doc import PARA_RE, _mmss, _shot_pick, _time_link, _to_sec, finish_doc
+from .doc import PARA_RE, _mmss, _shot_pick, _time_link, _to_sec, finish_doc, thin_cuts
 from .llm import _openai_input, _sdk_prompt, json_array
 from .media import LANG_PREF, _lang_rank, slugify
 from .subs import _fmt_ts, _parse_ts, fix_cjk_punct, merge_segments, parse_subs, to_srt
@@ -101,6 +101,10 @@ world
     assert _lang_rank(Path("source.zh-Hans-ar.vtt")) == len(LANG_PREF)  # 认不出的排最后
     # B 站的机翻码 ai-zh 得认成中文，不然设了 V2T_LANG 就被丢掉
     assert _lang_rank(Path("source.ai-zh.vtt")) < _lang_rank(Path("source.en.vtt"))
+    # yt-dlp 的英文轨叫 en-US，得认成英文；否则它跟 ab 并列排最后，
+    # 按文件名排序时 source.ab.vtt 反而赢（第 11、14 讲踩过）
+    assert _lang_rank(Path("source.en-US.vtt")) < _lang_rank(Path("source.ab.vtt"))
+    assert _lang_rank(Path("source.en-US.vtt")) == _lang_rank(Path("source.en.vtt"))
 
     # 内容为纯数字的字幕不能被当成 SRT 序号吞掉（讲数字识别的课满地都是）
     srt_num = "1\n00:00:01,000 --> 00:00:02,000\n3\n\n2\n00:00:02,000 --> 00:00:03,000\n是一个数字\n"
@@ -159,6 +163,13 @@ world
     assert _shot_pick({}, 9) is None          # 缺 n
     assert _shot_pick({"n": "x"}, 9) is None
     assert _shot_pick("3", 9) is None
+
+    # 场景分压到 0.01 后动画会给出成串等距检测，只留每簇最早那个
+    assert thin_cuts([1.0, 1.2, 3.0, 12.0, 12.5, 30.0], gap=10) == [1.0, 12.0, 30.0]
+    assert thin_cuts([], gap=10) == []
+    assert thin_cuts([5.0], gap=10) == [5.0]
+    # 平移不动：后面簇的取舍只跟已接受的最后一个比，不受中间被丢掉的干扰
+    assert thin_cuts([0.0, 9.0, 11.0, 25.0], gap=10) == [0.0, 11.0, 25.0]
 
     # 兜底走 Agent SDK：纯文本直接透传，图文块得包成流式输入的信封才收
     assert _sdk_prompt("hi") == "hi"

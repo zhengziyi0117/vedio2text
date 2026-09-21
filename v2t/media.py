@@ -144,6 +144,22 @@ def playlist_entries(url: str) -> list[dict]:
     return eps
 
 
+def _base_lang(lang: str) -> str:
+    """en-US / en_US → en；zh-Hans、zh-Hans-ar 原样返回。
+
+    yt-dlp 下下来的英文轨叫 en-US，而 LANG_PREF 里只写了 en —— 不归一的话
+    en-US 会跟 ab 这种无关语种并列排最后，再按文件名排序就让 source.ab.vtt
+    赢了（实测 CS336 第 11、14 讲就是这么用上阿布哈兹语机翻的）。
+
+    只认「主语言-两位大写地区」这一种形式：zh-Hans-ar 是「从 ar 翻译来的
+    zh」，内容语言未必是中文，不能当中文轨。
+    """
+    parts = lang.split("-")
+    if len(parts) == 2 and len(parts[1]) == 2 and parts[1].isupper():
+        return parts[0]
+    return lang
+
+
 def _lang_rank(p: Path) -> int:
     """source.zh-CN.vtt → 0（最想要）；认不出的语言排最后。
 
@@ -154,9 +170,14 @@ def _lang_rank(p: Path) -> int:
     # B 站的机翻字幕码是 ai-zh / ai-en，去掉前缀才认得出语种，
     # 否则设了 V2T_LANG 时它会被当成「认不出的语种」丢掉，白下载一趟。
     lang = lang.removeprefix("ai-")
+    base = _base_lang(lang)
     if LANG and (lang == LANG or lang.split("-")[0] == LANG.split("-")[0]):
         return -1
-    return LANG_PREF.index(lang) if lang in LANG_PREF else len(LANG_PREF)
+    # 整串先比，再退到归一后的主语言：zh-Hans 原样命中，en-US 落到 en
+    for cand in (lang, base):
+        if cand in LANG_PREF:
+            return LANG_PREF.index(cand)
+    return len(LANG_PREF)
 
 
 def existing_subs(video: Path, work: Path) -> list[dict] | None:
