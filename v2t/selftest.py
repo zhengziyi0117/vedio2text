@@ -97,10 +97,17 @@ world
     # 长标题不能截到分不出讲次（CS336 那串标题前 60 字符全都一样）
     t = "Stanford CS336 Language Modeling from Scratch | Spring 2026 | Lecture %d: x"
     assert slugify(t % 1) != slugify(t % 2), slugify(t % 1)
-    assert _lang_rank(Path("source.zh-CN.vtt")) < _lang_rank(Path("source.en.vtt"))
+    # 默认英文优先：非英文课挂的 zh.* 是 YouTube 机翻，拿机翻当原文等于白劣化一遍，
+    # 中文由文稿那步翻译。中文课靠 V2T_LANG=zh 顶回去。
+    assert _lang_rank(Path("source.en.vtt")) < _lang_rank(Path("source.zh-Hans.vtt"))
+    assert _lang_rank(Path("source.en-US.vtt")) < _lang_rank(Path("source.zh-CN.vtt"))
+    # en-orig 是 YouTube 标的原始音轨，得和 en 同级，别输给机翻中文轨
+    assert _lang_rank(Path("source.en-orig.vtt")) < _lang_rank(Path("source.zh-Hans.vtt"))
     assert _lang_rank(Path("source.zh-Hans-ar.vtt")) == len(LANG_PREF)  # 认不出的排最后
+    # 从别的语言翻过来的中文轨也不是中文原文，同样排最后
+    assert _lang_rank(Path("source.zh-Hans-en-US.vtt")) == len(LANG_PREF)
     # B 站的机翻码 ai-zh 得认成中文，不然设了 V2T_LANG 就被丢掉
-    assert _lang_rank(Path("source.ai-zh.vtt")) < _lang_rank(Path("source.en.vtt"))
+    assert _lang_rank(Path("source.ai-zh.vtt")) < _lang_rank(Path("source.ab.vtt"))
     # yt-dlp 的英文轨叫 en-US，得认成英文；否则它跟 ab 并列排最后，
     # 按文件名排序时 source.ab.vtt 反而赢（第 11、14 讲踩过）
     assert _lang_rank(Path("source.en-US.vtt")) < _lang_rank(Path("source.ab.vtt"))

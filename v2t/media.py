@@ -34,7 +34,10 @@ def _cookies() -> list:
 # 带 list= 的 YouTube 链接默认会拖整个播放列表下来 —— 一个 work 目录只装一讲，必须掐掉
 YTDLP = ["yt-dlp", "--no-playlist", *_cookies()]
 VIDEO_EXT = {".mp4", ".mkv", ".webm", ".flv", ".mov", ".avi", ".m4a", ".mp3", ".opus", ".wav"}
-LANG_PREF = ["zh-Hans", "zh-CN", "zh", "zh-TW", "zh-Hant", "en"]
+# 拿不到首选语种时的替补顺序。en 排最前：YouTube 上非英文课挂的 zh.* 是机翻，
+# 拿机翻当原文再校对等于白劣化一遍；英文轨信息最全，中文由文稿那步（V2T_DOC_LANG）
+# 翻过来。中文课（B 站的 ai-zh，或本来就是中文的课）设 V2T_LANG=zh 就能顶到最前。
+LANG_PREF = ["en", "zh-Hans", "zh-CN", "zh", "zh-TW", "zh-Hant"]
 
 # v2t/ 的上一层，也就是项目根：models/ 装在这儿
 ROOT = Path(__file__).resolve().parent.parent
@@ -106,12 +109,15 @@ def fetch_video(src: str, work: Path, want_video: bool = False) -> Path:
         # 机翻码 ai-zh 得写 ai-.*，写成 ai-* 匹配不到且返回码仍是 0，静默一条都不下）。
         # 一条没捞着就退一步抓任意语种 —— 日语课只挂 ja 轨也比回去跑 ASR 强，
         # 文稿那步会按 V2T_DOC_LANG 翻译。danmaku 是弹幕不是字幕，排掉。
-        for langs in ("zh.*,ai-.*,en.*", "all,-danmaku"):
+        # en 放最前不只是偏好：yt-dlp 是按这个顺序一条条下的，中途吃 429 就停，
+        # 先请求的先落盘。顺序写成 zh 在前的话，一次限流就把机翻中文轨留下来了
+        # —— CS336 第 8、16 讲就是这么拿到 33% 保留率的机翻稿的。
+        for langs in ("en.*,zh.*,ai-.*", "all,-danmaku"):
             r = run([*YTDLP, "--skip-download", "--write-subs", "--write-auto-subs",
                      "--sub-langs", langs, "--sub-format", "vtt", "--convert-subs", "vtt",
                      *_limit_rate(), "-o", str(work / "source.%(ext)s"), src], check=False)
             if _sub_files(work):
-                if langs != "zh.*,ai-.*,en.*":
+                if langs != "en.*,zh.*,ai-.*":
                     print("[下载] 没有首选语种字幕，退而抓了其它语种（文稿会翻译）")
                 break
         if not _sub_files(work):
@@ -145,26 +151,29 @@ def playlist_entries(url: str) -> list[dict]:
 
 
 def _base_lang(lang: str) -> str:
-    """en-US / en_US → en；zh-Hans、zh-Hans-ar 原样返回。
+    """en-US / en-orig → en；zh-Hans、zh-Hans-ar 原样返回。
 
     yt-dlp 下下来的英文轨叫 en-US，而 LANG_PREF 里只写了 en —— 不归一的话
     en-US 会跟 ab 这种无关语种并列排最后，再按文件名排序就让 source.ab.vtt
     赢了（实测 CS336 第 11、14 讲就是这么用上阿布哈兹语机翻的）。
+    en-orig 是 YouTube 标的「原始音轨」，不归一的话只有它和 zh.* 同时存在时，
+    它会输给机翻中文轨。
 
-    只认「主语言-两位大写地区」这一种形式：zh-Hans-ar 是「从 ar 翻译来的
-    zh」，内容语言未必是中文，不能当中文轨。
+    只认这两种形式：其余如 zh-Hans-ar 是「从 ar 翻译来的 zh」，
+    内容语言未必是中文，不能当中文轨。
     """
     parts = lang.split("-")
+    if parts[-1] == "orig":
+        return parts[0]
     if len(parts) == 2 and len(parts[1]) == 2 and parts[1].isupper():
         return parts[0]
     return lang
 
 
 def _lang_rank(p: Path) -> int:
-    """source.zh-CN.vtt → 0（最想要）；认不出的语言排最后。
+    """source.en.vtt → 0（最想要）；认不出的语言排最后。
 
-    V2T_LANG 指定了源语言就以它为准：英文课上的 zh.* 是 YouTube 机翻，
-    拿机翻当原文再校对，等于白劣化一遍。
+    V2T_LANG 指定了源语言就以它为准，优先级高于 LANG_PREF。
     """
     lang = p.stem.split(".", 1)[1] if "." in p.stem else ""
     # B 站的机翻字幕码是 ai-zh / ai-en，去掉前缀才认得出语种，
@@ -183,9 +192,8 @@ def _lang_rank(p: Path) -> int:
 def existing_subs(video: Path, work: Path) -> list[dict] | None:
     """按优先级找现成字幕：yt-dlp 下载的 → 同名外挂 → 内嵌。都没有返回 None。
 
-    V2T_LANG 指定了源语言时它排最前（英文课上的 zh.* 是 YouTube 机翻）；
-    但指定语种一条都没有时不会回去跑 ASR —— 拿剩下的最好那条，
-    文稿那步会按 V2T_DOC_LANG 翻译过来。
+    V2T_LANG 指定了源语言时它排最前；但指定语种一条都没有时不会回去跑 ASR
+    —— 拿剩下的最好那条，文稿那步会按 V2T_DOC_LANG 翻译过来。
     """
     files = sorted(_sub_files(work), key=lambda p: (_lang_rank(p), p.name))
     for p in files:
