@@ -1,0 +1,8972 @@
+[
+ {
+  "start": 6.04,
+  "end": 8.98,
+  "text": "We will get started."
+ },
+ {
+  "start": 8.98,
+  "end": 12.64,
+  "text": "Well, temporarily leaving the land of systems"
+ },
+ {
+  "start": 12.64,
+  "end": 16.239,
+  "text": "to talk about more deep learning stuff, which we're"
+ },
+ {
+  "start": 16.239,
+  "end": 19.28,
+  "text": "going to have two lectures on scaling law and scaling"
+ },
+ {
+  "start": 19.28,
+  "end": 20.42,
+  "text": "law adjacent phenomena."
+ },
+ {
+  "start": 20.42,
+  "end": 22.56,
+  "text": "So today is going to be the basics."
+ },
+ {
+  "start": 22.56,
+  "end": 25.26,
+  "text": "We're just going to talk about pretty basic scaling law stuff."
+ },
+ {
+  "start": 25.26,
+  "end": 26.62,
+  "text": "Some of the classic works."
+ },
+ {
+  "start": 26.62,
+  "end": 29.2,
+  "text": "How does the basic idea of scaling laws"
+ },
+ {
+  "start": 29.2,
+  "end": 33.12,
+  "text": "connect to maybe things you know about from machine learning 101."
+ },
+ {
+  "start": 33.12,
+  "end": 35.12,
+  "text": "And then in two lectures, we're going"
+ },
+ {
+  "start": 35.12,
+  "end": 37.56,
+  "text": "to do the more advanced version of the scaling laws"
+ },
+ {
+  "start": 37.56,
+  "end": 39.36,
+  "text": "lecture, where we're going to basically go"
+ },
+ {
+  "start": 39.36,
+  "end": 46.0,
+  "text": "into a bunch of modern, open model tech reports, things"
+ },
+ {
+  "start": 46.0,
+  "end": 48.165,
+  "text": "like mu p and other parameter initializations,"
+ },
+ {
+  "start": 48.165,
+  "end": 50.04,
+  "text": "and this year I'm going to throw in some more"
+ },
+ {
+  "start": 50.04,
+  "end": 51.06,
+  "text": "stuff for optimizers."
+ },
+ {
+  "start": 51.06,
+  "end": 52.56,
+  "text": "So there will be an advanced version"
+ },
+ {
+  "start": 52.56,
+  "end": 54.893,
+  "text": "of this that will try to really get to the cutting edge."
+ },
+ {
+  "start": 54.893,
+  "end": 58.84,
+  "text": "Today, we're going to start with all the really basic stuff."
+ },
+ {
+  "start": 58.84,
+  "end": 61.362,
+  "text": "And due to some scheduling constraints,"
+ },
+ {
+  "start": 61.362,
+  "end": 63.07,
+  "text": "next lecture will be inference, so you're"
+ },
+ {
+  "start": 63.07,
+  "end": 64.129,
+  "text": "going to go back and forth."
+ },
+ {
+  "start": 64.129,
+  "end": 66.712,
+  "text": "You're going to do scaling laws and inference and then scaling"
+ },
+ {
+  "start": 66.712,
+  "end": 69.15,
+  "text": "laws again."
+ },
+ {
+  "start": 69.15,
+  "end": 73.97,
+  "text": "So scaling laws is really the following scenario in some ways,"
+ },
+ {
+  "start": 73.97,
+  "end": 77.05,
+  "text": "or you run into it very quickly once you run into this scenario."
+ },
+ {
+  "start": 77.05,
+  "end": 79.83,
+  "text": "So you have your very wealthy friend,"
+ },
+ {
+  "start": 79.83,
+  "end": 82.87,
+  "text": "who has given you 10,000 B200s for a month,"
+ },
+ {
+  "start": 82.87,
+  "end": 85.95,
+  "text": "and he or she has asked you to build a very good open source"
+ },
+ {
+  "start": 85.95,
+  "end": 86.65,
+  "text": "language model."
+ },
+ {
+  "start": 86.65,
+  "end": 90.07,
+  "text": "They would like to get something out of those B200s."
+ },
+ {
+  "start": 90.07,
+  "end": 92.45,
+  "text": "And so you've already put together your infra team."
+ },
+ {
+  "start": 92.45,
+  "end": 95.83,
+  "text": "That's your assignment to buddies."
+ },
+ {
+  "start": 95.83,
+  "end": 98.295,
+  "text": "And you have, let's say a good pre-training data set."
+ },
+ {
+  "start": 98.295,
+  "end": 100.17,
+  "text": "That's going to be the assignment after this,"
+ },
+ {
+  "start": 100.17,
+  "end": 102.07,
+  "text": "but let's say you already have that."
+ },
+ {
+  "start": 102.07,
+  "end": 104.37,
+  "text": "And then you're going to go and train a big model,"
+ },
+ {
+  "start": 104.37,
+  "end": 107.43,
+  "text": "but there's lots of choices in training a big model-- all"
+ },
+ {
+  "start": 107.43,
+  "end": 110.83,
+  "text": "the assignments, the earlier lecture two stuff that we had"
+ },
+ {
+  "start": 110.83,
+  "end": 114.35,
+  "text": "earlier, where you have questions like what architecture"
+ },
+ {
+  "start": 114.35,
+  "end": 114.93,
+  "text": "should I use?"
+ },
+ {
+  "start": 114.93,
+  "end": 116.72999999999999,
+  "text": "What should my hyperparameters be?"
+ },
+ {
+  "start": 116.72999999999999,
+  "end": 118.58,
+  "text": "And it's very scary to run these things"
+ },
+ {
+  "start": 118.58,
+  "end": 120.54,
+  "text": "on a run that is basically, potentially"
+ },
+ {
+  "start": 120.54,
+  "end": 123.7,
+  "text": "millions of dollars in cost, so how"
+ },
+ {
+  "start": 123.7,
+  "end": 126.4,
+  "text": "do you really take this idea of scaling up very seriously?"
+ },
+ {
+  "start": 126.4,
+  "end": 130.94,
+  "text": "How do you make sure that your big run is actually successful?"
+ },
+ {
+  "start": 130.94,
+  "end": 133.46,
+  "text": "So of these many choices, some of which"
+ },
+ {
+  "start": 133.46,
+  "end": 135.605,
+  "text": "you're going to just copy out of the literature."
+ },
+ {
+  "start": 135.605,
+  "end": 137.98,
+  "text": "The stuff that I talked about earlier in the architecture"
+ },
+ {
+  "start": 137.98,
+  "end": 143.12,
+  "text": "lecture is really about, well adopted best practices,"
+ },
+ {
+  "start": 143.12,
+  "end": 146.07999999999998,
+  "text": "and you will probably just pick some of these out of a hat."
+ },
+ {
+  "start": 146.07999999999998,
+  "end": 149.52,
+  "text": "That's fine, but really, let's say you're at the frontier."
+ },
+ {
+  "start": 149.52,
+  "end": 151.14,
+  "text": "You would like to build something"
+ },
+ {
+  "start": 151.14,
+  "end": 154.46,
+  "text": "that's actually better than the best available models today."
+ },
+ {
+  "start": 154.46,
+  "end": 156.42000000000002,
+  "text": "You have to start really optimizing these."
+ },
+ {
+  "start": 156.42000000000002,
+  "end": 158.7,
+  "text": "You can't just copy the choices of others"
+ },
+ {
+  "start": 158.7,
+  "end": 161.62,
+  "text": "and get something that's better than the state of the art."
+ },
+ {
+  "start": 161.62,
+  "end": 162.88,
+  "text": "So how do we do that?"
+ },
+ {
+  "start": 162.88,
+  "end": 165.34,
+  "text": "Well, that's going to require us to really engage"
+ },
+ {
+  "start": 165.34,
+  "end": 168.22,
+  "text": "with this idea of scaling."
+ },
+ {
+  "start": 168.22,
+  "end": 172.26,
+  "text": "So scaling laws have been one very powerful tool."
+ },
+ {
+  "start": 172.26,
+  "end": 173.98,
+  "text": "You might also call it a paradigm."
+ },
+ {
+  "start": 173.98,
+  "end": 177.02,
+  "text": "Scaling laws, if you talk to some people who are really"
+ },
+ {
+  "start": 177.02,
+  "end": 179.07999999999998,
+  "text": "in these big labs doing scaling work,"
+ },
+ {
+  "start": 179.07999999999998,
+  "end": 180.593,
+  "text": "it's almost kind of a way of life."
+ },
+ {
+  "start": 180.593,
+  "end": 182.76,
+  "text": "They're like, we really believe in the scaling laws."
+ },
+ {
+  "start": 182.76,
+  "end": 184.42,
+  "text": "It's almost a belief, and you'll see"
+ },
+ {
+  "start": 184.42,
+  "end": 188.82,
+  "text": "why scaling laws can sometimes be quite tricky objects."
+ },
+ {
+  "start": 188.82,
+  "end": 191.7,
+  "text": "But really, scaling laws are these simple, predictive rules"
+ },
+ {
+  "start": 191.7,
+  "end": 196.2,
+  "text": "of how to go from small scale model performance and behavior,"
+ },
+ {
+  "start": 196.2,
+  "end": 199.44,
+  "text": "and to try to extrapolate them up to large scale behavior."
+ },
+ {
+  "start": 199.44,
+  "end": 203.62,
+  "text": "And so the basic naive way to approach model training"
+ },
+ {
+  "start": 203.62,
+  "end": 205.48,
+  "text": "might be to say, I have a big budget,"
+ },
+ {
+  "start": 205.48,
+  "end": 208.46,
+  "text": "I'm going to do multiple training runs on these very"
+ },
+ {
+  "start": 208.46,
+  "end": 210.46,
+  "text": "big runs, and I'm going to tune hyperparameters"
+ },
+ {
+  "start": 210.46,
+  "end": 213.26,
+  "text": "on those big runs, but that's very wasteful."
+ },
+ {
+  "start": 213.26,
+  "end": 214.74,
+  "text": "So instead, what I would like to do"
+ },
+ {
+  "start": 214.74,
+  "end": 218.18,
+  "text": "is I would like to do all of my optimization at the small scale"
+ },
+ {
+  "start": 218.18,
+  "end": 220.1,
+  "text": "and have some simple rule that allows"
+ },
+ {
+  "start": 220.1,
+  "end": 223.14,
+  "text": "me to extrapolate small scale behaviors to large scale"
+ },
+ {
+  "start": 223.14,
+  "end": 223.96,
+  "text": "behaviors."
+ },
+ {
+  "start": 223.96,
+  "end": 225.94,
+  "text": "And if the small scale and large scale"
+ },
+ {
+  "start": 225.94,
+  "end": 230.3,
+  "text": "are connected by some very simple, robust connections"
+ },
+ {
+  "start": 230.3,
+  "end": 232.1,
+  "text": "like regularities of some kind, then you"
+ },
+ {
+  "start": 232.1,
+  "end": 235.41,
+  "text": "would have confidence in this kind of new scaling approach"
+ },
+ {
+  "start": 235.41,
+  "end": 237.17000000000002,
+  "text": "to optimizing your system."
+ },
+ {
+  "start": 237.17000000000002,
+  "end": 238.81,
+  "text": "And that's really what today is all"
+ },
+ {
+  "start": 238.81,
+  "end": 244.79,
+  "text": "going to be about-- this engineering view of a scaling law."
+ },
+ {
+  "start": 244.79,
+  "end": 247.89,
+  "text": "And to start with, I'm going to talk a little bit"
+ },
+ {
+  "start": 247.89,
+  "end": 250.49,
+  "text": "about background, because scaling laws are very"
+ },
+ {
+  "start": 250.49,
+  "end": 254.57,
+  "text": "interesting in that not only are they the newest paradigm, that's"
+ },
+ {
+  "start": 254.57,
+  "end": 257.329,
+  "text": "how a lot of these models are designed and thought,"
+ },
+ {
+  "start": 257.329,
+  "end": 261.47,
+  "text": "but also they connect very closely to very classical ideas."
+ },
+ {
+  "start": 261.47,
+  "end": 265.923,
+  "text": "So if you're a person that's a machine learning theorist,"
+ },
+ {
+  "start": 265.923,
+  "end": 268.09,
+  "text": "actually, there are some things that you will really"
+ },
+ {
+  "start": 268.09,
+  "end": 270.97,
+  "text": "feel at home with in some ways, so they're like empirical sample"
+ },
+ {
+  "start": 270.97,
+  "end": 272.09000000000003,
+  "text": "complexities."
+ },
+ {
+  "start": 272.09000000000003,
+  "end": 275.73,
+  "text": "And then I'll talk through the history of scaling laws of one"
+ },
+ {
+  "start": 275.73,
+  "end": 278.365,
+  "text": "kind and show you that this is not something that's really new."
+ },
+ {
+  "start": 278.365,
+  "end": 280.49,
+  "text": "It's something with actually quite a bit of history"
+ },
+ {
+  "start": 280.49,
+  "end": 284.09000000000003,
+  "text": "and research done to it."
+ },
+ {
+  "start": 284.09000000000003,
+  "end": 287.27,
+  "text": "So I really, really had to put some math into my slides."
+ },
+ {
+  "start": 287.27,
+  "end": 290.69,
+  "text": "I really feel the need to do so, but one"
+ },
+ {
+  "start": 290.69,
+  "end": 292.53,
+  "text": "of the things that is very interesting"
+ },
+ {
+  "start": 292.53,
+  "end": 295.32,
+  "text": "is that for the longest time, machine learning"
+ },
+ {
+  "start": 295.32,
+  "end": 298.6,
+  "text": "has thought about this question of how will my model perform,"
+ },
+ {
+  "start": 298.6,
+  "end": 300.3,
+  "text": "especially from a theory perspective?"
+ },
+ {
+  "start": 300.3,
+  "end": 304.28,
+  "text": "I have this model class, how good is my model going to be?"
+ },
+ {
+  "start": 304.28,
+  "end": 306.84,
+  "text": "And generalization bound is the theorists answer"
+ },
+ {
+  "start": 306.84,
+  "end": 309.4,
+  "text": "to this question, so you have your error,"
+ },
+ {
+  "start": 309.4,
+  "end": 311.0,
+  "text": "over some finite hypothesis class,"
+ },
+ {
+  "start": 311.0,
+  "end": 312.417,
+  "text": "and you say, oh, my error is going"
+ },
+ {
+  "start": 312.417,
+  "end": 315.6,
+  "text": "to be at most this much worse than the model's"
+ },
+ {
+  "start": 315.6,
+  "end": 317.04,
+  "text": "performance on my training set."
+ },
+ {
+  "start": 317.04,
+  "end": 320.0,
+  "text": "This is classic generalization bounds."
+ },
+ {
+  "start": 320.0,
+  "end": 322.24,
+  "text": "You can write this down for more complex classes"
+ },
+ {
+  "start": 322.24,
+  "end": 324.32,
+  "text": "like smooth densities or whatever,"
+ },
+ {
+  "start": 324.32,
+  "end": 326.28,
+  "text": "but importantly, not only does this"
+ },
+ {
+  "start": 326.28,
+  "end": 328.48,
+  "text": "tell you some of performance, notice"
+ },
+ {
+  "start": 328.48,
+  "end": 331.88,
+  "text": "that these bounds are often dependent on the sample size."
+ },
+ {
+  "start": 331.88,
+  "end": 336.72,
+  "text": "And so this is telling you, well, this a theoretical upper bound on my loss values"
+ },
+ {
+  "start": 336.72,
+  "end": 339.22,
+  "text": "as a function of how my training set grows."
+ },
+ {
+  "start": 339.22,
+  "end": 342.4,
+  "text": "And in some ways, that's very closely related to this idea"
+ },
+ {
+  "start": 342.4,
+  "end": 345.86,
+  "text": "of what happens as I scale up the amount of data that I have?"
+ },
+ {
+  "start": 345.86,
+  "end": 347.76,
+  "text": "Those are closely related questions,"
+ },
+ {
+  "start": 347.76,
+  "end": 351.59000000000003,
+  "text": "where you might believe me that that's true."
+ },
+ {
+  "start": 351.59000000000003,
+  "end": 355.03,
+  "text": "And if you try to figure out what is the very first scaling"
+ },
+ {
+  "start": 355.03,
+  "end": 356.40999999999997,
+  "text": "law paper that exists?"
+ },
+ {
+  "start": 356.40999999999997,
+  "end": 358.95,
+  "text": "It turns out you can go back quite far."
+ },
+ {
+  "start": 358.95,
+  "end": 362.75,
+  "text": "You can go back to Bell Labs and Corina Cortez and Vladimir"
+ },
+ {
+  "start": 362.75,
+  "end": 366.75,
+  "text": "Vapnik and these folks that were doing very serious theory"
+ },
+ {
+  "start": 366.75,
+  "end": 370.55,
+  "text": "work on machine learning, ask this question, well,"
+ },
+ {
+  "start": 370.55,
+  "end": 372.99,
+  "text": "training classifiers on a really large data set"
+ },
+ {
+  "start": 372.99,
+  "end": 374.65,
+  "text": "is often very expensive."
+ },
+ {
+  "start": 374.65,
+  "end": 376.53,
+  "text": "We would like to avoid doing that,"
+ },
+ {
+  "start": 376.53,
+  "end": 379.87,
+  "text": "and to do so maybe we can just fit classifiers on a smaller"
+ },
+ {
+  "start": 379.87,
+  "end": 383.39,
+  "text": "sample, fit a curve to how their error rates decay,"
+ },
+ {
+  "start": 383.39,
+  "end": 385.63,
+  "text": "and use that as a way to estimate their performance."
+ },
+ {
+  "start": 385.63,
+  "end": 389.99,
+  "text": "That's almost literally a data scaling law back in 1993."
+ },
+ {
+  "start": 389.99,
+  "end": 393.19,
+  "text": "So this idea, at the very least, thinking"
+ },
+ {
+  "start": 393.19,
+  "end": 394.71,
+  "text": "about how your model's performance"
+ },
+ {
+  "start": 394.71,
+  "end": 397.43,
+  "text": "changes as a function of data set size is just a very"
+ },
+ {
+  "start": 397.43,
+  "end": 400.31,
+  "text": "classical one, and there's a lot of work that"
+ },
+ {
+  "start": 400.31,
+  "end": 401.97,
+  "text": "supports this kind of idea."
+ },
+ {
+  "start": 401.97,
+  "end": 404.65,
+  "text": "I just want to connect this to some of these older ideas"
+ },
+ {
+  "start": 404.65,
+  "end": 407.95,
+  "text": "so you don't really think of scaling laws as this very"
+ },
+ {
+  "start": 407.95,
+  "end": 409.59000000000003,
+  "text": "new, purely neural thing."
+ },
+ {
+  "start": 409.59000000000003,
+  "end": 413.07,
+  "text": "It's an idea that has a lot of roots in empirical machine"
+ },
+ {
+  "start": 413.07,
+  "end": 416.79,
+  "text": "learning, and also connections to theoretical machine learning."
+ },
+ {
+  "start": 416.79,
+  "end": 419.55,
+  "text": "And if you start to look at the history of this,"
+ },
+ {
+  "start": 419.55,
+  "end": 423.15,
+  "text": "there's a lot of people that have said, isn't it the case"
+ },
+ {
+  "start": 423.15,
+  "end": 426.29,
+  "text": "that maybe instead of spending money on algorithm development,"
+ },
+ {
+  "start": 426.29,
+  "end": 428.37,
+  "text": "maybe we should just go collect more data,"
+ },
+ {
+  "start": 428.37,
+  "end": 431.83,
+  "text": "because if we plot how the performance of our systems"
+ },
+ {
+  "start": 431.83,
+  "end": 434.39,
+  "text": "behave as a function of the amount of data that we have,"
+ },
+ {
+  "start": 434.39,
+  "end": 437.67,
+  "text": "it turns out that they are all increasing or improving"
+ },
+ {
+  "start": 437.67,
+  "end": 438.61,
+  "text": "in predictable ways?"
+ },
+ {
+  "start": 438.61,
+  "end": 444.75,
+  "text": "Banko and Brill, is one of the canonical NLP references in how"
+ },
+ {
+  "start": 444.75,
+  "end": 447.55,
+  "text": "the amount of data and thinking about scaling"
+ },
+ {
+  "start": 447.55,
+  "end": 450.79,
+  "text": "is a really valid way of improving system performance,"
+ },
+ {
+  "start": 450.79,
+  "end": 454.51,
+  "text": "so there's lots of ways of thinking about this."
+ },
+ {
+  "start": 454.51,
+  "end": 458.75,
+  "text": "And there's also work by other NLP folks"
+ },
+ {
+  "start": 458.75,
+  "end": 460.45,
+  "text": "like Kolachina et al. in 2012."
+ },
+ {
+  "start": 460.45,
+  "end": 462.63,
+  "text": "This is one of the earlier works on different kinds"
+ },
+ {
+  "start": 462.63,
+  "end": 465.39,
+  "text": "of functional forms for scaling laws, where once again, they're"
+ },
+ {
+  "start": 465.39,
+  "end": 467.87,
+  "text": "increasing the amount of data that they're using to train."
+ },
+ {
+  "start": 467.87,
+  "end": 471.38,
+  "text": "In this case, machine translation systems or BLEU scores."
+ },
+ {
+  "start": 471.38,
+  "end": 474.5,
+  "text": "And they're asking like, what is the right functional form"
+ },
+ {
+  "start": 474.5,
+  "end": 477.06,
+  "text": "for how a model's performance behaves"
+ },
+ {
+  "start": 477.06,
+  "end": 479.68,
+  "text": "as a function of increased data amount?"
+ },
+ {
+  "start": 479.68,
+  "end": 482.96,
+  "text": "And they maybe surprisingly or not surprisingly,"
+ },
+ {
+  "start": 482.96,
+  "end": 487.66,
+  "text": "end up with the same power laws, which is pow 3 and 4 as really"
+ },
+ {
+  "start": 487.66,
+  "end": 488.4,
+  "text": "we do today."
+ },
+ {
+  "start": 488.4,
+  "end": 490.02,
+  "text": "For the rest of the lecture, you're"
+ },
+ {
+  "start": 490.02,
+  "end": 494.06,
+  "text": "going to keep seeing essentially these polynomial functions, pow"
+ },
+ {
+  "start": 494.06,
+  "end": 497.08,
+  "text": "3 and pow 4 as I talk about scaling laws."
+ },
+ {
+  "start": 497.08,
+  "end": 501.26,
+  "text": "And we knew about a lot of this back in the 2010's"
+ },
+ {
+  "start": 501.26,
+  "end": 503.38,
+  "text": "that these kinds of functional forms"
+ },
+ {
+  "start": 503.38,
+  "end": 507.94,
+  "text": "were very predictive of model behavior as we scaled them up."
+ },
+ {
+  "start": 507.94,
+  "end": 511.82,
+  "text": "And then finally, I really like mentioning this paper because"
+ },
+ {
+  "start": 511.82,
+  "end": 513.7,
+  "text": "for whatever reason, they don't get,"
+ },
+ {
+  "start": 513.7,
+  "end": 515.179,
+  "text": "or Hestness et al. don't get cited"
+ },
+ {
+  "start": 515.179,
+  "end": 517.02,
+  "text": "quite as much as they should."
+ },
+ {
+  "start": 517.02,
+  "end": 520.5,
+  "text": "The origins of neural scaling, I would point back"
+ },
+ {
+  "start": 520.5,
+  "end": 522.58,
+  "text": "to Hestness in 2017."
+ },
+ {
+  "start": 522.58,
+  "end": 524.82,
+  "text": "Really a very forward looking work"
+ },
+ {
+  "start": 524.82,
+  "end": 527.53,
+  "text": "in many ways that built these scaling"
+ },
+ {
+  "start": 527.53,
+  "end": 529.57,
+  "text": "laws as a function of data set size"
+ },
+ {
+  "start": 529.57,
+  "end": 532.37,
+  "text": "for a wide variety of systems, different kinds of speech"
+ },
+ {
+  "start": 532.37,
+  "end": 535.01,
+  "text": "recognition systems, machine translation systems, language"
+ },
+ {
+  "start": 535.01,
+  "end": 538.53,
+  "text": "models, and they showed that these things follow"
+ },
+ {
+  "start": 538.53,
+  "end": 542.29,
+  "text": "these nice polynomial trends across a really large number"
+ },
+ {
+  "start": 542.29,
+  "end": 544.33,
+  "text": "of domains."
+ },
+ {
+  "start": 544.33,
+  "end": 545.93,
+  "text": "And it was really ahead of its time,"
+ },
+ {
+  "start": 545.93,
+  "end": 549.97,
+  "text": "because 2017 was long before some of the earlier OpenAI"
+ },
+ {
+  "start": 549.97,
+  "end": 552.89,
+  "text": "scaling laws and so on in the 2020s."
+ },
+ {
+  "start": 552.89,
+  "end": 555.23,
+  "text": "And they talked about stuff that we talk about today,"
+ },
+ {
+  "start": 555.23,
+  "end": 558.25,
+  "text": "like emergence, where suddenly models"
+ },
+ {
+  "start": 558.25,
+  "end": 559.97,
+  "text": "might show certain kinds of capabilities"
+ },
+ {
+  "start": 559.97,
+  "end": 562.53,
+  "text": "because accuracy is a much more discontinuous measure"
+ },
+ {
+  "start": 562.53,
+  "end": 564.25,
+  "text": "than losses."
+ },
+ {
+  "start": 564.25,
+  "end": 567.49,
+  "text": "And really, scaling by compute, that if we have systems"
+ },
+ {
+  "start": 567.49,
+  "end": 570.65,
+  "text": "that scale predictably to large training data, then"
+ },
+ {
+  "start": 570.65,
+  "end": 572.95,
+  "text": "really compute is going to be really important."
+ },
+ {
+  "start": 572.95,
+  "end": 576.33,
+  "text": "And then finally, since we're scaling by compute, well,"
+ },
+ {
+  "start": 576.33,
+  "end": 579.39,
+  "text": "speed and systems optimization is going to turn into accuracy."
+ },
+ {
+  "start": 579.39,
+  "end": 582.07,
+  "text": "So in some ways, a lot of the things that we see today,"
+ },
+ {
+  "start": 582.07,
+  "end": 585.24,
+  "text": "like the phenomena of system scaling and so on,"
+ },
+ {
+  "start": 585.24,
+  "end": 588.44,
+  "text": "we could have really known, or I could have known in 2017"
+ },
+ {
+  "start": 588.44,
+  "end": 592.28,
+  "text": "had I read and thought about a lot of these scaling laws papers"
+ },
+ {
+  "start": 592.28,
+  "end": 594.36,
+  "text": "back and thought about them more seriously."
+ },
+ {
+  "start": 594.36,
+  "end": 600.2,
+  "text": "So to mention that paper in every one of these scaling law"
+ },
+ {
+  "start": 600.2,
+  "end": 603.76,
+  "text": "lectures I give, just to say, a lot of these phenomena"
+ },
+ {
+  "start": 603.76,
+  "end": 606.08,
+  "text": "were known far before the modern era,"
+ },
+ {
+  "start": 606.08,
+  "end": 610.08,
+  "text": "or the Modern Language modeling era in that it's"
+ },
+ {
+  "start": 610.08,
+  "end": 612.28,
+  "text": "possible to have known the regime that we're"
+ },
+ {
+  "start": 612.28,
+  "end": 614.96,
+  "text": "in even before seeing these large language models."
+ },
+ {
+  "start": 614.96,
+  "end": 617.16,
+  "text": "That's very cool to know."
+ },
+ {
+  "start": 617.16,
+  "end": 620.42,
+  "text": "Any questions about this semi-historical part?"
+ },
+ {
+  "start": 620.42,
+  "end": 621.26,
+  "text": "Yeah."
+ },
+ {
+  "start": 621.26,
+  "end": 628.12,
+  "text": "[INAUDIBLE], and I'm wondering if those are just ored empirically, or is there some way we"
+ },
+ {
+  "start": 628.12,
+  "end": 630.2,
+  "text": "can justify all of this?"
+ },
+ {
+  "start": 630.2,
+  "end": 632.16,
+  "text": "You're asking about these scaling laws,"
+ },
+ {
+  "start": 632.16,
+  "end": 633.68,
+  "text": "and where they come from?"
+ },
+ {
+  "start": 633.68,
+  "end": 637.76,
+  "text": "These are pure curve fitting exercises."
+ },
+ {
+  "start": 637.76,
+  "end": 640.96,
+  "text": "I will talk a little bit about where scaling laws can come from"
+ },
+ {
+  "start": 640.96,
+  "end": 645.12,
+  "text": "and why polynomials are arguably a very natural class of scaling"
+ },
+ {
+  "start": 645.12,
+  "end": 649.98,
+  "text": "laws, but there's no golden rule that these are the only ones."
+ },
+ {
+  "start": 649.98,
+  "end": 652.62,
+  "text": "I will say, though, that in some ways,"
+ },
+ {
+  "start": 652.62,
+  "end": 655.68,
+  "text": "theory provides a very rich place, where the scaling law"
+ },
+ {
+  "start": 655.68,
+  "end": 658.24,
+  "text": "functional forms can come from because theory"
+ },
+ {
+  "start": 658.24,
+  "end": 661.36,
+  "text": "is often thinking a lot about how do error rates decay"
+ },
+ {
+  "start": 661.36,
+  "end": 662.86,
+  "text": "as a function of various objects?"
+ },
+ {
+  "start": 662.86,
+  "end": 664.693,
+  "text": "And they give you candidate functional forms"
+ },
+ {
+  "start": 664.693,
+  "end": 665.46,
+  "text": "of various kinds."
+ },
+ {
+  "start": 665.46,
+  "end": 666.64,
+  "text": "Physicists are also very good at this"
+ },
+ {
+  "start": 666.64,
+  "end": 667.67,
+  "text": "because they thinking about limits,"
+ },
+ {
+  "start": 667.67,
+  "end": 669.34,
+  "text": "like how do the limits behave?"
+ },
+ {
+  "start": 669.34,
+  "end": 672.98,
+  "text": "And that gives you different scaling law functional forms."
+ },
+ {
+  "start": 672.98,
+  "end": 673.48,
+  "text": "Cool."
+ },
+ {
+  "start": 678.64,
+  "end": 681.56,
+  "text": "All right, any other questions?"
+ },
+ {
+  "start": 681.56,
+  "end": 682.84,
+  "text": "Good."
+ },
+ {
+  "start": 682.84,
+  "end": 686.32,
+  "text": "So now I'm going to start talking about more modern neural"
+ },
+ {
+  "start": 686.32,
+  "end": 688.44,
+  "text": "language model scaling, and I'm going"
+ },
+ {
+  "start": 688.44,
+  "end": 691.48,
+  "text": "to start with data scaling laws because to me, they're the most"
+ },
+ {
+  "start": 691.48,
+  "end": 694.32,
+  "text": "simple and natural objects."
+ },
+ {
+  "start": 694.32,
+  "end": 695.96,
+  "text": "Talking about data scaling laws also"
+ },
+ {
+  "start": 695.96,
+  "end": 699.76,
+  "text": "allows me to walk you through very step-by-step on how"
+ },
+ {
+  "start": 699.76,
+  "end": 703.99,
+  "text": "we might guess what the functional form of a scaling law"
+ },
+ {
+  "start": 703.99,
+  "end": 707.15,
+  "text": "might be and why the polynomial form is a natural one."
+ },
+ {
+  "start": 707.15,
+  "end": 709.67,
+  "text": "And then I'm going to start talking about hyper parameters"
+ },
+ {
+  "start": 709.67,
+  "end": 713.07,
+  "text": "and architectures and all sorts of other more exotic objects"
+ },
+ {
+  "start": 713.07,
+  "end": 715.73,
+  "text": "that are going to be harder to justify from intuition,"
+ },
+ {
+  "start": 715.73,
+  "end": 720.91,
+  "text": "but still turn out to have very nice scaling law behaviors."
+ },
+ {
+  "start": 720.91,
+  "end": 724.31,
+  "text": "One of the things that's remarkable about this scaling"
+ },
+ {
+  "start": 724.31,
+  "end": 727.95,
+  "text": "law style analysis has been that these power law relationships"
+ },
+ {
+  "start": 727.95,
+  "end": 732.51,
+  "text": "seem to hold for a huge variety of different factors."
+ },
+ {
+  "start": 732.51,
+  "end": 734.97,
+  "text": "So the basic ones that we see in pre-training,"
+ },
+ {
+  "start": 734.97,
+  "end": 736.762,
+  "text": "and those are going to be the ones that I'm"
+ },
+ {
+  "start": 736.762,
+  "end": 738.23,
+  "text": "going to talk about today."
+ },
+ {
+  "start": 738.23,
+  "end": 741.677,
+  "text": "The usual ones that you see are compute on the x-axis."
+ },
+ {
+  "start": 741.677,
+  "end": 742.51,
+  "text": "This is log compute."
+ },
+ {
+  "start": 742.51,
+  "end": 745.75,
+  "text": "Sorry, on the x-axis, log of test loss on the y-axis,"
+ },
+ {
+  "start": 745.75,
+  "end": 748.05,
+  "text": "or log of the data set on x-axis,"
+ },
+ {
+  "start": 748.05,
+  "end": 750.55,
+  "text": "log of loss on the y-axis, log of parameters"
+ },
+ {
+  "start": 750.55,
+  "end": 753.61,
+  "text": "on x-axis, log of loss, once again, on the y-axis."
+ },
+ {
+  "start": 753.61,
+  "end": 756.15,
+  "text": "So we can get a variety of different x-axes"
+ },
+ {
+  "start": 756.15,
+  "end": 759.13,
+  "text": "that you might think of as resources in the log axis."
+ },
+ {
+  "start": 759.13,
+  "end": 763.1,
+  "text": "All of them linearize log test loss here."
+ },
+ {
+  "start": 763.1,
+  "end": 767.0,
+  "text": "You can see also much more exotic scaling laws."
+ },
+ {
+  "start": 767.0,
+  "end": 770.9,
+  "text": "You can see scaling laws that are basically"
+ },
+ {
+  "start": 770.9,
+  "end": 773.28,
+  "text": "the equivalent to these in downstream benchmarks."
+ },
+ {
+  "start": 773.28,
+  "end": 776.34,
+  "text": "In those cases, you expect to see a sigmoid functional form"
+ },
+ {
+  "start": 776.34,
+  "end": 779.74,
+  "text": "as a function of compute or compute-like quantities."
+ },
+ {
+  "start": 779.74,
+  "end": 782.34,
+  "text": "There's even been many works recently, more"
+ },
+ {
+  "start": 782.34,
+  "end": 784.7,
+  "text": "on the forecasting side, where people are doing things"
+ },
+ {
+  "start": 784.7,
+  "end": 787.44,
+  "text": "like putting dates as the x-axis."
+ },
+ {
+  "start": 787.44,
+  "end": 789.14,
+  "text": "And strangely enough, at least for these"
+ },
+ {
+  "start": 789.14,
+  "end": 791.54,
+  "text": "plots-- like the upper envelope of these curves"
+ },
+ {
+  "start": 791.54,
+  "end": 796.22,
+  "text": "are often linear in various forms of capabilities."
+ },
+ {
+  "start": 796.22,
+  "end": 798.88,
+  "text": "There's no reason that on this bottom side,"
+ },
+ {
+  "start": 798.88,
+  "end": 801.98,
+  "text": "the more exotic scaling laws need to be true."
+ },
+ {
+  "start": 801.98,
+  "end": 805.54,
+  "text": "But it turns out to be the case that I guess language model"
+ },
+ {
+  "start": 805.54,
+  "end": 808.62,
+  "text": "performance is often much more regular as a function of scale"
+ },
+ {
+  "start": 808.62,
+  "end": 813.86,
+  "text": "and resources than it initially might appear."
+ },
+ {
+  "start": 813.86,
+  "end": 817.2,
+  "text": "So to begin with, I'm going to start with data scaling laws."
+ },
+ {
+  "start": 817.2,
+  "end": 819.65,
+  "text": "And data scaling laws are a very simple kind"
+ },
+ {
+  "start": 819.65,
+  "end": 822.53,
+  "text": "of univariate relationship that we're going to think about."
+ },
+ {
+  "start": 822.53,
+  "end": 825.05,
+  "text": "So in this world, we're going to fix our model training"
+ },
+ {
+  "start": 825.05,
+  "end": 826.01,
+  "text": "procedure."
+ },
+ {
+  "start": 826.01,
+  "end": 828.07,
+  "text": "And in general, unless I say otherwise,"
+ },
+ {
+  "start": 828.07,
+  "end": 829.57,
+  "text": "the models are going to generally be"
+ },
+ {
+  "start": 829.57,
+  "end": 831.53,
+  "text": "bigger than the data set size."
+ },
+ {
+  "start": 831.53,
+  "end": 835.19,
+  "text": "And I'm going to increase my data set size in a regular way,"
+ },
+ {
+  "start": 835.19,
+  "end": 837.39,
+  "text": "and I'm going to see how the error reduces."
+ },
+ {
+  "start": 837.39,
+  "end": 839.69,
+  "text": "And what do we expect out of this relationship?"
+ },
+ {
+  "start": 839.69,
+  "end": 842.25,
+  "text": "In general, it's going to be monotone-ish"
+ },
+ {
+  "start": 842.25,
+  "end": 843.99,
+  "text": "if we tune our hyperparameters well."
+ },
+ {
+  "start": 843.99,
+  "end": 845.97,
+  "text": "Because we have more data, more data"
+ },
+ {
+  "start": 845.97,
+  "end": 848.55,
+  "text": "should help us do better at our task."
+ },
+ {
+  "start": 848.55,
+  "end": 850.05,
+  "text": "The error should decrease."
+ },
+ {
+  "start": 850.05,
+  "end": 852.57,
+  "text": "And if you're doing something like classification, or even"
+ },
+ {
+  "start": 852.57,
+  "end": 854.81,
+  "text": "for next token prediction, you should really"
+ },
+ {
+  "start": 854.81,
+  "end": 858.49,
+  "text": "go from random guessing to some of entropy-like object"
+ },
+ {
+  "start": 858.49,
+  "end": 861.69,
+  "text": "where you can't do any better than the irreducible error"
+ },
+ {
+  "start": 861.69,
+  "end": 862.35,
+  "text": "of your task."
+ },
+ {
+  "start": 862.35,
+  "end": 863.35,
+  "text": "That's the noise floor."
+ },
+ {
+  "start": 863.35,
+  "end": 866.97,
+  "text": "So we're going to have some sigmoidal-like object over here."
+ },
+ {
+  "start": 866.97,
+  "end": 871.29,
+  "text": "So this is generally what we expect out of our system."
+ },
+ {
+  "start": 871.29,
+  "end": 874.63,
+  "text": "So we're going to start with an empirical observation,"
+ },
+ {
+  "start": 874.63,
+  "end": 878.51,
+  "text": "and should make this on your own."
+ },
+ {
+  "start": 878.51,
+  "end": 880.37,
+  "text": "You'll make something that looks roughly"
+ },
+ {
+  "start": 880.37,
+  "end": 883.61,
+  "text": "like this in parts of assignment 3,"
+ },
+ {
+  "start": 883.61,
+  "end": 886.41,
+  "text": "which is if we just have a very big model,"
+ },
+ {
+  "start": 886.41,
+  "end": 888.65,
+  "text": "much bigger than our data set, and we"
+ },
+ {
+  "start": 888.65,
+  "end": 891.53,
+  "text": "increase the data set size, and we put that on the log axis,"
+ },
+ {
+  "start": 891.53,
+  "end": 894.23,
+  "text": "and on the y-axis, we have log test loss."
+ },
+ {
+  "start": 894.23,
+  "end": 899.05,
+  "text": "Once again, you will find that the two points that you plot"
+ },
+ {
+  "start": 899.05,
+  "end": 901.79,
+  "text": "will form a very clear linear trend."
+ },
+ {
+  "start": 901.79,
+  "end": 904.89,
+  "text": "I've taken this from Kaplan in 2020."
+ },
+ {
+  "start": 904.89,
+  "end": 906.87,
+  "text": "I'm going to refer repeatedly to this paper."
+ },
+ {
+  "start": 906.87,
+  "end": 909.97,
+  "text": "This one's OpenAI's \"Neural Scaling Laws\" paper."
+ },
+ {
+  "start": 909.97,
+  "end": 913.93,
+  "text": "They have a lot of lovely ablations and a lot of lovely data."
+ },
+ {
+  "start": 913.93,
+  "end": 916.61,
+  "text": "Now, this relationship, where I've"
+ },
+ {
+  "start": 916.61,
+  "end": 918.91,
+  "text": "plotted a line on a log-log plot,"
+ },
+ {
+  "start": 918.91,
+  "end": 923.09,
+  "text": "this is a scale-free or power law relationship."
+ },
+ {
+  "start": 923.09,
+  "end": 924.11,
+  "text": "And what does that mean?"
+ },
+ {
+  "start": 924.11,
+  "end": 926.258,
+  "text": "If I have a line on a log-log plot?"
+ },
+ {
+  "start": 926.258,
+  "end": 928.55,
+  "text": "Many of you-- to many of you, this is probably obvious."
+ },
+ {
+  "start": 928.55,
+  "end": 930.21,
+  "text": "But just to really emphasize this,"
+ },
+ {
+  "start": 930.21,
+  "end": 932.13,
+  "text": "if something is linear in a log-log plot, what"
+ },
+ {
+  "start": 932.13,
+  "end": 933.05,
+  "text": "does that mean?"
+ },
+ {
+  "start": 933.05,
+  "end": 935.53,
+  "text": "Well, it means that the error that I have"
+ },
+ {
+  "start": 935.53,
+  "end": 937.28,
+  "text": "is decaying polynomially."
+ },
+ {
+  "start": 937.28,
+  "end": 939.4,
+  "text": "And also, it usually means that I'm very far away"
+ },
+ {
+  "start": 939.4,
+  "end": 940.34,
+  "text": "from my asymptote."
+ },
+ {
+  "start": 940.34,
+  "end": 941.94,
+  "text": "Because once I approach my asymptote,"
+ },
+ {
+  "start": 941.94,
+  "end": 945.28,
+  "text": "I'm going to taper off rather than have a line."
+ },
+ {
+  "start": 945.28,
+  "end": 948.32,
+  "text": "So let's go through an example just to show you"
+ },
+ {
+  "start": 948.32,
+  "end": 951.88,
+  "text": "how scaling law arises very naturally on a very"
+ },
+ {
+  "start": 951.88,
+  "end": 955.12,
+  "text": "simple estimation problem."
+ },
+ {
+  "start": 955.12,
+  "end": 957.42,
+  "text": "So forget language modeling for the moment."
+ },
+ {
+  "start": 957.42,
+  "end": 959.14,
+  "text": "This was a language modeling class,"
+ },
+ {
+  "start": 959.14,
+  "end": 961.2,
+  "text": "but now it is a statistics class for the next one"
+ },
+ {
+  "start": 961.2,
+  "end": 963.28,
+  "text": "slide or actually two slides."
+ },
+ {
+  "start": 963.28,
+  "end": 966.08,
+  "text": "No, maybe three slides."
+ },
+ {
+  "start": 966.08,
+  "end": 967.72,
+  "text": "So in this case, what I want to do"
+ },
+ {
+  "start": 967.72,
+  "end": 970.535,
+  "text": "is I want to estimate the mean from a bunch of data."
+ },
+ {
+  "start": 970.535,
+  "end": 972.66,
+  "text": "And so I have an input, it's drawn from a Gaussian."
+ },
+ {
+  "start": 972.66,
+  "end": 974.42,
+  "text": "And I'm going to estimate the mean of this object."
+ },
+ {
+  "start": 974.42,
+  "end": 976.24,
+  "text": "I just write down the empirical mean."
+ },
+ {
+  "start": 976.24,
+  "end": 978.22,
+  "text": "And then, you can write down what the error is."
+ },
+ {
+  "start": 978.22,
+  "end": 979.428,
+  "text": "So what's the expected error?"
+ },
+ {
+  "start": 979.428,
+  "end": 981.415,
+  "text": "Well, each of these guys is Gaussian,"
+ },
+ {
+  "start": 981.415,
+  "end": 984.04,
+  "text": "and that the mu hat is Gaussian, so I can write down the error."
+ },
+ {
+  "start": 984.04,
+  "end": 986.48,
+  "text": "That's going to be sigma squared over n."
+ },
+ {
+  "start": 986.48,
+  "end": 990.9,
+  "text": "So well, if you look at this, is a scaling law."
+ },
+ {
+  "start": 990.9,
+  "end": 995.03,
+  "text": "I've written down the error, and the error, if I log that,"
+ },
+ {
+  "start": 995.03,
+  "end": 1000.59,
+  "text": "is a function of log n, log n being the log x-axis."
+ },
+ {
+  "start": 1000.59,
+  "end": 1002.71,
+  "text": "So in general, if you can come up"
+ },
+ {
+  "start": 1002.71,
+  "end": 1004.99,
+  "text": "with anything that is essentially"
+ },
+ {
+  "start": 1004.99,
+  "end": 1007.95,
+  "text": "1 over n to the alpha plus some constant,"
+ },
+ {
+  "start": 1007.95,
+  "end": 1010.09,
+  "text": "when you plot that on a log-log plot,"
+ },
+ {
+  "start": 1010.09,
+  "end": 1011.51,
+  "text": "subtracting out the constant term,"
+ },
+ {
+  "start": 1011.51,
+  "end": 1013.295,
+  "text": "you're going to get a scaling log."
+ },
+ {
+  "start": 1013.295,
+  "end": 1015.67,
+  "text": "So anything of this form, where you have polynomial decay"
+ },
+ {
+  "start": 1015.67,
+  "end": 1019.25,
+  "text": "and errors, is going to end up giving you a scaling law."
+ },
+ {
+  "start": 1019.25,
+  "end": 1022.23,
+  "text": "And of course, in parametric estimation like mean estimation"
+ },
+ {
+  "start": 1022.23,
+  "end": 1025.329,
+  "text": "or regression, you of course, expect a polynomial rate."
+ },
+ {
+  "start": 1025.329,
+  "end": 1028.829,
+  "text": "You don't really expect anything else."
+ },
+ {
+  "start": 1028.829,
+  "end": 1031.589,
+  "text": "And if you've taken your stats estimation courses,"
+ },
+ {
+  "start": 1031.589,
+  "end": 1034.03,
+  "text": "you know that essentially all the classical"
+ },
+ {
+  "start": 1034.03,
+  "end": 1037.349,
+  "text": "models you are expected to have a 1 over n scaling."
+ },
+ {
+  "start": 1037.349,
+  "end": 1039.99,
+  "text": "If you fit a regression or so on, you might get D over n"
+ },
+ {
+  "start": 1039.99,
+  "end": 1041.71,
+  "text": "or whatever else."
+ },
+ {
+  "start": 1041.71,
+  "end": 1045.47,
+  "text": "And so if this is true, and this is the origins of scaling laws,"
+ },
+ {
+  "start": 1045.47,
+  "end": 1047.71,
+  "text": "if we plot our lines, we should expect"
+ },
+ {
+  "start": 1047.71,
+  "end": 1050.83,
+  "text": "to see roughly a slope of minus 1"
+ },
+ {
+  "start": 1050.83,
+  "end": 1052.74,
+  "text": "because that's the exponent on the x."
+ },
+ {
+  "start": 1052.74,
+  "end": 1054.78,
+  "text": "Y equals minus x plus C."
+ },
+ {
+  "start": 1054.78,
+  "end": 1056.76,
+  "text": "If we fit our neural scaling laws,"
+ },
+ {
+  "start": 1056.76,
+  "end": 1059.74,
+  "text": "we will find that our exponents are quite different."
+ },
+ {
+  "start": 1059.74,
+  "end": 1063.3,
+  "text": "These exponents-- I've taken from these two"
+ },
+ {
+  "start": 1063.3,
+  "end": 1065.78,
+  "text": "on the left from Hestenes, I've taken the one on the right"
+ },
+ {
+  "start": 1065.78,
+  "end": 1066.86,
+  "text": "from Kaplan."
+ },
+ {
+  "start": 1066.86,
+  "end": 1071.6,
+  "text": "They're about -0.1, -0.3, -0.1, roughly speaking."
+ },
+ {
+  "start": 1071.6,
+  "end": 1073.76,
+  "text": "And so what does that mean?"
+ },
+ {
+  "start": 1073.76,
+  "end": 1076.74,
+  "text": "That means this is much slower than estimating a mean"
+ },
+ {
+  "start": 1076.74,
+  "end": 1078.88,
+  "text": "or estimating a linear regression."
+ },
+ {
+  "start": 1078.88,
+  "end": 1081.54,
+  "text": "So this is much, much slower convergence rate, still"
+ },
+ {
+  "start": 1081.54,
+  "end": 1083.74,
+  "text": "polynomial, but much slower."
+ },
+ {
+  "start": 1083.74,
+  "end": 1085.76,
+  "text": "Now this is interesting."
+ },
+ {
+  "start": 1085.76,
+  "end": 1087.82,
+  "text": "It's saying that we're getting these kind"
+ },
+ {
+  "start": 1087.82,
+  "end": 1091.32,
+  "text": "of nice polynomial rates, but the exponents are not so great."
+ },
+ {
+  "start": 1091.32,
+  "end": 1092.78,
+  "text": "They're -0.1."
+ },
+ {
+  "start": 1092.78,
+  "end": 1095.46,
+  "text": "Where might you get an estimation rate like this?"
+ },
+ {
+  "start": 1095.46,
+  "end": 1099.68,
+  "text": "Well, you would get this if your model was more nonparametric."
+ },
+ {
+  "start": 1099.68,
+  "end": 1101.46,
+  "text": "I promise this will be the last statistics"
+ },
+ {
+  "start": 1101.46,
+  "end": 1103.46,
+  "text": "slide of this lecture."
+ },
+ {
+  "start": 1103.46,
+  "end": 1105.1,
+  "text": "Let's say that I want to estimate now,"
+ },
+ {
+  "start": 1105.1,
+  "end": 1108.04,
+  "text": "instead of a mean, an arbitrary smooth function."
+ },
+ {
+  "start": 1108.04,
+  "end": 1111.78,
+  "text": "So one thing I could do is, if I'm doing a regression problem,"
+ },
+ {
+  "start": 1111.78,
+  "end": 1114.22,
+  "text": "I have my inputs, x1 through xn."
+ },
+ {
+  "start": 1114.22,
+  "end": 1115.777,
+  "text": "Let's say they're in the unit box."
+ },
+ {
+  "start": 1115.777,
+  "end": 1117.36,
+  "text": "I have a little bit of Gaussian noise,"
+ },
+ {
+  "start": 1117.36,
+  "end": 1120.54,
+  "text": "and I have an unknown function f that I would like to estimate."
+ },
+ {
+  "start": 1120.54,
+  "end": 1124.32,
+  "text": "A trivial estimator for this is I can take my space,"
+ },
+ {
+  "start": 1124.32,
+  "end": 1127.1,
+  "text": "I can cut it up into little 2D boxes of length n"
+ },
+ {
+  "start": 1127.1,
+  "end": 1129.46,
+  "text": "to the negative 1 to the fourth."
+ },
+ {
+  "start": 1129.46,
+  "end": 1131.16,
+  "text": "And then what's our estimation error?"
+ },
+ {
+  "start": 1131.16,
+  "end": 1133.0,
+  "text": "I'll have square root n boxes."
+ },
+ {
+  "start": 1133.0,
+  "end": 1135.557,
+  "text": "Each box is going to get square root n samples."
+ },
+ {
+  "start": 1135.557,
+  "end": 1137.14,
+  "text": "And the error is going to be roughly 1"
+ },
+ {
+  "start": 1137.14,
+  "end": 1138.84,
+  "text": "over square root of n or something."
+ },
+ {
+  "start": 1138.84,
+  "end": 1142.4,
+  "text": "And in general, if have a D-dimensional function"
+ },
+ {
+  "start": 1142.4,
+  "end": 1146.18,
+  "text": "I would like to estimate in this very nonparametric, arbitrary"
+ },
+ {
+  "start": 1146.18,
+  "end": 1149.34,
+  "text": "way, my error is going to be roughly equal to n"
+ },
+ {
+  "start": 1149.34,
+  "end": 1151.04,
+  "text": "to the negative 1 over d."
+ },
+ {
+  "start": 1151.04,
+  "end": 1153.18,
+  "text": "So my scaling is going to be y equals negative 1"
+ },
+ {
+  "start": 1153.18,
+  "end": 1154.94,
+  "text": "over D times x."
+ },
+ {
+  "start": 1154.94,
+  "end": 1157.86,
+  "text": "And so now these kinds more flexible functions, functions"
+ },
+ {
+  "start": 1157.86,
+  "end": 1160.26,
+  "text": "that are more flexible than the linear class,"
+ },
+ {
+  "start": 1160.26,
+  "end": 1163.94,
+  "text": "now have rates in their scaling laws that are not just 1,"
+ },
+ {
+  "start": 1163.94,
+  "end": 1165.08,
+  "text": "they're 1 over D."
+ },
+ {
+  "start": 1165.08,
+  "end": 1168.38,
+  "text": "And so one mental model that you could have"
+ },
+ {
+  "start": 1168.38,
+  "end": 1171.45,
+  "text": "is that the neural networks I was showing you in these slides"
+ },
+ {
+  "start": 1171.45,
+  "end": 1174.61,
+  "text": "are behaving kind of non-parametric regressors in 10"
+ },
+ {
+  "start": 1174.61,
+  "end": 1176.73,
+  "text": "dimensions, like a nearest neighbor or other kinds"
+ },
+ {
+  "start": 1176.73,
+  "end": 1178.75,
+  "text": "of estimators in 10 dimensions."
+ },
+ {
+  "start": 1178.75,
+  "end": 1181.23,
+  "text": "That's roughly the rate at which they learn from data."
+ },
+ {
+  "start": 1181.23,
+  "end": 1182.605,
+  "text": "That's kind of a cool thing to be"
+ },
+ {
+  "start": 1182.605,
+  "end": 1186.85,
+  "text": "able to know just by looking at some of these scaling laws."
+ },
+ {
+  "start": 1186.85,
+  "end": 1189.69,
+  "text": "Some people have argued this more strongly."
+ },
+ {
+  "start": 1189.69,
+  "end": 1193.01,
+  "text": "Bari et al. and some other scaling law theory folks"
+ },
+ {
+  "start": 1193.01,
+  "end": 1196.09,
+  "text": "have argued that the scaling law exponents are actually"
+ },
+ {
+  "start": 1196.09,
+  "end": 1198.53,
+  "text": "literally telling us that the neural network"
+ },
+ {
+  "start": 1198.53,
+  "end": 1200.73,
+  "text": "is behaving like a non-parametric smoother,"
+ },
+ {
+  "start": 1200.73,
+  "end": 1202.568,
+  "text": "and so on and so forth."
+ },
+ {
+  "start": 1202.568,
+  "end": 1204.11,
+  "text": "It's an interesting set of arguments,"
+ },
+ {
+  "start": 1204.11,
+  "end": 1207.33,
+  "text": "and you can by that intuition to whatever extent you'd like."
+ },
+ {
+  "start": 1207.33,
+  "end": 1210.49,
+  "text": "I don't quite how much I truly, truly buy this argument."
+ },
+ {
+  "start": 1210.49,
+  "end": 1213.35,
+  "text": "There's some of the evidence that might be a little sketchy."
+ },
+ {
+  "start": 1213.35,
+  "end": 1216.297,
+  "text": "It relies on estimators of intrinsic dimension,"
+ },
+ {
+  "start": 1216.297,
+  "end": 1218.13,
+  "text": "but it's an interesting thing to think about"
+ },
+ {
+  "start": 1218.13,
+  "end": 1220.57,
+  "text": "that somehow these exponents are telling us"
+ },
+ {
+  "start": 1220.57,
+  "end": 1224.49,
+  "text": "how fast are these neural networks really learning."
+ },
+ {
+  "start": 1224.49,
+  "end": 1227.83,
+  "text": "OK, so actually, I'll pause for the moment here."
+ },
+ {
+  "start": 1227.83,
+  "end": 1230.36,
+  "text": "That's really the end of the really basic data scaling"
+ },
+ {
+  "start": 1230.36,
+  "end": 1233.2,
+  "text": "law of one distribution, and you sample from it,"
+ },
+ {
+  "start": 1233.2,
+  "end": 1234.32,
+  "text": "and you learn from it."
+ },
+ {
+  "start": 1234.32,
+  "end": 1237.7,
+  "text": "Is that all clear, like the examples and so on?"
+ },
+ {
+  "start": 1237.7,
+  "end": 1238.2,
+  "text": "Good."
+ },
+ {
+  "start": 1238.2,
+  "end": 1239.62,
+  "text": "Oh yes, question."
+ },
+ {
+  "start": 1239.62,
+  "end": 1242.28,
+  "text": "When you say that the model is always larger"
+ },
+ {
+  "start": 1242.28,
+  "end": 1245.51,
+  "text": "than data set size, do you mean one-to-one number of parameters"
+ },
+ {
+  "start": 1245.51,
+  "end": 1247.652,
+  "text": "to number of tokens [INAUDIBLE]?"
+ },
+ {
+  "start": 1247.652,
+  "end": 1248.86,
+  "text": "Yeah, that's a good question."
+ },
+ {
+  "start": 1248.86,
+  "end": 1249.76,
+  "text": "So the question was something like,"
+ },
+ {
+  "start": 1249.76,
+  "end": 1251.4,
+  "text": "What do I mean when I say the model is larger"
+ },
+ {
+  "start": 1251.4,
+  "end": 1252.58,
+  "text": "than the data set size?"
+ },
+ {
+  "start": 1252.58,
+  "end": 1258.25,
+  "text": "What I mean is when the model gets small relative to the data,"
+ },
+ {
+  "start": 1258.25,
+  "end": 1260.9,
+  "text": "like you have way more data than you have model size,"
+ },
+ {
+  "start": 1260.9,
+  "end": 1263.0,
+  "text": "you enter this irreducible error regime."
+ },
+ {
+  "start": 1263.0,
+  "end": 1265.4,
+  "text": "You basically fitted the data as well"
+ },
+ {
+  "start": 1265.4,
+  "end": 1267.12,
+  "text": "as you can for your model class, and you"
+ },
+ {
+  "start": 1267.12,
+  "end": 1270.28,
+  "text": "can't do any better no matter how much data you add."
+ },
+ {
+  "start": 1270.28,
+  "end": 1272.74,
+  "text": "So we want to--when we're thinking about scaling laws,"
+ },
+ {
+  "start": 1272.74,
+  "end": 1275.84,
+  "text": "we usually want to think about this power law regime, which"
+ },
+ {
+  "start": 1275.84,
+  "end": 1277.06,
+  "text": "is the simpler case."
+ },
+ {
+  "start": 1277.06,
+  "end": 1279.44,
+  "text": "Either that or you explicitly fit the asymptote"
+ },
+ {
+  "start": 1279.44,
+  "end": 1280.618,
+  "text": "and then you correct for it."
+ },
+ {
+  "start": 1280.618,
+  "end": 1281.66,
+  "text": "Those are the two things."
+ },
+ {
+  "start": 1281.66,
+  "end": 1284.02,
+  "text": "So when I say the model is larger than the data,"
+ },
+ {
+  "start": 1284.02,
+  "end": 1287.095,
+  "text": "it can be basically any amount that is larger than the data,"
+ },
+ {
+  "start": 1287.095,
+  "end": 1288.47,
+  "text": "as long as it's in this power law"
+ },
+ {
+  "start": 1288.47,
+  "end": 1291.71,
+  "text": "regime, usually like 10 times bigger than the data, what"
+ },
+ {
+  "start": 1291.71,
+  "end": 1293.47,
+  "text": "have you."
+ },
+ {
+  "start": 1293.47,
+  "end": 1294.31,
+  "text": "Cool."
+ },
+ {
+  "start": 1294.31,
+  "end": 1295.03,
+  "text": "Good."
+ },
+ {
+  "start": 1295.03,
+  "end": 1299.25,
+  "text": "OK, now we are back to other data scaling laws."
+ },
+ {
+  "start": 1299.25,
+  "end": 1302.79,
+  "text": "So data scaling laws by themselves"
+ },
+ {
+  "start": 1302.79,
+  "end": 1305.61,
+  "text": "are not quite as useful as you'd like them to be."
+ },
+ {
+  "start": 1305.61,
+  "end": 1308.45,
+  "text": "They just tell you how fast does my model learn."
+ },
+ {
+  "start": 1308.45,
+  "end": 1311.25,
+  "text": "And that's kind of useful for forecasting."
+ },
+ {
+  "start": 1311.25,
+  "end": 1313.87,
+  "text": "It's not useful for very much else."
+ },
+ {
+  "start": 1313.87,
+  "end": 1315.31,
+  "text": "If you want to do engineering, you"
+ },
+ {
+  "start": 1315.31,
+  "end": 1317.19,
+  "text": "are probably interested in other questions,"
+ },
+ {
+  "start": 1317.19,
+  "end": 1319.73,
+  "text": "like what is my optimal data mixture?"
+ },
+ {
+  "start": 1319.73,
+  "end": 1322.19,
+  "text": "What is the best way for me to pick my training"
+ },
+ {
+  "start": 1322.19,
+  "end": 1323.33,
+  "text": "data for my model?"
+ },
+ {
+  "start": 1323.33,
+  "end": 1325.55,
+  "text": "Very useful engineering question."
+ },
+ {
+  "start": 1325.55,
+  "end": 1327.79,
+  "text": "Should I repeat my data, or should I"
+ },
+ {
+  "start": 1327.79,
+  "end": 1332.15,
+  "text": "just not repeat my data, save the compute for something else?"
+ },
+ {
+  "start": 1332.15,
+  "end": 1335.35,
+  "text": "Or maybe I should repeat some high-quality stuff"
+ },
+ {
+  "start": 1335.35,
+  "end": 1338.05,
+  "text": "and not repeat the low-quality stuff."
+ },
+ {
+  "start": 1338.05,
+  "end": 1340.31,
+  "text": "I could do various other things with repetition."
+ },
+ {
+  "start": 1340.31,
+  "end": 1342.43,
+  "text": "There's a lot of different engineering decisions"
+ },
+ {
+  "start": 1342.43,
+  "end": 1343.45,
+  "text": "I can make with data."
+ },
+ {
+  "start": 1343.45,
+  "end": 1348.42,
+  "text": "So how can scaling laws help us make some of those decisions?"
+ },
+ {
+  "start": 1348.42,
+  "end": 1350.42,
+  "text": "And I think one of the things that's interesting"
+ },
+ {
+  "start": 1350.42,
+  "end": 1353.82,
+  "text": "is if we think a little bit about how classical"
+ },
+ {
+  "start": 1353.82,
+  "end": 1355.5,
+  "text": "models behave."
+ },
+ {
+  "start": 1355.5,
+  "end": 1358.34,
+  "text": "Data scaling laws, if we think about their origins"
+ },
+ {
+  "start": 1358.34,
+  "end": 1361.42,
+  "text": "as essentially empirical versions of generalization"
+ },
+ {
+  "start": 1361.42,
+  "end": 1365.7,
+  "text": "bounds, they tell us, well, data set composition for many models"
+ },
+ {
+  "start": 1365.7,
+  "end": 1368.46,
+  "text": "really affect the offset of these scaling laws,"
+ },
+ {
+  "start": 1368.46,
+  "end": 1371.498,
+  "text": "but their slopes are actually determined by the model class."
+ },
+ {
+  "start": 1371.498,
+  "end": 1374.04,
+  "text": "They're not really determined by the distribution themselves."
+ },
+ {
+  "start": 1374.04,
+  "end": 1375.54,
+  "text": "So the slopes might remain the same,"
+ },
+ {
+  "start": 1375.54,
+  "end": 1377.333,
+  "text": "and only the intercepts might change."
+ },
+ {
+  "start": 1377.333,
+  "end": 1380.0,
+  "text": "And the intercept might actually be really interestingly shaped."
+ },
+ {
+  "start": 1380.0,
+  "end": 1383.78,
+  "text": "So this is a case of a toy model with a linear regression"
+ },
+ {
+  "start": 1383.78,
+  "end": 1385.96,
+  "text": "with two different things you can sample from."
+ },
+ {
+  "start": 1385.96,
+  "end": 1388.42,
+  "text": "If you get only one kind of data,"
+ },
+ {
+  "start": 1388.42,
+  "end": 1390.28,
+  "text": "it's the errors are high no matter what."
+ },
+ {
+  "start": 1390.28,
+  "end": 1392.04,
+  "text": "You actually want a mixture of both right."
+ },
+ {
+  "start": 1392.04,
+  "end": 1395.64,
+  "text": "So if you write down how this intercept behaves,"
+ },
+ {
+  "start": 1395.64,
+  "end": 1398.58,
+  "text": "you actually start to get some very interesting insights"
+ },
+ {
+  "start": 1398.58,
+  "end": 1402.02,
+  "text": "about how having more data diversity is very helpful."
+ },
+ {
+  "start": 1402.02,
+  "end": 1405.14,
+  "text": "But what does this practically mean?"
+ },
+ {
+  "start": 1405.14,
+  "end": 1407.66,
+  "text": "Well, practically speaking, what this means"
+ },
+ {
+  "start": 1407.66,
+  "end": 1411.4,
+  "text": "is you can actually fit data scaling laws on mixtures,"
+ },
+ {
+  "start": 1411.4,
+  "end": 1414.08,
+  "text": "and that can help you do some data--"
+ },
+ {
+  "start": 1414.08,
+  "end": 1417.122,
+  "text": "sorry, pre-training, data optimization."
+ },
+ {
+  "start": 1417.122,
+  "end": 1418.08,
+  "text": "So what does this mean?"
+ },
+ {
+  "start": 1418.08,
+  "end": 1421.16,
+  "text": "Let's say you have two data sources for simplicity."
+ },
+ {
+  "start": 1421.16,
+  "end": 1423.48,
+  "text": "You have news, and you have Wikipedia."
+ },
+ {
+  "start": 1423.48,
+  "end": 1426.58,
+  "text": "And how much news to use and how much Wikipedia to use."
+ },
+ {
+  "start": 1426.58,
+  "end": 1428.0,
+  "text": "How can you determine that?"
+ },
+ {
+  "start": 1428.0,
+  "end": 1430.82,
+  "text": "Well, you can train really small models"
+ },
+ {
+  "start": 1430.82,
+  "end": 1432.795,
+  "text": "on a really small amount of data."
+ },
+ {
+  "start": 1432.795,
+  "end": 1434.42,
+  "text": "And then you can basically train or you"
+ },
+ {
+  "start": 1434.42,
+  "end": 1438.5,
+  "text": "can fit a function of how different mixture levels affect"
+ },
+ {
+  "start": 1438.5,
+  "end": 1439.64,
+  "text": "your performance."
+ },
+ {
+  "start": 1439.64,
+  "end": 1443.4,
+  "text": "You can do this while you scale up your models little by little."
+ },
+ {
+  "start": 1443.4,
+  "end": 1445.083,
+  "text": "And you can see how the trends change."
+ },
+ {
+  "start": 1445.083,
+  "end": 1447.5,
+  "text": "And you can try to extrapolate that out the exact same way"
+ },
+ {
+  "start": 1447.5,
+  "end": 1449.86,
+  "text": "as you would extrapolate out a data scaling law."
+ },
+ {
+  "start": 1449.86,
+  "end": 1451.9,
+  "text": "And then you can ask which one will be optimal"
+ },
+ {
+  "start": 1451.9,
+  "end": 1454.46,
+  "text": "if I keep scaling it out to my full training run."
+ },
+ {
+  "start": 1454.46,
+  "end": 1458.74,
+  "text": "So this is a very simple idea of essentially fitting"
+ },
+ {
+  "start": 1458.74,
+  "end": 1461.53,
+  "text": "a functional form at a small amount of compute,"
+ },
+ {
+  "start": 1461.53,
+  "end": 1464.61,
+  "text": "finding the minimum, and then scaling that guy out."
+ },
+ {
+  "start": 1464.61,
+  "end": 1468.53,
+  "text": "So this is a data mixing loss paper."
+ },
+ {
+  "start": 1468.53,
+  "end": 1470.05,
+  "text": "Unfortunately, I think if you talk"
+ },
+ {
+  "start": 1470.05,
+  "end": 1472.81,
+  "text": "to anyone who's done a lot of these data mixture work,"
+ },
+ {
+  "start": 1472.81,
+  "end": 1475.37,
+  "text": "they will tell you reality is a lot more"
+ },
+ {
+  "start": 1475.37,
+  "end": 1478.73,
+  "text": "noisy than this ideal world would suggest."
+ },
+ {
+  "start": 1478.73,
+  "end": 1482.45,
+  "text": "And really, what has, as far as I know, happened in many cases"
+ },
+ {
+  "start": 1482.45,
+  "end": 1485.43,
+  "text": "is you end up training a bunch of small models."
+ },
+ {
+  "start": 1485.43,
+  "end": 1488.01,
+  "text": "You pick the best data mix from the small model,"
+ },
+ {
+  "start": 1488.01,
+  "end": 1491.25,
+  "text": "and you just scale that guy up, no scaling law required."
+ },
+ {
+  "start": 1491.25,
+  "end": 1493.93,
+  "text": "And data decide if you're interested in this kind of thing"
+ },
+ {
+  "start": 1493.93,
+  "end": 1498.65,
+  "text": "is a nice, large-scale empirical study of these kinds of data"
+ },
+ {
+  "start": 1498.65,
+  "end": 1499.93,
+  "text": "mixture things."
+ },
+ {
+  "start": 1499.93,
+  "end": 1501.71,
+  "text": "And what they found was actually,"
+ },
+ {
+  "start": 1501.71,
+  "end": 1503.89,
+  "text": "if you don't fit a scaling law, and instead you"
+ },
+ {
+  "start": 1503.89,
+  "end": 1506.35,
+  "text": "just pick the best data mix at the small scale,"
+ },
+ {
+  "start": 1506.35,
+  "end": 1507.81,
+  "text": "that works well."
+ },
+ {
+  "start": 1507.81,
+  "end": 1510.29,
+  "text": "For what it's worth, that's consistent with the argument"
+ },
+ {
+  "start": 1510.29,
+  "end": 1513.25,
+  "text": "that the intercepts differ, but the slopes don't change."
+ },
+ {
+  "start": 1513.25,
+  "end": 1515.15,
+  "text": "Because if the slopes don't change,"
+ },
+ {
+  "start": 1515.15,
+  "end": 1517.85,
+  "text": "the best mixture at small scale is also the best mixture"
+ },
+ {
+  "start": 1517.85,
+  "end": 1520.08,
+  "text": "at large scale."
+ },
+ {
+  "start": 1520.08,
+  "end": 1523.76,
+  "text": "OK, another really interesting set"
+ },
+ {
+  "start": 1523.76,
+  "end": 1527.8,
+  "text": "of questions that I'll also mention in the context of data"
+ },
+ {
+  "start": 1527.8,
+  "end": 1529.44,
+  "text": "is repetition."
+ },
+ {
+  "start": 1529.44,
+  "end": 1533.82,
+  "text": "I think it's increasingly the case that compute is growing,"
+ },
+ {
+  "start": 1533.82,
+  "end": 1535.932,
+  "text": "the amount of data that we have is not growing."
+ },
+ {
+  "start": 1535.932,
+  "end": 1537.64,
+  "text": "And so there's a lot of people interested"
+ },
+ {
+  "start": 1537.64,
+  "end": 1540.16,
+  "text": "in questions of what happens when you repeat"
+ },
+ {
+  "start": 1540.16,
+  "end": 1542.6,
+  "text": "data more and more times."
+ },
+ {
+  "start": 1542.6,
+  "end": 1545.72,
+  "text": "And there was a nice study a few years back called \"Scaling Data-"
+ },
+ {
+  "start": 1545.72,
+  "end": 1548.0,
+  "text": "Constrained Language Models,\" where they roughly show"
+ },
+ {
+  "start": 1548.0,
+  "end": 1551.3,
+  "text": "something like up to four epochs with standard training recipes,"
+ },
+ {
+  "start": 1551.3,
+  "end": 1553.28,
+  "text": "you just don't get hurt at all."
+ },
+ {
+  "start": 1553.28,
+  "end": 1556.04,
+  "text": "But if you go past that point, then actually"
+ },
+ {
+  "start": 1556.04,
+  "end": 1558.84,
+  "text": "your realized scaling law, this dark curve"
+ },
+ {
+  "start": 1558.84,
+  "end": 1561.543,
+  "text": "is much worse than the projected scaling law"
+ },
+ {
+  "start": 1561.543,
+  "end": 1562.46,
+  "text": "if you had fresh data."
+ },
+ {
+  "start": 1562.46,
+  "end": 1564.217,
+  "text": "That's the dashed line over here."
+ },
+ {
+  "start": 1564.217,
+  "end": 1566.8,
+  "text": "And you can also, once again, write down a modified functional"
+ },
+ {
+  "start": 1566.8,
+  "end": 1571.12,
+  "text": "form that's generally predictive of the behavior of this scaling"
+ },
+ {
+  "start": 1571.12,
+  "end": 1574.44,
+  "text": "law under repetition."
+ },
+ {
+  "start": 1574.44,
+  "end": 1577.14,
+  "text": "And we can take this idea even more to the extreme."
+ },
+ {
+  "start": 1577.14,
+  "end": 1579.99,
+  "text": "This was kind of recent work with Percy"
+ },
+ {
+  "start": 1579.99,
+  "end": 1581.53,
+  "text": "in one of our co-advise students,"
+ },
+ {
+  "start": 1581.53,
+  "end": 1583.03,
+  "text": "where we were asking, like, OK, what"
+ },
+ {
+  "start": 1583.03,
+  "end": 1585.03,
+  "text": "happens if you take this idea to the extreme"
+ },
+ {
+  "start": 1585.03,
+  "end": 1587.57,
+  "text": "and you just consider infinite amounts of compute?"
+ },
+ {
+  "start": 1587.57,
+  "end": 1589.85,
+  "text": "So you're allowed to epoch as many times as you want,"
+ },
+ {
+  "start": 1589.85,
+  "end": 1591.332,
+  "text": "like an infinite amount of times."
+ },
+ {
+  "start": 1591.332,
+  "end": 1593.79,
+  "text": "What is the best thing that you can get out of this system?"
+ },
+ {
+  "start": 1593.79,
+  "end": 1595.35,
+  "text": "Well, it turns out you can't just"
+ },
+ {
+  "start": 1595.35,
+  "end": 1597.422,
+  "text": "keep repeating passes over the data."
+ },
+ {
+  "start": 1597.422,
+  "end": 1599.13,
+  "text": "You can't keep making your models bigger."
+ },
+ {
+  "start": 1599.13,
+  "end": 1600.59,
+  "text": "Those have diminishing returns."
+ },
+ {
+  "start": 1600.59,
+  "end": 1602.57,
+  "text": "And so you end up reaching for other things,"
+ },
+ {
+  "start": 1602.57,
+  "end": 1605.342,
+  "text": "like ensembling your models to try to squeeze more and more"
+ },
+ {
+  "start": 1605.342,
+  "end": 1606.05,
+  "text": "out of your data."
+ },
+ {
+  "start": 1606.05,
+  "end": 1608.258,
+  "text": "But really, I think the one thing that I'll point out"
+ },
+ {
+  "start": 1608.258,
+  "end": 1610.35,
+  "text": "that's really interesting is your standard data"
+ },
+ {
+  "start": 1610.35,
+  "end": 1611.69,
+  "text": "scaling laws here in the red."
+ },
+ {
+  "start": 1611.69,
+  "end": 1615.11,
+  "text": "It's a very nice, predictable, improvement in performance"
+ },
+ {
+  "start": 1615.11,
+  "end": 1616.81,
+  "text": "as you increase the amount of data."
+ },
+ {
+  "start": 1616.81,
+  "end": 1619.83,
+  "text": "We do all sorts of interventions like regularizing and adding"
+ },
+ {
+  "start": 1619.83,
+  "end": 1620.95,
+  "text": "ensembles."
+ },
+ {
+  "start": 1620.95,
+  "end": 1622.85,
+  "text": "You get improvements in performance,"
+ },
+ {
+  "start": 1622.85,
+  "end": 1625.69,
+  "text": "but the slopes look actually surprisingly similar."
+ },
+ {
+  "start": 1625.69,
+  "end": 1628.117,
+  "text": "This is a lesson that you'll learn"
+ },
+ {
+  "start": 1628.117,
+  "end": 1630.45,
+  "text": "once you start fitting your own scaling laws, that very,"
+ },
+ {
+  "start": 1630.45,
+  "end": 1633.41,
+  "text": "very often your slopes don't change."
+ },
+ {
+  "start": 1633.41,
+  "end": 1635.15,
+  "text": "Often, the interventions that you do just"
+ },
+ {
+  "start": 1635.15,
+  "end": 1639.71,
+  "text": "change the intercept of the scaling laws."
+ },
+ {
+  "start": 1639.71,
+  "end": 1642.07,
+  "text": "One last thing that I'll mention,"
+ },
+ {
+  "start": 1642.07,
+  "end": 1644.55,
+  "text": "because I like this paper in the context of scaling"
+ },
+ {
+  "start": 1644.55,
+  "end": 1647.67,
+  "text": "laws and scaling in general, is that a lot"
+ },
+ {
+  "start": 1647.67,
+  "end": 1650.07,
+  "text": "of the phenomena we care about in data"
+ },
+ {
+  "start": 1650.07,
+  "end": 1651.95,
+  "text": "is actually very scale-dependent."
+ },
+ {
+  "start": 1651.95,
+  "end": 1654.79,
+  "text": "And one example of this is data filtering."
+ },
+ {
+  "start": 1654.79,
+  "end": 1657.87,
+  "text": "So if you or I tomorrow decide to filter some data"
+ },
+ {
+  "start": 1657.87,
+  "end": 1659.87,
+  "text": "for the models we're training, we would probably"
+ },
+ {
+  "start": 1659.87,
+  "end": 1661.09,
+  "text": "filter very aggressively."
+ },
+ {
+  "start": 1661.09,
+  "end": 1663.59,
+  "text": "We would only keep the highest quality stuff"
+ },
+ {
+  "start": 1663.59,
+  "end": 1665.77,
+  "text": "because both you and I don't have very much compute."
+ },
+ {
+  "start": 1665.77,
+  "end": 1668.05,
+  "text": "So we can't train on all the internet anyway."
+ },
+ {
+  "start": 1668.05,
+  "end": 1672.19,
+  "text": "We might as well filter down to the most high-quality stuff."
+ },
+ {
+  "start": 1672.19,
+  "end": 1674.635,
+  "text": "On the other hand, if you have a lot of compute,"
+ },
+ {
+  "start": 1674.635,
+  "end": 1676.51,
+  "text": "then you want to train on more and more stuff"
+ },
+ {
+  "start": 1676.51,
+  "end": 1678.47,
+  "text": "because you're going to not want to repeat"
+ },
+ {
+  "start": 1678.47,
+  "end": 1680.15,
+  "text": "on this very high-quality data."
+ },
+ {
+  "start": 1680.15,
+  "end": 1681.69,
+  "text": "So as you get more and more compute,"
+ },
+ {
+  "start": 1681.69,
+  "end": 1683.958,
+  "text": "your filter has become looser and looser,"
+ },
+ {
+  "start": 1683.958,
+  "end": 1685.75,
+  "text": "and potentially you start training on stuff"
+ },
+ {
+  "start": 1685.75,
+  "end": 1687.83,
+  "text": "that's lower and lower quality."
+ },
+ {
+  "start": 1687.83,
+  "end": 1689.39,
+  "text": "So a lot of the things that we often"
+ },
+ {
+  "start": 1689.39,
+  "end": 1691.71,
+  "text": "think about statically, things like data"
+ },
+ {
+  "start": 1691.71,
+  "end": 1693.578,
+  "text": "filtering or the quality of data,"
+ },
+ {
+  "start": 1693.578,
+  "end": 1694.87,
+  "text": "are actually much more dynamic."
+ },
+ {
+  "start": 1694.87,
+  "end": 1697.305,
+  "text": "As you increase scale, you have to think about"
+ },
+ {
+  "start": 1697.305,
+  "end": 1699.18,
+  "text": "where am I going to get the rest of the data."
+ },
+ {
+  "start": 1699.18,
+  "end": 1702.0,
+  "text": "The filters can't stay fixed as a function of the data,"
+ },
+ {
+  "start": 1702.0,
+  "end": 1703.58,
+  "text": "and certainly the optimal filters"
+ },
+ {
+  "start": 1703.58,
+  "end": 1705.96,
+  "text": "turn out to not be fixed at a function of scale."
+ },
+ {
+  "start": 1708.66,
+  "end": 1711.838,
+  "text": "OK, so that's it for data scaling laws."
+ },
+ {
+  "start": 1711.838,
+  "end": 1714.64,
+  "text": "This is the part that I think is most raightforward to understand."
+ },
+ {
+  "start": 1714.64,
+  "end": 1717.72,
+  "text": "Even as a stats/ML-minded person,"
+ },
+ {
+  "start": 1717.72,
+  "end": 1720.88,
+  "text": "this stuff is all very simple and straightforward to me."
+ },
+ {
+  "start": 1720.88,
+  "end": 1722.82,
+  "text": "You increase data, performance gets better"
+ },
+ {
+  "start": 1722.82,
+  "end": 1724.06,
+  "text": "in a very predictable way."
+ },
+ {
+  "start": 1724.06,
+  "end": 1725.72,
+  "text": "I think this is uncontroversial."
+ },
+ {
+  "start": 1725.72,
+  "end": 1727.98,
+  "text": "The fact that it does so polynomially for such"
+ },
+ {
+  "start": 1727.98,
+  "end": 1732.22,
+  "text": "a big model is still cool, but nothing really crazy."
+ },
+ {
+  "start": 1732.22,
+  "end": 1735.02,
+  "text": "So hopefully this is reasonable to all of you"
+ },
+ {
+  "start": 1735.02,
+  "end": 1737.86,
+  "text": "that there's so much predictability when you"
+ },
+ {
+  "start": 1737.86,
+  "end": 1740.9,
+  "text": "increase the amount of data."
+ },
+ {
+  "start": 1740.9,
+  "end": 1742.94,
+  "text": "Oh, yes."
+ },
+ {
+  "start": 1742.94,
+  "end": 1745.14,
+  "text": "So on this slide for the pre-training"
+ },
+ {
+  "start": 1745.14,
+  "end": 1750.62,
+  "text": "under infinite compute, so that graph on the right"
+ },
+ {
+  "start": 1750.62,
+  "end": 1756.45,
+  "text": "is linear in both the loss and data set size,"
+ },
+ {
+  "start": 1756.45,
+  "end": 1760.15,
+  "text": "whereas the previous example I gave was log-log scale."
+ },
+ {
+  "start": 1760.15,
+  "end": 1762.45,
+  "text": "And I was wondering why it's linear in both."
+ },
+ {
+  "start": 1762.45,
+  "end": 1765.75,
+  "text": "Yeah, so this is a bad axis."
+ },
+ {
+  "start": 1765.75,
+  "end": 1768.89,
+  "text": "Herman and I just talked about bad axis like this."
+ },
+ {
+  "start": 1768.89,
+  "end": 1770.39,
+  "text": "This is actually doubling."
+ },
+ {
+  "start": 1770.39,
+  "end": 1772.39,
+  "text": "So it looks linear, but it's actually log scale."
+ },
+ {
+  "start": 1772.39,
+  "end": 1773.73,
+  "text": "[LAUGHS] I fixed it now."
+ },
+ {
+  "start": 1773.73,
+  "end": 1775.21,
+  "text": "You fixed it now."
+ },
+ {
+  "start": 1775.21,
+  "end": 1778.31,
+  "text": "And the y-axis here, it doesn't look logged,"
+ },
+ {
+  "start": 1778.31,
+  "end": 1779.723,
+  "text": "but the range of this is so small"
+ },
+ {
+  "start": 1779.723,
+  "end": 1781.39,
+  "text": "that linear logs are basically the same."
+ },
+ {
+  "start": 1781.39,
+  "end": 1783.51,
+  "text": "If you look at the fitted functional forms here,"
+ },
+ {
+  "start": 1783.51,
+  "end": 1784.75,
+  "text": "these are still polynomials."
+ },
+ {
+  "start": 1784.75,
+  "end": 1786.542,
+  "text": "So we're fitting the same functional forms,"
+ },
+ {
+  "start": 1786.542,
+  "end": 1788.773,
+  "text": "and those are the ones that are plotted here."
+ },
+ {
+  "start": 1788.773,
+  "end": 1789.69,
+  "text": "This is another point."
+ },
+ {
+  "start": 1789.69,
+  "end": 1792.85,
+  "text": "I'll get to it at the end of the lecture."
+ },
+ {
+  "start": 1792.85,
+  "end": 1795.61,
+  "text": "If you only have a tiny slice of a compute range,"
+ },
+ {
+  "start": 1795.61,
+  "end": 1797.17,
+  "text": "it's very, very difficult to tell"
+ },
+ {
+  "start": 1797.17,
+  "end": 1798.77,
+  "text": "if something is scaling polynomially"
+ },
+ {
+  "start": 1798.77,
+  "end": 1800.55,
+  "text": "or if something's scaling exponentially."
+ },
+ {
+  "start": 1800.55,
+  "end": 1802.51,
+  "text": "Because Taylor approximations are a thing."
+ },
+ {
+  "start": 1802.51,
+  "end": 1805.07,
+  "text": "Everything looks linear if you zoom in enough."
+ },
+ {
+  "start": 1805.07,
+  "end": 1807.753,
+  "text": "And so whether this is polynomial"
+ },
+ {
+  "start": 1807.753,
+  "end": 1809.17,
+  "text": "or some other functional form, you"
+ },
+ {
+  "start": 1809.17,
+  "end": 1813.5,
+  "text": "want to be always a little bit careful and skeptical."
+ },
+ {
+  "start": 1813.5,
+  "end": 1814.0,
+  "text": "Good."
+ },
+ {
+  "start": 1814.0,
+  "end": 1816.12,
+  "text": "OK."
+ },
+ {
+  "start": 1816.12,
+  "end": 1819.56,
+  "text": "All right, so that was scaling laws for data,"
+ },
+ {
+  "start": 1819.56,
+  "end": 1821.08,
+  "text": "in many ways straightforward."
+ },
+ {
+  "start": 1821.08,
+  "end": 1824.84,
+  "text": "Now I want to talk about more exotic forms of scaling"
+ },
+ {
+  "start": 1824.84,
+  "end": 1829.217,
+  "text": "and scaling laws for model engineering of various kinds."
+ },
+ {
+  "start": 1829.217,
+  "end": 1830.8,
+  "text": "So what we're going to do now is we're"
+ },
+ {
+  "start": 1830.8,
+  "end": 1834.48,
+  "text": "going to try to design large language models."
+ },
+ {
+  "start": 1834.48,
+  "end": 1837.745,
+  "text": "Maybe you're a radical, and you believe that maybe LSTMs"
+ },
+ {
+  "start": 1837.745,
+  "end": 1838.37,
+  "text": "are the future."
+ },
+ {
+  "start": 1838.37,
+  "end": 1841.48,
+  "text": "Like, why can't I use LSTM instead of a transformer?"
+ },
+ {
+  "start": 1841.48,
+  "end": 1844.38,
+  "text": "I want to blow my B200 run on my LSTMs."
+ },
+ {
+  "start": 1844.38,
+  "end": 1846.6,
+  "text": "Or maybe you're a different kind of radical"
+ },
+ {
+  "start": 1846.6,
+  "end": 1848.02,
+  "text": "and you want to train on SGD."
+ },
+ {
+  "start": 1848.02,
+  "end": 1850.6,
+  "text": "Like, why can't I train on SGD?"
+ },
+ {
+  "start": 1850.6,
+  "end": 1851.78,
+  "text": "You might also wonder."
+ },
+ {
+  "start": 1851.78,
+  "end": 1854.3,
+  "text": "If you have a limited amount of resources,"
+ },
+ {
+  "start": 1854.3,
+  "end": 1856.76,
+  "text": "you have different ways to spend it."
+ },
+ {
+  "start": 1856.76,
+  "end": 1858.417,
+  "text": "Maybe you should train models longer,"
+ },
+ {
+  "start": 1858.417,
+  "end": 1860.0,
+  "text": "maybe you train bigger models, maybe I"
+ },
+ {
+  "start": 1860.0,
+  "end": 1861.38,
+  "text": "should go collect more data."
+ },
+ {
+  "start": 1861.38,
+  "end": 1863.64,
+  "text": "There's all sorts of trade-offs always at play,"
+ },
+ {
+  "start": 1863.64,
+  "end": 1866.72,
+  "text": "and scaling laws give us quantitative ways of making"
+ },
+ {
+  "start": 1866.72,
+  "end": 1870.04,
+  "text": "these trade-offs, hopefully."
+ },
+ {
+  "start": 1870.04,
+  "end": 1872.4,
+  "text": "I'm going to start off with some simple hyperparameter"
+ },
+ {
+  "start": 1872.4,
+  "end": 1875.68,
+  "text": "questions, things like how do I choose my architecture"
+ },
+ {
+  "start": 1875.68,
+  "end": 1878.0,
+  "text": "or optimizer, things that I talked about"
+ },
+ {
+  "start": 1878.0,
+  "end": 1880.12,
+  "text": "in the second lecture."
+ },
+ {
+  "start": 1880.12,
+  "end": 1882.64,
+  "text": "And there I gave you the perspective of maybe"
+ },
+ {
+  "start": 1882.64,
+  "end": 1884.783,
+  "text": "you can study what other people do."
+ },
+ {
+  "start": 1884.783,
+  "end": 1887.2,
+  "text": "Now I'm going to try to give you a first-principal answers"
+ },
+ {
+  "start": 1887.2,
+  "end": 1889.64,
+  "text": "to those questions with a little bit of a different set"
+ },
+ {
+  "start": 1889.64,
+  "end": 1890.36,
+  "text": "of trade-offs."
+ },
+ {
+  "start": 1890.36,
+  "end": 1892.82,
+  "text": "So you have to believe in scaling laws in this lecture,"
+ },
+ {
+  "start": 1892.82,
+  "end": 1896.16,
+  "text": "but as long as you do, you get to try things on your own"
+ },
+ {
+  "start": 1896.16,
+  "end": 1897.44,
+  "text": "and find out."
+ },
+ {
+  "start": 1897.44,
+  "end": 1900.84,
+  "text": "OK, the very first question we might start with is to say,"
+ },
+ {
+  "start": 1900.84,
+  "end": 1904.32,
+  "text": "Are transformers really better than LSTMs?"
+ },
+ {
+  "start": 1904.32,
+  "end": 1905.32,
+  "text": "LSTMs."
+ },
+ {
+  "start": 1905.32,
+  "end": 1906.64,
+  "text": "They can work OK, too."
+ },
+ {
+  "start": 1906.64,
+  "end": 1908.5,
+  "text": "They will fit distributions."
+ },
+ {
+  "start": 1908.5,
+  "end": 1910.66,
+  "text": "With the advent of things like Mamba,"
+ },
+ {
+  "start": 1910.66,
+  "end": 1913.0,
+  "text": "we know that SSMS can work."
+ },
+ {
+  "start": 1913.0,
+  "end": 1914.768,
+  "text": "So are they better?"
+ },
+ {
+  "start": 1914.768,
+  "end": 1916.56,
+  "text": "The brute force way to answer this question"
+ },
+ {
+  "start": 1916.56,
+  "end": 1922.4,
+  "text": "is to train a big LSTM GPT-3 or even bigger class of models."
+ },
+ {
+  "start": 1922.4,
+  "end": 1926.61,
+  "text": "The scaling law way would be to train a bunch of smaller models"
+ },
+ {
+  "start": 1926.61,
+  "end": 1928.36,
+  "text": "and say, I'm going to train my transformer"
+ },
+ {
+  "start": 1928.36,
+  "end": 1931.008,
+  "text": "across a different variety of compute ranges,"
+ },
+ {
+  "start": 1931.008,
+  "end": 1933.55,
+  "text": "and I'm going to train different LSTMs with different numbers"
+ },
+ {
+  "start": 1933.55,
+  "end": 1935.63,
+  "text": "of layers on, once again, a variety"
+ },
+ {
+  "start": 1935.63,
+  "end": 1937.75,
+  "text": "of different compute ranges."
+ },
+ {
+  "start": 1937.75,
+  "end": 1939.13,
+  "text": "Now, what does this show?"
+ },
+ {
+  "start": 1939.13,
+  "end": 1943.99,
+  "text": "This shows LSTMs have definitely different intercept, maybe even"
+ },
+ {
+  "start": 1943.99,
+  "end": 1945.89,
+  "text": "different slope than the transformer."
+ },
+ {
+  "start": 1945.89,
+  "end": 1950.39,
+  "text": "And because of this, probably you don't want to pick out LSTM."
+ },
+ {
+  "start": 1950.39,
+  "end": 1953.51,
+  "text": "This plot would justify scaling up the transformer instead"
+ },
+ {
+  "start": 1953.51,
+  "end": 1954.625,
+  "text": "of the LSTM."
+ },
+ {
+  "start": 1954.625,
+  "end": 1956.75,
+  "text": "And if you look at a lot of the architecture papers"
+ },
+ {
+  "start": 1956.75,
+  "end": 1958.25,
+  "text": "today, like you go look at the Mamba"
+ },
+ {
+  "start": 1958.25,
+  "end": 1960.575,
+  "text": "paper or the gated delta net papers,"
+ },
+ {
+  "start": 1960.575,
+  "end": 1961.95,
+  "text": "they will always have a plot that"
+ },
+ {
+  "start": 1961.95,
+  "end": 1965.51,
+  "text": "looks like this, where you have vanilla transformer, our really"
+ },
+ {
+  "start": 1965.51,
+  "end": 1966.25,
+  "text": "cool model."
+ },
+ {
+  "start": 1966.25,
+  "end": 1968.843,
+  "text": "And our really cool models, usually either on top or below,"
+ },
+ {
+  "start": 1968.843,
+  "end": 1971.51,
+  "text": "because that's what would prove that your model is doing better."
+ },
+ {
+  "start": 1971.51,
+  "end": 1974.31,
+  "text": "And you certainly don't want something where your slopes are"
+ },
+ {
+  "start": 1974.31,
+  "end": 1976.97,
+  "text": "worse because that means as you scale up larger and larger,"
+ },
+ {
+  "start": 1976.97,
+  "end": 1978.95,
+  "text": "your models will eventually do worse."
+ },
+ {
+  "start": 1978.95,
+  "end": 1981.31,
+  "text": "So this is one way of really reasoning"
+ },
+ {
+  "start": 1981.31,
+  "end": 1988.02,
+  "text": "about architectures without training gigantic models."
+ },
+ {
+  "start": 1988.02,
+  "end": 1990.22,
+  "text": "There haven't been, I think, quite"
+ },
+ {
+  "start": 1990.22,
+  "end": 1995.82,
+  "text": "as many recent and good architecture scaling law papers."
+ },
+ {
+  "start": 1995.82,
+  "end": 1998.98,
+  "text": "I think the one that is relatively recent"
+ },
+ {
+  "start": 1998.98,
+  "end": 2002.858,
+  "text": "and that I like quite a lot is by Ek and others at Google,"
+ },
+ {
+  "start": 2002.858,
+  "end": 2004.9,
+  "text": "back when they were publishing this kind of work,"
+ },
+ {
+  "start": 2004.9,
+  "end": 2008.66,
+  "text": "where they did a whole bunch of scaling studies on T5-style"
+ },
+ {
+  "start": 2008.66,
+  "end": 2012.66,
+  "text": "models, where they trained larger and larger variants of T5"
+ },
+ {
+  "start": 2012.66,
+  "end": 2015.692,
+  "text": "models on many different architectures."
+ },
+ {
+  "start": 2015.692,
+  "end": 2017.4,
+  "text": "And I think one thing that's really cool,"
+ },
+ {
+  "start": 2017.4,
+  "end": 2019.82,
+  "text": "and one of the reasons why I still bring this paper up,"
+ },
+ {
+  "start": 2019.82,
+  "end": 2023.34,
+  "text": "is they capture exactly the architecture"
+ },
+ {
+  "start": 2023.34,
+  "end": 2026.92,
+  "text": "changes that we implement today in our frontier models."
+ },
+ {
+  "start": 2026.92,
+  "end": 2031.62,
+  "text": "So things like performer, which is an efficient attention, that"
+ },
+ {
+  "start": 2031.62,
+  "end": 2032.68,
+  "text": "doesn't scale very well."
+ },
+ {
+  "start": 2032.68,
+  "end": 2035.1,
+  "text": "We do not implement those."
+ },
+ {
+  "start": 2035.1,
+  "end": 2037.88,
+  "text": "The things that we implement are the gated linear unit."
+ },
+ {
+  "start": 2037.88,
+  "end": 2041.028,
+  "text": "Red line better than green line throughout the scaling trends."
+ },
+ {
+  "start": 2041.028,
+  "end": 2041.82,
+  "text": "Switch transformer."
+ },
+ {
+  "start": 2041.82,
+  "end": 2043.695,
+  "text": "I don't what happened with their biggest run,"
+ },
+ {
+  "start": 2043.695,
+  "end": 2047.13,
+  "text": "but generally speaking, it's got good scaling trends."
+ },
+ {
+  "start": 2047.13,
+  "end": 2049.971,
+  "text": "And I forgot, oh, mixture of softmaxes."
+ },
+ {
+  "start": 2049.971,
+  "end": 2051.429,
+  "text": "Actually, we don't do this anymore,"
+ },
+ {
+  "start": 2051.429,
+  "end": 2053.389,
+  "text": "but this is probably an effective intervention"
+ },
+ {
+  "start": 2053.389,
+  "end": 2055.33,
+  "text": "given the scaling trends."
+ },
+ {
+  "start": 2055.33,
+  "end": 2058.37,
+  "text": "So you see that through this scaling trends,"
+ },
+ {
+  "start": 2058.37,
+  "end": 2060.889,
+  "text": "even though a lot of these papers"
+ },
+ {
+  "start": 2060.889,
+  "end": 2063.09,
+  "text": "were operating on much, much smaller compute scales"
+ },
+ {
+  "start": 2063.09,
+  "end": 2065.25,
+  "text": "than what we operate today, they're"
+ },
+ {
+  "start": 2065.25,
+  "end": 2067.53,
+  "text": "able to see the kinds of architecture trends"
+ },
+ {
+  "start": 2067.53,
+  "end": 2071.429,
+  "text": "that are driving frontier model development back then."
+ },
+ {
+  "start": 2071.429,
+  "end": 2075.05,
+  "text": "And I think this is why a lot of people use scaling laws"
+ },
+ {
+  "start": 2075.05,
+  "end": 2078.27,
+  "text": "as a really, almost paradigmatic way, saying, \"Oh,"
+ },
+ {
+  "start": 2078.27,
+  "end": 2080.3,
+  "text": "if it doesn't show up in the scaling law,"
+ },
+ {
+  "start": 2080.3,
+  "end": 2081.55,
+  "text": "it's not a good intervention.\""
+ },
+ {
+  "start": 2081.55,
+  "end": 2083.969,
+  "text": "Because in some ways, a lot of the past work"
+ },
+ {
+  "start": 2083.969,
+  "end": 2087.37,
+  "text": "has captured what we see today."
+ },
+ {
+  "start": 2087.37,
+  "end": 2088.69,
+  "text": "Good."
+ },
+ {
+  "start": 2088.69,
+  "end": 2091.61,
+  "text": "OK, going beyond architectures, we"
+ },
+ {
+  "start": 2091.61,
+  "end": 2094.25,
+  "text": "can extend this kind of analysis to all sorts of other things"
+ },
+ {
+  "start": 2094.25,
+  "end": 2097.39,
+  "text": "that we might want to understand."
+ },
+ {
+  "start": 2097.39,
+  "end": 2100.613,
+  "text": "We might ask, OK, is SGD better or worse than ADAM?"
+ },
+ {
+  "start": 2100.613,
+  "end": 2102.53,
+  "text": "If you do the scaling law analysis, this one's"
+ },
+ {
+  "start": 2102.53,
+  "end": 2105.372,
+  "text": "by Hestness, you'll see very clear trends."
+ },
+ {
+  "start": 2105.372,
+  "end": 2107.33,
+  "text": "This is once again, the really mysterious thing"
+ },
+ {
+  "start": 2107.33,
+  "end": 2111.45,
+  "text": "of the intercepts are different, but the slopes are very similar."
+ },
+ {
+  "start": 2111.45,
+  "end": 2113.49,
+  "text": "If you fix the data and you fix the models,"
+ },
+ {
+  "start": 2113.49,
+  "end": 2115.19,
+  "text": "slopes are often very, very similar."
+ },
+ {
+  "start": 2115.19,
+  "end": 2117.91,
+  "text": "I am very surprised by this every time I see it."
+ },
+ {
+  "start": 2117.91,
+  "end": 2119.13,
+  "text": "And yet, it's very true."
+ },
+ {
+  "start": 2119.13,
+  "end": 2121.59,
+  "text": "It's rare to get different slopes,"
+ },
+ {
+  "start": 2121.59,
+  "end": 2124.01,
+  "text": "even with an intervention as big as SGD to ADAM."
+ },
+ {
+  "start": 2124.01,
+  "end": 2127.15,
+  "text": "If you were the one training with SGD or ADAM,"
+ },
+ {
+  "start": 2127.15,
+  "end": 2129.13,
+  "text": "you would think that's a huge change."
+ },
+ {
+  "start": 2129.13,
+  "end": 2131.29,
+  "text": "Scaling trends remain roughly the same."
+ },
+ {
+  "start": 2131.29,
+  "end": 2133.73,
+  "text": "In this case, this is a language modeling"
+ },
+ {
+  "start": 2133.73,
+  "end": 2135.19,
+  "text": "with a recurrent highway net."
+ },
+ {
+  "start": 2138.17,
+  "end": 2142.47,
+  "text": "Similarly, in lecture 2, I told you about aspect ratios."
+ },
+ {
+  "start": 2142.47,
+  "end": 2144.77,
+  "text": "How do you pick your depth-to-width trade-off?"
+ },
+ {
+  "start": 2144.77,
+  "end": 2146.89,
+  "text": "And I told you, well, you can just"
+ },
+ {
+  "start": 2146.89,
+  "end": 2149.99,
+  "text": "pick some random number that's somewhat roughly reasonable."
+ },
+ {
+  "start": 2149.99,
+  "end": 2152.41,
+  "text": "It's like four times the reasonable multiplier."
+ },
+ {
+  "start": 2152.41,
+  "end": 2155.31,
+  "text": "But if you're doing this kind of scaling analysis,"
+ },
+ {
+  "start": 2155.31,
+  "end": 2158.03,
+  "text": "you could much more precisely what is happening."
+ },
+ {
+  "start": 2158.03,
+  "end": 2160.41,
+  "text": "So the first thing you could do is"
+ },
+ {
+  "start": 2160.41,
+  "end": 2162.83,
+  "text": "you could look at scaling trends as a function of layers,"
+ },
+ {
+  "start": 2162.83,
+  "end": 2165.88,
+  "text": "and you would immediately see that having extremely few layers"
+ },
+ {
+  "start": 2165.88,
+  "end": 2167.46,
+  "text": "is very, very bad for your model."
+ },
+ {
+  "start": 2167.46,
+  "end": 2169.86,
+  "text": "If you have one layer, you're not going anywhere."
+ },
+ {
+  "start": 2169.86,
+  "end": 2171.92,
+  "text": "That's a terrible, terrible scaling trend."
+ },
+ {
+  "start": 2171.92,
+  "end": 2173.48,
+  "text": "Greater than 1 layer, actually, it's"
+ },
+ {
+  "start": 2173.48,
+  "end": 2175.6,
+  "text": "surprisingly more competitive, although you"
+ },
+ {
+  "start": 2175.6,
+  "end": 2178.84,
+  "text": "do see that at every compute level, more layers, at least"
+ },
+ {
+  "start": 2178.84,
+  "end": 2181.468,
+  "text": "in this case is better."
+ },
+ {
+  "start": 2181.468,
+  "end": 2183.76,
+  "text": "And if you can do a much more fine-grained study, which"
+ },
+ {
+  "start": 2183.76,
+  "end": 2188.44,
+  "text": "they do in Kaplan, where you try to identify what"
+ },
+ {
+  "start": 2188.44,
+  "end": 2190.42,
+  "text": "you might call scale-invariant quantities,"
+ },
+ {
+  "start": 2190.42,
+  "end": 2192.0,
+  "text": "like the aspect ratio."
+ },
+ {
+  "start": 2192.0,
+  "end": 2194.62,
+  "text": "The number of layers is not a scale-invariant quantity."
+ },
+ {
+  "start": 2194.62,
+  "end": 2198.12,
+  "text": "As you make your model bigger, you do want more layers."
+ },
+ {
+  "start": 2198.12,
+  "end": 2200.02,
+  "text": "But as you make your model bigger,"
+ },
+ {
+  "start": 2200.02,
+  "end": 2203.36,
+  "text": "maybe the aspect ratio, the optimal one should stay the same."
+ },
+ {
+  "start": 2203.36,
+  "end": 2205.04,
+  "text": "This one is scale invariant."
+ },
+ {
+  "start": 2205.04,
+  "end": 2207.02,
+  "text": "And so if we look at the aspect ratio,"
+ },
+ {
+  "start": 2207.02,
+  "end": 2209.96,
+  "text": "we see that at different model sizes,"
+ },
+ {
+  "start": 2209.96,
+  "end": 2213.88,
+  "text": "we get basically the same minima around 100d model for every"
+ },
+ {
+  "start": 2213.88,
+  "end": 2216.44,
+  "text": "layer, or maybe a little bit less."
+ },
+ {
+  "start": 2216.44,
+  "end": 2218.18,
+  "text": "And it does shift a little bit right."
+ },
+ {
+  "start": 2218.18,
+  "end": 2221.95,
+  "text": "There is a shift towards aspect ratio"
+ },
+ {
+  "start": 2221.95,
+  "end": 2224.81,
+  "text": "that is smaller for deeper models, but for the most part,"
+ },
+ {
+  "start": 2224.81,
+  "end": 2227.03,
+  "text": "the minima stays roughly similar."
+ },
+ {
+  "start": 2227.03,
+  "end": 2229.003,
+  "text": "You can do similar kinds of analysis"
+ },
+ {
+  "start": 2229.003,
+  "end": 2231.17,
+  "text": "for things like attention head dimension and others."
+ },
+ {
+  "start": 2231.17,
+  "end": 2232.91,
+  "text": "And if you look at the Kaplan paper,"
+ },
+ {
+  "start": 2232.91,
+  "end": 2235.33,
+  "text": "they do quite a good job at doing all of this."
+ },
+ {
+  "start": 2235.33,
+  "end": 2238.27,
+  "text": "And this is one way that you can be confident about your scaling"
+ },
+ {
+  "start": 2238.27,
+  "end": 2239.03,
+  "text": "strategy."
+ },
+ {
+  "start": 2239.03,
+  "end": 2241.87,
+  "text": "So if your scaling strategy is \"I'm going to fix my aspect"
+ },
+ {
+  "start": 2241.87,
+  "end": 2243.41,
+  "text": "ratio, and I'm going to scale up,\""
+ },
+ {
+  "start": 2243.41,
+  "end": 2246.67,
+  "text": "you can make plots like this and convince yourself we're probably"
+ },
+ {
+  "start": 2246.67,
+  "end": 2249.79,
+  "text": "good because our optimization shifting too much as I go"
+ },
+ {
+  "start": 2249.79,
+  "end": 2251.69,
+  "text": "to larger and larger and larger models."
+ },
+ {
+  "start": 2254.91,
+  "end": 2259.11,
+  "text": "One thing that's important, and this is a huge can of worms,"
+ },
+ {
+  "start": 2259.11,
+  "end": 2260.75,
+  "text": "and a sufficiently big can of worms"
+ },
+ {
+  "start": 2260.75,
+  "end": 2263.21,
+  "text": "that I will talk about it on more than one slide,"
+ },
+ {
+  "start": 2263.21,
+  "end": 2267.41,
+  "text": "I will come back, not all parameters are created equal."
+ },
+ {
+  "start": 2267.41,
+  "end": 2269.69,
+  "text": "And because not all parameters are created equal,"
+ },
+ {
+  "start": 2269.69,
+  "end": 2271.91,
+  "text": "your scaling laws may look good or bad"
+ },
+ {
+  "start": 2271.91,
+  "end": 2275.87,
+  "text": "depending on how you define what a parameter is."
+ },
+ {
+  "start": 2275.87,
+  "end": 2278.79,
+  "text": "So in the Kaplan paper, they made this observation that"
+ },
+ {
+  "start": 2278.79,
+  "end": 2282.9,
+  "text": "if they drew their scaling laws for depth with the embedding"
+ },
+ {
+  "start": 2282.9,
+  "end": 2285.54,
+  "text": "parameters, they got these very funky-looking scaling laws,"
+ },
+ {
+  "start": 2285.54,
+  "end": 2288.245,
+  "text": "and they said, \"Oh, this is no good at all, no good at all.\""
+ },
+ {
+  "start": 2288.245,
+  "end": 2289.62,
+  "text": "Because it's no good at all, they"
+ },
+ {
+  "start": 2289.62,
+  "end": 2291.78,
+  "text": "decided that they were going to exclude"
+ },
+ {
+  "start": 2291.78,
+  "end": 2294.3,
+  "text": "all the embedding parameters, and they were only"
+ },
+ {
+  "start": 2294.3,
+  "end": 2297.52,
+  "text": "going to count the non-embedding parameters because you could"
+ },
+ {
+  "start": 2297.52,
+  "end": 2299.02,
+  "text": "justify it to yourself, saying these"
+ },
+ {
+  "start": 2299.02,
+  "end": 2303.363,
+  "text": "are the parameters that are doing computation or whatever."
+ },
+ {
+  "start": 2303.363,
+  "end": 2307.62,
+  "text": "We're going to see later that this going to have non-trivial implications on the validity"
+ },
+ {
+  "start": 2307.62,
+  "end": 2308.96,
+  "text": "of some of the results."
+ },
+ {
+  "start": 2308.96,
+  "end": 2311.72,
+  "text": "But the point here is scaling laws aren't magic."
+ },
+ {
+  "start": 2311.72,
+  "end": 2313.82,
+  "text": "I think Percy likes to make this point,"
+ },
+ {
+  "start": 2313.82,
+  "end": 2316.94,
+  "text": "that scaling laws and all these kinds of predictability"
+ },
+ {
+  "start": 2316.94,
+  "end": 2318.7,
+  "text": "across scales is engineered."
+ },
+ {
+  "start": 2318.7,
+  "end": 2320.48,
+  "text": "They don't happen automatically."
+ },
+ {
+  "start": 2320.48,
+  "end": 2323.677,
+  "text": "We need to pick the right kinds of x-axes to look at."
+ },
+ {
+  "start": 2323.677,
+  "end": 2326.26,
+  "text": "We need to make sure that the hyperparameters for these things"
+ },
+ {
+  "start": 2326.26,
+  "end": 2328.62,
+  "text": "are set right, and only under those conditions"
+ },
+ {
+  "start": 2328.62,
+  "end": 2331.3,
+  "text": "does it become possible to get predictable scaling"
+ },
+ {
+  "start": 2331.3,
+  "end": 2333.48,
+  "text": "across many orders of magnitude compute."
+ },
+ {
+  "start": 2333.48,
+  "end": 2337.52,
+  "text": "So this is what a lot of scaling law researchers do."
+ },
+ {
+  "start": 2337.52,
+  "end": 2339.14,
+  "text": "They think about what the right way"
+ },
+ {
+  "start": 2339.14,
+  "end": 2341.98,
+  "text": "is to get very predictable scaling."
+ },
+ {
+  "start": 2341.98,
+  "end": 2344.38,
+  "text": "Now, related to this, I think are"
+ },
+ {
+  "start": 2344.38,
+  "end": 2347.78,
+  "text": "very interesting recent papers on things like scaling"
+ },
+ {
+  "start": 2347.78,
+  "end": 2349.46,
+  "text": "for mixture of experts."
+ },
+ {
+  "start": 2349.46,
+  "end": 2351.96,
+  "text": "Now, that mixture of experts is, you would say,"
+ },
+ {
+  "start": 2351.96,
+  "end": 2355.38,
+  "text": "the dominant way of training large models,"
+ },
+ {
+  "start": 2355.38,
+  "end": 2358.02,
+  "text": "it is quite important to think about what is the value"
+ },
+ {
+  "start": 2358.02,
+  "end": 2360.18,
+  "text": "or what is a parameter in this new world"
+ },
+ {
+  "start": 2360.18,
+  "end": 2362.86,
+  "text": "where the number of parameters and the number of parameters"
+ },
+ {
+  "start": 2362.86,
+  "end": 2364.5,
+  "text": "are kind of decoupled."
+ },
+ {
+  "start": 2364.5,
+  "end": 2366.78,
+  "text": "And there's a nice, clean analysis"
+ },
+ {
+  "start": 2366.78,
+  "end": 2370.46,
+  "text": "by some folks at Apple and MIT that"
+ },
+ {
+  "start": 2370.46,
+  "end": 2376.22,
+  "text": "show the scaling trends as a function of both parameters"
+ },
+ {
+  "start": 2376.22,
+  "end": 2377.64,
+  "text": "and active parameters."
+ },
+ {
+  "start": 2377.64,
+  "end": 2380.14,
+  "text": "And the cool thing that you see is,"
+ },
+ {
+  "start": 2380.14,
+  "end": 2383.04,
+  "text": "as you start to train bigger and bigger models,"
+ },
+ {
+  "start": 2383.04,
+  "end": 2385.46,
+  "text": "if you increase the amount of total parameters"
+ },
+ {
+  "start": 2385.46,
+  "end": 2389.22,
+  "text": "on the x-axis over here, and you want to minimize your loss,"
+ },
+ {
+  "start": 2389.22,
+  "end": 2392.24,
+  "text": "you're going to end up with more sparse and sparse models."
+ },
+ {
+  "start": 2392.24,
+  "end": 2395.34,
+  "text": "See how the color becomes darker and darker and darker."
+ },
+ {
+  "start": 2395.34,
+  "end": 2399.53,
+  "text": "Similarly, here, if you like the number of active parameters"
+ },
+ {
+  "start": 2399.53,
+  "end": 2403.37,
+  "text": "decreases as a function of MoE sparsity."
+ },
+ {
+  "start": 2403.37,
+  "end": 2405.73,
+  "text": "And you get the result that I think"
+ },
+ {
+  "start": 2405.73,
+  "end": 2407.45,
+  "text": "is somewhat intuitive here, which"
+ },
+ {
+  "start": 2407.45,
+  "end": 2409.45,
+  "text": "is you can draw these surfaces."
+ },
+ {
+  "start": 2409.45,
+  "end": 2412.89,
+  "text": "For every compute amount, you can ask, OK,"
+ },
+ {
+  "start": 2412.89,
+  "end": 2417.85,
+  "text": "would I rather spend that compute on active parameters"
+ },
+ {
+  "start": 2417.85,
+  "end": 2419.77,
+  "text": "and how much sparsity do I want?"
+ },
+ {
+  "start": 2419.77,
+  "end": 2423.21,
+  "text": "I can vary my sparsity without really changing the amount"
+ },
+ {
+  "start": 2423.21,
+  "end": 2425.29,
+  "text": "of compute that I'm spending."
+ },
+ {
+  "start": 2425.29,
+  "end": 2427.13,
+  "text": "Now, given that you can ask, OK, what"
+ },
+ {
+  "start": 2427.13,
+  "end": 2429.59,
+  "text": "happens if I add more of empty parameters,"
+ },
+ {
+  "start": 2429.59,
+  "end": 2432.25,
+  "text": "same active parameters, but more total parameters?"
+ },
+ {
+  "start": 2432.25,
+  "end": 2434.57,
+  "text": "As you move from back on the plot"
+ },
+ {
+  "start": 2434.57,
+  "end": 2439.09,
+  "text": "to in the front of the plot, you see the losses are improving."
+ },
+ {
+  "start": 2439.09,
+  "end": 2441.33,
+  "text": "So in other words, this is saying"
+ },
+ {
+  "start": 2441.33,
+  "end": 2443.81,
+  "text": "that the parameters in an MoE that are not active"
+ },
+ {
+  "start": 2443.81,
+  "end": 2445.843,
+  "text": "are still helping you reduce your loss, which"
+ },
+ {
+  "start": 2445.843,
+  "end": 2446.51,
+  "text": "is kind of cool."
+ },
+ {
+  "start": 2446.51,
+  "end": 2449.11,
+  "text": "And you can write down what the functional forms of this are."
+ },
+ {
+  "start": 2449.11,
+  "end": 2451.57,
+  "text": "I won't go into that part in more detail,"
+ },
+ {
+  "start": 2451.57,
+  "end": 2454.89,
+  "text": "but the point here is to say all of these kinds of quantities"
+ },
+ {
+  "start": 2454.89,
+  "end": 2457.44,
+  "text": "that we care about in optimizing MoE"
+ },
+ {
+  "start": 2457.44,
+  "end": 2460.62,
+  "text": "are things that have predictable scaling and regularities."
+ },
+ {
+  "start": 2463.7,
+  "end": 2467.96,
+  "text": "And the two things I want to now talk about are actually really--"
+ },
+ {
+  "start": 2467.96,
+  "end": 2470.4,
+  "text": "yeah, two things that I now want to talk about."
+ },
+ {
+  "start": 2470.4,
+  "end": 2472.76,
+  "text": "When you're going to train a new big model,"
+ },
+ {
+  "start": 2472.76,
+  "end": 2475.2,
+  "text": "actually, most of the things that I talk about are fixed."
+ },
+ {
+  "start": 2475.2,
+  "end": 2476.92,
+  "text": "You're probably all not radical enough"
+ },
+ {
+  "start": 2476.92,
+  "end": 2478.34,
+  "text": "that you're going to switch to a LSTM."
+ },
+ {
+  "start": 2478.34,
+  "end": 2480.382,
+  "text": "You're probably going to pick like, I don't know,"
+ },
+ {
+  "start": 2480.382,
+  "end": 2483.96,
+  "text": "a DeepSeek-V4-inspired MoE or something."
+ },
+ {
+  "start": 2483.96,
+  "end": 2486.88,
+  "text": "And you're probably going to pick architecture choices that"
+ },
+ {
+  "start": 2486.88,
+  "end": 2487.98,
+  "text": "are tried and tested."
+ },
+ {
+  "start": 2487.98,
+  "end": 2490.0,
+  "text": "You're not going to really throw everything out."
+ },
+ {
+  "start": 2490.0,
+  "end": 2491.84,
+  "text": "But two things that you really do"
+ },
+ {
+  "start": 2491.84,
+  "end": 2494.44,
+  "text": "have to maybe reinvent in some sense"
+ },
+ {
+  "start": 2494.44,
+  "end": 2496.6,
+  "text": "is the batch size and the learning rate."
+ },
+ {
+  "start": 2496.6,
+  "end": 2498.4,
+  "text": "If you train your deep learning models,"
+ },
+ {
+  "start": 2498.4,
+  "end": 2501.16,
+  "text": "you know that you have to be very careful"
+ },
+ {
+  "start": 2501.16,
+  "end": 2503.92,
+  "text": "about the combination of your batch size and learning rate."
+ },
+ {
+  "start": 2503.92,
+  "end": 2505.88,
+  "text": "You change one, you have to change the other."
+ },
+ {
+  "start": 2505.88,
+  "end": 2508.88,
+  "text": "Now, batch size, from the previous lecture,"
+ },
+ {
+  "start": 2508.88,
+  "end": 2511.02,
+  "text": "is very tricky for another reason."
+ },
+ {
+  "start": 2511.02,
+  "end": 2513.18,
+  "text": "We want the batch size to be as big as possible"
+ },
+ {
+  "start": 2513.18,
+  "end": 2515.35,
+  "text": "because a big batch size gives us opportunity"
+ },
+ {
+  "start": 2515.35,
+  "end": 2516.43,
+  "text": "for parallelization."
+ },
+ {
+  "start": 2516.43,
+  "end": 2519.91,
+  "text": "Remember, data parallel requires large batch size."
+ },
+ {
+  "start": 2519.91,
+  "end": 2522.55,
+  "text": "So now, having said all that, what we really want to"
+ },
+ {
+  "start": 2522.55,
+  "end": 2525.79,
+  "text": "is how large can we make our batch size"
+ },
+ {
+  "start": 2525.79,
+  "end": 2527.13,
+  "text": "before we start to suffer?"
+ },
+ {
+  "start": 2527.13,
+  "end": 2530.15,
+  "text": "That's the relevant systems question."
+ },
+ {
+  "start": 2530.15,
+  "end": 2532.35,
+  "text": "And you also want to how does that change"
+ },
+ {
+  "start": 2532.35,
+  "end": 2534.03,
+  "text": "as a function of model size."
+ },
+ {
+  "start": 2534.03,
+  "end": 2539.75,
+  "text": "So given that preface, there is this very important idea"
+ },
+ {
+  "start": 2539.75,
+  "end": 2541.615,
+  "text": "that is used in a variety of papers"
+ },
+ {
+  "start": 2541.615,
+  "end": 2542.99,
+  "text": "and talked about very frequently,"
+ },
+ {
+  "start": 2542.99,
+  "end": 2544.99,
+  "text": "called the critical batch size."
+ },
+ {
+  "start": 2544.99,
+  "end": 2547.51,
+  "text": "The critical batch size is roughly this idea that"
+ },
+ {
+  "start": 2547.51,
+  "end": 2549.23,
+  "text": "up until a certain point, when you"
+ },
+ {
+  "start": 2549.23,
+  "end": 2551.01,
+  "text": "start to get diminishing returns,"
+ },
+ {
+  "start": 2551.01,
+  "end": 2554.61,
+  "text": "there is returns, perfect returns, to increased batch size."
+ },
+ {
+  "start": 2554.61,
+  "end": 2558.17,
+  "text": "So I might call this the noise-limited regime."
+ },
+ {
+  "start": 2558.17,
+  "end": 2560.87,
+  "text": "So in the noise-limited regime, every additional element"
+ },
+ {
+  "start": 2560.87,
+  "end": 2564.67,
+  "text": "that you throw in your batch reduces the gradient noise"
+ },
+ {
+  "start": 2564.67,
+  "end": 2565.77,
+  "text": "in your SGD step."
+ },
+ {
+  "start": 2565.77,
+  "end": 2568.23,
+  "text": "And since you're variance-limited,"
+ },
+ {
+  "start": 2568.23,
+  "end": 2570.77,
+  "text": "that reduction in variance is very, very helpful."
+ },
+ {
+  "start": 2570.77,
+  "end": 2572.6,
+  "text": "That gives you big returns."
+ },
+ {
+  "start": 2572.6,
+  "end": 2575.0,
+  "text": "So this is the regime in which you have perfect scaling."
+ },
+ {
+  "start": 2575.0,
+  "end": 2577.1,
+  "text": "You're doing about as well as you can,"
+ },
+ {
+  "start": 2577.1,
+  "end": 2580.94,
+  "text": "given the amount of extra examples that you're processing."
+ },
+ {
+  "start": 2580.94,
+  "end": 2582.66,
+  "text": "As you get to a certain point where"
+ },
+ {
+  "start": 2582.66,
+  "end": 2585.66,
+  "text": "you've reached the noise scale of your gradients,"
+ },
+ {
+  "start": 2585.66,
+  "end": 2588.88,
+  "text": "you get to a point where you are no longer variance-limited."
+ },
+ {
+  "start": 2588.88,
+  "end": 2590.32,
+  "text": "You're now bias-limited."
+ },
+ {
+  "start": 2590.32,
+  "end": 2591.36,
+  "text": "What does that mean?"
+ },
+ {
+  "start": 2591.36,
+  "end": 2593.0,
+  "text": "Well, remember, in gradient descent,"
+ },
+ {
+  "start": 2593.0,
+  "end": 2595.48,
+  "text": "you're looking at the local structure of your objective."
+ },
+ {
+  "start": 2595.48,
+  "end": 2599.52,
+  "text": "You don't have a global view of where the minimum is."
+ },
+ {
+  "start": 2599.52,
+  "end": 2602.58,
+  "text": "So no matter how low noise I am, I'm"
+ },
+ {
+  "start": 2602.58,
+  "end": 2605.04,
+  "text": "only going to point in this light blue direction over here."
+ },
+ {
+  "start": 2605.04,
+  "end": 2606.54,
+  "text": "And there's always a disagreement"
+ },
+ {
+  "start": 2606.54,
+  "end": 2608.38,
+  "text": "between my local descent direction"
+ },
+ {
+  "start": 2608.38,
+  "end": 2610.9,
+  "text": "and where the global optimum is."
+ },
+ {
+  "start": 2610.9,
+  "end": 2612.78,
+  "text": "Because of that, at a certain point,"
+ },
+ {
+  "start": 2612.78,
+  "end": 2614.3,
+  "text": "I'm going to get diminishing returns"
+ },
+ {
+  "start": 2614.3,
+  "end": 2617.8,
+  "text": "because now my limiting factor is no longer variance."
+ },
+ {
+  "start": 2617.8,
+  "end": 2619.4,
+  "text": "It is this bias term."
+ },
+ {
+  "start": 2619.4,
+  "end": 2624.1,
+  "text": "So now I'm bias-limited past this point over here."
+ },
+ {
+  "start": 2624.1,
+  "end": 2626.94,
+  "text": "And so critical batch is kind of a rule of thumb,"
+ },
+ {
+  "start": 2626.94,
+  "end": 2631.34,
+  "text": "you might call it, or a convenient trade-off point where"
+ },
+ {
+  "start": 2631.34,
+  "end": 2633.54,
+  "text": "you say this is the point at which we're starting"
+ },
+ {
+  "start": 2633.54,
+  "end": 2635.78,
+  "text": "to cross over from our perfect scaling"
+ },
+ {
+  "start": 2635.78,
+  "end": 2639.14,
+  "text": "regime to our ineffective scaling regime."
+ },
+ {
+  "start": 2639.14,
+  "end": 2641.097,
+  "text": "And so it gives you a good rule of thumb"
+ },
+ {
+  "start": 2641.097,
+  "end": 2643.18,
+  "text": "of where to be setting your batch size if you want"
+ },
+ {
+  "start": 2643.18,
+  "end": 2645.86,
+  "text": "your batch size to be as big as possible without suffering"
+ },
+ {
+  "start": 2645.86,
+  "end": 2648.48,
+  "text": "these huge efficiency losses."
+ },
+ {
+  "start": 2648.48,
+  "end": 2651.34,
+  "text": "Hopefully, that idea is very clear."
+ },
+ {
+  "start": 2651.34,
+  "end": 2656.06,
+  "text": "Now, critical batch size is kind of a strange object."
+ },
+ {
+  "start": 2656.06,
+  "end": 2660.86,
+  "text": "It is derived from a variety of complicated calculations"
+ },
+ {
+  "start": 2660.86,
+  "end": 2664.94,
+  "text": "about the local quadratic approximations to the objective."
+ },
+ {
+  "start": 2664.94,
+  "end": 2668.02,
+  "text": "But I will maybe give you the mechanical steps"
+ },
+ {
+  "start": 2668.02,
+  "end": 2672.42,
+  "text": "of what is actually used to estimate this quantity."
+ },
+ {
+  "start": 2672.42,
+  "end": 2676.18,
+  "text": "So what you do is first, you pick a target loss."
+ },
+ {
+  "start": 2676.18,
+  "end": 2678.48,
+  "text": "Target loss might be some numbers that you want to hit."
+ },
+ {
+  "start": 2678.48,
+  "end": 2680.58,
+  "text": "So your goal is to hit this target loss"
+ },
+ {
+  "start": 2680.58,
+  "end": 2681.86,
+  "text": "as quickly as possible."
+ },
+ {
+  "start": 2681.86,
+  "end": 2684.02,
+  "text": "That's my goal right now."
+ },
+ {
+  "start": 2684.02,
+  "end": 2685.82,
+  "text": "What I'm going to do is I'm going to sweep"
+ },
+ {
+  "start": 2685.82,
+  "end": 2687.98,
+  "text": "over all the different batch sizes or number"
+ },
+ {
+  "start": 2687.98,
+  "end": 2689.69,
+  "text": "of different batch sizes, and I'm"
+ },
+ {
+  "start": 2689.69,
+  "end": 2692.13,
+  "text": "going to write down the number of steps that I needed"
+ },
+ {
+  "start": 2692.13,
+  "end": 2694.73,
+  "text": "to reach my target loss, and the number of examples"
+ },
+ {
+  "start": 2694.73,
+  "end": 2697.31,
+  "text": "that were needed to get to that target loss."
+ },
+ {
+  "start": 2697.31,
+  "end": 2701.25,
+  "text": "Of course, number one and two are lated by a batch size factor."
+ },
+ {
+  "start": 2701.25,
+  "end": 2703.29,
+  "text": "The number of steps times my batch size"
+ },
+ {
+  "start": 2703.29,
+  "end": 2705.81,
+  "text": "is equal to the number of examples."
+ },
+ {
+  "start": 2705.81,
+  "end": 2711.25,
+  "text": "Now, through some calculations, OpenAI folks, McCandless"
+ },
+ {
+  "start": 2711.25,
+  "end": 2715.81,
+  "text": "and others, argue that this is the rough functional form"
+ },
+ {
+  "start": 2715.81,
+  "end": 2719.01,
+  "text": "that we should follow, that the number of steps that you need"
+ },
+ {
+  "start": 2719.01,
+  "end": 2720.73,
+  "text": "and the number of examples that you need"
+ },
+ {
+  "start": 2720.73,
+  "end": 2724.09,
+  "text": "are inversely related, with this estimate, which"
+ },
+ {
+  "start": 2724.09,
+  "end": 2726.17,
+  "text": "is the minimum number of possible steps"
+ },
+ {
+  "start": 2726.17,
+  "end": 2728.89,
+  "text": "and the minimum number of examples,"
+ },
+ {
+  "start": 2728.89,
+  "end": 2731.99,
+  "text": "normalizing these two quantities."
+ },
+ {
+  "start": 2731.99,
+  "end": 2734.052,
+  "text": "And so there's a trade-off between these two."
+ },
+ {
+  "start": 2734.052,
+  "end": 2736.01,
+  "text": "If you want to minimize the number of examples,"
+ },
+ {
+  "start": 2736.01,
+  "end": 2737.55,
+  "text": "you're going to have a lot of steps."
+ },
+ {
+  "start": 2737.55,
+  "end": 2739.17,
+  "text": "And if you want to minimize the number of steps,"
+ },
+ {
+  "start": 2739.17,
+  "end": 2740.795,
+  "text": "you're going to need a lot of examples."
+ },
+ {
+  "start": 2740.795,
+  "end": 2742.19,
+  "text": "That's a very natural trade-off."
+ },
+ {
+  "start": 2742.19,
+  "end": 2744.69,
+  "text": "And if you increase or decrease your batch size,"
+ },
+ {
+  "start": 2744.69,
+  "end": 2748.0,
+  "text": "you're going to have trade-offs that go one side or the other."
+ },
+ {
+  "start": 2748.0,
+  "end": 2749.96,
+  "text": "Now, they argue the goal now should"
+ },
+ {
+  "start": 2749.96,
+  "end": 2751.58,
+  "text": "be to balance these two sides."
+ },
+ {
+  "start": 2751.58,
+  "end": 2754.08,
+  "text": "I want to make sure that my number of steps term"
+ },
+ {
+  "start": 2754.08,
+  "end": 2756.56,
+  "text": "and the number of examples terms are roughly"
+ },
+ {
+  "start": 2756.56,
+  "end": 2758.02,
+  "text": "balanced with each other."
+ },
+ {
+  "start": 2758.02,
+  "end": 2759.48,
+  "text": "And if you solve for that, you're"
+ },
+ {
+  "start": 2759.48,
+  "end": 2761.64,
+  "text": "going to get this particular solution, which"
+ },
+ {
+  "start": 2761.64,
+  "end": 2764.48,
+  "text": "is that the critical batch size is"
+ },
+ {
+  "start": 2764.48,
+  "end": 2766.64,
+  "text": "the minimum number of examples that I"
+ },
+ {
+  "start": 2766.64,
+  "end": 2769.94,
+  "text": "need divided by the minimum number of steps that I need."
+ },
+ {
+  "start": 2769.94,
+  "end": 2774.12,
+  "text": "And these two are estimated by fitting this to the observed"
+ },
+ {
+  "start": 2774.12,
+  "end": 2775.653,
+  "text": "data that I have."
+ },
+ {
+  "start": 2775.653,
+  "end": 2777.82,
+  "text": "This is going to balance both sides of the equation."
+ },
+ {
+  "start": 2777.82,
+  "end": 2780.92,
+  "text": "It's going to give me a little bit more number of steps"
+ },
+ {
+  "start": 2780.92,
+  "end": 2781.62,
+  "text": "than optimal."
+ },
+ {
+  "start": 2781.62,
+  "end": 2784.7,
+  "text": "It's going to require a little bit more examples than optimal,"
+ },
+ {
+  "start": 2784.7,
+  "end": 2786.1,
+  "text": "but it balances the two sides."
+ },
+ {
+  "start": 2786.1,
+  "end": 2792.64,
+  "text": "And you can think of this as optimizing the convergence rate"
+ },
+ {
+  "start": 2792.64,
+  "end": 2797.0,
+  "text": "without blowing up the number of steps that you need."
+ },
+ {
+  "start": 2797.0,
+  "end": 2799.375,
+  "text": "There's another added point that I won't really"
+ },
+ {
+  "start": 2799.375,
+  "end": 2801.5,
+  "text": "belabor because this gets even more into the weeds."
+ },
+ {
+  "start": 2801.5,
+  "end": 2803.68,
+  "text": "You should really read the critical batch size paper"
+ },
+ {
+  "start": 2803.68,
+  "end": 2806.39,
+  "text": "if you're interested into this, where one of their arguments"
+ },
+ {
+  "start": 2806.39,
+  "end": 2808.69,
+  "text": "is estimating this is quite complicated."
+ },
+ {
+  "start": 2808.69,
+  "end": 2811.43,
+  "text": "You can do this by just looking at the ratio"
+ },
+ {
+  "start": 2811.43,
+  "end": 2813.47,
+  "text": "of the gradient covariance in the squared norm"
+ },
+ {
+  "start": 2813.47,
+  "end": 2816.39,
+  "text": "of your gradient."
+ },
+ {
+  "start": 2816.39,
+  "end": 2819.37,
+  "text": "So why is that even in the scaling lecture?"
+ },
+ {
+  "start": 2819.37,
+  "end": 2824.55,
+  "text": "This is a thing that is not really related to scaling so far."
+ },
+ {
+  "start": 2824.55,
+  "end": 2827.27,
+  "text": "The reason why this is in the scaling lecture"
+ },
+ {
+  "start": 2827.27,
+  "end": 2829.59,
+  "text": "is because, first of all, the critical batch size"
+ },
+ {
+  "start": 2829.59,
+  "end": 2831.37,
+  "text": "is a reasonable batch size to pick."
+ },
+ {
+  "start": 2831.37,
+  "end": 2833.55,
+  "text": "That's a batch size that balances convergence rate"
+ },
+ {
+  "start": 2833.55,
+  "end": 2835.11,
+  "text": "and the size of the batch."
+ },
+ {
+  "start": 2835.11,
+  "end": 2839.07,
+  "text": "So if I want to pick my batch size equal to my critical batch"
+ },
+ {
+  "start": 2839.07,
+  "end": 2841.31,
+  "text": "size, you might ask, how does this thing"
+ },
+ {
+  "start": 2841.31,
+  "end": 2844.37,
+  "text": "scale as a function of my target loss?"
+ },
+ {
+  "start": 2844.37,
+  "end": 2847.35,
+  "text": "Target loss can be thought of as compute."
+ },
+ {
+  "start": 2847.35,
+  "end": 2850.75,
+  "text": "If I want to have a model that is better and better and better,"
+ },
+ {
+  "start": 2850.75,
+  "end": 2853.69,
+  "text": "what is the batch size that I should use?"
+ },
+ {
+  "start": 2853.69,
+  "end": 2856.99,
+  "text": "And the reason why this isn't the scaling law lecture"
+ },
+ {
+  "start": 2856.99,
+  "end": 2860.91,
+  "text": "is as you go down in scale in the loss, so your loss is"
+ },
+ {
+  "start": 2860.91,
+  "end": 2864.43,
+  "text": "improving, the amount of critical batch size increases."
+ },
+ {
+  "start": 2864.43,
+  "end": 2866.75,
+  "text": "And it increases in this very predictable way, which"
+ },
+ {
+  "start": 2866.75,
+  "end": 2868.59,
+  "text": "is once again, a power law."
+ },
+ {
+  "start": 2868.59,
+  "end": 2871.23,
+  "text": "So this is the relationship that they argue,"
+ },
+ {
+  "start": 2871.23,
+  "end": 2876.43,
+  "text": "which is roughly inverse polynomial in batch size."
+ },
+ {
+  "start": 2876.43,
+  "end": 2879.08,
+  "text": "So given this, this is actually quite nice"
+ },
+ {
+  "start": 2879.08,
+  "end": 2880.83,
+  "text": "because what this is saying is if you have"
+ },
+ {
+  "start": 2880.83,
+  "end": 2882.91,
+  "text": "a really large-scale training run where you go all"
+ },
+ {
+  "start": 2882.91,
+  "end": 2884.327,
+  "text": "the way to the right of this plot,"
+ },
+ {
+  "start": 2884.327,
+  "end": 2886.59,
+  "text": "your batch sizes can be quite large."
+ },
+ {
+  "start": 2886.59,
+  "end": 2887.67,
+  "text": "And that makes sense."
+ },
+ {
+  "start": 2887.67,
+  "end": 2890.81,
+  "text": "As you get closer and closer and closer to the minimum,"
+ },
+ {
+  "start": 2890.81,
+  "end": 2893.028,
+  "text": "the value of variance reduction increases."
+ },
+ {
+  "start": 2893.028,
+  "end": 2897.03,
+  "text": "Because you're trying to optimize finer and finer grained objects, the noise"
+ },
+ {
+  "start": 2897.03,
+  "end": 2899.87,
+  "text": "matters a lot more once you're minimizing really, really"
+ },
+ {
+  "start": 2899.87,
+  "end": 2902.59,
+  "text": "tiny differences."
+ },
+ {
+  "start": 2902.59,
+  "end": 2905.99,
+  "text": "So that's the batch size story."
+ },
+ {
+  "start": 2905.99,
+  "end": 2907.95,
+  "text": "The other side-- so the two quantities,"
+ },
+ {
+  "start": 2907.95,
+  "end": 2910.15,
+  "text": "remember, that you're going to always have to tune"
+ },
+ {
+  "start": 2910.15,
+  "end": 2912.83,
+  "text": "is batch size and learning rate."
+ },
+ {
+  "start": 2912.83,
+  "end": 2914.87,
+  "text": "The learning rate side of the story"
+ },
+ {
+  "start": 2914.87,
+  "end": 2916.53,
+  "text": "is also a little bit complicated."
+ },
+ {
+  "start": 2916.53,
+  "end": 2920.31,
+  "text": "I'll go into this much more detail in the advanced scaling"
+ },
+ {
+  "start": 2920.31,
+  "end": 2922.39,
+  "text": "lecture."
+ },
+ {
+  "start": 2922.39,
+  "end": 2924.82,
+  "text": "But learning rates generally shift."
+ },
+ {
+  "start": 2924.82,
+  "end": 2926.94,
+  "text": "I think this is a good mental picture for how"
+ },
+ {
+  "start": 2926.94,
+  "end": 2929.46,
+  "text": "to think about learning rates in the standard world"
+ },
+ {
+  "start": 2929.46,
+  "end": 2931.54,
+  "text": "that you start with, which is, let's say,"
+ },
+ {
+  "start": 2931.54,
+  "end": 2933.3,
+  "text": "that you have just like a MLP."
+ },
+ {
+  "start": 2933.3,
+  "end": 2935.86,
+  "text": "Just a standard neural network of some kind."
+ },
+ {
+  "start": 2935.86,
+  "end": 2937.36,
+  "text": "I'm not going to do depth scaling."
+ },
+ {
+  "start": 2937.36,
+  "end": 2939.02,
+  "text": "I'm only going to do width scaling."
+ },
+ {
+  "start": 2939.02,
+  "end": 2941.14,
+  "text": "Now, if I'm doing width scaling, the bigger"
+ },
+ {
+  "start": 2941.14,
+  "end": 2943.82,
+  "text": "my model, the bigger my model, the smaller"
+ },
+ {
+  "start": 2943.82,
+  "end": 2945.24,
+  "text": "my learning rate should be."
+ },
+ {
+  "start": 2945.24,
+  "end": 2947.58,
+  "text": "And the reason why my learning rate should be smaller"
+ },
+ {
+  "start": 2947.58,
+  "end": 2950.0,
+  "text": "is because I have bigger, more parameters,"
+ },
+ {
+  "start": 2950.0,
+  "end": 2951.48,
+  "text": "I'm changing more things at once."
+ },
+ {
+  "start": 2951.48,
+  "end": 2953.46,
+  "text": "Maybe I should move less."
+ },
+ {
+  "start": 2953.46,
+  "end": 2955.58,
+  "text": "It kind of makes sense."
+ },
+ {
+  "start": 2955.58,
+  "end": 2958.66,
+  "text": "And in fact, there's a rule of thumb"
+ },
+ {
+  "start": 2958.66,
+  "end": 2961.16,
+  "text": "that maybe you want to scale by 1 over the width."
+ },
+ {
+  "start": 2961.16,
+  "end": 2963.46,
+  "text": "That's a very commonly known rule of thumb"
+ },
+ {
+  "start": 2963.46,
+  "end": 2966.9,
+  "text": "that you want to just decrease the learning rate regularly"
+ },
+ {
+  "start": 2966.9,
+  "end": 2968.54,
+  "text": "as a function of your width, and that"
+ },
+ {
+  "start": 2968.54,
+  "end": 2972.34,
+  "text": "will give you a rule of thumb to scale your learning rate."
+ },
+ {
+  "start": 2972.34,
+  "end": 2975.62,
+  "text": "There is another school of thought,"
+ },
+ {
+  "start": 2975.62,
+  "end": 2978.1,
+  "text": "or another set of tricks that people do,"
+ },
+ {
+  "start": 2978.1,
+  "end": 2980.26,
+  "text": "which is that people also rescale"
+ },
+ {
+  "start": 2980.26,
+  "end": 2981.71,
+  "text": "the network in various ways."
+ },
+ {
+  "start": 2981.71,
+  "end": 2983.81,
+  "text": "They will change the initialization sizes,"
+ },
+ {
+  "start": 2983.81,
+  "end": 2986.97,
+  "text": "and they will change the step sizes"
+ },
+ {
+  "start": 2986.97,
+  "end": 2990.65,
+  "text": "of the optimizer for various parts of the network"
+ },
+ {
+  "start": 2990.65,
+  "end": 2995.25,
+  "text": "in order to force the model to have the same learning rate"
+ },
+ {
+  "start": 2995.25,
+  "end": 2997.41,
+  "text": "minimum across scales."
+ },
+ {
+  "start": 2997.41,
+  "end": 3003.105,
+  "text": "And this is an idea that is called mu p and others like it."
+ },
+ {
+  "start": 3003.105,
+  "end": 3004.73,
+  "text": "Some people have reported great success"
+ },
+ {
+  "start": 3004.73,
+  "end": 3006.85,
+  "text": "with these kinds of approaches, others"
+ },
+ {
+  "start": 3006.85,
+  "end": 3008.45,
+  "text": "have reported less success."
+ },
+ {
+  "start": 3008.45,
+  "end": 3011.65,
+  "text": "The two ways, basically, of setting a learning rate"
+ },
+ {
+  "start": 3011.65,
+  "end": 3014.75,
+  "text": "for large-scale runs really is captured in this plot."
+ },
+ {
+  "start": 3014.75,
+  "end": 3016.37,
+  "text": "In one way, you can try to estimate"
+ },
+ {
+  "start": 3016.37,
+  "end": 3018.29,
+  "text": "what these minima are and try to predict"
+ },
+ {
+  "start": 3018.29,
+  "end": 3019.89,
+  "text": "what your minimum will be."
+ },
+ {
+  "start": 3019.89,
+  "end": 3022.59,
+  "text": "And the way in which the minimum changes is pretty predictable,"
+ },
+ {
+  "start": 3022.59,
+  "end": 3024.33,
+  "text": "so this is not a crazy idea."
+ },
+ {
+  "start": 3024.33,
+  "end": 3026.57,
+  "text": "Or you can reparameterize your model"
+ },
+ {
+  "start": 3026.57,
+  "end": 3028.91,
+  "text": "to try to keep the learning rate minimum the same,"
+ },
+ {
+  "start": 3028.91,
+  "end": 3031.39,
+  "text": "and then just pick your best learning rate and go."
+ },
+ {
+  "start": 3031.39,
+  "end": 3034.67,
+  "text": "Those are the two philosophies to picking your learning rate."
+ },
+ {
+  "start": 3034.67,
+  "end": 3037.63,
+  "text": "Both of them have been applied successfully at scale."
+ },
+ {
+  "start": 3037.63,
+  "end": 3039.17,
+  "text": "There are large-scale training runs"
+ },
+ {
+  "start": 3039.17,
+  "end": 3041.56,
+  "text": "that have used both approaches."
+ },
+ {
+  "start": 3041.56,
+  "end": 3046.52,
+  "text": "I think anecdotally it does seem more people are maybe favoring"
+ },
+ {
+  "start": 3046.52,
+  "end": 3049.56,
+  "text": "the scaling law approach, but both are certainly"
+ },
+ {
+  "start": 3049.56,
+  "end": 3050.8,
+  "text": "viable approaches."
+ },
+ {
+  "start": 3050.8,
+  "end": 3055.6,
+  "text": "I'll talk in detail about both of these next lecture."
+ },
+ {
+  "start": 3055.6,
+  "end": 3061.64,
+  "text": "So before I get into the last part of this lecture,"
+ },
+ {
+  "start": 3061.64,
+  "end": 3063.64,
+  "text": "where I want to talk about not quite"
+ },
+ {
+  "start": 3063.64,
+  "end": 3069.32,
+  "text": "pitfalls but various details of scaling law things,"
+ },
+ {
+  "start": 3069.32,
+  "end": 3071.16,
+  "text": "one thing I want to end this section with"
+ },
+ {
+  "start": 3071.16,
+  "end": 3074.24,
+  "text": "is the idea that upstream and downstream performance"
+ },
+ {
+  "start": 3074.24,
+  "end": 3075.96,
+  "text": "can be quite different."
+ },
+ {
+  "start": 3075.96,
+  "end": 3079.68,
+  "text": "So if you look at something like log likelihood,"
+ },
+ {
+  "start": 3079.68,
+  "end": 3083.36,
+  "text": "this is from the Yi Tay architectures paper,"
+ },
+ {
+  "start": 3083.36,
+  "end": 3088.08,
+  "text": "you find that perplexity and negative perplexity in this case"
+ },
+ {
+  "start": 3088.08,
+  "end": 3089.9,
+  "text": "parameters are very correlated."
+ },
+ {
+  "start": 3089.9,
+  "end": 3092.42,
+  "text": "The more parameters you have, the better your model,"
+ },
+ {
+  "start": 3092.42,
+  "end": 3093.26,
+  "text": "very predictably."
+ },
+ {
+  "start": 3093.26,
+  "end": 3095.64,
+  "text": "This is a very beautiful linear trend."
+ },
+ {
+  "start": 3095.64,
+  "end": 3097.375,
+  "text": "Now you're like, OK, this is great."
+ },
+ {
+  "start": 3097.375,
+  "end": 3099.0,
+  "text": "Now we're going to ship our best model."
+ },
+ {
+  "start": 3099.0,
+  "end": 3100.36,
+  "text": "NL12."
+ },
+ {
+  "start": 3100.36,
+  "end": 3102.42,
+  "text": "Turns out NL12 is not your best model."
+ },
+ {
+  "start": 3102.42,
+  "end": 3105.6,
+  "text": "It was actually NL32XL, which was a much worse model"
+ },
+ {
+  "start": 3105.6,
+  "end": 3106.64,
+  "text": "in perplexity."
+ },
+ {
+  "start": 3106.64,
+  "end": 3108.8,
+  "text": "This is a very common thing that does happen."
+ },
+ {
+  "start": 3108.8,
+  "end": 3111.603,
+  "text": "Upstream and downstream are often correlated."
+ },
+ {
+  "start": 3111.603,
+  "end": 3113.52,
+  "text": "This is probably one of the worst correlations"
+ },
+ {
+  "start": 3113.52,
+  "end": 3115.378,
+  "text": "that I've seen from upstream to downstream."
+ },
+ {
+  "start": 3115.378,
+  "end": 3116.92,
+  "text": "But I think it's very, very important"
+ },
+ {
+  "start": 3116.92,
+  "end": 3120.44,
+  "text": "to remember that scaling laws, generally speaking, are objects"
+ },
+ {
+  "start": 3120.44,
+  "end": 3122.5,
+  "text": "that you want to apply on the perplexity side."
+ },
+ {
+  "start": 3122.5,
+  "end": 3123.86,
+  "text": "They're very clean, they're very regular,"
+ },
+ {
+  "start": 3123.86,
+  "end": 3125.04,
+  "text": "they're very predictable."
+ },
+ {
+  "start": 3125.04,
+  "end": 3127.4,
+  "text": "But transfer from perplexity to downstream"
+ },
+ {
+  "start": 3127.4,
+  "end": 3129.88,
+  "text": "is a lot less certain than it might initially seem."
+ },
+ {
+  "start": 3129.88,
+  "end": 3133.08,
+  "text": "This is a place where you want to be very cautious."
+ },
+ {
+  "start": 3133.08,
+  "end": 3137.04,
+  "text": "And as an anecdote, I have former students"
+ },
+ {
+  "start": 3137.04,
+  "end": 3139.58,
+  "text": "that have gone and done post-training of various places,"
+ },
+ {
+  "start": 3139.58,
+  "end": 3140.38,
+  "text": "and they always complain."
+ },
+ {
+  "start": 3140.38,
+  "end": 3142.12,
+  "text": "They're like, \"Oh, those pre-training people,"
+ },
+ {
+  "start": 3142.12,
+  "end": 3143.12,
+  "text": "they hand you this model."
+ },
+ {
+  "start": 3143.12,
+  "end": 3144.26,
+  "text": "They are like, the perplexity is good."
+ },
+ {
+  "start": 3144.26,
+  "end": 3145.58,
+  "text": "It's all your problem now.\""
+ },
+ {
+  "start": 3145.58,
+  "end": 3147.76,
+  "text": "But it's often the problems have started"
+ },
+ {
+  "start": 3147.76,
+  "end": 3149.14,
+  "text": "at the pre-training side."
+ },
+ {
+  "start": 3149.14,
+  "end": 3151.06,
+  "text": "So you don't want to be one of those people."
+ },
+ {
+  "start": 3151.06,
+  "end": 3153.06,
+  "text": "You want to really think about transfer as well,"
+ },
+ {
+  "start": 3153.06,
+  "end": 3156.99,
+  "text": "not just focus on perplexities."
+ },
+ {
+  "start": 3156.99,
+  "end": 3159.97,
+  "text": "OK, so maybe this is surprising, maybe this is not."
+ },
+ {
+  "start": 3159.97,
+  "end": 3162.23,
+  "text": "But the point that I want to drill in here"
+ },
+ {
+  "start": 3162.23,
+  "end": 3165.13,
+  "text": "is that before you do your big training run,"
+ },
+ {
+  "start": 3165.13,
+  "end": 3167.51,
+  "text": "you should have a rough idea of what you're going to see."
+ },
+ {
+  "start": 3167.51,
+  "end": 3170.35,
+  "text": "Not just is it going to train at all."
+ },
+ {
+  "start": 3170.35,
+  "end": 3171.87,
+  "text": "In fact, if you do scaling laws, you"
+ },
+ {
+  "start": 3171.87,
+  "end": 3175.31,
+  "text": "should be able to actually predict fairly precisely"
+ },
+ {
+  "start": 3175.31,
+  "end": 3178.07,
+  "text": "the numerical values, almost, of how good"
+ },
+ {
+  "start": 3178.07,
+  "end": 3179.11,
+  "text": "your run is going to be."
+ },
+ {
+  "start": 3179.11,
+  "end": 3181.25,
+  "text": "If I choose one optimizer versus the other,"
+ },
+ {
+  "start": 3181.25,
+  "end": 3182.37,
+  "text": "what will the gain be?"
+ },
+ {
+  "start": 3182.37,
+  "end": 3184.99,
+  "text": "You should be able to predict that."
+ },
+ {
+  "start": 3184.99,
+  "end": 3186.67,
+  "text": "So the scaling law-based procedure"
+ },
+ {
+  "start": 3186.67,
+  "end": 3189.25,
+  "text": "is to say I'm going to train a bunch of smaller models,"
+ },
+ {
+  "start": 3189.25,
+  "end": 3191.67,
+  "text": "I'm going to establish some of a scaling law"
+ },
+ {
+  "start": 3191.67,
+  "end": 3194.21,
+  "text": "by fitting these lines onto log-log plots."
+ },
+ {
+  "start": 3194.21,
+  "end": 3195.89,
+  "text": "And then if the fit is good enough,"
+ },
+ {
+  "start": 3195.89,
+  "end": 3198.015,
+  "text": "I'm going to have some confidence that the gap will"
+ },
+ {
+  "start": 3198.015,
+  "end": 3200.31,
+  "text": "persist, and then I'm just going to deploy that"
+ },
+ {
+  "start": 3200.31,
+  "end": 3201.91,
+  "text": "onto my large-scale training run."
+ },
+ {
+  "start": 3201.91,
+  "end": 3204.97,
+  "text": "This is the naive version of a scaling law procedure,"
+ },
+ {
+  "start": 3204.97,
+  "end": 3206.79,
+  "text": "but I think one that is reasonably"
+ },
+ {
+  "start": 3206.79,
+  "end": 3209.97,
+  "text": "accurate for how you might think about these things in practice."
+ },
+ {
+  "start": 3209.97,
+  "end": 3211.39,
+  "text": "What else are you going to do?"
+ },
+ {
+  "start": 3211.39,
+  "end": 3213.61,
+  "text": "Just deploy a run out of nowhere?"
+ },
+ {
+  "start": 3213.61,
+  "end": 3215.86,
+  "text": "Probably not."
+ },
+ {
+  "start": 3215.86,
+  "end": 3217.94,
+  "text": "OK, I can pause here and take some questions"
+ },
+ {
+  "start": 3217.94,
+  "end": 3222.14,
+  "text": "before I get into the last part of this lecture."
+ },
+ {
+  "start": 3222.14,
+  "end": 3223.38,
+  "text": "Yes."
+ },
+ {
+  "start": 3223.38,
+  "end": 3225.52,
+  "text": "For each of the data points on the scaling law,"
+ },
+ {
+  "start": 3225.52,
+  "end": 3227.32,
+  "text": "how do you think about variance?"
+ },
+ {
+  "start": 3227.32,
+  "end": 3229.32,
+  "text": "How many runs do you do?"
+ },
+ {
+  "start": 3229.32,
+  "end": 3231.94,
+  "text": "And is aggregation usually like the average,"
+ },
+ {
+  "start": 3231.94,
+  "end": 3234.66,
+  "text": "or do you take min or max depending on [INAUDIBLE]?"
+ },
+ {
+  "start": 3234.66,
+  "end": 3239.82,
+  "text": "Yeah, I think in most cases, if not all cases that I've seen,"
+ },
+ {
+  "start": 3239.82,
+  "end": 3241.38,
+  "text": "those are singletons."
+ },
+ {
+  "start": 3241.38,
+  "end": 3243.42,
+  "text": "And the reason why it's a singleton"
+ },
+ {
+  "start": 3243.42,
+  "end": 3246.06,
+  "text": "is because when you're looking at perplexities,"
+ },
+ {
+  "start": 3246.06,
+  "end": 3248.48,
+  "text": "perplexities are very, very clean."
+ },
+ {
+  "start": 3248.48,
+  "end": 3252.282,
+  "text": "These objects, if you rerun them,"
+ },
+ {
+  "start": 3252.282,
+  "end": 3253.74,
+  "text": "they're probably like the variances"
+ },
+ {
+  "start": 3253.74,
+  "end": 3256.34,
+  "text": "in the second decimal place or something"
+ },
+ {
+  "start": 3256.34,
+  "end": 3258.34,
+  "text": "because the training data is very"
+ },
+ {
+  "start": 3258.34,
+  "end": 3261.74,
+  "text": "homogeneous, you've got a lot of it, your eval sets are very big."
+ },
+ {
+  "start": 3261.74,
+  "end": 3263.74,
+  "text": "You've really pushed the variance very, very low"
+ },
+ {
+  "start": 3263.74,
+  "end": 3265.5,
+  "text": "on these things."
+ },
+ {
+  "start": 3265.5,
+  "end": 3270.02,
+  "text": "But if you're doing something learning rate or critical batch"
+ },
+ {
+  "start": 3270.02,
+  "end": 3274.01,
+  "text": "size scaling laws, you will see some truly horrendous stuff."
+ },
+ {
+  "start": 3274.01,
+  "end": 3276.35,
+  "text": "I do think people do some variance reduction,"
+ },
+ {
+  "start": 3276.35,
+  "end": 3278.77,
+  "text": "but it's actually not that common as common"
+ },
+ {
+  "start": 3278.77,
+  "end": 3281.97,
+  "text": "as it should be, maybe."
+ },
+ {
+  "start": 3281.97,
+  "end": 3283.702,
+  "text": "Yes."
+ },
+ {
+  "start": 3283.702,
+  "end": 3287.93,
+  "text": "Do people use just downstream metrics directly"
+ },
+ {
+  "start": 3287.93,
+  "end": 3289.57,
+  "text": "instead of using perplexity?"
+ },
+ {
+  "start": 3289.57,
+  "end": 3292.83,
+  "text": "Yeah, people do scaling laws directly on downstream metrics,"
+ },
+ {
+  "start": 3292.83,
+  "end": 3294.77,
+  "text": "but that has the same problem as this."
+ },
+ {
+  "start": 3294.77,
+  "end": 3298.29,
+  "text": "So I think the way to think about scaling laws"
+ },
+ {
+  "start": 3298.29,
+  "end": 3301.42,
+  "text": "is to really reliably establish at least one thing."
+ },
+ {
+  "start": 3301.42,
+  "end": 3303.17,
+  "text": "So the way to think about it is, let's say"
+ },
+ {
+  "start": 3303.17,
+  "end": 3306.97,
+  "text": "I see something like this, I have"
+ },
+ {
+  "start": 3306.97,
+  "end": 3308.627,
+  "text": "a strong belief that this transformer"
+ },
+ {
+  "start": 3308.627,
+  "end": 3309.71,
+  "text": "line is going to continue."
+ },
+ {
+  "start": 3309.71,
+  "end": 3311.745,
+  "text": "This is a very regular trend."
+ },
+ {
+  "start": 3311.745,
+  "end": 3313.37,
+  "text": "And it might curve a little bit, but we"
+ },
+ {
+  "start": 3313.37,
+  "end": 3315.328,
+  "text": "do think there's probably some regularity here."
+ },
+ {
+  "start": 3315.328,
+  "end": 3318.49,
+  "text": "But instead, imagine this was a very noisy jaggedy line"
+ },
+ {
+  "start": 3318.49,
+  "end": 3319.51,
+  "text": "of this form."
+ },
+ {
+  "start": 3319.51,
+  "end": 3322.07,
+  "text": "You would not really know what is going on."
+ },
+ {
+  "start": 3322.07,
+  "end": 3324.19,
+  "text": "You would say, I maybe believe that it will go on,"
+ },
+ {
+  "start": 3324.19,
+  "end": 3326.45,
+  "text": "but maybe it's a line, maybe it's a curve."
+ },
+ {
+  "start": 3326.45,
+  "end": 3328.09,
+  "text": "So I think the general--"
+ },
+ {
+  "start": 3328.09,
+  "end": 3330.63,
+  "text": "if I'm trying to explain the philosophy of this stuff,"
+ },
+ {
+  "start": 3330.63,
+  "end": 3333.37,
+  "text": "is to say, OK, let's start with the low variance measurement"
+ },
+ {
+  "start": 3333.37,
+  "end": 3337.01,
+  "text": "and then establish scaling regularity there and then rely"
+ },
+ {
+  "start": 3337.01,
+  "end": 3340.69,
+  "text": "on some of belief about transfer or establish transfer"
+ },
+ {
+  "start": 3340.69,
+  "end": 3343.57,
+  "text": "or elsewhere to try to show that would transfer over"
+ },
+ {
+  "start": 3343.57,
+  "end": 3344.47,
+  "text": "to downstream."
+ },
+ {
+  "start": 3348.53,
+  "end": 3350.09,
+  "text": "Yeah."
+ },
+ {
+  "start": 3350.09,
+  "end": 3352.49,
+  "text": "So some of these are [INAUDIBLE],"
+ },
+ {
+  "start": 3352.49,
+  "end": 3354.27,
+  "text": "and some are just [INAUDIBLE] loss."
+ },
+ {
+  "start": 3354.27,
+  "end": 3355.77,
+  "text": "When do you do either?"
+ },
+ {
+  "start": 3355.77,
+  "end": 3357.33,
+  "text": "I see, yes."
+ },
+ {
+  "start": 3357.33,
+  "end": 3360.57,
+  "text": "You fit to test loss when you're doing good scientific practice,"
+ },
+ {
+  "start": 3360.57,
+  "end": 3361.91,
+  "text": "like Kaplan 2021."
+ },
+ {
+  "start": 3361.91,
+  "end": 3367.45,
+  "text": "But realistically, all the models, except for a very few,"
+ },
+ {
+  "start": 3367.45,
+  "end": 3371.43,
+  "text": "like the infinite compute one and the repetition stuff,"
+ },
+ {
+  "start": 3371.43,
+  "end": 3375.73,
+  "text": "unless you're doing some of that, you're doing one-pass SGD."
+ },
+ {
+  "start": 3375.73,
+  "end": 3377.85,
+  "text": "So the generalization gap for all of these models"
+ },
+ {
+  "start": 3377.85,
+  "end": 3379.13,
+  "text": "is very, very small."
+ },
+ {
+  "start": 3379.13,
+  "end": 3381.37,
+  "text": "So train and val are very similar."
+ },
+ {
+  "start": 3381.37,
+  "end": 3383.73,
+  "text": "I've seen some pre-training code bases that don't even"
+ },
+ {
+  "start": 3383.73,
+  "end": 3384.99,
+  "text": "have validation loss."
+ },
+ {
+  "start": 3384.99,
+  "end": 3387.57,
+  "text": "Because if you're doing one pass, most likely"
+ },
+ {
+  "start": 3387.57,
+  "end": 3389.61,
+  "text": "your train and val are very, very close."
+ },
+ {
+  "start": 3389.61,
+  "end": 3392.06,
+  "text": "That's why a lot of these plots exchange those two,"
+ },
+ {
+  "start": 3392.06,
+  "end": 3395.343,
+  "text": "because they're all in the one-pass regime."
+ },
+ {
+  "start": 3395.343,
+  "end": 3396.26,
+  "text": "Good question, though."
+ },
+ {
+  "start": 3396.26,
+  "end": 3400.92,
+  "text": "OK, all right, we will continue to move on to--"
+ },
+ {
+  "start": 3400.92,
+  "end": 3404.1,
+  "text": "sorry, I moved on too far backwards here."
+ },
+ {
+  "start": 3404.1,
+  "end": 3407.68,
+  "text": "OK, so now I'm going to talk about one"
+ },
+ {
+  "start": 3407.68,
+  "end": 3411.8,
+  "text": "of the most well-known uses of a scaling law."
+ },
+ {
+  "start": 3411.8,
+  "end": 3415.34,
+  "text": "Even though you might not personally be using this,"
+ },
+ {
+  "start": 3415.34,
+  "end": 3418.24,
+  "text": "you've certainly used the rule of thumb at some point."
+ },
+ {
+  "start": 3418.24,
+  "end": 3421.08,
+  "text": "And also, I think because this set of things"
+ },
+ {
+  "start": 3421.08,
+  "end": 3424.4,
+  "text": "will tell us something really interesting about the actual"
+ },
+ {
+  "start": 3424.4,
+  "end": 3426.68,
+  "text": "execution of a scaling law."
+ },
+ {
+  "start": 3426.68,
+  "end": 3429.28,
+  "text": "OK, the motivating question is, do I"
+ },
+ {
+  "start": 3429.28,
+  "end": 3431.02,
+  "text": "want more data or bigger models?"
+ },
+ {
+  "start": 3431.02,
+  "end": 3433.64,
+  "text": "So the resource that you have, the resource"
+ },
+ {
+  "start": 3433.64,
+  "end": 3435.16,
+  "text": "that you have to spend, is compute."
+ },
+ {
+  "start": 3435.16,
+  "end": 3437.92,
+  "text": "Someone's going to hand you metaphorically a certain amount"
+ },
+ {
+  "start": 3437.92,
+  "end": 3438.62,
+  "text": "of FLOPs."
+ },
+ {
+  "start": 3438.62,
+  "end": 3441.18,
+  "text": "And you're going to take those FLOPs,"
+ },
+ {
+  "start": 3441.18,
+  "end": 3442.88,
+  "text": "and you're going to spend them somehow"
+ },
+ {
+  "start": 3442.88,
+  "end": 3446.32,
+  "text": "on-- if you remember Percy's very first lecture, it's"
+ },
+ {
+  "start": 3446.32,
+  "end": 3448.87,
+  "text": "going to be data times the parameters is roughly"
+ },
+ {
+  "start": 3448.87,
+  "end": 3450.67,
+  "text": "your FLOPs, linear in that."
+ },
+ {
+  "start": 3450.67,
+  "end": 3452.89,
+  "text": "So do I want more data or more models?"
+ },
+ {
+  "start": 3452.89,
+  "end": 3456.99,
+  "text": "Well, we know that if we take a teeny tiny model"
+ },
+ {
+  "start": 3456.99,
+  "end": 3460.17,
+  "text": "and we dump tons of data into it, that will just be wasted."
+ },
+ {
+  "start": 3460.17,
+  "end": 3463.85,
+  "text": "That's the dark purple line at the very top here."
+ },
+ {
+  "start": 3463.85,
+  "end": 3465.83,
+  "text": "I've taken a teeny tiny language model,"
+ },
+ {
+  "start": 3465.83,
+  "end": 3469.01,
+  "text": "and I've passed a huge amount of data into it,"
+ },
+ {
+  "start": 3469.01,
+  "end": 3471.33,
+  "text": "and this thing has been flat for a very long time."
+ },
+ {
+  "start": 3471.33,
+  "end": 3473.27,
+  "text": "This is a complete waste of compute."
+ },
+ {
+  "start": 3473.27,
+  "end": 3475.79,
+  "text": "You would have much rather trained this big yellow model"
+ },
+ {
+  "start": 3475.79,
+  "end": 3478.03,
+  "text": "to the same amount of tokens or even earlier"
+ },
+ {
+  "start": 3478.03,
+  "end": 3481.15,
+  "text": "on, if you're having the same amount of compute."
+ },
+ {
+  "start": 3481.15,
+  "end": 3486.03,
+  "text": "Now, if you could understand the interaction of how"
+ },
+ {
+  "start": 3486.03,
+  "end": 3491.27,
+  "text": "data amount and model size come together to give you"
+ },
+ {
+  "start": 3491.27,
+  "end": 3493.61,
+  "text": "performance, if you understood that relationship,"
+ },
+ {
+  "start": 3493.61,
+  "end": 3496.01,
+  "text": "you could optimize this very precisely."
+ },
+ {
+  "start": 3496.01,
+  "end": 3501.35,
+  "text": "And so there are scaling laws that are more advanced"
+ },
+ {
+  "start": 3501.35,
+  "end": 3504.89,
+  "text": "and relate kind of joint behaviors of objects."
+ },
+ {
+  "start": 3504.89,
+  "end": 3510.1,
+  "text": "So almost simultaneously, Kaplan and Rosenfeld"
+ },
+ {
+  "start": 3510.1,
+  "end": 3512.92,
+  "text": "both proposed these functional forms,"
+ },
+ {
+  "start": 3512.92,
+  "end": 3515.74,
+  "text": "which are roughly equivalent, describing"
+ },
+ {
+  "start": 3515.74,
+  "end": 3518.42,
+  "text": "how the size of the model and the amount of data"
+ },
+ {
+  "start": 3518.42,
+  "end": 3520.5,
+  "text": "relate to the error."
+ },
+ {
+  "start": 3520.5,
+  "end": 3521.84,
+  "text": "Rosenfeld is very simple."
+ },
+ {
+  "start": 3521.84,
+  "end": 3524.12,
+  "text": "It's really just the sum of two inverse terms."
+ },
+ {
+  "start": 3524.12,
+  "end": 3526.98,
+  "text": "These are two scaling laws that are added together."
+ },
+ {
+  "start": 3526.98,
+  "end": 3529.48,
+  "text": "And Kaplan is a little bit more complicated,"
+ },
+ {
+  "start": 3529.48,
+  "end": 3532.128,
+  "text": "but it's roughly the same idea."
+ },
+ {
+  "start": 3532.128,
+  "end": 3533.92,
+  "text": "And if you look at, think about the limits,"
+ },
+ {
+  "start": 3533.92,
+  "end": 3534.96,
+  "text": "this is very intuitive."
+ },
+ {
+  "start": 3534.96,
+  "end": 3538.66,
+  "text": "If I have an infinite amount of data, then what happens?"
+ },
+ {
+  "start": 3538.66,
+  "end": 3540.26,
+  "text": "Then this goes to 0."
+ },
+ {
+  "start": 3540.26,
+  "end": 3541.92,
+  "text": "You're basically model-size limited."
+ },
+ {
+  "start": 3541.92,
+  "end": 3543.88,
+  "text": "You become a pure model size scaling law."
+ },
+ {
+  "start": 3543.88,
+  "end": 3546.12,
+  "text": "If I send my model size to infinity,"
+ },
+ {
+  "start": 3546.12,
+  "end": 3548.2,
+  "text": "then I'm going to be bounded by data."
+ },
+ {
+  "start": 3548.2,
+  "end": 3550.0,
+  "text": "I'm going to have a pure data scaling law."
+ },
+ {
+  "start": 3550.0,
+  "end": 3552.6,
+  "text": "So it makes sense if you take the limits of both of these."
+ },
+ {
+  "start": 3552.6,
+  "end": 3555.94,
+  "text": "It's often a good idea if someone tells you a scaling law"
+ },
+ {
+  "start": 3555.94,
+  "end": 3557.74,
+  "text": "to take the limits of all the variables"
+ },
+ {
+  "start": 3557.74,
+  "end": 3561.1,
+  "text": "to understand the behavior of the system."
+ },
+ {
+  "start": 3561.1,
+  "end": 3562.82,
+  "text": "Now, the thing that's kind of cool"
+ },
+ {
+  "start": 3562.82,
+  "end": 3565.73,
+  "text": "is Rosenfeld and many others that"
+ },
+ {
+  "start": 3565.73,
+  "end": 3568.89,
+  "text": "have proposed these kinds of joint scaling laws"
+ },
+ {
+  "start": 3568.89,
+  "end": 3571.87,
+  "text": "show that these things fit quite well, even if you extrapolate."
+ },
+ {
+  "start": 3571.87,
+  "end": 3573.37,
+  "text": "So what you're going to do is you're"
+ },
+ {
+  "start": 3573.37,
+  "end": 3576.01,
+  "text": "going to fit on these green points, which is a low compute"
+ },
+ {
+  "start": 3576.01,
+  "end": 3577.91,
+  "text": "regime and low data regime."
+ },
+ {
+  "start": 3577.91,
+  "end": 3581.73,
+  "text": "You never see things that have either high data or high model"
+ },
+ {
+  "start": 3581.73,
+  "end": 3582.43,
+  "text": "sizes."
+ },
+ {
+  "start": 3582.43,
+  "end": 3584.57,
+  "text": "And then you can extrapolate on the basis"
+ },
+ {
+  "start": 3584.57,
+  "end": 3587.25,
+  "text": "of these tiny runs in this corner over here"
+ },
+ {
+  "start": 3587.25,
+  "end": 3591.85,
+  "text": "to essentially this high compute or high data, high model size"
+ },
+ {
+  "start": 3591.85,
+  "end": 3592.35,
+  "text": "regime."
+ },
+ {
+  "start": 3592.35,
+  "end": 3594.61,
+  "text": "And you can very accurately predict the error"
+ },
+ {
+  "start": 3594.61,
+  "end": 3596.21,
+  "text": "based on your predictions."
+ },
+ {
+  "start": 3596.21,
+  "end": 3598.69,
+  "text": "Great predictions."
+ },
+ {
+  "start": 3598.69,
+  "end": 3601.65,
+  "text": "And so once you have that, now what you can do is to say,"
+ },
+ {
+  "start": 3601.65,
+  "end": 3605.05,
+  "text": "well, I have a fixed amount of FLOPs subject to my FLOPs"
+ },
+ {
+  "start": 3605.05,
+  "end": 3607.11,
+  "text": "constraints, minimize this."
+ },
+ {
+  "start": 3607.11,
+  "end": 3609.83,
+  "text": "That's a simple nonlinear optimization problem."
+ },
+ {
+  "start": 3609.83,
+  "end": 3611.85,
+  "text": "You can do that to solve for this."
+ },
+ {
+  "start": 3611.85,
+  "end": 3619.25,
+  "text": "Now, both Kaplan and Rosenfeld provide equations of this form."
+ },
+ {
+  "start": 3619.25,
+  "end": 3621.79,
+  "text": "What do they say?"
+ },
+ {
+  "start": 3621.79,
+  "end": 3625.462,
+  "text": "Well, if you look at Kaplan, and they solve for this equation,"
+ },
+ {
+  "start": 3625.462,
+  "end": 3626.67,
+  "text": "they say something like this."
+ },
+ {
+  "start": 3626.67,
+  "end": 3630.71,
+  "text": "Well, the amount of--they always flip this."
+ },
+ {
+  "start": 3630.71,
+  "end": 3631.57,
+  "text": "It confuses me."
+ },
+ {
+  "start": 3631.57,
+  "end": 3635.95,
+  "text": "The amount of data it should be C to the 0.73,"
+ },
+ {
+  "start": 3635.95,
+  "end": 3639.722,
+  "text": "and the amount of model size should be C to the 0.27."
+ },
+ {
+  "start": 3639.722,
+  "end": 3640.43,
+  "text": "Is that reversed?"
+ },
+ {
+  "start": 3640.43,
+  "end": 3641.23,
+  "text": "I think it's reversed, sorry."
+ },
+ {
+  "start": 3641.23,
+  "end": 3642.73,
+  "text": "N should be the amount of parameters"
+ },
+ {
+  "start": 3642.73,
+  "end": 3646.01,
+  "text": "and D should be the amount of data."
+ },
+ {
+  "start": 3646.01,
+  "end": 3649.25,
+  "text": "And so tokens per parameters decreases with C."
+ },
+ {
+  "start": 3649.25,
+  "end": 3651.49,
+  "text": "So as you increase the compute amounts,"
+ },
+ {
+  "start": 3651.49,
+  "end": 3653.45,
+  "text": "this prescription by Kaplan tells"
+ },
+ {
+  "start": 3653.45,
+  "end": 3656.01,
+  "text": "you to train bigger and bigger and bigger models."
+ },
+ {
+  "start": 3656.01,
+  "end": 3658.303,
+  "text": "And so if you were around in the days of GPT-3,"
+ },
+ {
+  "start": 3658.303,
+  "end": 3659.97,
+  "text": "it kind of shocks me to think that there"
+ },
+ {
+  "start": 3659.97,
+  "end": 3662.89,
+  "text": "are people who were not, you would"
+ },
+ {
+  "start": 3662.89,
+  "end": 3665.41,
+  "text": "know that there was a period where everyone was"
+ },
+ {
+  "start": 3665.41,
+  "end": 3666.73,
+  "text": "training these gigantic models."
+ },
+ {
+  "start": 3666.73,
+  "end": 3669.37,
+  "text": "Like hundreds of billions of parameters"
+ },
+ {
+  "start": 3669.37,
+  "end": 3672.77,
+  "text": "of models, trillion-parameter dense models, what have you."
+ },
+ {
+  "start": 3672.77,
+  "end": 3674.57,
+  "text": "And part of that was driven by this."
+ },
+ {
+  "start": 3674.57,
+  "end": 3677.11,
+  "text": "They saw GPT-3, they saw these Kaplan predictions,"
+ },
+ {
+  "start": 3677.11,
+  "end": 3679.57,
+  "text": "and they said, \"Wow, I'm going to do my big training runs"
+ },
+ {
+  "start": 3679.57,
+  "end": 3684.52,
+  "text": "on these gigantic model size models.\""
+ },
+ {
+  "start": 3684.52,
+  "end": 3689.943,
+  "text": "But a few years later, in 2022, some folks at DeepMind, Hoffman"
+ },
+ {
+  "start": 3689.943,
+  "end": 3691.86,
+  "text": "et al., came in and they said, well, actually,"
+ },
+ {
+  "start": 3691.86,
+  "end": 3693.793,
+  "text": "these predictions are all terribly off."
+ },
+ {
+  "start": 3693.793,
+  "end": 3695.96,
+  "text": "You've been training these giant models, these three"
+ },
+ {
+  "start": 3695.96,
+  "end": 3699.06,
+  "text": "stars over here, but actually, those are way too big."
+ },
+ {
+  "start": 3699.06,
+  "end": 3700.56,
+  "text": "What we should be training instead"
+ },
+ {
+  "start": 3700.56,
+  "end": 3705.0,
+  "text": "is a very different trend, this line on the blue over here,"
+ },
+ {
+  "start": 3705.0,
+  "end": 3707.44,
+  "text": "and we should be training this teal star, which"
+ },
+ {
+  "start": 3707.44,
+  "end": 3708.64,
+  "text": "is a much better model."
+ },
+ {
+  "start": 3708.64,
+  "end": 3711.48,
+  "text": "So they argued that we should be training much smaller models"
+ },
+ {
+  "start": 3711.48,
+  "end": 3713.16,
+  "text": "relative to this."
+ },
+ {
+  "start": 3713.16,
+  "end": 3715.96,
+  "text": "And I think, of course, many of you"
+ },
+ {
+  "start": 3715.96,
+  "end": 3717.953,
+  "text": "or all of you probably the Chinchilla paper,"
+ },
+ {
+  "start": 3717.953,
+  "end": 3720.16,
+  "text": "you know what the token multipliers are."
+ },
+ {
+  "start": 3720.16,
+  "end": 3722.08,
+  "text": "It's 20 tokens to every parameter."
+ },
+ {
+  "start": 3722.08,
+  "end": 3724.6,
+  "text": "But I think this is useful to go in detail"
+ },
+ {
+  "start": 3724.6,
+  "end": 3728.42,
+  "text": "because the Chinchilla-Kaplan disagreement and all of this"
+ },
+ {
+  "start": 3728.42,
+  "end": 3730.68,
+  "text": "tells us something important about how we should"
+ },
+ {
+  "start": 3730.68,
+  "end": 3731.972,
+  "text": "be thinking about scaling laws."
+ },
+ {
+  "start": 3731.972,
+  "end": 3734.013,
+  "text": "It's not just something where you turn the crank,"
+ },
+ {
+  "start": 3734.013,
+  "end": 3735.2,
+  "text": "and you get the answer."
+ },
+ {
+  "start": 3735.2,
+  "end": 3737.66,
+  "text": "It's something that's actually careful and sensitive,"
+ },
+ {
+  "start": 3737.66,
+  "end": 3741.887,
+  "text": "and we have to respect the process."
+ },
+ {
+  "start": 3741.887,
+  "end": 3743.97,
+  "text": "So I'm going to walk through the Chinchilla paper."
+ },
+ {
+  "start": 3743.97,
+  "end": 3745.65,
+  "text": "And after I walk through the Chinchilla paper,"
+ },
+ {
+  "start": 3745.65,
+  "end": 3747.91,
+  "text": "I'm going to talk about why the Kaplan and Chinchilla"
+ },
+ {
+  "start": 3747.91,
+  "end": 3750.81,
+  "text": "papers disagree and what that means for you."
+ },
+ {
+  "start": 3750.81,
+  "end": 3754.23,
+  "text": "So the Chinchilla author suggests three different ways"
+ },
+ {
+  "start": 3754.23,
+  "end": 3755.37,
+  "text": "of fitting scaling laws."
+ },
+ {
+  "start": 3755.37,
+  "end": 3759.11,
+  "text": "I really like this because it's a way of robustifying yourself"
+ },
+ {
+  "start": 3759.11,
+  "end": 3761.75,
+  "text": "to modeling assumptions you may have made."
+ },
+ {
+  "start": 3761.75,
+  "end": 3764.47,
+  "text": "And each of these actually is quite a different approach"
+ },
+ {
+  "start": 3764.47,
+  "end": 3769.71,
+  "text": "to estimating the trade-off between model size and data."
+ },
+ {
+  "start": 3769.71,
+  "end": 3773.55,
+  "text": "And minus method 3, which does differ a little bit,"
+ },
+ {
+  "start": 3773.55,
+  "end": 3774.77,
+  "text": "they mostly agree."
+ },
+ {
+  "start": 3774.77,
+  "end": 3777.99,
+  "text": "All 1 and 2 both agree that the coefficients"
+ },
+ {
+  "start": 3777.99,
+  "end": 3781.31,
+  "text": "for data and for model size are roughly the same."
+ },
+ {
+  "start": 3781.31,
+  "end": 3784.03,
+  "text": "0.5, 0.5, 0.49, 0.51."
+ },
+ {
+  "start": 3784.03,
+  "end": 3788.27,
+  "text": "Method 3 does differ, 0.46 and 0.54, but we'll talk about why"
+ },
+ {
+  "start": 3788.27,
+  "end": 3789.13,
+  "text": "later."
+ },
+ {
+  "start": 3789.13,
+  "end": 3791.55,
+  "text": "Kaplan et al., of course, have a very big difference"
+ },
+ {
+  "start": 3791.55,
+  "end": 3794.35,
+  "text": "between the two, which is why they were training big models"
+ },
+ {
+  "start": 3794.35,
+  "end": 3797.35,
+  "text": "at big, big compute sizes."
+ },
+ {
+  "start": 3797.35,
+  "end": 3799.94,
+  "text": "Method number 1 from Chinchilla is"
+ },
+ {
+  "start": 3799.94,
+  "end": 3802.2,
+  "text": "what I might call the lower envelope method."
+ },
+ {
+  "start": 3802.2,
+  "end": 3805.94,
+  "text": "And this is the method that was also being used partially"
+ },
+ {
+  "start": 3805.94,
+  "end": 3809.5,
+  "text": "by Kaplan to try to figure out what the right scaling was."
+ },
+ {
+  "start": 3809.5,
+  "end": 3812.4,
+  "text": "And so what you do is you take all of your training runs."
+ },
+ {
+  "start": 3812.4,
+  "end": 3816.042,
+  "text": "So each one of these colored lines is a training curve."
+ },
+ {
+  "start": 3816.042,
+  "end": 3817.5,
+  "text": "And what you want to do is you want"
+ },
+ {
+  "start": 3817.5,
+  "end": 3820.42,
+  "text": "to actually take the lower envelope of these training curves."
+ },
+ {
+  "start": 3820.42,
+  "end": 3823.18,
+  "text": "Because a lower envelope point on this training curve,"
+ },
+ {
+  "start": 3823.18,
+  "end": 3825.48,
+  "text": "that means that for a particular FLOP,"
+ },
+ {
+  "start": 3825.48,
+  "end": 3828.9,
+  "text": "this is the best loss that I ever achieved for that FLOP"
+ },
+ {
+  "start": 3828.9,
+  "end": 3830.04,
+  "text": "on any training run."
+ },
+ {
+  "start": 3830.04,
+  "end": 3832.62,
+  "text": "So I can take all of the lower envelope"
+ },
+ {
+  "start": 3832.62,
+  "end": 3835.64,
+  "text": "points at the very bottom here at the high compute regime,"
+ },
+ {
+  "start": 3835.64,
+  "end": 3837.42,
+  "text": "and then I can plot all those points"
+ },
+ {
+  "start": 3837.42,
+  "end": 3841.02,
+  "text": "to see how big were the models that each of these FLOP points"
+ },
+ {
+  "start": 3841.02,
+  "end": 3841.71,
+  "text": "intersected."
+ },
+ {
+  "start": 3841.71,
+  "end": 3843.46,
+  "text": "Because each of these points is a training"
+ },
+ {
+  "start": 3843.46,
+  "end": 3845.08,
+  "text": "run with a model size."
+ },
+ {
+  "start": 3845.08,
+  "end": 3848.16,
+  "text": "And if I scatter plot that, I will get a nice linear trend."
+ },
+ {
+  "start": 3848.16,
+  "end": 3851.66,
+  "text": "And that will give me one way of estimating the optimal trade-off"
+ },
+ {
+  "start": 3851.66,
+  "end": 3853.84,
+  "text": "between FLOP to parameters."
+ },
+ {
+  "start": 3853.84,
+  "end": 3856.84,
+  "text": "And that gives one answer, which is for their compute budget,"
+ },
+ {
+  "start": 3856.84,
+  "end": 3859.58,
+  "text": "they should train a 67 billion parameter model."
+ },
+ {
+  "start": 3859.58,
+  "end": 3863.1,
+  "text": "This is a nice and simple way, but very tricky defining things"
+ },
+ {
+  "start": 3863.1,
+  "end": 3865.5,
+  "text": "like what is the lower envelope, and so on and so forth."
+ },
+ {
+  "start": 3865.5,
+  "end": 3868.74,
+  "text": "There's definitely some tricky parts."
+ },
+ {
+  "start": 3868.74,
+  "end": 3870.58,
+  "text": "Method 2 is IsoFLOP."
+ },
+ {
+  "start": 3870.58,
+  "end": 3872.2,
+  "text": "This is now very popular."
+ },
+ {
+  "start": 3872.2,
+  "end": 3874.16,
+  "text": "It's also very easy and very robust."
+ },
+ {
+  "start": 3874.16,
+  "end": 3877.14,
+  "text": "This is probably my personal favorite method."
+ },
+ {
+  "start": 3877.14,
+  "end": 3879.1,
+  "text": "And what you do is, for this, you"
+ },
+ {
+  "start": 3879.1,
+  "end": 3881.6,
+  "text": "pick a bunch of different FLOPS budgets."
+ },
+ {
+  "start": 3881.6,
+  "end": 3885.34,
+  "text": "So I have a different range of FLOPS budgets going in factors"
+ },
+ {
+  "start": 3885.34,
+  "end": 3889.3,
+  "text": "of 3 in this case or 1, 3, 6."
+ },
+ {
+  "start": 3889.3,
+  "end": 3891.14,
+  "text": "And what you do is for each FLOP budget,"
+ },
+ {
+  "start": 3891.14,
+  "end": 3893.22,
+  "text": "you're going to essentially sweep the space."
+ },
+ {
+  "start": 3893.22,
+  "end": 3894.86,
+  "text": "So here I have one variable, which"
+ },
+ {
+  "start": 3894.86,
+  "end": 3896.6,
+  "text": "is the parameter-to-data trade-off."
+ },
+ {
+  "start": 3896.6,
+  "end": 3898.5,
+  "text": "So for each FLOP budget, I'm going"
+ },
+ {
+  "start": 3898.5,
+  "end": 3902.24,
+  "text": "to sweep over the parameter to data trade-off, fixing my FLOPS."
+ },
+ {
+  "start": 3902.24,
+  "end": 3904.58,
+  "text": "So I double my data size, I half my model size,"
+ },
+ {
+  "start": 3904.58,
+  "end": 3905.4,
+  "text": "so on and so forth."
+ },
+ {
+  "start": 3905.4,
+  "end": 3908.02,
+  "text": "And that will generate a sequence of training runs"
+ },
+ {
+  "start": 3908.02,
+  "end": 3911.04,
+  "text": "whose terminal loss is going to sweep out some of curve."
+ },
+ {
+  "start": 3911.04,
+  "end": 3913.5,
+  "text": "So each one of these colored sets of points"
+ },
+ {
+  "start": 3913.5,
+  "end": 3915.24,
+  "text": "is a fixed FLOP run."
+ },
+ {
+  "start": 3915.24,
+  "end": 3918.11,
+  "text": "Each point is sweeping across different parameters,"
+ },
+ {
+  "start": 3918.11,
+  "end": 3920.91,
+  "text": "and of course, it's implicitly sweeping over data as well."
+ },
+ {
+  "start": 3920.91,
+  "end": 3925.05,
+  "text": "Now, the nice thing now is I can take the minimum over each"
+ },
+ {
+  "start": 3925.05,
+  "end": 3926.77,
+  "text": "of these runs, or even fit a quadratic"
+ },
+ {
+  "start": 3926.77,
+  "end": 3928.81,
+  "text": "and take the minimum over the quadratics,"
+ },
+ {
+  "start": 3928.81,
+  "end": 3930.57,
+  "text": "and then I can draw a line through all"
+ },
+ {
+  "start": 3930.57,
+  "end": 3932.23,
+  "text": "of the bottoms of the quadratics,"
+ },
+ {
+  "start": 3932.23,
+  "end": 3934.49,
+  "text": "or take the bottom of the quadratics"
+ },
+ {
+  "start": 3934.49,
+  "end": 3938.05,
+  "text": "and plot them as a function of FLOPS to parameters."
+ },
+ {
+  "start": 3938.05,
+  "end": 3939.787,
+  "text": "And that will give me another prediction,"
+ },
+ {
+  "start": 3939.787,
+  "end": 3940.87,
+  "text": "which agrees very closely."
+ },
+ {
+  "start": 3940.87,
+  "end": 3944.19,
+  "text": "These is $63 billion parameters for my compute budget."
+ },
+ {
+  "start": 3947.503,
+  "end": 3950.93,
+  "text": "Now, the final approach that we can do"
+ },
+ {
+  "start": 3950.93,
+  "end": 3952.79,
+  "text": "is actually the maybe most natural one,"
+ },
+ {
+  "start": 3952.79,
+  "end": 3956.09,
+  "text": "as suggested by the Rosenfeld paper as well as the Kaplan"
+ },
+ {
+  "start": 3956.09,
+  "end": 3960.05,
+  "text": "paper, because both of them are propose"
+ },
+ {
+  "start": 3960.05,
+  "end": 3963.77,
+  "text": "a hypothesized functional form for how model"
+ },
+ {
+  "start": 3963.77,
+  "end": 3966.05,
+  "text": "size and data relate to loss."
+ },
+ {
+  "start": 3966.05,
+  "end": 3969.81,
+  "text": "So if you have such a joint functional form, what you can do"
+ },
+ {
+  "start": 3969.81,
+  "end": 3973.45,
+  "text": "is you can take a whole bunch of training runs that you've done,"
+ },
+ {
+  "start": 3973.45,
+  "end": 3976.6,
+  "text": "and you can fit your loss landscape, which"
+ },
+ {
+  "start": 3976.6,
+  "end": 3978.18,
+  "text": "is your hypothesized functional form,"
+ },
+ {
+  "start": 3978.18,
+  "end": 3979.56,
+  "text": "and you can just do curve fitting"
+ },
+ {
+  "start": 3979.56,
+  "end": 3982.268,
+  "text": "to estimate what the coefficients are in your scaling law."
+ },
+ {
+  "start": 3982.268,
+  "end": 3983.8,
+  "text": "This is the most brute-force way."
+ },
+ {
+  "start": 3983.8,
+  "end": 3985.52,
+  "text": "You have a hypothesized relationship"
+ },
+ {
+  "start": 3985.52,
+  "end": 3988.52,
+  "text": "between loss, data size, and model size"
+ },
+ {
+  "start": 3988.52,
+  "end": 3991.88,
+  "text": "train a bunch of models, do curve fitting."
+ },
+ {
+  "start": 3991.88,
+  "end": 3995.38,
+  "text": "Hopefully, fairly straightforward--how you do that."
+ },
+ {
+  "start": 3995.38,
+  "end": 3997.8,
+  "text": "Of course, if you're doing this method, how you do"
+ },
+ {
+  "start": 3997.8,
+  "end": 3999.402,
+  "text": "the curve fitting is very important."
+ },
+ {
+  "start": 3999.402,
+  "end": 4000.86,
+  "text": "Now, you're fitting these surfaces,"
+ },
+ {
+  "start": 4000.86,
+  "end": 4003.76,
+  "text": "there's many variables, it's kind of tricky."
+ },
+ {
+  "start": 4003.76,
+  "end": 4007.82,
+  "text": "This thing also has some trickiness, just like method 1."
+ },
+ {
+  "start": 4007.82,
+  "end": 4011.0,
+  "text": "So it's not a straightforward way the same way"
+ },
+ {
+  "start": 4011.0,
+  "end": 4013.24,
+  "text": "that maybe FLOPS is."
+ },
+ {
+  "start": 4013.24,
+  "end": 4016.82,
+  "text": "So now that we've gone through what Chinchilla does,"
+ },
+ {
+  "start": 4016.82,
+  "end": 4019.36,
+  "text": "it doesn't seem materially different than what"
+ },
+ {
+  "start": 4019.36,
+  "end": 4020.22,
+  "text": "Kaplan was doing."
+ },
+ {
+  "start": 4020.22,
+  "end": 4023.08,
+  "text": "It's not like Kaplan was doing one crazy thing and then"
+ },
+ {
+  "start": 4023.08,
+  "end": 4025.8,
+  "text": "the Chinchilla authors did something way smarter and you"
+ },
+ {
+  "start": 4025.8,
+  "end": 4028.4,
+  "text": "said, \"Wow, why didn't we do that from the start?\""
+ },
+ {
+  "start": 4028.4,
+  "end": 4030.52,
+  "text": "They both did pretty reasonable stuff."
+ },
+ {
+  "start": 4030.52,
+  "end": 4032.62,
+  "text": "But if we look at their scaling predictions,"
+ },
+ {
+  "start": 4032.62,
+  "end": 4034.03,
+  "text": "they are very different."
+ },
+ {
+  "start": 4034.03,
+  "end": 4038.11,
+  "text": "And in hindsight, we generally tend to agree with the fact"
+ },
+ {
+  "start": 4038.11,
+  "end": 4041.25,
+  "text": "that the Chinchilla authors had more of the correct scaling."
+ },
+ {
+  "start": 4041.25,
+  "end": 4044.21,
+  "text": "If you do your own Chinchilla-style analysis,"
+ },
+ {
+  "start": 4044.21,
+  "end": 4047.75,
+  "text": "you will find probably scaling is much closer to Chinchilla."
+ },
+ {
+  "start": 4047.75,
+  "end": 4050.91,
+  "text": "Now, so why is there such a big difference when"
+ },
+ {
+  "start": 4050.91,
+  "end": 4054.39,
+  "text": "they're both fitting these joint scaling laws?"
+ },
+ {
+  "start": 4054.39,
+  "end": 4057.35,
+  "text": "OK, so this is, I think, where we"
+ },
+ {
+  "start": 4057.35,
+  "end": 4062.21,
+  "text": "get into the messy realities of how scaling laws are made."
+ },
+ {
+  "start": 4062.21,
+  "end": 4065.31,
+  "text": "Scaling laws can really change depending"
+ },
+ {
+  "start": 4065.31,
+  "end": 4068.23,
+  "text": "on the precise ways in which you're implementing the scaling"
+ },
+ {
+  "start": 4068.23,
+  "end": 4070.89,
+  "text": "laws, the hyperparameter settings that you're using,"
+ },
+ {
+  "start": 4070.89,
+  "end": 4073.87,
+  "text": "and even what the x-axis is."
+ },
+ {
+  "start": 4073.87,
+  "end": 4075.64,
+  "text": "So there's a really nice paper."
+ },
+ {
+  "start": 4075.64,
+  "end": 4076.89,
+  "text": "Oh, no, I covered the authors."
+ },
+ {
+  "start": 4076.89,
+  "end": 4082.933,
+  "text": "I can paste this in the lecture Slack later."
+ },
+ {
+  "start": 4082.933,
+  "end": 4085.35,
+  "text": "--called \"Resolving Discrepancy to Compute-Optimal Scaling"
+ },
+ {
+  "start": 4085.35,
+  "end": 4086.77,
+  "text": "of Language Models.\""
+ },
+ {
+  "start": 4086.77,
+  "end": 4087.77,
+  "text": "Yair is the last author."
+ },
+ {
+  "start": 4087.77,
+  "end": 4089.75,
+  "text": "He was a former student here."
+ },
+ {
+  "start": 4089.75,
+  "end": 4092.59,
+  "text": "And they show-- basically, first they"
+ },
+ {
+  "start": 4092.59,
+  "end": 4095.11,
+  "text": "replicate the Kaplan result using"
+ },
+ {
+  "start": 4095.11,
+  "end": 4096.689,
+  "text": "roughly the Kaplan settings."
+ },
+ {
+  "start": 4096.689,
+  "end": 4098.67,
+  "text": "And then they say, OK, well, let's"
+ },
+ {
+  "start": 4098.67,
+  "end": 4100.33,
+  "text": "change how we count parameters."
+ },
+ {
+  "start": 4100.33,
+  "end": 4102.013,
+  "text": "That shifts the curve a little bit."
+ },
+ {
+  "start": 4102.013,
+  "end": 4103.43,
+  "text": "And then they say, OK, well, let's"
+ },
+ {
+  "start": 4103.43,
+  "end": 4105.29,
+  "text": "change how learning rate warmup is done."
+ },
+ {
+  "start": 4105.29,
+  "end": 4106.87,
+  "text": "That shifts the curve a little bit."
+ },
+ {
+  "start": 4106.87,
+  "end": 4109.09,
+  "text": "And then let's tune the optimizer a little bit more."
+ },
+ {
+  "start": 4109.09,
+  "end": 4111.45,
+  "text": "And then they get exactly the Chinchilla result."
+ },
+ {
+  "start": 4111.45,
+  "end": 4113.35,
+  "text": "So their argument here is that there"
+ },
+ {
+  "start": 4113.35,
+  "end": 4118.37,
+  "text": "is a sequence of what seems very minor decisions that in the end,"
+ },
+ {
+  "start": 4118.37,
+  "end": 4120.75,
+  "text": "gives you this big gap between the Kaplan scaling"
+ },
+ {
+  "start": 4120.75,
+  "end": 4122.85,
+  "text": "law and the Chinchilla scaling law."
+ },
+ {
+  "start": 4122.85,
+  "end": 4126.069,
+  "text": "And I'll explain what each of these steps"
+ },
+ {
+  "start": 4126.069,
+  "end": 4129.229,
+  "text": "is, not that that's the most important single thing,"
+ },
+ {
+  "start": 4129.229,
+  "end": 4133.069,
+  "text": "but also to emphasize to you how important the details are here."
+ },
+ {
+  "start": 4133.069,
+  "end": 4135.83,
+  "text": "So the very first arrow, where we go from Kaplan"
+ },
+ {
+  "start": 4135.83,
+  "end": 4140.01,
+  "text": "to the blue line, that is how we count parameters."
+ },
+ {
+  "start": 4140.01,
+  "end": 4142.375,
+  "text": "So remember, in Kaplan, I said, well,"
+ },
+ {
+  "start": 4142.375,
+  "end": 4143.75,
+  "text": "they saw this weird stuff if they"
+ },
+ {
+  "start": 4143.75,
+  "end": 4145.27,
+  "text": "included embedding parameters."
+ },
+ {
+  "start": 4145.27,
+  "end": 4147.229,
+  "text": "So they excluded embedding parameters."
+ },
+ {
+  "start": 4147.229,
+  "end": 4149.899,
+  "text": "That's generally an OK thing to do."
+ },
+ {
+  "start": 4149.899,
+  "end": 4152.74,
+  "text": "But one thing they also did that really messed them up"
+ },
+ {
+  "start": 4152.74,
+  "end": 4156.38,
+  "text": "was they also excluded the last layer parameter"
+ },
+ {
+  "start": 4156.38,
+  "end": 4158.2,
+  "text": "counts, the softmax ones."
+ },
+ {
+  "start": 4158.2,
+  "end": 4161.22,
+  "text": "Because in many models, the embedding and the last layer"
+ },
+ {
+  "start": 4161.22,
+  "end": 4162.58,
+  "text": "linear are dual to each other."
+ },
+ {
+  "start": 4162.58,
+  "end": 4164.38,
+  "text": "They have the same shapes."
+ },
+ {
+  "start": 4164.38,
+  "end": 4167.72,
+  "text": "The inside has vocab size by hidden dim."
+ },
+ {
+  "start": 4167.72,
+  "end": 4170.502,
+  "text": "The output matrix has hidden dim by vocab size."
+ },
+ {
+  "start": 4170.502,
+  "end": 4171.96,
+  "text": "And because they're the same shape,"
+ },
+ {
+  "start": 4171.96,
+  "end": 4174.043,
+  "text": "they said, well, let's just exclude both of those."
+ },
+ {
+  "start": 4174.043,
+  "end": 4176.22,
+  "text": "It turns out whether you include or exclude"
+ },
+ {
+  "start": 4176.22,
+  "end": 4180.7,
+  "text": "those has a big material impact on the shape of the scaling law."
+ },
+ {
+  "start": 4180.7,
+  "end": 4184.399,
+  "text": "They also found-- this is much more of an oversight,"
+ },
+ {
+  "start": 4184.399,
+  "end": 4188.06,
+  "text": "more than a genuine difference in opinion,"
+ },
+ {
+  "start": 4188.06,
+  "end": 4191.42,
+  "text": "that a lot of the models that were being trained in Kaplan"
+ },
+ {
+  "start": 4191.42,
+  "end": 4192.359,
+  "text": "were very small."
+ },
+ {
+  "start": 4192.359,
+  "end": 4195.1,
+  "text": "And in fact, they were so small that they were not actually"
+ },
+ {
+  "start": 4195.1,
+  "end": 4198.08,
+  "text": "converging by the time that the learning rate warm up was done."
+ },
+ {
+  "start": 4198.08,
+  "end": 4200.28,
+  "text": "So their learning rates were set very suboptimally."
+ },
+ {
+  "start": 4200.28,
+  "end": 4203.74,
+  "text": "And because of that, their models weren't fully converged."
+ },
+ {
+  "start": 4203.74,
+  "end": 4207.3,
+  "text": "And then finally, they found that Kaplan et al. was fixing"
+ },
+ {
+  "start": 4207.3,
+  "end": 4209.65,
+  "text": "one big batch size, and those big batch sizes"
+ },
+ {
+  "start": 4209.65,
+  "end": 4211.67,
+  "text": "were suboptimal for the smaller models."
+ },
+ {
+  "start": 4211.67,
+  "end": 4214.17,
+  "text": "And therefore, if you tune that correctly"
+ },
+ {
+  "start": 4214.17,
+  "end": 4215.89,
+  "text": "and you use varying batch sizes, you"
+ },
+ {
+  "start": 4215.89,
+  "end": 4220.21,
+  "text": "end up getting this thing that agrees exactly with Chinchilla."
+ },
+ {
+  "start": 4220.21,
+  "end": 4221.89,
+  "text": "So I think each of these might seem"
+ },
+ {
+  "start": 4221.89,
+  "end": 4225.912,
+  "text": "like a very minor difference, but if you change up"
+ },
+ {
+  "start": 4225.912,
+  "end": 4227.37,
+  "text": "these really minor differences, you"
+ },
+ {
+  "start": 4227.37,
+  "end": 4229.81,
+  "text": "can get big shifts in the scaling law."
+ },
+ {
+  "start": 4229.81,
+  "end": 4232.05,
+  "text": "And one thing I like to emphasize"
+ },
+ {
+  "start": 4232.05,
+  "end": 4235.53,
+  "text": "is that scaling laws are lower bounds in some sense."
+ },
+ {
+  "start": 4235.53,
+  "end": 4237.77,
+  "text": "They're kind of saying, if I continue this recipe"
+ },
+ {
+  "start": 4237.77,
+  "end": 4241.21,
+  "text": "and I scale it up, then this is what I will get."
+ },
+ {
+  "start": 4241.21,
+  "end": 4243.61,
+  "text": "But if you're scaling up a recipe that you don't want"
+ },
+ {
+  "start": 4243.61,
+  "end": 4245.508,
+  "text": "to scale up, your warmup is kind of crazy,"
+ },
+ {
+  "start": 4245.508,
+  "end": 4247.05,
+  "text": "or your batch sizes are crazy, you're"
+ },
+ {
+  "start": 4247.05,
+  "end": 4248.45,
+  "text": "going to get bad scaling laws."
+ },
+ {
+  "start": 4248.45,
+  "end": 4254.05,
+  "text": "So you want to be as close to the proper full run as possible."
+ },
+ {
+  "start": 4254.05,
+  "end": 4257.45,
+  "text": "There's another paper that does another very interesting thing"
+ },
+ {
+  "start": 4257.45,
+  "end": 4260.13,
+  "text": "to try to study the difference between Kaplan and Chinchilla"
+ },
+ {
+  "start": 4260.13,
+  "end": 4261.01,
+  "text": "scaling laws."
+ },
+ {
+  "start": 4261.01,
+  "end": 4263.45,
+  "text": "It's by Pearce and Song."
+ },
+ {
+  "start": 4263.45,
+  "end": 4266.21,
+  "text": "And what they do, and I think this is very clever,"
+ },
+ {
+  "start": 4266.21,
+  "end": 4267.62,
+  "text": "is they don't train any models."
+ },
+ {
+  "start": 4267.62,
+  "end": 4269.56,
+  "text": "They just take the Chinchilla training"
+ },
+ {
+  "start": 4269.56,
+  "end": 4272.64,
+  "text": "curves or the implied functional form of the Chinchilla training"
+ },
+ {
+  "start": 4272.64,
+  "end": 4273.14,
+  "text": "curves."
+ },
+ {
+  "start": 4273.14,
+  "end": 4275.5,
+  "text": "They just plot them out and they say, well,"
+ },
+ {
+  "start": 4275.5,
+  "end": 4277.56,
+  "text": "based on these implied training curves, which"
+ },
+ {
+  "start": 4277.56,
+  "end": 4280.12,
+  "text": "are simulated purely from Chinchilla,"
+ },
+ {
+  "start": 4280.12,
+  "end": 4282.4,
+  "text": "they generate what the implied training curves will"
+ },
+ {
+  "start": 4282.4,
+  "end": 4285.52,
+  "text": "be for Kaplan if you ignore the embedding parameters"
+ },
+ {
+  "start": 4285.52,
+  "end": 4287.92,
+  "text": "and you scale way down, and what happens"
+ },
+ {
+  "start": 4287.92,
+  "end": 4290.3,
+  "text": "if you use the total parameter count instead."
+ },
+ {
+  "start": 4290.3,
+  "end": 4292.58,
+  "text": "And what they find is really two effects."
+ },
+ {
+  "start": 4292.58,
+  "end": 4295.9,
+  "text": "One is that Kaplan is operating at a much lower compute scale,"
+ },
+ {
+  "start": 4295.9,
+  "end": 4298.26,
+  "text": "so they're very sensitive to small changes,"
+ },
+ {
+  "start": 4298.26,
+  "end": 4300.6,
+  "text": "and actually ignoring the non-embedding parameter"
+ },
+ {
+  "start": 4300.6,
+  "end": 4303.72,
+  "text": "is a sufficiently big change to mess up the result relative"
+ },
+ {
+  "start": 4303.72,
+  "end": 4304.5,
+  "text": "to Chinchilla."
+ },
+ {
+  "start": 4304.5,
+  "end": 4308.06,
+  "text": "So their argument is slightly different from Yair and others,"
+ },
+ {
+  "start": 4308.06,
+  "end": 4309.52,
+  "text": "which is that here, actually, it's"
+ },
+ {
+  "start": 4309.52,
+  "end": 4313.16,
+  "text": "the size of the compute scale plus the slight non-linearity"
+ },
+ {
+  "start": 4313.16,
+  "end": 4315.36,
+  "text": "induced by non embedding parameters that's"
+ },
+ {
+  "start": 4315.36,
+  "end": 4317.7,
+  "text": "causing this disagreement."
+ },
+ {
+  "start": 4317.7,
+  "end": 4321.58,
+  "text": "So this is really starting to get into the weeds."
+ },
+ {
+  "start": 4321.58,
+  "end": 4324.52,
+  "text": "But I hope you appreciate the importance"
+ },
+ {
+  "start": 4324.52,
+  "end": 4326.42,
+  "text": "of paying attention to detail."
+ },
+ {
+  "start": 4326.42,
+  "end": 4329.08,
+  "text": "And I think a lot of the work that goes on"
+ },
+ {
+  "start": 4329.08,
+  "end": 4331.12,
+  "text": "in establishing, relying, scaling laws"
+ },
+ {
+  "start": 4331.12,
+  "end": 4333.32,
+  "text": "is about figuring out what the right regime is"
+ },
+ {
+  "start": 4333.32,
+  "end": 4337.88,
+  "text": "so that you can get reliable scaling across compute scales."
+ },
+ {
+  "start": 4337.88,
+  "end": 4340.68,
+  "text": "The final thing, and this is really just more of something"
+ },
+ {
+  "start": 4340.68,
+  "end": 4343.76,
+  "text": "that I just find amusing more than anything else, which"
+ },
+ {
+  "start": 4343.76,
+  "end": 4346.24,
+  "text": "is that Chinchilla is this paper that takes down"
+ },
+ {
+  "start": 4346.24,
+  "end": 4347.38,
+  "text": "the Kaplan paper in a way."
+ },
+ {
+  "start": 4347.38,
+  "end": 4349.72,
+  "text": "It's like, oh, you guys were very wrong."
+ },
+ {
+  "start": 4349.72,
+  "end": 4352.02,
+  "text": "But there was this one remaining mystery,"
+ },
+ {
+  "start": 4352.02,
+  "end": 4354.56,
+  "text": "which is that Chinchilla method three never agreed"
+ },
+ {
+  "start": 4354.56,
+  "end": 4356.14,
+  "text": "with Chinchilla method 1 and 2."
+ },
+ {
+  "start": 4356.14,
+  "end": 4358.14,
+  "text": "And the numbers look small."
+ },
+ {
+  "start": 4358.14,
+  "end": 4360.535,
+  "text": "And the authors are very unperturbed about this,"
+ },
+ {
+  "start": 4360.535,
+  "end": 4362.66,
+  "text": "but I think the implications are quite non-trivial."
+ },
+ {
+  "start": 4362.66,
+  "end": 4365.28,
+  "text": "If you look at this, methods 1 and 2 basically"
+ },
+ {
+  "start": 4365.28,
+  "end": 4368.498,
+  "text": "say the amount of parameters and tokens should scale together."
+ },
+ {
+  "start": 4368.498,
+  "end": 4370.54,
+  "text": "So there should be a fixed ratio between the two."
+ },
+ {
+  "start": 4370.54,
+  "end": 4373.2,
+  "text": "This is where the Chinchilla factor of 20 comes from."
+ },
+ {
+  "start": 4373.2,
+  "end": 4376.66,
+  "text": "If you look at number 3, the exponents are different."
+ },
+ {
+  "start": 4376.66,
+  "end": 4378.6,
+  "text": "This means if you scale up your compute,"
+ },
+ {
+  "start": 4378.6,
+  "end": 4380.22,
+  "text": "eventually, actually, in this case,"
+ },
+ {
+  "start": 4380.22,
+  "end": 4382.16,
+  "text": "you're going to have way more tokens than you"
+ },
+ {
+  "start": 4382.16,
+  "end": 4383.542,
+  "text": "are going to have parameters."
+ },
+ {
+  "start": 4383.542,
+  "end": 4385.75,
+  "text": "So it's going to be actually a very different scaling"
+ },
+ {
+  "start": 4385.75,
+  "end": 4389.91,
+  "text": "conclusion asymptotically than the other ones."
+ },
+ {
+  "start": 4389.91,
+  "end": 4395.282,
+  "text": "And so it turns out that I was certainly not the only one who"
+ },
+ {
+  "start": 4395.282,
+  "end": 4398.31,
+  "text": "was perturbed about this, except some folks at Epoch AI"
+ },
+ {
+  "start": 4398.31,
+  "end": 4400.47,
+  "text": "did something about being perturbed."
+ },
+ {
+  "start": 4400.47,
+  "end": 4403.21,
+  "text": "They couldn't get either the raw data or the code."
+ },
+ {
+  "start": 4403.21,
+  "end": 4405.51,
+  "text": "So what they did was they extracted the data from plots"
+ },
+ {
+  "start": 4405.51,
+  "end": 4409.545,
+  "text": "in the paper, and they refitted the method 3 regressions."
+ },
+ {
+  "start": 4409.545,
+  "end": 4411.17,
+  "text": "They extracted the data from the paper."
+ },
+ {
+  "start": 4411.17,
+  "end": 4415.99,
+  "text": "And given that data, they fitted that 2D surface or 3D surface"
+ },
+ {
+  "start": 4415.99,
+  "end": 4417.71,
+  "text": "that was proposed."
+ },
+ {
+  "start": 4417.71,
+  "end": 4419.59,
+  "text": "And then, what they showed is actually"
+ },
+ {
+  "start": 4419.59,
+  "end": 4423.57,
+  "text": "the original paper must have underfitted the original data."
+ },
+ {
+  "start": 4423.57,
+  "end": 4426.17,
+  "text": "And if they redid the curve fitting,"
+ },
+ {
+  "start": 4426.17,
+  "end": 4428.91,
+  "text": "they could get much lower losses relative to what"
+ },
+ {
+  "start": 4428.91,
+  "end": 4432.25,
+  "text": "the proposed scaling law in the Chinchilla paper."
+ },
+ {
+  "start": 4432.25,
+  "end": 4435.65,
+  "text": "And in fact, if you follow the refitted model,"
+ },
+ {
+  "start": 4435.65,
+  "end": 4439.87,
+  "text": "you got almost exactly D over 20 is"
+ },
+ {
+  "start": 4439.87,
+  "end": 4442.22,
+  "text": "20 rule of thumb from the Chinchilla paper,"
+ },
+ {
+  "start": 4442.22,
+  "end": 4443.84,
+  "text": "which is really a funny conclusion,"
+ },
+ {
+  "start": 4443.84,
+  "end": 4445.98,
+  "text": "I think, to the Chinchilla paper, where in the end"
+ },
+ {
+  "start": 4445.98,
+  "end": 4449.54,
+  "text": "it turns out that the authors were more right than they knew."
+ },
+ {
+  "start": 4449.54,
+  "end": 4451.54,
+  "text": "Actually, they had made a mistake,"
+ },
+ {
+  "start": 4451.54,
+  "end": 4453.78,
+  "text": "and that was the only reason why method 3 disagreed"
+ },
+ {
+  "start": 4453.78,
+  "end": 4454.84,
+  "text": "from methods 1 and 2."
+ },
+ {
+  "start": 4454.84,
+  "end": 4459.22,
+  "text": "So it's a nice conclusion to know that the method was"
+ },
+ {
+  "start": 4459.22,
+  "end": 4461.58,
+  "text": "robust after all."
+ },
+ {
+  "start": 4461.58,
+  "end": 4465.6,
+  "text": "OK, so that's the end of the Chinchilla saga in some ways."
+ },
+ {
+  "start": 4465.6,
+  "end": 4469.74,
+  "text": "But I will end this section by saying you probably don't"
+ },
+ {
+  "start": 4469.74,
+  "end": 4471.34,
+  "text": "want the Chinchilla factor."
+ },
+ {
+  "start": 4471.34,
+  "end": 4475.22,
+  "text": "At this point, I think this is a pretty common knowledge thing."
+ },
+ {
+  "start": 4475.22,
+  "end": 4477.42,
+  "text": "But if you're training a production model,"
+ },
+ {
+  "start": 4477.42,
+  "end": 4480.26,
+  "text": "you don't really care about saving training compute"
+ },
+ {
+  "start": 4480.26,
+  "end": 4481.54,
+  "text": "for the most part."
+ },
+ {
+  "start": 4481.54,
+  "end": 4483.46,
+  "text": "You can look at all sorts of external surveys"
+ },
+ {
+  "start": 4483.46,
+  "end": 4485.66,
+  "text": "that people have done of how Frontier Labs are"
+ },
+ {
+  "start": 4485.66,
+  "end": 4486.96,
+  "text": "spending their compute."
+ },
+ {
+  "start": 4486.96,
+  "end": 4489.4,
+  "text": "Most of the compute is not going into training runs."
+ },
+ {
+  "start": 4489.4,
+  "end": 4493.48,
+  "text": "Most of the compute is actually going into R&amp;D and serving."
+ },
+ {
+  "start": 4493.48,
+  "end": 4496.54,
+  "text": "And given that, especially for serving, what you want to do"
+ },
+ {
+  "start": 4496.54,
+  "end": 4499.1,
+  "text": "is you want small models that are capable."
+ },
+ {
+  "start": 4499.1,
+  "end": 4502.79,
+  "text": "You do not want big, bloated models that cost a lot to serve,"
+ },
+ {
+  "start": 4502.79,
+  "end": 4505.05,
+  "text": "even if that minimizes training cost."
+ },
+ {
+  "start": 4505.05,
+  "end": 4508.81,
+  "text": "And so what you really want is something that you would call"
+ },
+ {
+  "start": 4508.81,
+  "end": 4509.73,
+  "text": "as \"overtrained.\""
+ },
+ {
+  "start": 4509.73,
+  "end": 4512.003,
+  "text": "I put that in quotes because, really, overtraining"
+ },
+ {
+  "start": 4512.003,
+  "end": 4512.67,
+  "text": "is what we want."
+ },
+ {
+  "start": 4512.67,
+  "end": 4514.41,
+  "text": "That's the right amount of training."
+ },
+ {
+  "start": 4514.41,
+  "end": 4516.97,
+  "text": "And if you look at all the models that were released"
+ },
+ {
+  "start": 4516.97,
+  "end": 4518.79,
+  "text": "in the early days, like GPT-3--"
+ },
+ {
+  "start": 4518.79,
+  "end": 4521.83,
+  "text": "this was under-trained for sure, three tokens per parameter."
+ },
+ {
+  "start": 4521.83,
+  "end": 4525.03,
+  "text": "Chinchilla gets to the modern ratio of 20 per parameter."
+ },
+ {
+  "start": 4525.03,
+  "end": 4527.43,
+  "text": "And then for a while, people were at 20 per parameter."
+ },
+ {
+  "start": 4527.43,
+  "end": 4528.97,
+  "text": "And this is the era, I think, where"
+ },
+ {
+  "start": 4528.97,
+  "end": 4531.07,
+  "text": "there wasn't that much serving of these models."
+ },
+ {
+  "start": 4531.07,
+  "end": 4534.11,
+  "text": "The models were cool, but it wasn't being served at scale."
+ },
+ {
+  "start": 4534.11,
+  "end": 4538.17,
+  "text": "And then as you start to move to eras where serving becomes very"
+ },
+ {
+  "start": 4538.17,
+  "end": 4539.97,
+  "text": "real, now you're overtraining these models,"
+ },
+ {
+  "start": 4539.97,
+  "end": 4541.49,
+  "text": "and now you've moved into MoEs, and you're"
+ },
+ {
+  "start": 4541.49,
+  "end": 4543.99,
+  "text": "making all these trade-offs to optimize inference serving."
+ },
+ {
+  "start": 4543.99,
+  "end": 4547.07,
+  "text": "So I think Chinchilla is important,"
+ },
+ {
+  "start": 4547.07,
+  "end": 4551.31,
+  "text": "not because I think the 20-to-1 ratio is the one golden ratio."
+ },
+ {
+  "start": 4551.31,
+  "end": 4554.022,
+  "text": "If you're doing stuff for research, it might be."
+ },
+ {
+  "start": 4554.022,
+  "end": 4555.73,
+  "text": "But I think the reason why it's important"
+ },
+ {
+  "start": 4555.73,
+  "end": 4558.01,
+  "text": "is because it tells us quite a bit about how"
+ },
+ {
+  "start": 4558.01,
+  "end": 4559.77,
+  "text": "we should be fitting scaling laws"
+ },
+ {
+  "start": 4559.77,
+  "end": 4562.09,
+  "text": "and how to think about scaling laws."
+ },
+ {
+  "start": 4562.09,
+  "end": 4565.77,
+  "text": "OK, one final thing I'll end with Chinchilla-wise"
+ },
+ {
+  "start": 4565.77,
+  "end": 4568.1,
+  "text": "and otherwise for scaling is IsoFLOP"
+ },
+ {
+  "start": 4568.1,
+  "end": 4569.85,
+  "text": "have been one of the things that, I think,"
+ },
+ {
+  "start": 4569.85,
+  "end": 4572.29,
+  "text": "has a research tool have endured."
+ },
+ {
+  "start": 4572.29,
+  "end": 4574.29,
+  "text": "IsoFLOP are very easy to execute."
+ },
+ {
+  "start": 4574.29,
+  "end": 4576.01,
+  "text": "You fix a FLOPS budget, and then you"
+ },
+ {
+  "start": 4576.01,
+  "end": 4578.33,
+  "text": "sweep over all of the other degrees of freedom"
+ },
+ {
+  "start": 4578.33,
+  "end": 4580.45,
+  "text": "to see what the surface looks like."
+ },
+ {
+  "start": 4580.45,
+  "end": 4584.61,
+  "text": "And this gives you, in general, fairly reliable readings"
+ },
+ {
+  "start": 4584.61,
+  "end": 4587.85,
+  "text": "of how different parameters vary as a function"
+ },
+ {
+  "start": 4587.85,
+  "end": 4591.25,
+  "text": "of your free parameters."
+ },
+ {
+  "start": 4591.25,
+  "end": 4594.05,
+  "text": "People have done this for-- or actually, one of my students"
+ },
+ {
+  "start": 4594.05,
+  "end": 4595.91,
+  "text": "did this for diffusion models."
+ },
+ {
+  "start": 4595.91,
+  "end": 4599.77,
+  "text": "The MoE study I talked about was a IsoFLOP-style design."
+ },
+ {
+  "start": 4599.77,
+  "end": 4602.03,
+  "text": "If you're ever in a situation where you're thinking,"
+ },
+ {
+  "start": 4602.03,
+  "end": 4604.83,
+  "text": "how am I going to decide all these trade-offs,"
+ },
+ {
+  "start": 4604.83,
+  "end": 4607.97,
+  "text": "IsoFLOP is always a good default."
+ },
+ {
+  "start": 4607.97,
+  "end": 4612.81,
+  "text": "OK, so to wrap up everything for today,"
+ },
+ {
+  "start": 4612.81,
+  "end": 4616.49,
+  "text": "there's this idea that we have this log-linear regularity"
+ },
+ {
+  "start": 4616.49,
+  "end": 4618.8,
+  "text": "between the amount of resources we put in"
+ },
+ {
+  "start": 4618.8,
+  "end": 4620.14,
+  "text": "and the performance we get out."
+ },
+ {
+  "start": 4620.14,
+  "end": 4622.84,
+  "text": "And it extends to a wide variety of things, model parameters,"
+ },
+ {
+  "start": 4622.84,
+  "end": 4625.88,
+  "text": "compute, sparsity level of your MoE."
+ },
+ {
+  "start": 4625.88,
+  "end": 4627.8,
+  "text": "And that lets you do a lot of the things"
+ },
+ {
+  "start": 4627.8,
+  "end": 4630.74,
+  "text": "that I was talking about earlier, as arbitrary choices,"
+ },
+ {
+  "start": 4630.74,
+  "end": 4634.4,
+  "text": "but do it in a much more evidence-driven way, hopefully."
+ },
+ {
+  "start": 4634.4,
+  "end": 4637.64,
+  "text": "And so this allows us to have engineering at scale"
+ },
+ {
+  "start": 4637.64,
+  "end": 4642.34,
+  "text": "without explicitly relying on doing big model training runs."
+ },
+ {
+  "start": 4642.34,
+  "end": 4644.65,
+  "text": "And hopefully, you remember, I think all"
+ },
+ {
+  "start": 4644.65,
+  "end": 4645.9,
+  "text": "the different components here."
+ },
+ {
+  "start": 4645.9,
+  "end": 4648.1,
+  "text": "Data scaling is this very natural object,"
+ },
+ {
+  "start": 4648.1,
+  "end": 4649.92,
+  "text": "just the exponent is a little bit strange."
+ },
+ {
+  "start": 4649.92,
+  "end": 4652.44,
+  "text": "Model scaling allows you to do all these cool engineering"
+ },
+ {
+  "start": 4652.44,
+  "end": 4653.02,
+  "text": "things."
+ },
+ {
+  "start": 4653.02,
+  "end": 4655.68,
+  "text": "And then finally, scaling is this very cool,"
+ },
+ {
+  "start": 4655.68,
+  "end": 4657.96,
+  "text": "robust predictor, let's call it, for how"
+ },
+ {
+  "start": 4657.96,
+  "end": 4661.16,
+  "text": "to try to do engineering at a large scale."
+ },
+ {
+  "start": 4661.16,
+  "end": 4661.78,
+  "text": "And thanks."
+ },
+ {
+  "start": 4661.78,
+  "end": 4664.18,
+  "text": "The next lecture, I think, will be Percy on inference."
+ },
+ {
+  "start": 4664.18,
+  "end": 4667.76,
+  "text": "But after that, we will return to more advanced niche scaling"
+ },
+ {
+  "start": 4667.76,
+  "end": 4670.46,
+  "text": "topics."
+ },
+ {
+  "start": 4670.46,
+  "end": 4673.51,
+  "text": "[APPLAUSE]"
+ }
+]

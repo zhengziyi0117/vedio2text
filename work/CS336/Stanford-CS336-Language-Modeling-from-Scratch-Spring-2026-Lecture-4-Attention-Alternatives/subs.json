@@ -1,0 +1,9557 @@
+[
+ {
+  "start": 5.2,
+  "end": 6.26,
+  "text": "All right."
+ },
+ {
+  "start": 6.26,
+  "end": 7.92,
+  "text": "We'll get started."
+ },
+ {
+  "start": 7.92,
+  "end": 11.52,
+  "text": "Sorry, the lecture slides for this lecture was not"
+ },
+ {
+  "start": 11.52,
+  "end": 14.7,
+  "text": "up earlier today, but it is now up."
+ },
+ {
+  "start": 14.7,
+  "end": 17.54,
+  "text": "So if you want to have that at your fingertips to look at,"
+ },
+ {
+  "start": 17.54,
+  "end": 21.84,
+  "text": "you should be able to get it through the course website."
+ },
+ {
+  "start": 21.84,
+  "end": 25.2,
+  "text": "But if not, it's definitely up there on the GitHub."
+ },
+ {
+  "start": 25.2,
+  "end": 28.44,
+  "text": "Today, we're going to talk about what I think of as more"
+ },
+ {
+  "start": 28.44,
+  "end": 31.32,
+  "text": "advanced architecture ideas."
+ },
+ {
+  "start": 31.32,
+  "end": 35.08,
+  "text": "So last lecture was really about the basic transformer"
+ },
+ {
+  "start": 35.08,
+  "end": 38.96,
+  "text": "and how we might tweak different parts of the basic transformer"
+ },
+ {
+  "start": 38.96,
+  "end": 41.8,
+  "text": "to get to a modern language model."
+ },
+ {
+  "start": 41.8,
+  "end": 43.88,
+  "text": "Now, I want to talk about things that I think"
+ },
+ {
+  "start": 43.88,
+  "end": 46.4,
+  "text": "are much more advanced, much more complex"
+ },
+ {
+  "start": 46.4,
+  "end": 49.48,
+  "text": "developments on top of the usual transformer."
+ },
+ {
+  "start": 49.48,
+  "end": 51.9,
+  "text": "And the two things I'll talk about today--"
+ },
+ {
+  "start": 51.9,
+  "end": 55.76,
+  "text": "the first one is attention alternatives, ways"
+ },
+ {
+  "start": 55.76,
+  "end": 60.14,
+  "text": "of going to much longer contexts using architectural changes"
+ },
+ {
+  "start": 60.14,
+  "end": 62.74,
+  "text": "that, for the most part, generally allow for linear time"
+ },
+ {
+  "start": 62.74,
+  "end": 66.55799999999999,
+  "text": "dependence on the length of the sequence rather than quadratic."
+ },
+ {
+  "start": 66.55799999999999,
+  "end": 68.1,
+  "text": "The second thing I want to talk about"
+ },
+ {
+  "start": 68.1,
+  "end": 70.3,
+  "text": "is the idea of mixture of experts."
+ },
+ {
+  "start": 70.3,
+  "end": 73.76,
+  "text": "So the first part is modifying the attention block."
+ },
+ {
+  "start": 73.76,
+  "end": 76.9,
+  "text": "The second part is going to be modifying the MLP part."
+ },
+ {
+  "start": 76.9,
+  "end": 79.9,
+  "text": "A mixture of experts are going to give us significantly better"
+ },
+ {
+  "start": 79.9,
+  "end": 82.24,
+  "text": "utilization in terms of our hardware,"
+ },
+ {
+  "start": 82.24,
+  "end": 84.58,
+  "text": "in terms of having more parameters"
+ },
+ {
+  "start": 84.58,
+  "end": 87.76,
+  "text": "relative to the compute that we have to spend on these models."
+ },
+ {
+  "start": 87.76,
+  "end": 92.86,
+  "text": "So those are the two parts and the two ideas for today."
+ },
+ {
+  "start": 92.86,
+  "end": 95.08,
+  "text": "So I'm going to start with attention."
+ },
+ {
+  "start": 95.08,
+  "end": 97.1,
+  "text": "And I'm going to set the stage."
+ },
+ {
+  "start": 97.1,
+  "end": 100.61699999999999,
+  "text": "It's clear now that people want longer context length."
+ },
+ {
+  "start": 100.61699999999999,
+  "end": 102.7,
+  "text": "You want to pack a lot of things into the context,"
+ },
+ {
+  "start": 102.7,
+  "end": 104.44,
+  "text": "so that your model has more knowledge."
+ },
+ {
+  "start": 104.44,
+  "end": 107.1,
+  "text": "Maybe it's an agent and operates on lots of things."
+ },
+ {
+  "start": 107.1,
+  "end": 109.7,
+  "text": "If you look at different models over time"
+ },
+ {
+  "start": 109.7,
+  "end": 113.6,
+  "text": "on the x-axis over here, and the context window size,"
+ },
+ {
+  "start": 113.6,
+  "end": 116.78,
+  "text": "this is in log scale, there's really a clear rush"
+ },
+ {
+  "start": 116.78,
+  "end": 119.13,
+  "text": "by a lot of the top LLM vendors that"
+ },
+ {
+  "start": 119.13,
+  "end": 120.89,
+  "text": "provide larger and larger context"
+ },
+ {
+  "start": 120.89,
+  "end": 125.53,
+  "text": "sizes to support these kinds of more complex workloads."
+ },
+ {
+  "start": 125.53,
+  "end": 128.05,
+  "text": "Now, how do we control these costs?"
+ },
+ {
+  "start": 130.69,
+  "end": 131.61,
+  "text": "Not yet."
+ },
+ {
+  "start": 131.61,
+  "end": 133.89,
+  "text": "The right plot also shows the ratio"
+ },
+ {
+  "start": 133.89,
+  "end": 136.25,
+  "text": "between how much compute cost is spent"
+ },
+ {
+  "start": 136.25,
+  "end": 139.05,
+  "text": "in the feed forward part of the network versus the attention"
+ },
+ {
+  "start": 139.05,
+  "end": 141.97,
+  "text": "part of the network as you increase the sequence length."
+ },
+ {
+  "start": 141.97,
+  "end": 143.85,
+  "text": "And you see that the feed forward,"
+ },
+ {
+  "start": 143.85,
+  "end": 147.34199999999998,
+  "text": "fairly large at the start, but grows linearly attention."
+ },
+ {
+  "start": 147.34199999999998,
+  "end": 149.05,
+  "text": "It's an all to all connection between all"
+ },
+ {
+  "start": 149.05,
+  "end": 152.29,
+  "text": "the different positions, quadratic, so quickly outpaces"
+ },
+ {
+  "start": 152.29,
+  "end": 155.23,
+  "text": "feed forward as the sequence length grows."
+ },
+ {
+  "start": 155.23,
+  "end": 158.01,
+  "text": "So it used to be that for big models,"
+ },
+ {
+  "start": 158.01,
+  "end": 160.57,
+  "text": "that smaller sequence lengths, feed forward"
+ },
+ {
+  "start": 160.57,
+  "end": 161.95,
+  "text": "was the dominant cost."
+ },
+ {
+  "start": 161.95,
+  "end": 163.75,
+  "text": "As you go to these longer sequence lengths,"
+ },
+ {
+  "start": 163.75,
+  "end": 169.236,
+  "text": "attention increasingly becomes more and more of a problem."
+ },
+ {
+  "start": 169.236,
+  "end": 173.235,
+  "text": "Now, what's the basic toolkit by which we can control these?"
+ },
+ {
+  "start": 173.235,
+  "end": 174.61,
+  "text": "We've already talked about these."
+ },
+ {
+  "start": 174.61,
+  "end": 176.23,
+  "text": "Well, we talked about one of these,"
+ },
+ {
+  "start": 176.23,
+  "end": 179.35,
+  "text": "and we will talk about another one of these."
+ },
+ {
+  "start": 179.35,
+  "end": 183.59,
+  "text": "We can basically take things like local attention"
+ },
+ {
+  "start": 183.59,
+  "end": 186.75,
+  "text": "and combine them in different kinds of hybrid ways"
+ },
+ {
+  "start": 186.75,
+  "end": 189.77,
+  "text": "to control the very high cost of global attention."
+ },
+ {
+  "start": 189.77,
+  "end": 192.27,
+  "text": "If you're only doing global attention once"
+ },
+ {
+  "start": 192.27,
+  "end": 194.47,
+  "text": "every eight layers, and all the other ones"
+ },
+ {
+  "start": 194.47,
+  "end": 198.75,
+  "text": "are these very local attentions, you've ry much controlled the cost."
+ },
+ {
+  "start": 198.75,
+  "end": 201.63,
+  "text": "The other thing you can do is systems engineering."
+ },
+ {
+  "start": 201.63,
+  "end": 206.15,
+  "text": "I think a very underappreciated fact is, constant factors"
+ },
+ {
+  "start": 206.15,
+  "end": 207.27,
+  "text": "really, really matter."
+ },
+ {
+  "start": 207.27,
+  "end": 209.31,
+  "text": "Part of the theme of this course is,"
+ },
+ {
+  "start": 209.31,
+  "end": 211.63,
+  "text": "you need to pay attention to the details."
+ },
+ {
+  "start": 211.63,
+  "end": 213.79,
+  "text": "And it's very easy for people trained"
+ },
+ {
+  "start": 213.79,
+  "end": 217.11,
+  "text": "in a more classical theory-oriented computer science"
+ },
+ {
+  "start": 217.11,
+  "end": 220.35,
+  "text": "tradition to be like, yes, it's the big O that matters,"
+ },
+ {
+  "start": 220.35,
+  "end": 221.84,
+  "text": "linear or quadratic."
+ },
+ {
+  "start": 221.84,
+  "end": 223.59,
+  "text": "But I think one of the biggest things that"
+ },
+ {
+  "start": 223.59,
+  "end": 227.59,
+  "text": "has happened to context and attention cost"
+ },
+ {
+  "start": 227.59,
+  "end": 228.91,
+  "text": "is flash attention."
+ },
+ {
+  "start": 228.91,
+  "end": 231.67000000000002,
+  "text": "Flash attention, we'll talk about this in a lot more detail"
+ },
+ {
+  "start": 231.67000000000002,
+  "end": 233.72,
+  "text": "once we get to the systems lecture and as you do,"
+ },
+ {
+  "start": 233.72,
+  "end": 235.14,
+  "text": "the systems assignments."
+ },
+ {
+  "start": 235.14,
+  "end": 238.1,
+  "text": "But flash attention is really just a very clever way"
+ },
+ {
+  "start": 238.1,
+  "end": 241.5,
+  "text": "of rearranging the attention operation"
+ },
+ {
+  "start": 241.5,
+  "end": 243.62,
+  "text": "into a much more systems-friendly way,"
+ },
+ {
+  "start": 243.62,
+  "end": 247.54,
+  "text": "to minimize memory transfer overhead."
+ },
+ {
+  "start": 247.54,
+  "end": 250.62,
+  "text": "And by doing so, you can get truly, truly dramatic"
+ },
+ {
+  "start": 250.62,
+  "end": 253.68,
+  "text": "improvements in the performance of your attention."
+ },
+ {
+  "start": 253.68,
+  "end": 256.42,
+  "text": "So base PyTorch is this blue."
+ },
+ {
+  "start": 256.42,
+  "end": 258.92,
+  "text": "You can just look at some of the shorter sequence lengths."
+ },
+ {
+  "start": 258.92,
+  "end": 264.277,
+  "text": "You're doing 30 to 40 teraflops per second."
+ },
+ {
+  "start": 264.277,
+  "end": 265.86,
+  "text": "And then you do flash attention, which"
+ },
+ {
+  "start": 265.86,
+  "end": 268.142,
+  "text": "is really a constant factor systems improvement."
+ },
+ {
+  "start": 268.142,
+  "end": 270.1,
+  "text": "And you're getting these big, big improvements,"
+ },
+ {
+  "start": 270.1,
+  "end": 271.96,
+  "text": "factors of 2 improvements."
+ },
+ {
+  "start": 271.96,
+  "end": 274.72,
+  "text": "And at some sizes, you can't even fit this in memory anymore."
+ },
+ {
+  "start": 274.72,
+  "end": 276.47,
+  "text": "But with flash attention, where you're not"
+ },
+ {
+  "start": 276.47,
+  "end": 278.72,
+  "text": "materializing these big attention matrices anymore,"
+ },
+ {
+  "start": 278.72,
+  "end": 282.0,
+  "text": "you can continue to run these, albeit somewhat slowly."
+ },
+ {
+  "start": 282.0,
+  "end": 285.54,
+  "text": "This doesn't fix any of the quadratic cost issues,"
+ },
+ {
+  "start": 285.54,
+  "end": 288.54,
+  "text": "but constant factors are very, very powerful."
+ },
+ {
+  "start": 288.54,
+  "end": 293.88,
+  "text": "Now, that said, if we're going to 5, 10 million tokens,"
+ },
+ {
+  "start": 293.88,
+  "end": 295.54,
+  "text": "these tricks might not be enough."
+ },
+ {
+  "start": 295.54,
+  "end": 297.88,
+  "text": "We want much more radical, much larger"
+ },
+ {
+  "start": 297.88,
+  "end": 301.36,
+  "text": "gains in our ability to handle long context."
+ },
+ {
+  "start": 301.36,
+  "end": 302.96,
+  "text": "So this leads us to the question,"
+ },
+ {
+  "start": 302.96,
+  "end": 306.68,
+  "text": "is there ways for us to have linear time or linear dependence"
+ },
+ {
+  "start": 306.68,
+  "end": 308.36,
+  "text": "on the length of the sequence?"
+ },
+ {
+  "start": 308.36,
+  "end": 312.88,
+  "text": "And what would those kinds of things look like?"
+ },
+ {
+  "start": 312.88,
+  "end": 315.64,
+  "text": "There you go."
+ },
+ {
+  "start": 315.64,
+  "end": 318.28,
+  "text": "It turns out that a lot of people"
+ },
+ {
+  "start": 318.28,
+  "end": 321.28,
+  "text": "have tried a lot of different things over the years."
+ },
+ {
+  "start": 321.28,
+  "end": 323.88,
+  "text": "And I think there are a few false starts."
+ },
+ {
+  "start": 323.88,
+  "end": 327.92,
+  "text": "But in the recent years, I would say, the last two-ish years,"
+ },
+ {
+  "start": 327.92,
+  "end": 331.24,
+  "text": "there's been an emergence of a set of recipes"
+ },
+ {
+  "start": 331.24,
+  "end": 333.92,
+  "text": "that are fairly effective in linear time attention, that"
+ },
+ {
+  "start": 333.92,
+  "end": 336.08,
+  "text": "are now battle-tested at scale."
+ },
+ {
+  "start": 336.08,
+  "end": 339.36,
+  "text": "And that's why this is finally the first year when"
+ },
+ {
+  "start": 339.36,
+  "end": 341.28,
+  "text": "I'm talking about linear time attention,"
+ },
+ {
+  "start": 341.28,
+  "end": 343.72,
+  "text": "because it's clear now that these things really"
+ },
+ {
+  "start": 343.72,
+  "end": 347.26,
+  "text": "work at scale, and in production, and so on."
+ },
+ {
+  "start": 347.26,
+  "end": 351.27,
+  "text": "To really explain all of these different methods that"
+ },
+ {
+  "start": 351.27,
+  "end": 353.51,
+  "text": "work well, I think you need to really only understand"
+ },
+ {
+  "start": 353.51,
+  "end": 355.59000000000003,
+  "text": "one core idea to start with, and then we're"
+ },
+ {
+  "start": 355.59000000000003,
+  "end": 358.75,
+  "text": "going to elaborate and build upon that idea."
+ },
+ {
+  "start": 358.75,
+  "end": 361.99,
+  "text": "And that idea to start with is the associativity"
+ },
+ {
+  "start": 361.99,
+  "end": 363.05,
+  "text": "of multiplication."
+ },
+ {
+  "start": 363.05,
+  "end": 365.672,
+  "text": "So let's think about how attention works."
+ },
+ {
+  "start": 365.672,
+  "end": 367.63,
+  "text": "We can write it in this compact notation, where"
+ },
+ {
+  "start": 367.63,
+  "end": 371.95,
+  "text": "we say, the attention operation is going to be of Q, Ks, and Vs,"
+ },
+ {
+  "start": 371.95,
+  "end": 375.23,
+  "text": "with these matrix dimensions up here."
+ },
+ {
+  "start": 375.23,
+  "end": 376.93,
+  "text": "And I'm going to take my Qs and the Ks,"
+ },
+ {
+  "start": 376.93,
+  "end": 378.93,
+  "text": "and I'm going to have an all to all interaction."
+ },
+ {
+  "start": 378.93,
+  "end": 381.305,
+  "text": "All the n positions are going to interact with each other"
+ },
+ {
+  "start": 381.305,
+  "end": 382.81,
+  "text": "by matrix multiplication."
+ },
+ {
+  "start": 382.81,
+  "end": 385.33,
+  "text": "And then I'll normalize them through a softmax,"
+ },
+ {
+  "start": 385.33,
+  "end": 387.03,
+  "text": "this row over here."
+ },
+ {
+  "start": 387.03,
+  "end": 390.03,
+  "text": "And then I will multiply it with my values"
+ },
+ {
+  "start": 390.03,
+  "end": 392.45,
+  "text": "V to get the attention outputs."
+ },
+ {
+  "start": 392.45,
+  "end": 396.63,
+  "text": "This is a classic self-attention or whatever other attention"
+ },
+ {
+  "start": 396.63,
+  "end": 398.31,
+  "text": "operation."
+ },
+ {
+  "start": 398.31,
+  "end": 401.03,
+  "text": "Now, for the moment, let's forget"
+ },
+ {
+  "start": 401.03,
+  "end": 403.05,
+  "text": "that attention has a softmax."
+ },
+ {
+  "start": 403.05,
+  "end": 405.008,
+  "text": "And then I'm just going to drop the row."
+ },
+ {
+  "start": 405.008,
+  "end": 406.05,
+  "text": "Forget it for the moment."
+ },
+ {
+  "start": 406.05,
+  "end": 409.69,
+  "text": "Now, if we didn't have a row, maybe we"
+ },
+ {
+  "start": 409.69,
+  "end": 412.39,
+  "text": "can actually change the complexity of this operation."
+ },
+ {
+  "start": 412.39,
+  "end": 414.25,
+  "text": "So if you look at attention, it's"
+ },
+ {
+  "start": 414.25,
+  "end": 417.49,
+  "text": "n squared dk, because we're taking this QK transpose"
+ },
+ {
+  "start": 417.49,
+  "end": 418.81,
+  "text": "multiplication."
+ },
+ {
+  "start": 418.81,
+  "end": 421.93,
+  "text": "But if Rho was the identity, I can just move the parentheses"
+ },
+ {
+  "start": 421.93,
+  "end": 422.85,
+  "text": "around a little bit."
+ },
+ {
+  "start": 422.85,
+  "end": 425.69,
+  "text": "And I can say, all right, instead of QK transpose"
+ },
+ {
+  "start": 425.69,
+  "end": 429.63,
+  "text": "V, really, what I'm going to have is QK transpose V."
+ },
+ {
+  "start": 429.63,
+  "end": 432.81,
+  "text": "And if we do this reordering, well, we've"
+ },
+ {
+  "start": 432.81,
+  "end": 434.95,
+  "text": "changed which part is quadratic."
+ },
+ {
+  "start": 434.95,
+  "end": 437.29,
+  "text": "Instead of having the n squareds,"
+ },
+ {
+  "start": 437.29,
+  "end": 439.942,
+  "text": "which were pretty terrible, because these n's are very big."
+ },
+ {
+  "start": 439.942,
+  "end": 440.65,
+  "text": "They're millions."
+ },
+ {
+  "start": 440.65,
+  "end": 442.53,
+  "text": "It's the context length."
+ },
+ {
+  "start": 442.53,
+  "end": 445.79,
+  "text": "Instead, I can have dependence on ndvdk."
+ },
+ {
+  "start": 445.79,
+  "end": 448.37,
+  "text": "So now, we're multiplying essentially,"
+ },
+ {
+  "start": 448.37,
+  "end": 450.07,
+  "text": "the key and the value dimensions."
+ },
+ {
+  "start": 450.07,
+  "end": 451.87,
+  "text": "These could be big, in principle."
+ },
+ {
+  "start": 451.87,
+  "end": 453.13,
+  "text": "I can have a big model."
+ },
+ {
+  "start": 453.13,
+  "end": 455.61,
+  "text": "But these are usually on the order of thousands,"
+ },
+ {
+  "start": 455.61,
+  "end": 456.75,
+  "text": "tens of thousands."
+ },
+ {
+  "start": 456.75,
+  "end": 463.13,
+  "text": "No one has a million coordinates in their hidden dimensions."
+ },
+ {
+  "start": 463.13,
+  "end": 467.88,
+  "text": "And so this is a much more favorable term"
+ },
+ {
+  "start": 467.88,
+  "end": 470.68,
+  "text": "to be dependent on compared to this n squared term"
+ },
+ {
+  "start": 470.68,
+  "end": 473.65999999999997,
+  "text": "when we were doing this original attention operation."
+ },
+ {
+  "start": 473.65999999999997,
+  "end": 476.44,
+  "text": "So this is the first thing that you should know,"
+ },
+ {
+  "start": 476.44,
+  "end": 479.12,
+  "text": "which is like, associativity of multiplication"
+ },
+ {
+  "start": 479.12,
+  "end": 484.4,
+  "text": "allows us to change the dependence on the sequence length."
+ },
+ {
+  "start": 484.4,
+  "end": 489.16,
+  "text": "Now, the other thing that we can do now"
+ },
+ {
+  "start": 489.16,
+  "end": 491.84,
+  "text": "is, if we consider this reordering,"
+ },
+ {
+  "start": 491.84,
+  "end": 496.98,
+  "text": "this QK transpose V, something that's even nicer about this,"
+ },
+ {
+  "start": 496.98,
+  "end": 500.08,
+  "text": "and I think this has led to really, a lot of the research"
+ },
+ {
+  "start": 500.08,
+  "end": 503.0,
+  "text": "that I'm going to mention in the next couple of slides,"
+ },
+ {
+  "start": 503.0,
+  "end": 505.4,
+  "text": "is that this matrix multiply on the right,"
+ },
+ {
+  "start": 505.4,
+  "end": 508.84,
+  "text": "in the self-attention case, looks just like an RNN."
+ },
+ {
+  "start": 508.84,
+  "end": 511.98,
+  "text": "Instead of writing it in this dense form up here,"
+ },
+ {
+  "start": 511.98,
+  "end": 513.24,
+  "text": "I can write it incrementally."
+ },
+ {
+  "start": 513.24,
+  "end": 516.0,
+  "text": "As I sweep left to right on my context,"
+ },
+ {
+  "start": 516.0,
+  "end": 519.88,
+  "text": "I can multiply my Ks and Vs, and I can update this thing"
+ },
+ {
+  "start": 519.88,
+  "end": 523.539,
+  "text": "S, which is a state, and I can add it to my previous state."
+ },
+ {
+  "start": 523.539,
+  "end": 527.34,
+  "text": "This is incrementally multiplying and accumulating my KVs."
+ },
+ {
+  "start": 527.34,
+  "end": 530.84,
+  "text": "And I can multiply it with my Q to get my output."
+ },
+ {
+  "start": 530.84,
+  "end": 535.18,
+  "text": "And this dense operation up here and this RNN form"
+ },
+ {
+  "start": 535.18,
+  "end": 536.66,
+  "text": "are equivalent."
+ },
+ {
+  "start": 536.66,
+  "end": 538.28,
+  "text": "And so what have we done?"
+ },
+ {
+  "start": 538.28,
+  "end": 542.24,
+  "text": "Well, we've started from linear attention on the top left."
+ },
+ {
+  "start": 542.24,
+  "end": 544.1,
+  "text": "And then we've somehow gotten something that"
+ },
+ {
+  "start": 544.1,
+  "end": 546.22,
+  "text": "looks very much like an RNN."
+ },
+ {
+  "start": 546.22,
+  "end": 547.72,
+  "text": "And what's nice about RNNs?"
+ },
+ {
+  "start": 547.72,
+  "end": 550.64,
+  "text": "Well, RNNs are quite nice, because at inference time,"
+ },
+ {
+  "start": 550.64,
+  "end": 554.3,
+  "text": "I have this S, which is my state, it's fixed in size."
+ },
+ {
+  "start": 554.3,
+  "end": 556.28,
+  "text": "And I'm just carrying that forward and forward."
+ },
+ {
+  "start": 556.28,
+  "end": 559.58,
+  "text": "So RNNs are very nice for inference reasons."
+ },
+ {
+  "start": 559.58,
+  "end": 562.64,
+  "text": "They are not nice for training reasons."
+ },
+ {
+  "start": 562.64,
+  "end": 564.46,
+  "text": "But nice thing about linear attention"
+ },
+ {
+  "start": 564.46,
+  "end": 565.94,
+  "text": "is, you can use them in either way."
+ },
+ {
+  "start": 565.94,
+  "end": 567.38,
+  "text": "You can have it in this dense form, which"
+ },
+ {
+  "start": 567.38,
+  "end": 568.505,
+  "text": "will be great for training."
+ },
+ {
+  "start": 568.505,
+  "end": 569.54,
+  "text": "Its parallel."
+ },
+ {
+  "start": 569.54,
+  "end": 571.86,
+  "text": "Or you can have it in this serial form,"
+ },
+ {
+  "start": 571.86,
+  "end": 574.34,
+  "text": "like an RNN, which is great for inference."
+ },
+ {
+  "start": 574.34,
+  "end": 576.78,
+  "text": "So you can get the best of both worlds."
+ },
+ {
+  "start": 576.78,
+  "end": 579.977,
+  "text": "Now, at least in terms of dependence of all these objects,"
+ },
+ {
+  "start": 579.977,
+  "end": 580.56,
+  "text": "this is great."
+ },
+ {
+  "start": 580.56,
+  "end": 581.86,
+  "text": "This is lovely."
+ },
+ {
+  "start": 581.86,
+  "end": 586.6,
+  "text": "Unfortunately, this is linear, which is not very good."
+ },
+ {
+  "start": 586.6,
+  "end": 589.585,
+  "text": "This is really the starting point of our discussion."
+ },
+ {
+  "start": 589.585,
+  "end": 590.46,
+  "text": "Any questions so far?"
+ },
+ {
+  "start": 590.46,
+  "end": 591.74,
+  "text": "This is really the basics."
+ },
+ {
+  "start": 594.71,
+  "end": 600.68,
+  "text": "One cool thing is, there have been people that have basically"
+ },
+ {
+  "start": 600.68,
+  "end": 605.48,
+  "text": "used this linear attention as part of their attention"
+ },
+ {
+  "start": 605.48,
+  "end": 607.0,
+  "text": "mechanism."
+ },
+ {
+  "start": 607.0,
+  "end": 610.92,
+  "text": "So Minimax M1, which is a fairly large scale, fairly"
+ },
+ {
+  "start": 610.92,
+  "end": 616.36,
+  "text": "high-performance Chinese open model, uses a 7 to 1"
+ },
+ {
+  "start": 616.36,
+  "end": 619.76,
+  "text": "hybrid, so seven linear attention layers plus one"
+ },
+ {
+  "start": 619.76,
+  "end": 622.8,
+  "text": "full softmax attention."
+ },
+ {
+  "start": 622.8,
+  "end": 624.38,
+  "text": "Performance, generally strong."
+ },
+ {
+  "start": 624.38,
+  "end": 627.28,
+  "text": "You can compare it to a number of strong models"
+ },
+ {
+  "start": 627.28,
+  "end": 631.4,
+  "text": "like OpenAI's O3 or DeepSeek-R1, fairly competitive."
+ },
+ {
+  "start": 631.4,
+  "end": 633.58,
+  "text": "And then since it's linear attention,"
+ },
+ {
+  "start": 633.58,
+  "end": 636.2,
+  "text": "most of the dependence on context length is linear."
+ },
+ {
+  "start": 636.2,
+  "end": 638.86,
+  "text": "It's not fully linear, because you've got these softmaxes,"
+ },
+ {
+  "start": 638.86,
+  "end": 642.79,
+  "text": "but the dependence is much, much milder."
+ },
+ {
+  "start": 642.79,
+  "end": 646.39,
+  "text": "So this is one example, where people"
+ },
+ {
+  "start": 646.39,
+  "end": 648.83,
+  "text": "have shown that even this basic linear attention, which"
+ },
+ {
+  "start": 648.83,
+  "end": 651.59,
+  "text": "is very, very simple to understand,"
+ },
+ {
+  "start": 651.59,
+  "end": 654.91,
+  "text": "can be used fairly effectively at scale, as long as you've"
+ },
+ {
+  "start": 654.91,
+  "end": 659.55,
+  "text": "got some full quadratic connections involved."
+ },
+ {
+  "start": 659.55,
+  "end": 663.55,
+  "text": "No one has, thus far, really proven out fully linear time"
+ },
+ {
+  "start": 663.55,
+  "end": 665.053,
+  "text": "attention mechanisms at scale."
+ },
+ {
+  "start": 665.053,
+  "end": 667.47,
+  "text": "Everything that I'm going to talk about in the next couple"
+ },
+ {
+  "start": 667.47,
+  "end": 668.77,
+  "text": "of slides is a hybrid."
+ },
+ {
+  "start": 671.67,
+  "end": 673.85,
+  "text": "So now, we've done linear attention."
+ },
+ {
+  "start": 673.85,
+  "end": 675.43,
+  "text": "But you might say, linear attention"
+ },
+ {
+  "start": 675.43,
+  "end": 677.53,
+  "text": "is too naive and simple for me."
+ },
+ {
+  "start": 677.53,
+  "end": 678.65,
+  "text": "This is not what I want."
+ },
+ {
+  "start": 678.65,
+  "end": 683.19,
+  "text": "I want some more serious complex neural network stuff"
+ },
+ {
+  "start": 683.19,
+  "end": 684.13,
+  "text": "to be happening."
+ },
+ {
+  "start": 684.13,
+  "end": 687.75,
+  "text": "Well, what you can now do is--"
+ },
+ {
+  "start": 687.75,
+  "end": 691.63,
+  "text": "oh, sorry, I went a little too far, look"
+ },
+ {
+  "start": 691.63,
+  "end": 694.25,
+  "text": "at the RNN form of linear attention."
+ },
+ {
+  "start": 694.25,
+  "end": 696.67,
+  "text": "So I've put the linear attention equation right here,"
+ },
+ {
+  "start": 696.67,
+  "end": 699.65,
+  "text": "just so you don't have to keep going back and forth."
+ },
+ {
+  "start": 699.65,
+  "end": 703.65,
+  "text": "And we can add a small elaboration to linear attention"
+ },
+ {
+  "start": 703.65,
+  "end": 706.77,
+  "text": "in order to get more expressive updates."
+ },
+ {
+  "start": 706.77,
+  "end": 709.69,
+  "text": "And this is how you end up getting Mamba-2."
+ },
+ {
+  "start": 709.69,
+  "end": 712.59,
+  "text": "Some of you may have heard of Mamba, Mamba-2, Mamba-3 now,"
+ },
+ {
+  "start": 712.59,
+  "end": 713.77,
+  "text": "I think."
+ },
+ {
+  "start": 713.77,
+  "end": 716.73,
+  "text": "These are a family of state space models"
+ },
+ {
+  "start": 716.73,
+  "end": 720.33,
+  "text": "by Albert Gu, and Tri Dao, and friends."
+ },
+ {
+  "start": 720.33,
+  "end": 724.41,
+  "text": "And they're derived, originally, from this state space"
+ },
+ {
+  "start": 724.41,
+  "end": 725.63,
+  "text": "theory and view."
+ },
+ {
+  "start": 725.63,
+  "end": 729.67,
+  "text": "But actually, if you look at the mechanics of what is being done,"
+ },
+ {
+  "start": 729.67,
+  "end": 732.49,
+  "text": "you can actually see it as a very simple elaboration"
+ },
+ {
+  "start": 732.49,
+  "end": 734.27,
+  "text": "of the linear attention mechanism."
+ },
+ {
+  "start": 734.27,
+  "end": 736.21,
+  "text": "And so the idea is the following."
+ },
+ {
+  "start": 736.21,
+  "end": 738.33,
+  "text": "So we start with linear attention."
+ },
+ {
+  "start": 738.33,
+  "end": 740.29,
+  "text": "And you might say, really, the main problem"
+ },
+ {
+  "start": 740.29,
+  "end": 742.57,
+  "text": "with linear attention is that I'm always"
+ },
+ {
+  "start": 742.57,
+  "end": 744.11,
+  "text": "passing my state forward."
+ },
+ {
+  "start": 744.11,
+  "end": 747.25,
+  "text": "We know, from the olden days of LSTMs,"
+ },
+ {
+  "start": 747.25,
+  "end": 750.61,
+  "text": "that it's important to when to pass information forward"
+ },
+ {
+  "start": 750.61,
+  "end": 752.85,
+  "text": "and when to just not pass information forward,"
+ },
+ {
+  "start": 752.85,
+  "end": 754.89,
+  "text": "to forget things and send them to 0."
+ },
+ {
+  "start": 754.89,
+  "end": 757.98,
+  "text": "So what I'm going to do is, I'm going to be inspired by that."
+ },
+ {
+  "start": 757.98,
+  "end": 760.48,
+  "text": "And I'm going to add a gate, gamma of t."
+ },
+ {
+  "start": 760.48,
+  "end": 762.42,
+  "text": "Gamma of t is not stateful."
+ },
+ {
+  "start": 762.42,
+  "end": 765.6,
+  "text": "Gamma of t only depends on my current inputs x of t."
+ },
+ {
+  "start": 765.6,
+  "end": 770.8,
+  "text": "And gamma of t is going to modulate how much of my state"
+ },
+ {
+  "start": 770.8,
+  "end": 773.4,
+  "text": "I'm going to carry forward into the future."
+ },
+ {
+  "start": 773.4,
+  "end": 776.24,
+  "text": "Now, if you think about this, the state-dependent terms"
+ },
+ {
+  "start": 776.24,
+  "end": 778.04,
+  "text": "are all these Ss."
+ },
+ {
+  "start": 778.04,
+  "end": 780.44,
+  "text": "This gamma is not state-dependent at all,"
+ },
+ {
+  "start": 780.44,
+  "end": 783.5,
+  "text": "so this means that this is very simple to compute."
+ },
+ {
+  "start": 783.5,
+  "end": 785.42,
+  "text": "And there's still this duality."
+ },
+ {
+  "start": 785.42,
+  "end": 788.16,
+  "text": "You can compute this Mamba-2 term,"
+ },
+ {
+  "start": 788.16,
+  "end": 792.02,
+  "text": "either as a big dense matrix multiply or at inference time,"
+ },
+ {
+  "start": 792.02,
+  "end": 797.54,
+  "text": "use it in this recurrent form to get nice inference improvements."
+ },
+ {
+  "start": 797.54,
+  "end": 801.2,
+  "text": "So that's the core conceit or view of this idea"
+ },
+ {
+  "start": 801.2,
+  "end": 803.74,
+  "text": "that you can either use it in parallel or sequence,"
+ },
+ {
+  "start": 803.74,
+  "end": 805.56,
+  "text": "just like linear attention."
+ },
+ {
+  "start": 805.56,
+  "end": 808.62,
+  "text": "And people have now used this at scale."
+ },
+ {
+  "start": 808.62,
+  "end": 813.28,
+  "text": "So Nemotron-3, I mentioned briefly last lecture,"
+ },
+ {
+  "start": 813.28,
+  "end": 815.9,
+  "text": "uses this idea of combining Mamba-2"
+ },
+ {
+  "start": 815.9,
+  "end": 817.773,
+  "text": "as their lightweight layer."
+ },
+ {
+  "start": 817.773,
+  "end": 819.94,
+  "text": "And of course, you've got your big softmax attention"
+ },
+ {
+  "start": 819.94,
+  "end": 821.152,
+  "text": "every now and then."
+ },
+ {
+  "start": 821.152,
+  "end": 823.58,
+  "text": "And they alternate this in various ways"
+ },
+ {
+  "start": 823.58,
+  "end": 826.92,
+  "text": "to manage their inference cost, expressiveness trade-off."
+ },
+ {
+  "start": 829.7,
+  "end": 833.3,
+  "text": "Nemotron-3 achieves pretty good performance"
+ },
+ {
+  "start": 833.3,
+  "end": 838.54,
+  "text": "compared to Qwen3 thinking as compared to GPT OSS."
+ },
+ {
+  "start": 838.54,
+  "end": 840.98,
+  "text": "And because of all these Mamba-2 layers,"
+ },
+ {
+  "start": 840.98,
+  "end": 844.24,
+  "text": "has pretty good throughput at fairly large context length."
+ },
+ {
+  "start": 844.24,
+  "end": 846.78,
+  "text": "So you can see that it works."
+ },
+ {
+  "start": 846.78,
+  "end": 849.24,
+  "text": "At least, these are small frontier models,"
+ },
+ {
+  "start": 849.24,
+  "end": 852.34,
+  "text": "not really big frontier models, but small frontier"
+ },
+ {
+  "start": 852.34,
+  "end": 855.9,
+  "text": "models that are open source."
+ },
+ {
+  "start": 855.9,
+  "end": 857.12,
+  "text": "Cool."
+ },
+ {
+  "start": 857.12,
+  "end": 861.5,
+  "text": "So now, we've built on this gating idea, which is cool."
+ },
+ {
+  "start": 861.5,
+  "end": 864.74,
+  "text": "You might say, though, can we just keep"
+ },
+ {
+  "start": 864.74,
+  "end": 868.02,
+  "text": "pushing this idea further, and taking this recurrence,"
+ },
+ {
+  "start": 868.02,
+  "end": 871.86,
+  "text": "and making it increasingly more complex?"
+ },
+ {
+  "start": 871.86,
+  "end": 875.09,
+  "text": "And the rule of thumb, in some sense, for what you"
+ },
+ {
+  "start": 875.09,
+  "end": 878.37,
+  "text": "can do with your operations here is, as long"
+ },
+ {
+  "start": 878.37,
+  "end": 881.23,
+  "text": "as you're getting the various terms in your RNN,"
+ },
+ {
+  "start": 881.23,
+  "end": 884.31,
+  "text": "so to speak, with only input-dependent terms,"
+ },
+ {
+  "start": 884.31,
+  "end": 886.73,
+  "text": "so no state dependence, then you will still"
+ },
+ {
+  "start": 886.73,
+  "end": 890.87,
+  "text": "have this fairly nice duality between parallel operations,"
+ },
+ {
+  "start": 890.87,
+  "end": 894.69,
+  "text": "which you can use for training, and serial operations, which you"
+ },
+ {
+  "start": 894.69,
+  "end": 896.85,
+  "text": "are going to use for inference."
+ },
+ {
+  "start": 896.85,
+  "end": 902.17,
+  "text": "So gated delta net is probably among the most widely"
+ },
+ {
+  "start": 902.17,
+  "end": 905.19,
+  "text": "used, I would say, state space model now."
+ },
+ {
+  "start": 905.19,
+  "end": 908.33,
+  "text": "I think it's been tested in quite a few papers."
+ },
+ {
+  "start": 908.33,
+  "end": 912.37,
+  "text": "And there's a very nice large scale scale"
+ },
+ {
+  "start": 912.37,
+  "end": 916.59,
+  "text": "up in 3.5 for these models."
+ },
+ {
+  "start": 916.59,
+  "end": 920.81,
+  "text": "So let me talk you through what gated delta net is"
+ },
+ {
+  "start": 920.81,
+  "end": 922.97,
+  "text": "in comparison to Mamba-2."
+ },
+ {
+  "start": 922.97,
+  "end": 926.59,
+  "text": "So Mamba-2 is, as I have at the top here,"
+ },
+ {
+  "start": 926.59,
+  "end": 930.21,
+  "text": "we take the linear recurrence, this state update."
+ },
+ {
+  "start": 930.21,
+  "end": 932.89,
+  "text": "And what I'm going to do is I'm going to gate it with my gamma."
+ },
+ {
+  "start": 932.89,
+  "end": 934.29,
+  "text": "Oh, I forgot to explain this vt."
+ },
+ {
+  "start": 934.29,
+  "end": 934.79,
+  "text": "Sorry."
+ },
+ {
+  "start": 934.79,
+  "end": 936.79,
+  "text": "I apologize for that."
+ },
+ {
+  "start": 936.79,
+  "end": 938.21,
+  "text": "I added this for completeness."
+ },
+ {
+  "start": 938.21,
+  "end": 939.91,
+  "text": "Mamba-2 also has a modification, where"
+ },
+ {
+  "start": 939.91,
+  "end": 943.53,
+  "text": "they add what is basically a residual layer to the yt update."
+ },
+ {
+  "start": 943.53,
+  "end": 946.647,
+  "text": "It's not really core to the state update or their arguments"
+ },
+ {
+  "start": 946.647,
+  "end": 949.23,
+  "text": "for why this is a good idea, but I put it in for completeness,"
+ },
+ {
+  "start": 949.23,
+  "end": 953.49,
+  "text": "just to make sure I'm actually giving the true Mamba-2 updates"
+ },
+ {
+  "start": 953.49,
+  "end": 957.35,
+  "text": "rather than a more abridged version that only gets the core"
+ },
+ {
+  "start": 957.35,
+  "end": 959.79,
+  "text": "ideas across."
+ },
+ {
+  "start": 959.79,
+  "end": 961.21,
+  "text": "But you can ignore the vt for now."
+ },
+ {
+  "start": 961.21,
+  "end": 963.83,
+  "text": "This is really just like an architectural improvement that's"
+ },
+ {
+  "start": 963.83,
+  "end": 966.35,
+  "text": "not core to the state updates."
+ },
+ {
+  "start": 966.35,
+  "end": 970.27,
+  "text": "Gated delta net takes this idea in some sense and adds"
+ },
+ {
+  "start": 970.27,
+  "end": 971.73,
+  "text": "a second gate, beta t."
+ },
+ {
+  "start": 971.73,
+  "end": 974.11,
+  "text": "So what does beta t do?"
+ },
+ {
+  "start": 974.11,
+  "end": 979.19,
+  "text": "Beta t, I think of as a no input operation gate."
+ },
+ {
+  "start": 979.19,
+  "end": 981.95,
+  "text": "If beta t is 0, that basically means,"
+ },
+ {
+  "start": 981.95,
+  "end": 983.97,
+  "text": "don't take any of my current information,"
+ },
+ {
+  "start": 983.97,
+  "end": 986.33,
+  "text": "don't add it into my state."
+ },
+ {
+  "start": 986.33,
+  "end": 989.35,
+  "text": "And I think, most or all of you are probably"
+ },
+ {
+  "start": 989.35,
+  "end": 990.84,
+  "text": "familiar with LSTMs."
+ },
+ {
+  "start": 990.84,
+  "end": 993.84,
+  "text": "This is very reminiscent of the ideas in LSTM."
+ },
+ {
+  "start": 993.84,
+  "end": 997.22,
+  "text": "You've got gates that control whether to forget"
+ },
+ {
+  "start": 997.22,
+  "end": 999.96,
+  "text": "and whether to put in information from the current time step."
+ },
+ {
+  "start": 999.96,
+  "end": 1003.4,
+  "text": "So it operates in a very similar set of principles,"
+ },
+ {
+  "start": 1003.4,
+  "end": 1005.86,
+  "text": "although, of course, derived, I think, originally"
+ },
+ {
+  "start": 1005.86,
+  "end": 1007.66,
+  "text": "in a very different way."
+ },
+ {
+  "start": 1007.66,
+  "end": 1010.59,
+  "text": "Now, the other thing that's interesting about gated delta"
+ },
+ {
+  "start": 1010.59,
+  "end": 1012.78,
+  "text": "net, and this comes from the delta net rather than"
+ },
+ {
+  "start": 1012.78,
+  "end": 1016.305,
+  "text": "the gated delta net, is this update direction."
+ },
+ {
+  "start": 1016.305,
+  "end": 1017.68,
+  "text": "So instead of just gating things,"
+ },
+ {
+  "start": 1017.68,
+  "end": 1021.1,
+  "text": "you could have made this 1 minus beta t, for example."
+ },
+ {
+  "start": 1021.1,
+  "end": 1023.843,
+  "text": "What they do is, if you're going to do an update,"
+ },
+ {
+  "start": 1023.843,
+  "end": 1026.26,
+  "text": "where you're putting in this beta, what you're going to do"
+ },
+ {
+  "start": 1026.26,
+  "end": 1027.92,
+  "text": "is, you're going to try to project out,"
+ },
+ {
+  "start": 1027.92,
+  "end": 1029.72,
+  "text": "in some sense, my current key direction."
+ },
+ {
+  "start": 1029.72,
+  "end": 1031.66,
+  "text": "So the intuition here is, I'm going"
+ },
+ {
+  "start": 1031.66,
+  "end": 1035.5,
+  "text": "to be writing in information from my current key, k of t."
+ },
+ {
+  "start": 1035.5,
+  "end": 1037.619,
+  "text": "And when doing that, not only do I"
+ },
+ {
+  "start": 1037.619,
+  "end": 1039.78,
+  "text": "want to put in new information, I also"
+ },
+ {
+  "start": 1039.78,
+  "end": 1042.72,
+  "text": "want to erase any previous keys that have gone into it."
+ },
+ {
+  "start": 1042.72,
+  "end": 1044.8,
+  "text": "That's one way that you can think about updates--"
+ },
+ {
+  "start": 1044.8,
+  "end": 1047.98,
+  "text": "not just put stuff in, I want to clear out the current key that"
+ },
+ {
+  "start": 1047.98,
+  "end": 1048.993,
+  "text": "has gone in."
+ },
+ {
+  "start": 1048.993,
+  "end": 1051.16,
+  "text": "And that's why there's this blue term, this identity"
+ },
+ {
+  "start": 1051.16,
+  "end": 1054.28,
+  "text": "minus beta tktkt transpose, which is essentially"
+ },
+ {
+  "start": 1054.28,
+  "end": 1056.96,
+  "text": "acting as a projector that is projecting out"
+ },
+ {
+  "start": 1056.96,
+  "end": 1058.425,
+  "text": "things in the kt dimension."
+ },
+ {
+  "start": 1058.425,
+  "end": 1060.8,
+  "text": "That's not exactly right, because you're not doing things"
+ },
+ {
+  "start": 1060.8,
+  "end": 1066.44,
+  "text": "like unit normalization, but you get roughly the intuition here."
+ },
+ {
+  "start": 1066.44,
+  "end": 1068.407,
+  "text": "The other thing I'll mention before--"
+ },
+ {
+  "start": 1068.407,
+  "end": 1070.24,
+  "text": "oops, sorry, I have this blue box here, I'll"
+ },
+ {
+  "start": 1070.24,
+  "end": 1074.04,
+  "text": "move on with beta delta net, is that this"
+ },
+ {
+  "start": 1074.04,
+  "end": 1077.84,
+  "text": "has been reinvented, in some ways, in various settings."
+ },
+ {
+  "start": 1077.84,
+  "end": 1080.12,
+  "text": "This update, this projector appears"
+ },
+ {
+  "start": 1080.12,
+  "end": 1082.36,
+  "text": "if you try to solve certain kinds of meta"
+ },
+ {
+  "start": 1082.36,
+  "end": 1084.12,
+  "text": "learning least squares problems."
+ },
+ {
+  "start": 1084.12,
+  "end": 1089.04,
+  "text": "It's been reinvented in other forms in fast weight programming"
+ },
+ {
+  "start": 1089.04,
+  "end": 1091.24,
+  "text": "or test time training, where essentially,"
+ },
+ {
+  "start": 1091.24,
+  "end": 1093.72,
+  "text": "through very different design principles,"
+ },
+ {
+  "start": 1093.72,
+  "end": 1095.6,
+  "text": "researchers from those areas have basically"
+ },
+ {
+  "start": 1095.6,
+  "end": 1101.4,
+  "text": "ended up with the exact same kinds of solutions."
+ },
+ {
+  "start": 1101.4,
+  "end": 1105.4,
+  "text": "And the thing that I'll say here is, the Qwen 3.5 and the Qwen"
+ },
+ {
+  "start": 1105.4,
+  "end": 1108.19,
+  "text": "Next models that were predecessors to that,"
+ },
+ {
+  "start": 1108.19,
+  "end": 1111.39,
+  "text": "some of the best open source models available today."
+ },
+ {
+  "start": 1111.39,
+  "end": 1113.37,
+  "text": "And they use exactly this architecture."
+ },
+ {
+  "start": 1113.37,
+  "end": 1117.49,
+  "text": "They use a 3 to 1 gated delta net attention hybrid."
+ },
+ {
+  "start": 1117.49,
+  "end": 1120.55,
+  "text": "Very reasonable performance, strong inference characteristics"
+ },
+ {
+  "start": 1120.55,
+  "end": 1122.15,
+  "text": "that you can see on the right there."
+ },
+ {
+  "start": 1122.15,
+  "end": 1125.95,
+  "text": "Qwen Next has much higher decoding throughput"
+ },
+ {
+  "start": 1125.95,
+  "end": 1128.51,
+  "text": "relative to Qwen 3 as the context length goes up"
+ },
+ {
+  "start": 1128.51,
+  "end": 1130.27,
+  "text": "and up and up."
+ },
+ {
+  "start": 1130.27,
+  "end": 1132.51,
+  "text": "The middle panel is a comparison of performance"
+ },
+ {
+  "start": 1132.51,
+  "end": 1135.79,
+  "text": "versus various closed source models and previous generation"
+ },
+ {
+  "start": 1135.79,
+  "end": 1136.87,
+  "text": "models."
+ },
+ {
+  "start": 1136.87,
+  "end": 1139.27,
+  "text": "This hybrid architecture doesn't seem to hurt performance"
+ },
+ {
+  "start": 1139.27,
+  "end": 1140.17,
+  "text": "very much at all."
+ },
+ {
+  "start": 1143.03,
+  "end": 1146.75,
+  "text": "The last thing that I will say is,"
+ },
+ {
+  "start": 1146.75,
+  "end": 1151.23,
+  "text": "there hasn't been that many great controlled studies of how"
+ },
+ {
+  "start": 1151.23,
+  "end": 1153.31,
+  "text": "hybrid architectures perform."
+ },
+ {
+  "start": 1153.31,
+  "end": 1156.63,
+  "text": "There's maybe one by ByteDance Seed and UC Santa Cruz"
+ },
+ {
+  "start": 1156.63,
+  "end": 1159.597,
+  "text": "folks, where they compared things like Mamba-2,"
+ },
+ {
+  "start": 1159.597,
+  "end": 1161.43,
+  "text": "and gated delta net, and other architectures"
+ },
+ {
+  "start": 1161.43,
+  "end": 1166.13,
+  "text": "as a function of how many hybrid layers you have."
+ },
+ {
+  "start": 1166.13,
+  "end": 1168.07,
+  "text": "Some of the results, I would say, are messy,"
+ },
+ {
+  "start": 1168.07,
+  "end": 1169.65,
+  "text": "but the things that I would point at"
+ },
+ {
+  "start": 1169.65,
+  "end": 1172.37,
+  "text": "is, this dashed line over here on this right panel,"
+ },
+ {
+  "start": 1172.37,
+  "end": 1174.87,
+  "text": "this guy is full attention performance."
+ },
+ {
+  "start": 1174.87,
+  "end": 1176.63,
+  "text": "And as you go from left to right,"
+ },
+ {
+  "start": 1176.63,
+  "end": 1181.19,
+  "text": "this is increasing the number of non-full attention layers."
+ },
+ {
+  "start": 1181.19,
+  "end": 1183.622,
+  "text": "So the RNN layers, let's call them,"
+ },
+ {
+  "start": 1183.622,
+  "end": 1185.33,
+  "text": "you increase them as you go to the right,"
+ },
+ {
+  "start": 1185.33,
+  "end": 1187.81,
+  "text": "and you see performance degradation."
+ },
+ {
+  "start": 1187.81,
+  "end": 1189.718,
+  "text": "But maybe the thing to see here is"
+ },
+ {
+  "start": 1189.718,
+  "end": 1192.01,
+  "text": "that for some of the best architectures that you have--"
+ },
+ {
+  "start": 1192.01,
+  "end": 1194.05,
+  "text": "the yellow, the orange, the blue,"
+ },
+ {
+  "start": 1194.05,
+  "end": 1197.49,
+  "text": "these are like the gated delta nets and various other variants."
+ },
+ {
+  "start": 1197.49,
+  "end": 1201.07,
+  "text": "You see that at the low ratios, there's basically no hit."
+ },
+ {
+  "start": 1201.07,
+  "end": 1203.11,
+  "text": "And then once you pass a certain point,"
+ },
+ {
+  "start": 1203.11,
+  "end": 1206.93,
+  "text": "you start to see more significant degradation"
+ },
+ {
+  "start": 1206.93,
+  "end": 1209.93,
+  "text": "in long context performance, in this case."
+ },
+ {
+  "start": 1209.93,
+  "end": 1212.25,
+  "text": "Basically, at the end, as you go to full RNN,"
+ },
+ {
+  "start": 1212.25,
+  "end": 1214.81,
+  "text": "you have very noticeable performance degradation"
+ },
+ {
+  "start": 1214.81,
+  "end": 1216.41,
+  "text": "in all these architectures."
+ },
+ {
+  "start": 1216.41,
+  "end": 1218.85,
+  "text": "The same is true at various different other kinds"
+ },
+ {
+  "start": 1218.85,
+  "end": 1220.195,
+  "text": "of evaluations."
+ },
+ {
+  "start": 1220.195,
+  "end": 1221.57,
+  "text": "Some of these, I think, have been"
+ },
+ {
+  "start": 1221.57,
+  "end": 1224.59,
+  "text": "optimized by the architectures themselves."
+ },
+ {
+  "start": 1224.59,
+  "end": 1226.51,
+  "text": "Single key retrieval is a task that, I think,"
+ },
+ {
+  "start": 1226.51,
+  "end": 1228.87,
+  "text": "all of these long context architectures"
+ },
+ {
+  "start": 1228.87,
+  "end": 1230.49,
+  "text": "explicitly optimize for."
+ },
+ {
+  "start": 1230.49,
+  "end": 1231.93,
+  "text": "But if you look at QA performance,"
+ },
+ {
+  "start": 1231.93,
+  "end": 1234.15,
+  "text": "we see a same story that as we increase"
+ },
+ {
+  "start": 1234.15,
+  "end": 1236.71,
+  "text": "the amount of hybrid ratio, we see decreases"
+ },
+ {
+  "start": 1236.71,
+  "end": 1239.35,
+  "text": "in performance, fairly steadily and fairly clearly,"
+ },
+ {
+  "start": 1239.35,
+  "end": 1241.59,
+  "text": "ending up at this pure point."
+ },
+ {
+  "start": 1241.59,
+  "end": 1245.45,
+  "text": "Any questions for the linear time attention stuff?"
+ },
+ {
+  "start": 1245.45,
+  "end": 1246.99,
+  "text": "I have one last efficient attention"
+ },
+ {
+  "start": 1246.99,
+  "end": 1248.75,
+  "text": "thing to talk about, but yes."
+ },
+ {
+  "start": 1248.75,
+  "end": 1252.83,
+  "text": "[INAUDIBLE] look like the parallel form of attention"
+ },
+ {
+  "start": 1252.83,
+  "end": 1256.39,
+  "text": "versus the linear form."
+ },
+ {
+  "start": 1256.39,
+  "end": 1262.05,
+  "text": "[INAUDIBLE] Shouldn't they be mathematically equivalent?"
+ },
+ {
+  "start": 1262.05,
+  "end": 1262.55,
+  "text": "Yes."
+ },
+ {
+  "start": 1262.55,
+  "end": 1267.47,
+  "text": "Why do you see degradation in performance if you [INAUDIBLE]?"
+ },
+ {
+  "start": 1267.47,
+  "end": 1267.99,
+  "text": "Sorry."
+ },
+ {
+  "start": 1267.99,
+  "end": 1271.91,
+  "text": "By recurrent, I meant RNN in general,"
+ },
+ {
+  "start": 1271.91,
+  "end": 1273.65,
+  "text": "any recurrent formulation."
+ },
+ {
+  "start": 1273.65,
+  "end": 1275.95,
+  "text": "So gated delta net would be a recurrence."
+ },
+ {
+  "start": 1275.95,
+  "end": 1277.85,
+  "text": "That is not equivalent to this top one."
+ },
+ {
+  "start": 1277.85,
+  "end": 1280.53,
+  "text": "This is full softmax attention with the row."
+ },
+ {
+  "start": 1280.53,
+  "end": 1283.02,
+  "text": "The first step is lossy, where we drop the row,"
+ },
+ {
+  "start": 1283.02,
+  "end": 1284.12,
+  "text": "and then we become linear."
+ },
+ {
+  "start": 1284.12,
+  "end": 1286.26,
+  "text": "That's the very, very first step of any of these."
+ },
+ {
+  "start": 1286.26,
+  "end": 1287.72,
+  "text": "So this part is going to be lossy."
+ },
+ {
+  "start": 1287.72,
+  "end": 1290.62,
+  "text": "And then after that, this linear form"
+ },
+ {
+  "start": 1290.62,
+  "end": 1296.1,
+  "text": "to this recurrent form, this equivalence, that is exact."
+ },
+ {
+  "start": 1296.1,
+  "end": 1296.82,
+  "text": "Good."
+ },
+ {
+  "start": 1296.82,
+  "end": 1297.32,
+  "text": "Yes."
+ },
+ {
+  "start": 1297.32,
+  "end": 1305.86,
+  "text": "[INAUDIBLE] Oh, yes."
+ },
+ {
+  "start": 1305.86,
+  "end": 1307.122,
+  "text": "Yes."
+ },
+ {
+  "start": 1307.122,
+  "end": 1308.08,
+  "text": "Yeah, this term, right?"
+ },
+ {
+  "start": 1308.08,
+  "end": 1309.78,
+  "text": "Yeah."
+ },
+ {
+  "start": 1309.78,
+  "end": 1313.62,
+  "text": "So in the linear attention form, what we're really doing is,"
+ },
+ {
+  "start": 1313.62,
+  "end": 1315.86,
+  "text": "we're taking these kv's, and we're"
+ },
+ {
+  "start": 1315.86,
+  "end": 1317.34,
+  "text": "accumulating them with queues."
+ },
+ {
+  "start": 1317.34,
+  "end": 1321.14,
+  "text": "In the dual form, that's how this operates."
+ },
+ {
+  "start": 1321.14,
+  "end": 1323.62,
+  "text": "But you might actually want in your outputs"
+ },
+ {
+  "start": 1323.62,
+  "end": 1325.968,
+  "text": "to also have some value from your current time step."
+ },
+ {
+  "start": 1325.968,
+  "end": 1328.26,
+  "text": "You might think that, oh, the value for my current time"
+ },
+ {
+  "start": 1328.26,
+  "end": 1330.86,
+  "text": "step for my token is actually useful for various things"
+ },
+ {
+  "start": 1330.86,
+  "end": 1331.785,
+  "text": "downstream."
+ },
+ {
+  "start": 1331.785,
+  "end": 1334.16,
+  "text": "And so this acts a little bit like a residual connection,"
+ },
+ {
+  "start": 1334.16,
+  "end": 1335.9,
+  "text": "where the value of my current inputs"
+ },
+ {
+  "start": 1335.9,
+  "end": 1338.64,
+  "text": "directly pass through to the outputs of my attention."
+ },
+ {
+  "start": 1338.64,
+  "end": 1340.767,
+  "text": "And D is another modulated gate, where"
+ },
+ {
+  "start": 1340.767,
+  "end": 1343.1,
+  "text": "you can control the amount of pass through that happens."
+ },
+ {
+  "start": 1346.34,
+  "end": 1346.84,
+  "text": "Good."
+ },
+ {
+  "start": 1346.84,
+  "end": 1347.84,
+  "text": "OK."
+ },
+ {
+  "start": 1347.84,
+  "end": 1349.34,
+  "text": "So that's linear time attention."
+ },
+ {
+  "start": 1349.34,
+  "end": 1351.44,
+  "text": "There's a lot of really interesting stuff."
+ },
+ {
+  "start": 1351.44,
+  "end": 1354.6,
+  "text": "It's also interesting that a lot of the methods that"
+ },
+ {
+  "start": 1354.6,
+  "end": 1357.6,
+  "text": "have gotten tested out really have"
+ },
+ {
+  "start": 1357.6,
+  "end": 1361.44,
+  "text": "this nice, simple, linear attention style, recurrent form."
+ },
+ {
+  "start": 1361.44,
+  "end": 1364.24,
+  "text": "There's a few exceptions, but for the most part, a lot of this"
+ },
+ {
+  "start": 1364.24,
+  "end": 1368.82,
+  "text": "has converged to almost very LSTM-like objects in the end."
+ },
+ {
+  "start": 1372.485,
+  "end": 1373.8,
+  "text": "What do I want to say?"
+ },
+ {
+  "start": 1373.8,
+  "end": 1374.3,
+  "text": "OK."
+ },
+ {
+  "start": 1374.3,
+  "end": 1376.0,
+  "text": "So there's another alternative."
+ },
+ {
+  "start": 1376.0,
+  "end": 1377.86,
+  "text": "What I talked about was linear attention,"
+ },
+ {
+  "start": 1377.86,
+  "end": 1383.12,
+  "text": "which has this very nice complexity theoretic flavor to it."
+ },
+ {
+  "start": 1383.12,
+  "end": 1386.12,
+  "text": "I want to talk about another attention optimization, which"
+ },
+ {
+  "start": 1386.12,
+  "end": 1388.96,
+  "text": "I did not talk about, but falls into this family"
+ },
+ {
+  "start": 1388.96,
+  "end": 1393.04,
+  "text": "of efficient attention things that are important."
+ },
+ {
+  "start": 1393.04,
+  "end": 1401.19,
+  "text": "So DeepSeek in DeepSeek 3.2, I think, had DSA, not Do Sparse"
+ },
+ {
+  "start": 1401.19,
+  "end": 1405.07,
+  "text": "Attention, that's DeepSeek Attention, where what they do"
+ },
+ {
+  "start": 1405.07,
+  "end": 1408.27,
+  "text": "is, instead of computing attention--"
+ },
+ {
+  "start": 1408.27,
+  "end": 1411.75,
+  "text": "that was not intentional part, instead of computing attention"
+ },
+ {
+  "start": 1411.75,
+  "end": 1413.83,
+  "text": "over all the tokens, what you're going to do"
+ },
+ {
+  "start": 1413.83,
+  "end": 1416.83,
+  "text": "is you're going to first have a lightweight indexer that's going"
+ },
+ {
+  "start": 1416.83,
+  "end": 1418.15,
+  "text": "to subset a bunch of tokens."
+ },
+ {
+  "start": 1418.15,
+  "end": 1420.49,
+  "text": "So you're going to look at your very long context."
+ },
+ {
+  "start": 1420.49,
+  "end": 1424.39,
+  "text": "And the indexer is going to pick out some subset of these, much"
+ },
+ {
+  "start": 1424.39,
+  "end": 1425.973,
+  "text": "smaller than the full sequence."
+ },
+ {
+  "start": 1425.973,
+  "end": 1428.39,
+  "text": "And then you're going to do full attention on that smaller"
+ },
+ {
+  "start": 1428.39,
+  "end": 1429.13,
+  "text": "subset."
+ },
+ {
+  "start": 1429.13,
+  "end": 1432.89,
+  "text": "So the mechanics of this are pretty simple,"
+ },
+ {
+  "start": 1432.89,
+  "end": 1436.63,
+  "text": "at least in the forward pass, where what you do"
+ },
+ {
+  "start": 1436.63,
+  "end": 1439.79,
+  "text": "is you have your normal Qs and Ks,"
+ },
+ {
+  "start": 1439.79,
+  "end": 1442.01,
+  "text": "but then you pass this through this indexer."
+ },
+ {
+  "start": 1442.01,
+  "end": 1445.01,
+  "text": "And what the indexer does is, it takes the qk inner products,"
+ },
+ {
+  "start": 1445.01,
+  "end": 1446.99,
+  "text": "it takes a ReLU."
+ },
+ {
+  "start": 1446.99,
+  "end": 1450.91,
+  "text": "And then it's going to have these weights that are derived"
+ },
+ {
+  "start": 1450.91,
+  "end": 1452.09,
+  "text": "from the preceding tokens."
+ },
+ {
+  "start": 1452.09,
+  "end": 1457.81,
+  "text": "And then this is going to give you the activations for each"
+ },
+ {
+  "start": 1457.81,
+  "end": 1458.953,
+  "text": "of the positions."
+ },
+ {
+  "start": 1458.953,
+  "end": 1460.37,
+  "text": "And then you're going to take this"
+ },
+ {
+  "start": 1460.37,
+  "end": 1464.89,
+  "text": "through a top k, where some number of these top positions"
+ },
+ {
+  "start": 1464.89,
+  "end": 1467.358,
+  "text": "get included into my attention computation."
+ },
+ {
+  "start": 1467.358,
+  "end": 1469.65,
+  "text": "And I'm going to do my usual attention computation that"
+ },
+ {
+  "start": 1469.65,
+  "end": 1472.37,
+  "text": "emits a key value."
+ },
+ {
+  "start": 1472.37,
+  "end": 1476.25,
+  "text": "The nice thing about this is it's very, very sparse."
+ },
+ {
+  "start": 1476.25,
+  "end": 1478.43,
+  "text": "And if this indexer is lightweight,"
+ },
+ {
+  "start": 1478.43,
+  "end": 1480.93,
+  "text": "now, this bottom term, where you're doing full attention,"
+ },
+ {
+  "start": 1480.93,
+  "end": 1483.05,
+  "text": "can be done on a very small subset."
+ },
+ {
+  "start": 1483.05,
+  "end": 1485.73,
+  "text": "Another thing that both DSA and I"
+ },
+ {
+  "start": 1485.73,
+  "end": 1489.633,
+  "text": "think, GLM show is that, you don't actually"
+ },
+ {
+  "start": 1489.633,
+  "end": 1491.05,
+  "text": "have to train the model with this,"
+ },
+ {
+  "start": 1491.05,
+  "end": 1493.01,
+  "text": "because training with this indexer thing"
+ },
+ {
+  "start": 1493.01,
+  "end": 1496.71,
+  "text": "is maybe pretty annoying and very complex."
+ },
+ {
+  "start": 1496.71,
+  "end": 1499.03,
+  "text": "What you do is you just train a normal transformer."
+ },
+ {
+  "start": 1499.03,
+  "end": 1501.23,
+  "text": "And when you do your long context extension,"
+ },
+ {
+  "start": 1501.23,
+  "end": 1503.97,
+  "text": "you actually then drop in this lightning indexer,"
+ },
+ {
+  "start": 1503.97,
+  "end": 1506.93,
+  "text": "and then you train the model to handle this indexer"
+ },
+ {
+  "start": 1506.93,
+  "end": 1509.95,
+  "text": "in a extension stage that's separate from pretraining."
+ },
+ {
+  "start": 1509.95,
+  "end": 1513.17,
+  "text": "So actually, the computational cost of doing this is itself,"
+ },
+ {
+  "start": 1513.17,
+  "end": 1515.48,
+  "text": "pretty light."
+ },
+ {
+  "start": 1515.48,
+  "end": 1519.08,
+  "text": "And I want to highlight in DeepSeek's v3.2,"
+ },
+ {
+  "start": 1519.08,
+  "end": 1522.4,
+  "text": "where they proposed DSA, this model is quite good."
+ },
+ {
+  "start": 1522.4,
+  "end": 1526.84,
+  "text": "The v3.2 matches all the other frontier models at the time,"
+ },
+ {
+  "start": 1526.84,
+  "end": 1529.855,
+  "text": "like Claude 4.5 Sonnet or Gemini 3."
+ },
+ {
+  "start": 1529.855,
+  "end": 1531.48,
+  "text": "And they also have this very nice plot,"
+ },
+ {
+  "start": 1531.48,
+  "end": 1534.5,
+  "text": "where they're showing, well, our prefill,"
+ },
+ {
+  "start": 1534.5,
+  "end": 1538.52,
+  "text": "which is the attending to the input, and also decoding,"
+ },
+ {
+  "start": 1538.52,
+  "end": 1540.64,
+  "text": "where you're actually generating, both of these"
+ },
+ {
+  "start": 1540.64,
+  "end": 1543.32,
+  "text": "are very favorable scaling compared"
+ },
+ {
+  "start": 1543.32,
+  "end": 1545.84,
+  "text": "to the previous generation of DeepSeek models"
+ },
+ {
+  "start": 1545.84,
+  "end": 1547.54,
+  "text": "that did not use sparse attention."
+ },
+ {
+  "start": 1547.54,
+  "end": 1548.6,
+  "text": "And that makes sense."
+ },
+ {
+  "start": 1548.6,
+  "end": 1551.26,
+  "text": "If you're only paying attention to a very small subset,"
+ },
+ {
+  "start": 1551.26,
+  "end": 1553.0,
+  "text": "you're going to dramatically be reducing"
+ },
+ {
+  "start": 1553.0,
+  "end": 1556.92,
+  "text": "your costs of doing attention."
+ },
+ {
+  "start": 1556.92,
+  "end": 1565.76,
+  "text": "And I think another nice orthogonal validation of this GLM5, which came out last year."
+ },
+ {
+  "start": 1565.76,
+  "end": 1570.8,
+  "text": "I think GLM5 is one of the best open models that are available,"
+ },
+ {
+  "start": 1570.8,
+  "end": 1572.3,
+  "text": "like period."
+ },
+ {
+  "start": 1572.3,
+  "end": 1574.91,
+  "text": "And they also adopted this DSA approach."
+ },
+ {
+  "start": 1574.91,
+  "end": 1577.41,
+  "text": "And they have actually, fairly nice ablations in their paper"
+ },
+ {
+  "start": 1577.41,
+  "end": 1581.08,
+  "text": "here, if you're curious, where they end up comparing with, oh,"
+ },
+ {
+  "start": 1581.08,
+  "end": 1583.1,
+  "text": "what happens if we do DSA with some warm"
+ },
+ {
+  "start": 1583.1,
+  "end": 1586.602,
+  "text": "up or just do DSA or don't do DSA at all?"
+ },
+ {
+  "start": 1586.602,
+  "end": 1588.06,
+  "text": "The main thing that they're showing"
+ },
+ {
+  "start": 1588.06,
+  "end": 1591.26,
+  "text": "is, if they do full DSA training,"
+ },
+ {
+  "start": 1591.26,
+  "end": 1593.42,
+  "text": "you don't lose very much in performance"
+ },
+ {
+  "start": 1593.42,
+  "end": 1597.26,
+  "text": "relative to full attention, even at long context retrieval"
+ },
+ {
+  "start": 1597.26,
+  "end": 1601.9,
+  "text": "tasks that are fairly difficult to do with RNN style"
+ },
+ {
+  "start": 1601.9,
+  "end": 1602.84,
+  "text": "architectures."
+ },
+ {
+  "start": 1602.84,
+  "end": 1604.86,
+  "text": "So this is a totally alternative view"
+ },
+ {
+  "start": 1604.86,
+  "end": 1608.2,
+  "text": "of how to reduce attention costs."
+ },
+ {
+  "start": 1608.2,
+  "end": 1612.38,
+  "text": "Notice, I'll go back one slide, this is not linear time."
+ },
+ {
+  "start": 1612.38,
+  "end": 1615.26,
+  "text": "The indexer still has to operate on full all"
+ },
+ {
+  "start": 1615.26,
+  "end": 1617.18,
+  "text": "to all attention, because you got these qk"
+ },
+ {
+  "start": 1617.18,
+  "end": 1620.48,
+  "text": "inner products that are not going to be linear in cost."
+ },
+ {
+  "start": 1620.48,
+  "end": 1623.94,
+  "text": "But you can make this indexer much, much cheaper,"
+ },
+ {
+  "start": 1623.94,
+  "end": 1625.98,
+  "text": "for example, by making this lower dimensional"
+ },
+ {
+  "start": 1625.98,
+  "end": 1628.34,
+  "text": "or making this w very small."
+ },
+ {
+  "start": 1628.34,
+  "end": 1633.62,
+  "text": "All of this can be made much cheaper in its cost."
+ },
+ {
+  "start": 1633.62,
+  "end": 1635.87,
+  "text": "So that's a totally alternative view, works very well."
+ },
+ {
+  "start": 1635.87,
+  "end": 1637.47,
+  "text": "I won't talk much about this."
+ },
+ {
+  "start": 1637.47,
+  "end": 1641.05,
+  "text": "But it turns out that this idea of top k selection"
+ },
+ {
+  "start": 1641.05,
+  "end": 1644.07,
+  "text": "is going to be core to the next part of this lecture."
+ },
+ {
+  "start": 1644.07,
+  "end": 1646.65,
+  "text": "I'll stop here for any efficient attention questions"
+ },
+ {
+  "start": 1646.65,
+  "end": 1649.75,
+  "text": "before I move on to MoEs."
+ },
+ {
+  "start": 1649.75,
+  "end": 1650.25,
+  "text": "Yes."
+ },
+ {
+  "start": 1650.25,
+  "end": 1655.83,
+  "text": "So the indexer, the time complexity for that,"
+ },
+ {
+  "start": 1655.83,
+  "end": 1656.77,
+  "text": "is it n squared?"
+ },
+ {
+  "start": 1656.77,
+  "end": 1660.15,
+  "text": "[INAUDIBLE] Yeah."
+ },
+ {
+  "start": 1660.15,
+  "end": 1662.412,
+  "text": "I mean, in order to know what to select,"
+ },
+ {
+  "start": 1662.412,
+  "end": 1663.87,
+  "text": "it does have to look at everything."
+ },
+ {
+  "start": 1663.87,
+  "end": 1667.03,
+  "text": "And there's no clever state transition"
+ },
+ {
+  "start": 1667.03,
+  "end": 1668.03,
+  "text": "stuff that happens here."
+ },
+ {
+  "start": 1668.03,
+  "end": 1669.91,
+  "text": "It is really brute force inner products."
+ },
+ {
+  "start": 1669.91,
+  "end": 1672.21,
+  "text": "So if you're going through all of it,"
+ },
+ {
+  "start": 1672.21,
+  "end": 1676.57,
+  "text": "then the step afterwards is also quadratic as well."
+ },
+ {
+  "start": 1676.57,
+  "end": 1679.13,
+  "text": "How are we getting time like [INAUDIBLE]?"
+ },
+ {
+  "start": 1679.13,
+  "end": 1681.73,
+  "text": "I mean, it's like a system z trick, almost."
+ },
+ {
+  "start": 1681.73,
+  "end": 1684.132,
+  "text": "You're going to do the indexer much more lightweight."
+ },
+ {
+  "start": 1684.132,
+  "end": 1685.59,
+  "text": "And there are many ways to do that."
+ },
+ {
+  "start": 1685.59,
+  "end": 1687.05,
+  "text": "You can do that in much lower precision, which"
+ },
+ {
+  "start": 1687.05,
+  "end": 1688.03,
+  "text": "they talk about."
+ },
+ {
+  "start": 1688.03,
+  "end": 1691.91,
+  "text": "You can do it in ways that are lower dimensional by projecting"
+ },
+ {
+  "start": 1691.91,
+  "end": 1694.068,
+  "text": "the q's and k's further, just for the indexing."
+ },
+ {
+  "start": 1694.068,
+  "end": 1696.11,
+  "text": "So there are lots of tricks that you can do here,"
+ },
+ {
+  "start": 1696.11,
+  "end": 1697.75,
+  "text": "that you can imagine, but the indexer"
+ },
+ {
+  "start": 1697.75,
+  "end": 1698.89,
+  "text": "is going to be much more lightweight."
+ },
+ {
+  "start": 1698.89,
+  "end": 1700.637,
+  "text": "So the constant factors are very good."
+ },
+ {
+  "start": 1700.637,
+  "end": 1702.97,
+  "text": "And then for the second one, even though it's quadratic,"
+ },
+ {
+  "start": 1702.97,
+  "end": 1704.762,
+  "text": "it's quadratic on a shorter context length,"
+ },
+ {
+  "start": 1704.762,
+  "end": 1706.53,
+  "text": "because it's top k, we can control k."
+ },
+ {
+  "start": 1706.53,
+  "end": 1709.21,
+  "text": "So now, this is expensive but small."
+ },
+ {
+  "start": 1709.21,
+  "end": 1711.31,
+  "text": "So this is another one of these things"
+ },
+ {
+  "start": 1711.31,
+  "end": 1714.85,
+  "text": "of, sometimes, don't get too stuck up on the quadratic versus"
+ },
+ {
+  "start": 1714.85,
+  "end": 1715.35,
+  "text": "not."
+ },
+ {
+  "start": 1715.35,
+  "end": 1718.248,
+  "text": "Sometimes, the constant factors are really, really important."
+ },
+ {
+  "start": 1718.248,
+  "end": 1719.29,
+  "text": "There's another question?"
+ },
+ {
+  "start": 1719.29,
+  "end": 1719.79,
+  "text": "Yeah."
+ },
+ {
+  "start": 1719.79,
+  "end": 1725.792,
+  "text": "[INAUDIBLE] That's right."
+ },
+ {
+  "start": 1725.792,
+  "end": 1728.19,
+  "text": "Or it's part of a continued pretraining style thing,"
+ },
+ {
+  "start": 1728.19,
+  "end": 1731.11,
+  "text": "because all the models, you don't train long contexts"
+ },
+ {
+  "start": 1731.11,
+  "end": 1733.85,
+  "text": "from scratch for compute and various other reasons,"
+ },
+ {
+  "start": 1733.85,
+  "end": 1736.33,
+  "text": "you train a short-ish context model first,"
+ },
+ {
+  "start": 1736.33,
+  "end": 1738.97,
+  "text": "and then you've got these long context extension stages."
+ },
+ {
+  "start": 1738.97,
+  "end": 1741.23,
+  "text": "And so the nice idea here is that, we're going"
+ },
+ {
+  "start": 1741.23,
+  "end": 1742.77,
+  "text": "to do the second phase anyway."
+ },
+ {
+  "start": 1742.77,
+  "end": 1745.91,
+  "text": "Why don't we bolt the long context cost savings"
+ },
+ {
+  "start": 1745.91,
+  "end": 1747.33,
+  "text": "on at the same stage?"
+ },
+ {
+  "start": 1747.33,
+  "end": 1749.59,
+  "text": "And it's surprising that it works."
+ },
+ {
+  "start": 1749.59,
+  "end": 1755.05,
+  "text": "Honestly, they can bolt on this frankly scary-looking TopK"
+ },
+ {
+  "start": 1755.05,
+  "end": 1756.63,
+  "text": "non-differentiable object."
+ },
+ {
+  "start": 1756.63,
+  "end": 1759.05,
+  "text": "But as you'll see in the next part,"
+ },
+ {
+  "start": 1759.05,
+  "end": 1761.59,
+  "text": "maybe you shouldn't be so scared of TopK selection."
+ },
+ {
+  "start": 1761.59,
+  "end": 1767.05,
+  "text": "[INAUDIBLE] So this is also part of the post"
+ },
+ {
+  "start": 1767.05,
+  "end": 1768.85,
+  "text": "with other post-training steps?"
+ },
+ {
+  "start": 1768.85,
+  "end": 1769.35,
+  "text": "Yeah."
+ },
+ {
+  "start": 1769.35,
+  "end": 1771.41,
+  "text": "The usual recipe that I am familiar with,"
+ },
+ {
+  "start": 1771.41,
+  "end": 1773.21,
+  "text": "when a lot of the open source models, is it"
+ },
+ {
+  "start": 1773.21,
+  "end": 1779.85,
+  "text": "usually goes like short context pre-training, long context ension, then post-training."
+ },
+ {
+  "start": 1779.85,
+  "end": 1780.45,
+  "text": "Yes."
+ },
+ {
+  "start": 1780.45,
+  "end": 1785.638,
+  "text": "Is the k here, similar in length [INAUDIBLE]?"
+ },
+ {
+  "start": 1785.638,
+  "end": 1786.43,
+  "text": "Yeah, that's right."
+ },
+ {
+  "start": 1786.43,
+  "end": 1789.35,
+  "text": "You would pick values that are much closer to short context"
+ },
+ {
+  "start": 1789.35,
+  "end": 1789.85,
+  "text": "performance."
+ },
+ {
+  "start": 1789.85,
+  "end": 1790.808,
+  "text": "And you would bound it."
+ },
+ {
+  "start": 1790.808,
+  "end": 1795.547,
+  "text": "So regardless of the input size, they would be bounded."
+ },
+ {
+  "start": 1795.547,
+  "end": 1796.13,
+  "text": "Any questions?"
+ },
+ {
+  "start": 1796.13,
+  "end": 1797.81,
+  "text": "OK."
+ },
+ {
+  "start": 1797.81,
+  "end": 1801.73,
+  "text": "Does the removal of softmax for [INAUDIBLE]"
+ },
+ {
+  "start": 1801.73,
+  "end": 1803.89,
+  "text": "causing training instability?"
+ },
+ {
+  "start": 1803.89,
+  "end": 1805.18,
+  "text": "Training stability issues."
+ },
+ {
+  "start": 1805.18,
+  "end": 1806.68,
+  "text": "That's a good question."
+ },
+ {
+  "start": 1806.68,
+  "end": 1807.62,
+  "text": "I don't think so."
+ },
+ {
+  "start": 1807.62,
+  "end": 1812.11,
+  "text": "I'm not aware of documented linear softmax causing"
+ },
+ {
+  "start": 1812.11,
+  "end": 1812.86,
+  "text": "lots of attention."
+ },
+ {
+  "start": 1812.86,
+  "end": 1814.48,
+  "text": "If anything, softmaxes are usually"
+ },
+ {
+  "start": 1814.48,
+  "end": 1817.075,
+  "text": "more of the problems for various reasons."
+ },
+ {
+  "start": 1817.075,
+  "end": 1819.2,
+  "text": "So I think this will actually improve the stability"
+ },
+ {
+  "start": 1819.2,
+  "end": 1821.04,
+  "text": "properties of the architecture."
+ },
+ {
+  "start": 1823.96,
+  "end": 1828.36,
+  "text": "Can you predict the next [INAUDIBLE] attention."
+ },
+ {
+  "start": 1828.36,
+  "end": 1833.4,
+  "text": "Consider the [INAUDIBLE] attention mechanism requests,"
+ },
+ {
+  "start": 1833.4,
+  "end": 1839.56,
+  "text": "because the low computing cost and the low latency."
+ },
+ {
+  "start": 1839.56,
+  "end": 1844.58,
+  "text": "Given that you predict, I mean, in high level,"
+ },
+ {
+  "start": 1844.58,
+  "end": 1850.78,
+  "text": "what kind of features that will be [INAUDIBLE] the [INAUDIBLE]."
+ },
+ {
+  "start": 1850.78,
+  "end": 1851.28,
+  "text": "Yeah."
+ },
+ {
+  "start": 1851.28,
+  "end": 1854.08,
+  "text": "I don't know if I have good predictions for what"
+ },
+ {
+  "start": 1854.08,
+  "end": 1856.84,
+  "text": "the future attention architecture looks like."
+ },
+ {
+  "start": 1856.84,
+  "end": 1861.76,
+  "text": "I mean, my somewhat cop out answer to this, I think a lot of this will look like we"
+ },
+ {
+  "start": 1861.76,
+  "end": 1863.54,
+  "text": "throw all of these tricks in."
+ },
+ {
+  "start": 1863.54,
+  "end": 1865.54,
+  "text": "In the same way as the architectures have gotten"
+ },
+ {
+  "start": 1865.54,
+  "end": 1868.3,
+  "text": "very complex by taking all of these successful recipes"
+ },
+ {
+  "start": 1868.3,
+  "end": 1870.06,
+  "text": "and throwing them in, I think also"
+ },
+ {
+  "start": 1870.06,
+  "end": 1874.66,
+  "text": "that there's an even broader layer or a higher level"
+ },
+ {
+  "start": 1874.66,
+  "end": 1877.14,
+  "text": "layer of basically using post-training"
+ },
+ {
+  "start": 1877.14,
+  "end": 1879.54,
+  "text": "to have the model manage its own context."
+ },
+ {
+  "start": 1879.54,
+  "end": 1881.5,
+  "text": "Compaction, retrieval, all of these things"
+ },
+ {
+  "start": 1881.5,
+  "end": 1884.26,
+  "text": "are basically an added layer on top."
+ },
+ {
+  "start": 1884.26,
+  "end": 1886.86,
+  "text": "I think a lot of the work that I imagine"
+ },
+ {
+  "start": 1886.86,
+  "end": 1889.04,
+  "text": "will be integration of these different layers,"
+ },
+ {
+  "start": 1889.04,
+  "end": 1892.58,
+  "text": "because we've seen that, at least the linear time attention"
+ },
+ {
+  "start": 1892.58,
+  "end": 1895.22,
+  "text": "stuff has converged a lot into LSTM-like"
+ },
+ {
+  "start": 1895.22,
+  "end": 1896.96,
+  "text": "or linear attention-like architectures."
+ },
+ {
+  "start": 1896.96,
+  "end": 1898.98,
+  "text": "And I don't really see that changing too much"
+ },
+ {
+  "start": 1898.98,
+  "end": 1901.94,
+  "text": "in the near future."
+ },
+ {
+  "start": 1901.94,
+  "end": 1902.7,
+  "text": "Cool."
+ },
+ {
+  "start": 1902.7,
+  "end": 1903.23,
+  "text": "Oh, yes."
+ },
+ {
+  "start": 1903.23,
+  "end": 1903.98,
+  "text": "One last question."
+ },
+ {
+  "start": 1903.98,
+  "end": 1907.7,
+  "text": "Can you speak about lower precision attention?"
+ },
+ {
+  "start": 1907.7,
+  "end": 1910.66,
+  "text": "Is FP4 attention possible?"
+ },
+ {
+  "start": 1910.66,
+  "end": 1914.6,
+  "text": "I think the indexer is partially motivated by things like this."
+ },
+ {
+  "start": 1914.6,
+  "end": 1918.66,
+  "text": "FP4 attention, definitely possible."
+ },
+ {
+  "start": 1918.66,
+  "end": 1922.05,
+  "text": "I think the drawback is that the loss of precision for things"
+ },
+ {
+  "start": 1922.05,
+  "end": 1924.868,
+  "text": "like softmaxes, where small, underflow, overflow,"
+ },
+ {
+  "start": 1924.868,
+  "end": 1926.91,
+  "text": "these kinds of things can really start to matter,"
+ },
+ {
+  "start": 1926.91,
+  "end": 1929.09,
+  "text": "can, sometimes, be pretty problematic."
+ },
+ {
+  "start": 1929.09,
+  "end": 1931.33,
+  "text": "And so I think this motivation of saying"
+ },
+ {
+  "start": 1931.33,
+  "end": 1934.01,
+  "text": "like, OK, let's do selection with low precision"
+ },
+ {
+  "start": 1934.01,
+  "end": 1936.35,
+  "text": "and then do a full precision computation afterwards,"
+ },
+ {
+  "start": 1936.35,
+  "end": 1939.01,
+  "text": "because then the value vectors can be more finely"
+ },
+ {
+  "start": 1939.01,
+  "end": 1941.53,
+  "text": "added together and weighted together."
+ },
+ {
+  "start": 1941.53,
+  "end": 1943.31,
+  "text": "It's an approach that makes sense."
+ },
+ {
+  "start": 1943.31,
+  "end": 1947.01,
+  "text": "I don't know if there's really good ways"
+ },
+ {
+  "start": 1947.01,
+  "end": 1950.57,
+  "text": "of doing full attention in FP4 or even"
+ },
+ {
+  "start": 1950.57,
+  "end": 1952.03,
+  "text": "lower precision of some kind."
+ },
+ {
+  "start": 1952.03,
+  "end": 1954.65,
+  "text": "Yeah."
+ },
+ {
+  "start": 1954.65,
+  "end": 1955.65,
+  "text": "OK."
+ },
+ {
+  "start": 1955.65,
+  "end": 1959.21,
+  "text": "OK, one last question then, then I'll move on."
+ },
+ {
+  "start": 1959.21,
+  "end": 1963.81,
+  "text": "So compared to transformers, compared to state space models,"
+ },
+ {
+  "start": 1963.81,
+  "end": 1969.81,
+  "text": "what's the downside of training more complicated state space"
+ },
+ {
+  "start": 1969.81,
+  "end": 1970.35,
+  "text": "models?"
+ },
+ {
+  "start": 1970.35,
+  "end": 1970.57,
+  "text": "Yeah."
+ },
+ {
+  "start": 1970.57,
+  "end": 1971.75,
+  "text": "So that's a good question."
+ },
+ {
+  "start": 1971.75,
+  "end": 1974.042,
+  "text": "There have to be some downside or otherwise everybody--"
+ },
+ {
+  "start": 1974.042,
+  "end": 1977.81,
+  "text": "Well, the downside, I think, is expressive power."
+ },
+ {
+  "start": 1977.81,
+  "end": 1980.15,
+  "text": "The all to all connection in softmax"
+ },
+ {
+  "start": 1980.15,
+  "end": 1981.57,
+  "text": "attention is incredibly powerful."
+ },
+ {
+  "start": 1981.57,
+  "end": 1983.75,
+  "text": "It's also very easy to train."
+ },
+ {
+  "start": 1983.75,
+  "end": 1986.47,
+  "text": "It used to be, I think, compared to say, an LSTM."
+ },
+ {
+  "start": 1986.47,
+  "end": 1988.11,
+  "text": "Attention had the very strong advantage"
+ },
+ {
+  "start": 1988.11,
+  "end": 1989.83,
+  "text": "of hardware efficiency."
+ },
+ {
+  "start": 1989.83,
+  "end": 1992.07,
+  "text": "You could train in parallel."
+ },
+ {
+  "start": 1992.07,
+  "end": 1996.07,
+  "text": "I think the reason why the state space models have caught on,"
+ },
+ {
+  "start": 1996.07,
+  "end": 1998.03,
+  "text": "despite their similarity to LSTMs"
+ },
+ {
+  "start": 1998.03,
+  "end": 2000.95,
+  "text": "and similar drawbacks in terms of representational power,"
+ },
+ {
+  "start": 2000.95,
+  "end": 2004.91,
+  "text": "is that now, there's this kind of well-understood duality"
+ },
+ {
+  "start": 2004.91,
+  "end": 2006.59,
+  "text": "because of the linear attention thing"
+ },
+ {
+  "start": 2006.59,
+  "end": 2010.43,
+  "text": "that I talked about, where you can go from this RNN form"
+ },
+ {
+  "start": 2010.43,
+  "end": 2012.77,
+  "text": "to the more dense matrix multiply form."
+ },
+ {
+  "start": 2012.77,
+  "end": 2014.27,
+  "text": "And the matrix multiply form allows"
+ },
+ {
+  "start": 2014.27,
+  "end": 2015.65,
+  "text": "for computational efficiency."
+ },
+ {
+  "start": 2015.65,
+  "end": 2018.727,
+  "text": "So that trade-off has now been checked off."
+ },
+ {
+  "start": 2018.727,
+  "end": 2020.31,
+  "text": "But you've still got the trade-off of,"
+ },
+ {
+  "start": 2020.31,
+  "end": 2021.67,
+  "text": "if you have a finite state and you"
+ },
+ {
+  "start": 2021.67,
+  "end": 2023.045,
+  "text": "have to carry everything through,"
+ },
+ {
+  "start": 2023.045,
+  "end": 2026.317,
+  "text": "you're going to be losing some information relative to just"
+ },
+ {
+  "start": 2026.317,
+  "end": 2027.15,
+  "text": "carrying everything."
+ },
+ {
+  "start": 2027.15,
+  "end": 2030.69,
+  "text": "[INAUDIBLE] is going to be a problem in state space."
+ },
+ {
+  "start": 2030.69,
+  "end": 2034.19,
+  "text": "So [INAUDIBLE] the context itself, [INAUDIBLE]."
+ },
+ {
+  "start": 2036.843,
+  "end": 2038.26,
+  "text": "Well, in the state space, you have"
+ },
+ {
+  "start": 2038.26,
+  "end": 2040.34,
+  "text": "to basically think about the context length"
+ },
+ {
+  "start": 2040.34,
+  "end": 2042.14,
+  "text": "relative to the size of your state."
+ },
+ {
+  "start": 2042.14,
+  "end": 2044.66,
+  "text": "I mean, if you have a state the size of your context,"
+ },
+ {
+  "start": 2044.66,
+  "end": 2046.3,
+  "text": "then you're good to go, but then you're"
+ },
+ {
+  "start": 2046.3,
+  "end": 2048.02,
+  "text": "paying these very large costs."
+ },
+ {
+  "start": 2048.02,
+  "end": 2050.719,
+  "text": "So really, the point is, the free lunches,"
+ },
+ {
+  "start": 2050.719,
+  "end": 2052.42,
+  "text": "if you want a really tiny state, it's"
+ },
+ {
+  "start": 2052.42,
+  "end": 2055.739,
+  "text": "really hard to compress all the information in a big context."
+ },
+ {
+  "start": 2055.739,
+  "end": 2058.642,
+  "text": "It might be possible one day to not have any trade-offs,"
+ },
+ {
+  "start": 2058.642,
+  "end": 2060.1,
+  "text": "but I think, thus far, that's where"
+ },
+ {
+  "start": 2060.1,
+  "end": 2062.1,
+  "text": "the trade-offs are showing up."
+ },
+ {
+  "start": 2062.1,
+  "end": 2062.659,
+  "text": "Cool."
+ },
+ {
+  "start": 2062.659,
+  "end": 2063.159,
+  "text": "OK."
+ },
+ {
+  "start": 2063.159,
+  "end": 2066.139,
+  "text": "So now, I'm going to talk about mixture of experts."
+ },
+ {
+  "start": 2066.139,
+  "end": 2069.34,
+  "text": "And I think mixture of experts are important to talk about."
+ },
+ {
+  "start": 2069.34,
+  "end": 2071.639,
+  "text": "Conceptually, they don't really change the game."
+ },
+ {
+  "start": 2071.639,
+  "end": 2073.5,
+  "text": "One way of thinking about mixture of experts"
+ },
+ {
+  "start": 2073.5,
+  "end": 2076.139,
+  "text": "is, they are just a more efficient MLP."
+ },
+ {
+  "start": 2076.139,
+  "end": 2077.179,
+  "text": "You take your MLP."
+ },
+ {
+  "start": 2077.179,
+  "end": 2080.54,
+  "text": "And somehow, someone gives you just a more efficient MLP."
+ },
+ {
+  "start": 2080.54,
+  "end": 2083.02,
+  "text": "That is what mixture of experts is."
+ },
+ {
+  "start": 2083.02,
+  "end": 2085.06,
+  "text": "But I think you need to understand"
+ },
+ {
+  "start": 2085.06,
+  "end": 2086.739,
+  "text": "what mixture of experts is, I think,"
+ },
+ {
+  "start": 2086.739,
+  "end": 2090.139,
+  "text": "for two reasons-- one is this slide of everyone's"
+ },
+ {
+  "start": 2090.139,
+  "end": 2093.969,
+  "text": "doing MoEs these days, everyone's shipping MoEs these days."
+ },
+ {
+  "start": 2093.969,
+  "end": 2095.719,
+  "text": "You should understand what it is if you're"
+ },
+ {
+  "start": 2095.719,
+  "end": 2100.08,
+  "text": "going to want to be people who deeply understand language"
+ },
+ {
+  "start": 2100.08,
+  "end": 2101.28,
+  "text": "models and how they work."
+ },
+ {
+  "start": 2101.28,
+  "end": 2103.08,
+  "text": "So that's one reason."
+ },
+ {
+  "start": 2103.08,
+  "end": 2105.4,
+  "text": "The other reason is that MoEs actually"
+ },
+ {
+  "start": 2105.4,
+  "end": 2109.86,
+  "text": "has some really interesting mechanical components to them."
+ },
+ {
+  "start": 2109.86,
+  "end": 2111.8,
+  "text": "If you look at how MoEs are built"
+ },
+ {
+  "start": 2111.8,
+  "end": 2113.32,
+  "text": "and what primitives they use, you"
+ },
+ {
+  "start": 2113.32,
+  "end": 2117.52,
+  "text": "will quickly see MoE like primitives in many places."
+ },
+ {
+  "start": 2117.52,
+  "end": 2120.16,
+  "text": "And you'll realize, wow, I can do more interesting things"
+ },
+ {
+  "start": 2120.16,
+  "end": 2121.06,
+  "text": "with neural networks."
+ },
+ {
+  "start": 2121.06,
+  "end": 2122.8,
+  "text": "So there's a broader reason why I"
+ },
+ {
+  "start": 2122.8,
+  "end": 2124.5,
+  "text": "think MoEs are interesting and cool,"
+ },
+ {
+  "start": 2124.5,
+  "end": 2126.96,
+  "text": "and you should learn about them."
+ },
+ {
+  "start": 2126.96,
+  "end": 2128.86,
+  "text": "So what is an MoE?"
+ },
+ {
+  "start": 2128.86,
+  "end": 2131.14,
+  "text": "MoEs are very simple things in some ways,"
+ },
+ {
+  "start": 2131.14,
+  "end": 2133.42,
+  "text": "they're just replacements of your MLP."
+ },
+ {
+  "start": 2133.42,
+  "end": 2137.097,
+  "text": "So on the left is your usual MLP for a transformer."
+ },
+ {
+  "start": 2137.097,
+  "end": 2138.18,
+  "text": "You've got your attention."
+ },
+ {
+  "start": 2138.18,
+  "end": 2139.58,
+  "text": "You've got some normalization."
+ },
+ {
+  "start": 2139.58,
+  "end": 2142.22,
+  "text": "And then you've got a feed forward right after that."
+ },
+ {
+  "start": 2142.22,
+  "end": 2145.08,
+  "text": "This is where a lot of the dense, big information"
+ },
+ {
+  "start": 2145.08,
+  "end": 2146.68,
+  "text": "processing happens."
+ },
+ {
+  "start": 2146.68,
+  "end": 2151.52,
+  "text": "Now, what I can do instead is, let's say, I take my big FFN."
+ },
+ {
+  "start": 2151.52,
+  "end": 2154.59,
+  "text": "And I'm going to cut them up into smaller FFNs."
+ },
+ {
+  "start": 2154.59,
+  "end": 2157.662,
+  "text": "So I now have four feed forward networks."
+ },
+ {
+  "start": 2157.662,
+  "end": 2160.37,
+  "text": "And actually, let's say, I don't cut them up into smaller pieces."
+ },
+ {
+  "start": 2160.37,
+  "end": 2163.79,
+  "text": "Let's say, they're the same size as my original FFN."
+ },
+ {
+  "start": 2163.79,
+  "end": 2166.31,
+  "text": "And somehow, by some magic, I have"
+ },
+ {
+  "start": 2166.31,
+  "end": 2170.01,
+  "text": "a system that tells me which FFN to pick for every input."
+ },
+ {
+  "start": 2170.01,
+  "end": 2174.21,
+  "text": "Now, what I've done is, I have 4x the parameters,"
+ },
+ {
+  "start": 2174.21,
+  "end": 2177.83,
+  "text": "or at least for my FFN, I have four FFNs worth of parameters."
+ },
+ {
+  "start": 2177.83,
+  "end": 2180.67,
+  "text": "But on any forward or backward pass,"
+ },
+ {
+  "start": 2180.67,
+  "end": 2184.23,
+  "text": "I'm only going to pay one FFN worth of cost."
+ },
+ {
+  "start": 2184.23,
+  "end": 2185.31,
+  "text": "That's great."
+ },
+ {
+  "start": 2185.31,
+  "end": 2189.13,
+  "text": "So in some sense, the original motivations for MoEs,"
+ },
+ {
+  "start": 2189.13,
+  "end": 2193.07,
+  "text": "if you read the original papers, have this very parameter-centric"
+ },
+ {
+  "start": 2193.07,
+  "end": 2193.71,
+  "text": "view."
+ },
+ {
+  "start": 2193.71,
+  "end": 2195.81,
+  "text": "If you start something like, well,"
+ },
+ {
+  "start": 2195.81,
+  "end": 2197.67,
+  "text": "let's say, you just wanted more parameters,"
+ },
+ {
+  "start": 2197.67,
+  "end": 2200.03,
+  "text": "because you believe more parameters are good."
+ },
+ {
+  "start": 2200.03,
+  "end": 2200.53,
+  "text": "OK."
+ },
+ {
+  "start": 2200.53,
+  "end": 2200.93,
+  "text": "Good."
+ },
+ {
+  "start": 2200.93,
+  "end": 2202.39,
+  "text": "If we want more parameters, and we"
+ },
+ {
+  "start": 2202.39,
+  "end": 2204.53,
+  "text": "don't want to pay the cost for more parameters,"
+ },
+ {
+  "start": 2204.53,
+  "end": 2206.25,
+  "text": "you need something on the right."
+ },
+ {
+  "start": 2206.25,
+  "end": 2210.01,
+  "text": "So this is the mental model that you should have for MoEs."
+ },
+ {
+  "start": 2210.01,
+  "end": 2214.65,
+  "text": "You want to increase parameters without affecting your flops."
+ },
+ {
+  "start": 2214.65,
+  "end": 2217.25,
+  "text": "Now, why are they so popular?"
+ },
+ {
+  "start": 2217.25,
+  "end": 2219.45,
+  "text": "Every model that you get on Hugging Face"
+ },
+ {
+  "start": 2219.45,
+  "end": 2222.77,
+  "text": "or whatever these days are MoEs past a certain size."
+ },
+ {
+  "start": 2222.77,
+  "end": 2226.53,
+  "text": "Past a certain size, everything that you get seems to be an MoE."
+ },
+ {
+  "start": 2226.53,
+  "end": 2229.05,
+  "text": "And the reason is because it seems"
+ },
+ {
+  "start": 2229.05,
+  "end": 2232.37,
+  "text": "to be the case that for whatever reason, if you keep"
+ },
+ {
+  "start": 2232.37,
+  "end": 2235.85,
+  "text": "the total compute the same, but you just increase"
+ },
+ {
+  "start": 2235.85,
+  "end": 2239.33,
+  "text": "the number of sparse parameters, somehow,"
+ },
+ {
+  "start": 2239.33,
+  "end": 2241.57,
+  "text": "the models are generally getting better."
+ },
+ {
+  "start": 2241.57,
+  "end": 2244.57,
+  "text": "So this is evidence, maybe in favor of the view"
+ },
+ {
+  "start": 2244.57,
+  "end": 2246.65,
+  "text": "that more parameters are, in fact,"
+ },
+ {
+  "start": 2246.65,
+  "end": 2249.89,
+  "text": "generally good, even if only a subset of them are active"
+ },
+ {
+  "start": 2249.89,
+  "end": 2251.17,
+  "text": "at a time."
+ },
+ {
+  "start": 2251.17,
+  "end": 2254.37,
+  "text": "And I'm going to refer to some of the original Google papers"
+ },
+ {
+  "start": 2254.37,
+  "end": 2256.07,
+  "text": "extensively throughout this lecture."
+ },
+ {
+  "start": 2256.07,
+  "end": 2259.59,
+  "text": "This one's from Fedus, et al, in 2022, where they were doing,"
+ },
+ {
+  "start": 2259.59,
+  "end": 2261.503,
+  "text": "I think, the switch transformer for this one."
+ },
+ {
+  "start": 2261.503,
+  "end": 2263.17,
+  "text": "And they're showing, oh, as you increase"
+ },
+ {
+  "start": 2263.17,
+  "end": 2266.17,
+  "text": "the number of experts, so this is active parameter"
+ },
+ {
+  "start": 2266.17,
+  "end": 2269.05,
+  "text": "stays the same, number of experts increases,"
+ },
+ {
+  "start": 2269.05,
+  "end": 2270.948,
+  "text": "your test loss for language modeling"
+ },
+ {
+  "start": 2270.948,
+  "end": 2272.74,
+  "text": "is just decreasing, decreasing, decreasing."
+ },
+ {
+  "start": 2272.74,
+  "end": 2274.28,
+  "text": "That's lovely if all you care about"
+ },
+ {
+  "start": 2274.28,
+  "end": 2277.08,
+  "text": "is your forward pass flops."
+ },
+ {
+  "start": 2277.08,
+  "end": 2281.68,
+  "text": "On the right, you see similar things as you train faster."
+ },
+ {
+  "start": 2281.68,
+  "end": 2285.06,
+  "text": "As you increase your training compute on the x-axis,"
+ },
+ {
+  "start": 2285.06,
+  "end": 2287.94,
+  "text": "if you have more experts for the same amount of training compute,"
+ },
+ {
+  "start": 2287.94,
+  "end": 2289.84,
+  "text": "you just get better performance."
+ },
+ {
+  "start": 2289.84,
+  "end": 2292.08,
+  "text": "So for both training and inference,"
+ },
+ {
+  "start": 2292.08,
+  "end": 2294.04,
+  "text": "MoEs just give you a free win."
+ },
+ {
+  "start": 2294.04,
+  "end": 2295.5,
+  "text": "This is pretty wonderful."
+ },
+ {
+  "start": 2295.5,
+  "end": 2298.16,
+  "text": "It's pretty great."
+ },
+ {
+  "start": 2298.16,
+  "end": 2301.725,
+  "text": "And this is really something that's been seen many times."
+ },
+ {
+  "start": 2301.725,
+  "end": 2303.6,
+  "text": "This is the same plot from before on the left"
+ },
+ {
+  "start": 2303.6,
+  "end": 2305.36,
+  "text": "from the Fedus paper."
+ },
+ {
+  "start": 2305.36,
+  "end": 2306.64,
+  "text": "Last year."
+ },
+ {
+  "start": 2306.64,
+  "end": 2310.78,
+  "text": "I think, AIQ folks put out this OlMoE paper,"
+ },
+ {
+  "start": 2310.78,
+  "end": 2314.08,
+  "text": "which was their open source mixture of experts"
+ },
+ {
+  "start": 2314.08,
+  "end": 2316.16,
+  "text": "analysis and training paper."
+ },
+ {
+  "start": 2316.16,
+  "end": 2317.66,
+  "text": "And they see the same thing as well."
+ },
+ {
+  "start": 2317.66,
+  "end": 2320.72,
+  "text": "If you look at training loss, or validation loss,"
+ },
+ {
+  "start": 2320.72,
+  "end": 2323.38,
+  "text": "or downstream benchmark performance,"
+ },
+ {
+  "start": 2323.38,
+  "end": 2326.96,
+  "text": "you see that in training time, these models"
+ },
+ {
+  "start": 2326.96,
+  "end": 2329.7,
+  "text": "are doing much better as MoEs compared"
+ },
+ {
+  "start": 2329.7,
+  "end": 2330.96,
+  "text": "to their dense counterparts."
+ },
+ {
+  "start": 2330.96,
+  "end": 2334.9,
+  "text": "So something like two times faster or something like that,"
+ },
+ {
+  "start": 2334.9,
+  "end": 2337.92,
+  "text": "training a MoE relative to a dense model."
+ },
+ {
+  "start": 2337.92,
+  "end": 2342.46,
+  "text": "So you can really see the benefits of sparsity here."
+ },
+ {
+  "start": 2342.46,
+  "end": 2344.36,
+  "text": "And I think the proof is in the pudding."
+ },
+ {
+  "start": 2344.36,
+  "end": 2346.78,
+  "text": "But if you look at all the MoEs that got released,"
+ },
+ {
+  "start": 2346.78,
+  "end": 2350.46,
+  "text": "they are much stronger than dense models"
+ },
+ {
+  "start": 2350.46,
+  "end": 2352.5,
+  "text": "in terms of activated parameters, which"
+ },
+ {
+  "start": 2352.5,
+  "end": 2355.06,
+  "text": "is what matters if you care about inference flops,"
+ },
+ {
+  "start": 2355.06,
+  "end": 2357.86,
+  "text": "or really, even just in general, the cost"
+ },
+ {
+  "start": 2357.86,
+  "end": 2361.44,
+  "text": "to train and serve these systems, the all-in cost."
+ },
+ {
+  "start": 2361.44,
+  "end": 2365.3,
+  "text": "So in DeepSeek v2 and the earlier DeepSeekMoEs came out,"
+ },
+ {
+  "start": 2365.3,
+  "end": 2368.78,
+  "text": "it was really a big shift from a lot of these dense models"
+ },
+ {
+  "start": 2368.78,
+  "end": 2370.24,
+  "text": "that everyone else was training."
+ },
+ {
+  "start": 2370.24,
+  "end": 2374.06,
+  "text": "You saw that, wow, we have much fewer active parameters, just as"
+ },
+ {
+  "start": 2374.06,
+  "end": 2376.62,
+  "text": "good, if not better MoE performance compared"
+ },
+ {
+  "start": 2376.62,
+  "end": 2377.78,
+  "text": "to everyone else."
+ },
+ {
+  "start": 2377.78,
+  "end": 2381.38,
+  "text": "This is some really good stuff happening with MoEs."
+ },
+ {
+  "start": 2381.38,
+  "end": 2382.78,
+  "text": "Good."
+ },
+ {
+  "start": 2382.78,
+  "end": 2383.42,
+  "text": "OK."
+ },
+ {
+  "start": 2383.42,
+  "end": 2385.34,
+  "text": "So hopefully, I've convinced you that MoEs"
+ },
+ {
+  "start": 2385.34,
+  "end": 2388.16,
+  "text": "are an interesting thing that you should spend your time"
+ },
+ {
+  "start": 2388.16,
+  "end": 2390.38,
+  "text": "thinking about and studying."
+ },
+ {
+  "start": 2390.38,
+  "end": 2391.12,
+  "text": "Oh, great."
+ },
+ {
+  "start": 2391.12,
+  "end": 2392.72,
+  "text": "And then one last thing that I'll"
+ },
+ {
+  "start": 2392.72,
+  "end": 2395.04,
+  "text": "say for why this is important is,"
+ },
+ {
+  "start": 2395.04,
+  "end": 2398.36,
+  "text": "MoEs give you another axis of parallelization."
+ },
+ {
+  "start": 2398.36,
+  "end": 2402.4,
+  "text": "We'll talk about parallelization in systems in three more"
+ },
+ {
+  "start": 2402.4,
+  "end": 2403.942,
+  "text": "lectures, I think."
+ },
+ {
+  "start": 2403.942,
+  "end": 2405.4,
+  "text": "But parallelization is actually one"
+ },
+ {
+  "start": 2405.4,
+  "end": 2408.1,
+  "text": "of the really big important things in LLMs."
+ },
+ {
+  "start": 2408.1,
+  "end": 2409.34,
+  "text": "LLMs are very big."
+ },
+ {
+  "start": 2409.34,
+  "end": 2410.96,
+  "text": "They don't fit in single devices,"
+ },
+ {
+  "start": 2410.96,
+  "end": 2412.285,
+  "text": "either to train or inference."
+ },
+ {
+  "start": 2412.285,
+  "end": 2414.16,
+  "text": "So you want many different ways of cutting up"
+ },
+ {
+  "start": 2414.16,
+  "end": 2416.4,
+  "text": "your model to efficiently serve or train them."
+ },
+ {
+  "start": 2416.4,
+  "end": 2418.92,
+  "text": "Mixture of experts have this additional nice thing"
+ },
+ {
+  "start": 2418.92,
+  "end": 2422.4,
+  "text": "that you can do, where your experts within each FFN"
+ },
+ {
+  "start": 2422.4,
+  "end": 2425.2,
+  "text": "naturally come in different chunks."
+ },
+ {
+  "start": 2425.2,
+  "end": 2426.9,
+  "text": "Each expert is a natural chunk."
+ },
+ {
+  "start": 2426.9,
+  "end": 2428.74,
+  "text": "You can put them on different devices."
+ },
+ {
+  "start": 2428.74,
+  "end": 2431.54,
+  "text": "And then you can route the activations to different devices."
+ },
+ {
+  "start": 2431.54,
+  "end": 2434.3,
+  "text": "We'll talk about expert parallel later, which is what this is."
+ },
+ {
+  "start": 2434.3,
+  "end": 2436.52,
+  "text": "But this gives you an additional systems thing"
+ },
+ {
+  "start": 2436.52,
+  "end": 2438.96,
+  "text": "that you can optimize, which is very helpful if you"
+ },
+ {
+  "start": 2438.96,
+  "end": 2442.12,
+  "text": "want to optimize your serving."
+ },
+ {
+  "start": 2442.12,
+  "end": 2447.15,
+  "text": "In the West, I think there's been several open source"
+ },
+ {
+  "start": 2447.15,
+  "end": 2450.11,
+  "text": "releases that are big, strong MoEs."
+ },
+ {
+  "start": 2450.11,
+  "end": 2455.91,
+  "text": "On the big model side, there was Llama 4 and GPT OSS from OpenAI."
+ },
+ {
+  "start": 2455.91,
+  "end": 2458.95,
+  "text": "Unfortunately, I guess, open source model releases"
+ },
+ {
+  "start": 2458.95,
+  "end": 2462.11,
+  "text": "in the West have stalled, for the most part."
+ },
+ {
+  "start": 2462.11,
+  "end": 2464.33,
+  "text": "So there aren't quite as many being released now,"
+ },
+ {
+  "start": 2464.33,
+  "end": 2467.71,
+  "text": "but there's at least two good examples of this,"
+ },
+ {
+  "start": 2467.71,
+  "end": 2472.07,
+  "text": "both top tier models in their own right."
+ },
+ {
+  "start": 2472.07,
+  "end": 2475.03,
+  "text": "But I think a lot of the action for both MoE"
+ },
+ {
+  "start": 2475.03,
+  "end": 2479.67,
+  "text": "research and training has happened in China."
+ },
+ {
+  "start": 2479.67,
+  "end": 2483.61,
+  "text": "Qwen, and DeepSeek, and some others, like mini CPM,"
+ },
+ {
+  "start": 2483.61,
+  "end": 2487.91,
+  "text": "did some of the earliest work training and popularizing MoEs."
+ },
+ {
+  "start": 2487.91,
+  "end": 2491.35,
+  "text": "They continue to do really great work on MoEs."
+ },
+ {
+  "start": 2491.35,
+  "end": 2493.81,
+  "text": "If you look at some of the early Qwen MoE models,"
+ },
+ {
+  "start": 2493.81,
+  "end": 2496.51,
+  "text": "this was Qwen 1.5 MoE."
+ },
+ {
+  "start": 2496.51,
+  "end": 2500.11,
+  "text": "They showed that their like small 2.7 billion parameter"
+ },
+ {
+  "start": 2500.11,
+  "end": 2504.05,
+  "text": "active model was doing better than many of the 7B models"
+ },
+ {
+  "start": 2504.05,
+  "end": 2504.71,
+  "text": "at the time."
+ },
+ {
+  "start": 2504.71,
+  "end": 2507.29,
+  "text": "And I think some of this early proof of work from DeepSeek"
+ },
+ {
+  "start": 2507.29,
+  "end": 2510.81,
+  "text": "and Qwen really convinced everyone else in the open source"
+ },
+ {
+  "start": 2510.81,
+  "end": 2514.61,
+  "text": "community that this was the right way to go."
+ },
+ {
+  "start": 2514.61,
+  "end": 2516.67,
+  "text": "Speaking of DeepSeek-- was there a question?"
+ },
+ {
+  "start": 2516.67,
+  "end": 2517.41,
+  "text": "Yes."
+ },
+ {
+  "start": 2517.41,
+  "end": 2521.43,
+  "text": "I guess one question I had about the expert parallel,"
+ },
+ {
+  "start": 2521.43,
+  "end": 2524.29,
+  "text": "isn't there like a communication bottleneck that's"
+ },
+ {
+  "start": 2524.29,
+  "end": 2526.73,
+  "text": "built up because these experts are communicating"
+ },
+ {
+  "start": 2526.73,
+  "end": 2527.89,
+  "text": "with each other?"
+ },
+ {
+  "start": 2527.89,
+  "end": 2528.93,
+  "text": "Yes."
+ },
+ {
+  "start": 2528.93,
+  "end": 2531.17,
+  "text": "So in some sense, you pay the communication cost"
+ },
+ {
+  "start": 2531.17,
+  "end": 2533.13,
+  "text": "of shipping an activation over."
+ },
+ {
+  "start": 2533.13,
+  "end": 2536.81,
+  "text": "And I will not explain, but I will show you one trick"
+ },
+ {
+  "start": 2536.81,
+  "end": 2539.13,
+  "text": "of how you reduce that."
+ },
+ {
+  "start": 2539.13,
+  "end": 2541.55,
+  "text": "But in general, you're trading certain things off."
+ },
+ {
+  "start": 2541.55,
+  "end": 2543.217,
+  "text": "You're getting more aggregate flops."
+ },
+ {
+  "start": 2543.217,
+  "end": 2544.55,
+  "text": "You're reducing your memory use."
+ },
+ {
+  "start": 2544.55,
+  "end": 2546.508,
+  "text": "And in exchange, you're going to pay for comms."
+ },
+ {
+  "start": 2546.508,
+  "end": 2550.09,
+  "text": "So it's highly dependent on your topology and all"
+ },
+ {
+  "start": 2550.09,
+  "end": 2553.07,
+  "text": "these other things, whether this is going to be a net win."
+ },
+ {
+  "start": 2553.07,
+  "end": 2553.57,
+  "text": "Cool."
+ },
+ {
+  "start": 2553.57,
+  "end": 2554.37,
+  "text": "Oh, yeah."
+ },
+ {
+  "start": 2554.37,
+  "end": 2557.69,
+  "text": "So during training [INAUDIBLE]."
+ },
+ {
+  "start": 2557.69,
+  "end": 2558.19,
+  "text": "OK."
+ },
+ {
+  "start": 2558.19,
+  "end": 2559.37,
+  "text": "This is the important part."
+ },
+ {
+  "start": 2559.37,
+  "end": 2561.68,
+  "text": "During training, they are also sparse."
+ },
+ {
+  "start": 2561.68,
+  "end": 2564.42,
+  "text": "This is really the key thing that makes MoEs hard."
+ },
+ {
+  "start": 2564.42,
+  "end": 2570.16,
+  "text": "I mean, I'm spoilering the key idea from a few slides down,"
+ },
+ {
+  "start": 2570.16,
+  "end": 2573.013,
+  "text": "but it would be very easy if we activated all the experts"
+ },
+ {
+  "start": 2573.013,
+  "end": 2573.68,
+  "text": "during training."
+ },
+ {
+  "start": 2573.68,
+  "end": 2574.76,
+  "text": "Because then we get to see, oh, which"
+ },
+ {
+  "start": 2574.76,
+  "end": 2576.1,
+  "text": "expert is good for my input?"
+ },
+ {
+  "start": 2576.1,
+  "end": 2577.96,
+  "text": "So you get to learn how to route."
+ },
+ {
+  "start": 2577.96,
+  "end": 2581.36,
+  "text": "The hard thing about MoE is that during training, you only"
+ },
+ {
+  "start": 2581.36,
+  "end": 2583.54,
+  "text": "have one or k experts active."
+ },
+ {
+  "start": 2583.54,
+  "end": 2586.0,
+  "text": "So you don't what happened with the rest of them."
+ },
+ {
+  "start": 2586.0,
+  "end": 2587.94,
+  "text": "You only know the ones that activated."
+ },
+ {
+  "start": 2587.94,
+  "end": 2590.2,
+  "text": "Despite this, you must somehow learn to route."
+ },
+ {
+  "start": 2590.2,
+  "end": 2593.96,
+  "text": "So it's got this RL bandit flavor to the problem,"
+ },
+ {
+  "start": 2593.96,
+  "end": 2596.38,
+  "text": "but we're not going to solve it with either RL or bandits."
+ },
+ {
+  "start": 2596.38,
+  "end": 2598.547,
+  "text": "We're going to solve it with the power of heuristics"
+ },
+ {
+  "start": 2598.547,
+  "end": 2599.56,
+  "text": "and deep learning magic."
+ },
+ {
+  "start": 2599.56,
+  "end": 2600.58,
+  "text": "Yes."
+ },
+ {
+  "start": 2600.58,
+  "end": 2604.36,
+  "text": "What is the granularity of switching between experts?"
+ },
+ {
+  "start": 2604.36,
+  "end": 2607.76,
+  "text": "So the granularity, as in the scale at which we route experts,"
+ },
+ {
+  "start": 2607.76,
+  "end": 2608.532,
+  "text": "is at token level."
+ },
+ {
+  "start": 2608.532,
+  "end": 2609.74,
+  "text": "I don't know if--OK, good."
+ },
+ {
+  "start": 2609.74,
+  "end": 2609.84,
+  "text": "Good."
+ },
+ {
+  "start": 2609.84,
+  "end": 2610.54,
+  "text": "That was the question."
+ },
+ {
+  "start": 2610.54,
+  "end": 2611.54,
+  "text": "Yes, at the token level."
+ },
+ {
+  "start": 2611.54,
+  "end": 2612.92,
+  "text": "So every token gets an expert."
+ },
+ {
+  "start": 2612.92,
+  "end": 2616.3,
+  "text": "And the routers, just to get your mental model correct,"
+ },
+ {
+  "start": 2616.3,
+  "end": 2617.78,
+  "text": "the routers are super naive."
+ },
+ {
+  "start": 2617.78,
+  "end": 2620.74,
+  "text": "They're a single matrix multiply between your input"
+ },
+ {
+  "start": 2620.74,
+  "end": 2621.715,
+  "text": "and your whatever."
+ },
+ {
+  "start": 2621.715,
+  "end": 2623.84,
+  "text": "And so you're not going to do anything complicated."
+ },
+ {
+  "start": 2623.84,
+  "end": 2626.04,
+  "text": "You don't know it's like a medical question or not."
+ },
+ {
+  "start": 2626.04,
+  "end": 2627.98,
+  "text": "You're like, oh, this is a token that looks like it's"
+ },
+ {
+  "start": 2627.98,
+  "end": 2629.12,
+  "text": "in, I don't know, Japanese."
+ },
+ {
+  "start": 2629.12,
+  "end": 2631.5,
+  "text": "Let's route it to expert 7."
+ },
+ {
+  "start": 2631.5,
+  "end": 2632.3,
+  "text": "Yes."
+ },
+ {
+  "start": 2632.3,
+  "end": 2632.8,
+  "text": "Yeah."
+ },
+ {
+  "start": 2632.8,
+  "end": 2639.14,
+  "text": "So is there an upper limit to parallelizing these MoE models"
+ },
+ {
+  "start": 2639.14,
+  "end": 2640.96,
+  "text": "in training or inference?"
+ },
+ {
+  "start": 2640.96,
+  "end": 2643.46,
+  "text": "Yeah, in general, there's an upper limit to parallelization,"
+ },
+ {
+  "start": 2643.46,
+  "end": 2646.18,
+  "text": "because as you shard over more and more devices,"
+ },
+ {
+  "start": 2646.18,
+  "end": 2649.86,
+  "text": "the communication cost explodes."
+ },
+ {
+  "start": 2649.86,
+  "end": 2652.54,
+  "text": "Well, if we get the assignment to design done correctly,"
+ },
+ {
+  "start": 2652.54,
+  "end": 2655.04,
+  "text": "you will have to deal with some of these in your assignment."
+ },
+ {
+  "start": 2655.04,
+  "end": 2656.94,
+  "text": "We will ask you to figure out the networking"
+ },
+ {
+  "start": 2656.94,
+  "end": 2659.795,
+  "text": "topology and things like this that will make sharding make"
+ },
+ {
+  "start": 2659.795,
+  "end": 2660.92,
+  "text": "sense, or it's the reverse."
+ },
+ {
+  "start": 2660.92,
+  "end": 2662.42,
+  "text": "Given a networking topology, you'll"
+ },
+ {
+  "start": 2662.42,
+  "end": 2665.62,
+  "text": "have to figure out how to shard models and things like this."
+ },
+ {
+  "start": 2665.62,
+  "end": 2666.46,
+  "text": "Yeah."
+ },
+ {
+  "start": 2666.46,
+  "end": 2667.14,
+  "text": "Good."
+ },
+ {
+  "start": 2670.58,
+  "end": 2673.973,
+  "text": "DeepSeek, now known for DeepSeek R1 and so on."
+ },
+ {
+  "start": 2673.973,
+  "end": 2676.14,
+  "text": "But I think the thing I really like about DeepSeek--"
+ },
+ {
+  "start": 2676.14,
+  "end": 2678.41,
+  "text": "and originally, this lecture was, let's just"
+ },
+ {
+  "start": 2678.41,
+  "end": 2680.33,
+  "text": "go through a DeepSeek paper lecture, the very"
+ },
+ {
+  "start": 2680.33,
+  "end": 2682.77,
+  "text": "first iteration, is that they've done actually"
+ },
+ {
+  "start": 2682.77,
+  "end": 2687.23,
+  "text": "really good architecture in LLM science work for a long time."
+ },
+ {
+  "start": 2687.23,
+  "end": 2690.21,
+  "text": "And DeepSeek were one of the earlier ones going through"
+ },
+ {
+  "start": 2690.21,
+  "end": 2692.03,
+  "text": "and showing why MoEs are good."
+ },
+ {
+  "start": 2692.03,
+  "end": 2695.085,
+  "text": "And they have a ton of good ablation work on, oh,"
+ },
+ {
+  "start": 2695.085,
+  "end": 2696.71,
+  "text": "what happens if we use the dense layer?"
+ },
+ {
+  "start": 2696.71,
+  "end": 2697.99,
+  "text": "What if we use hash routing?"
+ },
+ {
+  "start": 2697.99,
+  "end": 2699.43,
+  "text": "What if we use a switch router?"
+ },
+ {
+  "start": 2699.43,
+  "end": 2701.37,
+  "text": "All these different kinds of design decisions,"
+ },
+ {
+  "start": 2701.37,
+  "end": 2704.203,
+  "text": "you can see in some of their earlier DeepSeekMoE papers."
+ },
+ {
+  "start": 2704.203,
+  "end": 2706.37,
+  "text": "So if you're interested in a lot of these questions,"
+ },
+ {
+  "start": 2706.37,
+  "end": 2707.91,
+  "text": "like architecture, design and so on,"
+ },
+ {
+  "start": 2707.91,
+  "end": 2710.43,
+  "text": "I would suggest you read the earlier DeepSeek papers."
+ },
+ {
+  "start": 2710.43,
+  "end": 2713.21,
+  "text": "There's a lot to learn from all of these."
+ },
+ {
+  "start": 2713.21,
+  "end": 2715.21,
+  "text": "And of course, progress hasn't stopped."
+ },
+ {
+  "start": 2715.21,
+  "end": 2720.17,
+  "text": "DeepSeek v3, and v3.2, and GLM, and so on, have built these"
+ },
+ {
+  "start": 2720.17,
+  "end": 2723.17,
+  "text": "wonderful, very strong MoE models."
+ },
+ {
+  "start": 2723.17,
+  "end": 2724.97,
+  "text": "It's quite clear that this is where"
+ },
+ {
+  "start": 2724.97,
+  "end": 2727.53,
+  "text": "the future of these big models are going to be"
+ },
+ {
+  "start": 2727.53,
+  "end": 2729.55,
+  "text": "for the foreseeable future."
+ },
+ {
+  "start": 2729.55,
+  "end": 2733.25,
+  "text": "At least the next couple of years, I imagine, will be MoEs."
+ },
+ {
+  "start": 2733.25,
+  "end": 2733.97,
+  "text": "OK."
+ },
+ {
+  "start": 2733.97,
+  "end": 2740.35,
+  "text": "So now, the question is, why haven't they been more popular?"
+ },
+ {
+  "start": 2740.35,
+  "end": 2742.27,
+  "text": "In many different ways, I feel like MoEs"
+ },
+ {
+  "start": 2742.27,
+  "end": 2743.795,
+  "text": "caught on pretty slowly."
+ },
+ {
+  "start": 2743.795,
+  "end": 2745.17,
+  "text": "You look at some of these papers."
+ },
+ {
+  "start": 2745.17,
+  "end": 2746.51,
+  "text": "They're like in 2022."
+ },
+ {
+  "start": 2746.51,
+  "end": 2751.19,
+  "text": "Google was studying and really trying to push MoEs."
+ },
+ {
+  "start": 2751.19,
+  "end": 2755.07,
+  "text": "But it's only in 2024 onwards that MoEs really"
+ },
+ {
+  "start": 2755.07,
+  "end": 2756.79,
+  "text": "started to catch on why."
+ },
+ {
+  "start": 2756.79,
+  "end": 2759.89,
+  "text": "Also, if you're doing LLM research of various kinds,"
+ },
+ {
+  "start": 2759.89,
+  "end": 2762.15,
+  "text": "you're probably mostly working with dense models,"
+ },
+ {
+  "start": 2762.15,
+  "end": 2764.71,
+  "text": "like why not MoE models if they're so nice?"
+ },
+ {
+  "start": 2764.71,
+  "end": 2766.67,
+  "text": "We can save on compute."
+ },
+ {
+  "start": 2766.67,
+  "end": 2769.17,
+  "text": "There's a lot of complexities that come from MoEs."
+ },
+ {
+  "start": 2769.17,
+  "end": 2771.99,
+  "text": "It's not easy to train at MoE, or to use that MoE,"
+ },
+ {
+  "start": 2771.99,
+  "end": 2774.63,
+  "text": "or to do many things."
+ },
+ {
+  "start": 2774.63,
+  "end": 2776.79,
+  "text": "The infrastructure is very complex."
+ },
+ {
+  "start": 2776.79,
+  "end": 2779.29,
+  "text": "I mean, there were a couple questions about parallelization,"
+ },
+ {
+  "start": 2779.29,
+  "end": 2780.91,
+  "text": "but this is generally right, that it's"
+ },
+ {
+  "start": 2780.91,
+  "end": 2783.95,
+  "text": "hard to parallelize experts in ways that"
+ },
+ {
+  "start": 2783.95,
+  "end": 2786.11,
+  "text": "are efficient in utilization."
+ },
+ {
+  "start": 2786.11,
+  "end": 2787.57,
+  "text": "MoEs have a lot of parameters."
+ },
+ {
+  "start": 2787.57,
+  "end": 2790.27,
+  "text": "It's hard to fit them on a single device."
+ },
+ {
+  "start": 2790.27,
+  "end": 2793.86,
+  "text": "And if you're training them, the MoEs can really blow up on you."
+ },
+ {
+  "start": 2793.86,
+  "end": 2796.12,
+  "text": "And you'll see why in a few slides,"
+ },
+ {
+  "start": 2796.12,
+  "end": 2798.04,
+  "text": "why MoEs are just really hard to deal with,"
+ },
+ {
+  "start": 2798.04,
+  "end": 2800.94,
+  "text": "but they're just not easy objects to work with."
+ },
+ {
+  "start": 2800.94,
+  "end": 2806.26,
+  "text": "I mean, there's good rules of thumb now, but it's not easy."
+ },
+ {
+  "start": 2806.26,
+  "end": 2809.7,
+  "text": "I'll briefly mention with one slide that there are people"
+ },
+ {
+  "start": 2809.7,
+  "end": 2813.62,
+  "text": "that also mixture of experts, the attention block"
+ },
+ {
+  "start": 2813.62,
+  "end": 2814.98,
+  "text": "in transformers."
+ },
+ {
+  "start": 2814.98,
+  "end": 2817.14,
+  "text": "There have been a couple of papers,"
+ },
+ {
+  "start": 2817.14,
+  "end": 2819.6,
+  "text": "but they are much less common."
+ },
+ {
+  "start": 2819.6,
+  "end": 2822.14,
+  "text": "And I think the things that I have seen"
+ },
+ {
+  "start": 2822.14,
+  "end": 2823.66,
+  "text": "is that they haven't been quite as"
+ },
+ {
+  "start": 2823.66,
+  "end": 2828.5,
+  "text": "easy to tame or to get to work compared to just replacing"
+ },
+ {
+  "start": 2828.5,
+  "end": 2830.8,
+  "text": "the FFN or the MLP layer."
+ },
+ {
+  "start": 2830.8,
+  "end": 2832.56,
+  "text": "So I'm only going to talk about the left."
+ },
+ {
+  "start": 2832.56,
+  "end": 2835.82,
+  "text": "This is basically what all the big models do."
+ },
+ {
+  "start": 2835.82,
+  "end": 2838.9,
+  "text": "People are not, for the most part, sharding or sorry,"
+ },
+ {
+  "start": 2838.9,
+  "end": 2843.42,
+  "text": "splitting up attention heads into experts."
+ },
+ {
+  "start": 2843.42,
+  "end": 2843.98,
+  "text": "OK."
+ },
+ {
+  "start": 2843.98,
+  "end": 2848.18,
+  "text": "So that was the broad industrial overview of MoE"
+ },
+ {
+  "start": 2848.18,
+  "end": 2850.26,
+  "text": "and what the state of things are."
+ },
+ {
+  "start": 2850.26,
+  "end": 2852.92,
+  "text": "But now, let's talk about how you design an MoE, how"
+ },
+ {
+  "start": 2852.92,
+  "end": 2854.36,
+  "text": "you think about an MoE."
+ },
+ {
+  "start": 2854.36,
+  "end": 2858.12,
+  "text": "So to do that, I'm going to talk about three different kind"
+ },
+ {
+  "start": 2858.12,
+  "end": 2860.18,
+  "text": "of axes of variation."
+ },
+ {
+  "start": 2860.18,
+  "end": 2863.77,
+  "text": "So what kinds of things can change for MoEs?"
+ },
+ {
+  "start": 2863.77,
+  "end": 2865.52,
+  "text": "Well, you can change the routing function."
+ },
+ {
+  "start": 2865.52,
+  "end": 2868.96,
+  "text": "We know that MoEs have this core thing of a router"
+ },
+ {
+  "start": 2868.96,
+  "end": 2870.62,
+  "text": "has to send tokens to experts."
+ },
+ {
+  "start": 2870.62,
+  "end": 2872.16,
+  "text": "So we can change that."
+ },
+ {
+  "start": 2872.16,
+  "end": 2874.42,
+  "text": "We can change the sizes of the different experts."
+ },
+ {
+  "start": 2874.42,
+  "end": 2877.72,
+  "text": "For a given budget, you might have more experts"
+ },
+ {
+  "start": 2877.72,
+  "end": 2881.552,
+  "text": "with fewer parameters or fewer experts with more parameters."
+ },
+ {
+  "start": 2881.552,
+  "end": 2883.76,
+  "text": "And then finally, we're going to talk about training,"
+ },
+ {
+  "start": 2883.76,
+  "end": 2885.82,
+  "text": "because training is going to be really difficult."
+ },
+ {
+  "start": 2885.82,
+  "end": 2889.92,
+  "text": "Once you start to realize how MoEs work, you realize, wow,"
+ },
+ {
+  "start": 2889.92,
+  "end": 2892.44,
+  "text": "it is not easy to train something that routes"
+ },
+ {
+  "start": 2892.44,
+  "end": 2895.3,
+  "text": "tokens to different places."
+ },
+ {
+  "start": 2895.3,
+  "end": 2895.8,
+  "text": "OK."
+ },
+ {
+  "start": 2895.8,
+  "end": 2900.84,
+  "text": "So in all cases, we don't want to activate all the experts."
+ },
+ {
+  "start": 2900.84,
+  "end": 2904.8,
+  "text": "We want to only have some subset of experts active."
+ },
+ {
+  "start": 2904.8,
+  "end": 2908.8,
+  "text": "And so we are going to always be choosing some TopK."
+ },
+ {
+  "start": 2908.8,
+  "end": 2912.26,
+  "text": "There is different kinds of choices that you can do."
+ },
+ {
+  "start": 2912.26,
+  "end": 2915.0,
+  "text": "You can have the token choose the expert."
+ },
+ {
+  "start": 2915.0,
+  "end": 2916.94,
+  "text": "You can have the expert choose the token."
+ },
+ {
+  "start": 2916.94,
+  "end": 2919.08,
+  "text": "So each expert picks their favorite tokens,"
+ },
+ {
+  "start": 2919.08,
+  "end": 2922.34,
+  "text": "or you can have each token pick their favorite experts."
+ },
+ {
+  "start": 2922.34,
+  "end": 2925.58,
+  "text": "Or you can, somehow, have this very complicated router"
+ },
+ {
+  "start": 2925.58,
+  "end": 2928.18,
+  "text": "that globally decides, oh, yes, you, token, should"
+ },
+ {
+  "start": 2928.18,
+  "end": 2928.933,
+  "text": "go to this expert."
+ },
+ {
+  "start": 2928.933,
+  "end": 2931.1,
+  "text": "And this other token should go to that other experts"
+ },
+ {
+  "start": 2931.1,
+  "end": 2935.5,
+  "text": "to try to globally optimize assignments."
+ },
+ {
+  "start": 2935.5,
+  "end": 2940.88,
+  "text": "So basically, almost all the MoE do token choice TopK."
+ },
+ {
+  "start": 2940.88,
+  "end": 2944.02,
+  "text": "And so the token is going to be the one to choose the experts."
+ },
+ {
+  "start": 2944.02,
+  "end": 2946.02,
+  "text": "And there's going to be k different experts that"
+ },
+ {
+  "start": 2946.02,
+  "end": 2949.74,
+  "text": "get selected to be in the pool."
+ },
+ {
+  "start": 2949.74,
+  "end": 2953.58,
+  "text": "And you can see, this is from the OlMoE paper,"
+ },
+ {
+  "start": 2953.58,
+  "end": 2956.403,
+  "text": "differences between token choice and expert choice."
+ },
+ {
+  "start": 2956.403,
+  "end": 2957.82,
+  "text": "You see that token choice is going"
+ },
+ {
+  "start": 2957.82,
+  "end": 2961.18,
+  "text": "to get lower validation losses, higher downstream benchmark"
+ },
+ {
+  "start": 2961.18,
+  "end": 2964.0,
+  "text": "scores compared to expert choice."
+ },
+ {
+  "start": 2964.0,
+  "end": 2966.0,
+  "text": "There have been successful expert choice models."
+ },
+ {
+  "start": 2966.0,
+  "end": 2967.61,
+  "text": "I mean, this also trains fine."
+ },
+ {
+  "start": 2967.61,
+  "end": 2972.57,
+  "text": "But token choice has generally been much easier to get working"
+ },
+ {
+  "start": 2972.57,
+  "end": 2974.93,
+  "text": "and has been the standard for all of the models"
+ },
+ {
+  "start": 2974.93,
+  "end": 2976.61,
+  "text": "that we see today."
+ },
+ {
+  "start": 2976.61,
+  "end": 2979.95,
+  "text": "I think one of the four models was maybe expert choice."
+ },
+ {
+  "start": 2979.95,
+  "end": 2981.53,
+  "text": "But I don't think that's necessarily"
+ },
+ {
+  "start": 2981.53,
+  "end": 2983.39,
+  "text": "a strong vote of confidence."
+ },
+ {
+  "start": 2986.61,
+  "end": 2988.85,
+  "text": "I think that was one of the unreleased Llama 4"
+ },
+ {
+  "start": 2988.85,
+  "end": 2990.35,
+  "text": "models in my defense."
+ },
+ {
+  "start": 2990.35,
+  "end": 2990.97,
+  "text": "OK."
+ },
+ {
+  "start": 2990.97,
+  "end": 2993.41,
+  "text": "So I think there's many different ways"
+ },
+ {
+  "start": 2993.41,
+  "end": 2995.29,
+  "text": "that you can do routing."
+ },
+ {
+  "start": 2995.29,
+  "end": 2997.37,
+  "text": "So one of the ways that you can do routing"
+ },
+ {
+  "start": 2997.37,
+  "end": 3002.93,
+  "text": "is, you can actually have a small, small linear projection"
+ },
+ {
+  "start": 3002.93,
+  "end": 3004.79,
+  "text": "that says, OK, I'm going to get my input."
+ },
+ {
+  "start": 3004.79,
+  "end": 3007.49,
+  "text": "My router is going to compute an inner product."
+ },
+ {
+  "start": 3007.49,
+  "end": 3009.83,
+  "text": "Each expert has a vector direction."
+ },
+ {
+  "start": 3009.83,
+  "end": 3013.47,
+  "text": "And the closest in inner product space will get selected."
+ },
+ {
+  "start": 3013.47,
+  "end": 3016.27,
+  "text": "This is, by far, the most common router."
+ },
+ {
+  "start": 3016.27,
+  "end": 3019.45,
+  "text": "It's used in the classic switch transformer, the Gshard."
+ },
+ {
+  "start": 3019.45,
+  "end": 3021.55,
+  "text": "Those two are the early Google papers."
+ },
+ {
+  "start": 3021.55,
+  "end": 3025.27,
+  "text": "It's used in Grok, Mixtral plan, DBRX, DeepSeek, and others."
+ },
+ {
+  "start": 3025.27,
+  "end": 3030.43,
+  "text": "The number of k that you choose varies, depending on which paper"
+ },
+ {
+  "start": 3030.43,
+  "end": 3032.19,
+  "text": "you're looking at."
+ },
+ {
+  "start": 3032.19,
+  "end": 3036.39,
+  "text": "But for the most part, you're just taking inner products."
+ },
+ {
+  "start": 3036.39,
+  "end": 3039.47,
+  "text": "One thing that has always been a little mysterious to me"
+ },
+ {
+  "start": 3039.47,
+  "end": 3043.55,
+  "text": "is that, many, many papers have shown that actually, you don't"
+ },
+ {
+  "start": 3043.55,
+  "end": 3045.21,
+  "text": "need to do any learned routing."
+ },
+ {
+  "start": 3045.21,
+  "end": 3047.99,
+  "text": "You can just take your X's, you can hash them and send them"
+ },
+ {
+  "start": 3047.99,
+  "end": 3050.29,
+  "text": "to different feedforward networks."
+ },
+ {
+  "start": 3050.29,
+  "end": 3052.43,
+  "text": "And actually, this is fine too."
+ },
+ {
+  "start": 3052.43,
+  "end": 3054.71,
+  "text": "This gives gains, not as much as TopK,"
+ },
+ {
+  "start": 3054.71,
+  "end": 3058.19,
+  "text": "but somehow, hashing-based expert routing is also something"
+ },
+ {
+  "start": 3058.19,
+  "end": 3059.13,
+  "text": "that people do."
+ },
+ {
+  "start": 3059.13,
+  "end": 3063.65,
+  "text": "Common baseline in papers, not used in deployment"
+ },
+ {
+  "start": 3063.65,
+  "end": 3065.35,
+  "text": "for many reasons."
+ },
+ {
+  "start": 3065.35,
+  "end": 3067.57,
+  "text": "You can do RL to learn the routes."
+ },
+ {
+  "start": 3067.57,
+  "end": 3071.23,
+  "text": "You can basically have a router that's an inner product router."
+ },
+ {
+  "start": 3071.23,
+  "end": 3073.39,
+  "text": "And you can use reinforcement learning"
+ },
+ {
+  "start": 3073.39,
+  "end": 3076.31,
+  "text": "to try to treat this router as a kind of policy"
+ },
+ {
+  "start": 3076.31,
+  "end": 3078.55,
+  "text": "and then learn it."
+ },
+ {
+  "start": 3078.55,
+  "end": 3081.55,
+  "text": "If you're a machine learning classic learning"
+ },
+ {
+  "start": 3081.55,
+  "end": 3083.643,
+  "text": "theory-type oriented person, I think"
+ },
+ {
+  "start": 3083.643,
+  "end": 3086.06,
+  "text": "this should be the natural way to think about the problem."
+ },
+ {
+  "start": 3086.06,
+  "end": 3087.72,
+  "text": "You're like, OK, what am I doing?"
+ },
+ {
+  "start": 3087.72,
+  "end": 3089.24,
+  "text": "It's a bandit problem."
+ },
+ {
+  "start": 3089.24,
+  "end": 3092.26,
+  "text": "I'm selecting one out of k or k out of n."
+ },
+ {
+  "start": 3092.26,
+  "end": 3095.0,
+  "text": "And I don't observe all of them."
+ },
+ {
+  "start": 3095.0,
+  "end": 3096.4,
+  "text": "This is a bandit problem."
+ },
+ {
+  "start": 3096.4,
+  "end": 3098.4,
+  "text": "I will use a bandit or an RL algorithm."
+ },
+ {
+  "start": 3098.4,
+  "end": 3102.91,
+  "text": "Used in some of the earliest work, because this the natural way to think about the problem,"
+ },
+ {
+  "start": 3102.91,
+  "end": 3105.46,
+  "text": "like Bengio in 2013."
+ },
+ {
+  "start": 3105.46,
+  "end": 3108.5,
+  "text": "But it is not a common approach."
+ },
+ {
+  "start": 3108.5,
+  "end": 3110.58,
+  "text": "And I think the reason why it's not common"
+ },
+ {
+  "start": 3110.58,
+  "end": 3114.42,
+  "text": "is because the approaches needed to do RL introduce"
+ },
+ {
+  "start": 3114.42,
+  "end": 3117.42,
+  "text": "a lot of overhead in terms of both the RL algorithm"
+ },
+ {
+  "start": 3117.42,
+  "end": 3120.46,
+  "text": "and the stochasticity."
+ },
+ {
+  "start": 3120.46,
+  "end": 3122.06,
+  "text": "And what people have figured out is,"
+ },
+ {
+  "start": 3122.06,
+  "end": 3124.08,
+  "text": "there's a good set of heuristics,"
+ },
+ {
+  "start": 3124.08,
+  "end": 3128.42,
+  "text": "these recipes that you can apply to this very simple classic TopK"
+ },
+ {
+  "start": 3128.42,
+  "end": 3132.8,
+  "text": "routing scheme that basically just has it working right."
+ },
+ {
+  "start": 3132.8,
+  "end": 3136.58,
+  "text": "And so there's no reason to do something much more complicated."
+ },
+ {
+  "start": 3136.58,
+  "end": 3140.98,
+  "text": "I will finally mention an idea that I think is really cool"
+ },
+ {
+  "start": 3140.98,
+  "end": 3144.16,
+  "text": "and that I love as a person that likes things that make sense."
+ },
+ {
+  "start": 3144.16,
+  "end": 3146.4,
+  "text": "You can solve a linear assignment problem,"
+ },
+ {
+  "start": 3146.4,
+  "end": 3149.44,
+  "text": "where you say, OK, I'm going to globally compute the score that"
+ },
+ {
+  "start": 3149.44,
+  "end": 3152.72,
+  "text": "says like, oh, it would be this good for this token"
+ },
+ {
+  "start": 3152.72,
+  "end": 3153.64,
+  "text": "to go to that expert."
+ },
+ {
+  "start": 3153.64,
+  "end": 3155.44,
+  "text": "So you compute this all pairwise scores"
+ },
+ {
+  "start": 3155.44,
+  "end": 3157.02,
+  "text": "of how good the assignments are."
+ },
+ {
+  "start": 3157.02,
+  "end": 3158.72,
+  "text": "And you can use linear assignment"
+ },
+ {
+  "start": 3158.72,
+  "end": 3161.28,
+  "text": "to exactly solve for the optimal assignment"
+ },
+ {
+  "start": 3161.28,
+  "end": 3163.92,
+  "text": "from experts to tokens."
+ },
+ {
+  "start": 3163.92,
+  "end": 3167.88,
+  "text": "It's been shown to do good things in some cases,"
+ },
+ {
+  "start": 3167.88,
+  "end": 3170.32,
+  "text": "hasn't been seen at scale at all."
+ },
+ {
+  "start": 3170.32,
+  "end": 3172.8,
+  "text": "I would think, because it's extremely expensive"
+ },
+ {
+  "start": 3172.8,
+  "end": 3176.88,
+  "text": "relative to the others to get working."
+ },
+ {
+  "start": 3176.88,
+  "end": 3181.36,
+  "text": "So TopK routing, as I said, is basically the consensus"
+ },
+ {
+  "start": 3181.36,
+  "end": 3183.0,
+  "text": "routing mechanism."
+ },
+ {
+  "start": 3183.0,
+  "end": 3184.24,
+  "text": "How does this work?"
+ },
+ {
+  "start": 3184.24,
+  "end": 3185.42,
+  "text": "It's very, very simple."
+ },
+ {
+  "start": 3185.42,
+  "end": 3190.2,
+  "text": "And if you were paying attention in the DSA slide,"
+ },
+ {
+  "start": 3190.2,
+  "end": 3192.68,
+  "text": "this looks a lot like DSA."
+ },
+ {
+  "start": 3192.68,
+  "end": 3196.288,
+  "text": "You will also notice this if you were ading some other papers like H-Nets"
+ },
+ {
+  "start": 3196.288,
+  "end": 3197.58,
+  "text": "or these other kinds of things."
+ },
+ {
+  "start": 3197.58,
+  "end": 3199.33,
+  "text": "This will appear in many different places."
+ },
+ {
+  "start": 3199.33,
+  "end": 3203.39,
+  "text": "So this is a good kind of pattern to be able to recognize."
+ },
+ {
+  "start": 3203.39,
+  "end": 3209.39,
+  "text": "So what you're doing is, you are going to take in your inputs."
+ },
+ {
+  "start": 3209.39,
+  "end": 3211.93,
+  "text": "And you're going to take it through a feed forward."
+ },
+ {
+  "start": 3211.93,
+  "end": 3214.73,
+  "text": "And then I'm going to compute some sort of scores."
+ },
+ {
+  "start": 3214.73,
+  "end": 3216.55,
+  "text": "And the scores that I'm going to compute"
+ },
+ {
+  "start": 3216.55,
+  "end": 3220.87,
+  "text": "is going to be the softmax between the experts"
+ },
+ {
+  "start": 3220.87,
+  "end": 3222.33,
+  "text": "and my inputs u."
+ },
+ {
+  "start": 3222.33,
+  "end": 3225.33,
+  "text": "And then this s is going to be the scores."
+ },
+ {
+  "start": 3225.33,
+  "end": 3227.677,
+  "text": "And I'm going to select the TopK of those guys."
+ },
+ {
+  "start": 3227.677,
+  "end": 3229.51,
+  "text": "And that's going to be the gate that's going"
+ },
+ {
+  "start": 3229.51,
+  "end": 3231.41,
+  "text": "to control each of my experts."
+ },
+ {
+  "start": 3231.41,
+  "end": 3233.25,
+  "text": "So this is like input."
+ },
+ {
+  "start": 3233.25,
+  "end": 3234.37,
+  "text": "This is the residual term."
+ },
+ {
+  "start": 3234.37,
+  "end": 3235.23,
+  "text": "This is the FFN."
+ },
+ {
+  "start": 3235.23,
+  "end": 3235.91,
+  "text": "I've got gates."
+ },
+ {
+  "start": 3235.91,
+  "end": 3237.63,
+  "text": "And the gates are controlled TopK."
+ },
+ {
+  "start": 3237.63,
+  "end": 3240.23,
+  "text": "This is the equation form of what you"
+ },
+ {
+  "start": 3240.23,
+  "end": 3242.25,
+  "text": "would imagine of a TopK router."
+ },
+ {
+  "start": 3242.25,
+  "end": 3244.99,
+  "text": "And the only detail that you're probably learning here"
+ },
+ {
+  "start": 3244.99,
+  "end": 3247.05,
+  "text": "is, how do I learn my gates?"
+ },
+ {
+  "start": 3247.05,
+  "end": 3249.07,
+  "text": "My gates are just learned by taking"
+ },
+ {
+  "start": 3249.07,
+  "end": 3252.55,
+  "text": "inner product between a weight for each expert and the inputs"
+ },
+ {
+  "start": 3252.55,
+  "end": 3253.39,
+  "text": "that I have."
+ },
+ {
+  "start": 3253.39,
+  "end": 3254.69,
+  "text": "Very, very lightweight."
+ },
+ {
+  "start": 3254.69,
+  "end": 3257.03,
+  "text": "So there's nothing complicated about the ways"
+ },
+ {
+  "start": 3257.03,
+  "end": 3260.73,
+  "text": "that I'm going to select my gates."
+ },
+ {
+  "start": 3260.73,
+  "end": 3262.49,
+  "text": "Even within this simple thing, there's"
+ },
+ {
+  "start": 3262.49,
+  "end": 3267.89,
+  "text": "been some innovation and variation from DeepSeek and friends."
+ },
+ {
+  "start": 3267.89,
+  "end": 3272.55,
+  "text": "DeepSeekMoE pioneered this idea, which is now very widely used,"
+ },
+ {
+  "start": 3272.55,
+  "end": 3274.85,
+  "text": "called Shared Experts."
+ },
+ {
+  "start": 3274.85,
+  "end": 3279.57,
+  "text": "This is a very intuitive idea, where in the classic TopK"
+ },
+ {
+  "start": 3279.57,
+  "end": 3281.89,
+  "text": "router, you would have k different-- or sorry,"
+ },
+ {
+  "start": 3281.89,
+  "end": 3284.41,
+  "text": "in this case, n different experts."
+ },
+ {
+  "start": 3284.41,
+  "end": 3287.81,
+  "text": "And these experts, you would select amongst them."
+ },
+ {
+  "start": 3287.81,
+  "end": 3289.57,
+  "text": "But sometimes, you might say, well,"
+ },
+ {
+  "start": 3289.57,
+  "end": 3292.05,
+  "text": "there's some very common processing"
+ },
+ {
+  "start": 3292.05,
+  "end": 3293.75,
+  "text": "that I want to apply to all tokens."
+ },
+ {
+  "start": 3293.75,
+  "end": 3297.87,
+  "text": "Maybe you don't want experts to be different every time."
+ },
+ {
+  "start": 3297.87,
+  "end": 3300.81,
+  "text": "You want some experts to always be applied"
+ },
+ {
+  "start": 3300.81,
+  "end": 3303.99,
+  "text": "and then some other experts to be applied conditionally."
+ },
+ {
+  "start": 3303.99,
+  "end": 3307.41,
+  "text": "So what DeepSeekMoE did was, they"
+ },
+ {
+  "start": 3307.41,
+  "end": 3310.53,
+  "text": "took the original expert design."
+ },
+ {
+  "start": 3310.53,
+  "end": 3313.87,
+  "text": "They cut up the experts into smaller, finer grained chunks."
+ },
+ {
+  "start": 3313.87,
+  "end": 3316.29,
+  "text": "And some subset of those fine grained experts"
+ },
+ {
+  "start": 3316.29,
+  "end": 3319.96,
+  "text": "were as shared experts that are always on."
+ },
+ {
+  "start": 3319.96,
+  "end": 3321.9,
+  "text": "So these bypass the router."
+ },
+ {
+  "start": 3321.9,
+  "end": 3323.52,
+  "text": "They always process our inputs."
+ },
+ {
+  "start": 3323.52,
+  "end": 3325.76,
+  "text": "And they go back on the outputs."
+ },
+ {
+  "start": 3325.76,
+  "end": 3327.88,
+  "text": "Sorry."
+ },
+ {
+  "start": 3327.88,
+  "end": 3330.72,
+  "text": "And this is a nice idea, because it turned out"
+ },
+ {
+  "start": 3330.72,
+  "end": 3333.38,
+  "text": "that if you had this classic expert design,"
+ },
+ {
+  "start": 3333.38,
+  "end": 3335.48,
+  "text": "you were just reusing a lot of these weights"
+ },
+ {
+  "start": 3335.48,
+  "end": 3336.86,
+  "text": "to do common modeling."
+ },
+ {
+  "start": 3336.86,
+  "end": 3339.72,
+  "text": "And so you can offload this into the one shared expert,"
+ },
+ {
+  "start": 3339.72,
+  "end": 3343.2,
+  "text": "letting these guys specialize even more."
+ },
+ {
+  "start": 3343.2,
+  "end": 3345.32,
+  "text": "And as I was kind of saying, DeepSeek"
+ },
+ {
+  "start": 3345.32,
+  "end": 3348.08,
+  "text": "is really nice in that they do careful ablations"
+ },
+ {
+  "start": 3348.08,
+  "end": 3350.0,
+  "text": "in a lot of their papers."
+ },
+ {
+  "start": 3350.0,
+  "end": 3352.16,
+  "text": "And so they have this very nice ablation,"
+ },
+ {
+  "start": 3352.16,
+  "end": 3354.98,
+  "text": "where they look at zero shared experts"
+ },
+ {
+  "start": 3354.98,
+  "end": 3357.74,
+  "text": "and then you have these big experts, 16 rooted experts."
+ },
+ {
+  "start": 3357.74,
+  "end": 3361.04,
+  "text": "And this is really the old GShard Google design,"
+ },
+ {
+  "start": 3361.04,
+  "end": 3364.36,
+  "text": "compared to, they have very fine grained segmentation"
+ },
+ {
+  "start": 3364.36,
+  "end": 3367.22,
+  "text": "of experts and one shared expert amongst these."
+ },
+ {
+  "start": 3367.22,
+  "end": 3370.4,
+  "text": "And as you make the experts smaller and smaller,"
+ },
+ {
+  "start": 3370.4,
+  "end": 3372.36,
+  "text": "and you have one shared expert, you"
+ },
+ {
+  "start": 3372.36,
+  "end": 3375.3,
+  "text": "see significant gains from both of those interventions."
+ },
+ {
+  "start": 3375.3,
+  "end": 3377.3,
+  "text": "And for some of these, the shared expert"
+ },
+ {
+  "start": 3377.3,
+  "end": 3378.86,
+  "text": "has very significant improvements,"
+ },
+ {
+  "start": 3378.86,
+  "end": 3380.6,
+  "text": "like TriviaQA, NaturalQuestions."
+ },
+ {
+  "start": 3380.6,
+  "end": 3384.38,
+  "text": "This blue to yellow gap right is shared experts or not."
+ },
+ {
+  "start": 3384.38,
+  "end": 3388.52,
+  "text": "So more experts, shared experts, all generally seem to help."
+ },
+ {
+  "start": 3388.52,
+  "end": 3393.5,
+  "text": "And if you want more validation of these claims and ideas,"
+ },
+ {
+  "start": 3393.5,
+  "end": 3395.64,
+  "text": "you see this from OlMoE as well."
+ },
+ {
+  "start": 3395.64,
+  "end": 3400.86,
+  "text": "OlMoE is, I think, the nice Western carefully controlled MoE"
+ },
+ {
+  "start": 3400.86,
+  "end": 3401.6,
+  "text": "study."
+ },
+ {
+  "start": 3401.6,
+  "end": 3404.1,
+  "text": "They do things like, oh, do shared experts help?"
+ },
+ {
+  "start": 3404.1,
+  "end": 3407.3,
+  "text": "They conclude that shared experts don't help very much."
+ },
+ {
+  "start": 3407.3,
+  "end": 3409.62,
+  "text": "And number of experts, they show,"
+ },
+ {
+  "start": 3409.62,
+  "end": 3411.8,
+  "text": "doing fine-grained, many experts is helpful."
+ },
+ {
+  "start": 3411.8,
+  "end": 3415.58,
+  "text": "So they disagree a little bit on the shared expert point,"
+ },
+ {
+  "start": 3415.58,
+  "end": 3420.62,
+  "text": "but they also have very nice, carefully controlled ablations."
+ },
+ {
+  "start": 3420.62,
+  "end": 3425.5,
+  "text": "Many of the recent MoE do follow essentially the DeepSeek design."
+ },
+ {
+  "start": 3425.5,
+  "end": 3430.7,
+  "text": "There were a couple of early MoEs up until this point."
+ },
+ {
+  "start": 3430.7,
+  "end": 3433.65,
+  "text": "The first three, I keep giving Google"
+ },
+ {
+  "start": 3433.65,
+  "end": 3435.65,
+  "text": "praise for doing lots of interesting things."
+ },
+ {
+  "start": 3435.65,
+  "end": 3437.57,
+  "text": "The first three were from Google,"
+ },
+ {
+  "start": 3437.57,
+  "end": 3440.53,
+  "text": "Mixtral, DBRX, and Grok were some of the early MoE"
+ },
+ {
+  "start": 3440.53,
+  "end": 3441.89,
+  "text": "attempts in the West."
+ },
+ {
+  "start": 3441.89,
+  "end": 3444.97,
+  "text": "DeepSeek v1 comes up with both the fine-grained and shared"
+ },
+ {
+  "start": 3444.97,
+  "end": 3446.058,
+  "text": "expert design."
+ },
+ {
+  "start": 3446.058,
+  "end": 3447.85,
+  "text": "And then that catches on, and everyone else"
+ },
+ {
+  "start": 3447.85,
+  "end": 3449.53,
+  "text": "follows from DeepSeek."
+ },
+ {
+  "start": 3449.53,
+  "end": 3451.03,
+  "text": "I mean, it's a similar, I would say,"
+ },
+ {
+  "start": 3451.03,
+  "end": 3454.65,
+  "text": "phenomenon to the Llama design for dense transformers"
+ },
+ {
+  "start": 3454.65,
+  "end": 3458.85,
+  "text": "being essentially, the standard DeepSeekMoE and DeepSeek v3"
+ },
+ {
+  "start": 3458.85,
+  "end": 3461.17,
+  "text": "are the standard design that people have copied"
+ },
+ {
+  "start": 3461.17,
+  "end": 3464.41,
+  "text": "for the MoE side of things."
+ },
+ {
+  "start": 3464.41,
+  "end": 3466.85,
+  "text": "And if you look at Qwen 3.5, or GLM, or any"
+ },
+ {
+  "start": 3466.85,
+  "end": 3468.85,
+  "text": "of these modern models, you continue"
+ },
+ {
+  "start": 3468.85,
+  "end": 3472.49,
+  "text": "to see both shared experts and fine-grained experts"
+ },
+ {
+  "start": 3472.49,
+  "end": 3475.61,
+  "text": "in widespread use amongst all of these people."
+ },
+ {
+  "start": 3475.61,
+  "end": 3479.57,
+  "text": "And so that's been a very battle-tested design."
+ },
+ {
+  "start": 3479.57,
+  "end": 3481.01,
+  "text": "Any questions?"
+ },
+ {
+  "start": 3481.01,
+  "end": 3481.51,
+  "text": "Oh, yes."
+ },
+ {
+  "start": 3481.51,
+  "end": 3482.05,
+  "text": "Good."
+ },
+ {
+  "start": 3482.05,
+  "end": 3482.55,
+  "text": "Yeah."
+ },
+ {
+  "start": 3482.55,
+  "end": 3488.65,
+  "text": "If there is a shared expert or there are few shared experts,"
+ },
+ {
+  "start": 3488.65,
+  "end": 3492.93,
+  "text": "how would parallelization work in that case?"
+ },
+ {
+  "start": 3492.93,
+  "end": 3493.43,
+  "text": "Yeah."
+ },
+ {
+  "start": 3493.43,
+  "end": 3495.182,
+  "text": "So in the shared expert case, you"
+ },
+ {
+  "start": 3495.182,
+  "end": 3496.89,
+  "text": "wouldn't get any parallelization savings."
+ },
+ {
+  "start": 3496.89,
+  "end": 3498.91,
+  "text": "Every activation has to route through those."
+ },
+ {
+  "start": 3498.91,
+  "end": 3502.43,
+  "text": "You can copy the shared expert to basically eat memory savings"
+ },
+ {
+  "start": 3502.43,
+  "end": 3505.95,
+  "text": "to reduce comms cost."
+ },
+ {
+  "start": 3505.95,
+  "end": 3506.91,
+  "text": "Cool."
+ },
+ {
+  "start": 3506.91,
+  "end": 3507.41,
+  "text": "All right."
+ },
+ {
+  "start": 3507.41,
+  "end": 3511.05,
+  "text": "So that's the design space of routers."
+ },
+ {
+  "start": 3511.05,
+  "end": 3512.89,
+  "text": "Now, I want to talk about training MoEs."
+ },
+ {
+  "start": 3512.89,
+  "end": 3516.95,
+  "text": "And it gets into really surprising,"
+ },
+ {
+  "start": 3516.95,
+  "end": 3520.07,
+  "text": "and I would say, very deep learning things about this."
+ },
+ {
+  "start": 3520.07,
+  "end": 3522.57,
+  "text": "I think, initially, when I was learning about MoEs,"
+ },
+ {
+  "start": 3522.57,
+  "end": 3525.75,
+  "text": "I thought, there's no way that we can train these things well"
+ },
+ {
+  "start": 3525.75,
+  "end": 3527.23,
+  "text": "or reasonably."
+ },
+ {
+  "start": 3527.23,
+  "end": 3530.27,
+  "text": "But it turns out, there are lots of tricks"
+ },
+ {
+  "start": 3530.27,
+  "end": 3533.47,
+  "text": "that when combined together, just really work well"
+ },
+ {
+  "start": 3533.47,
+  "end": 3537.03,
+  "text": "and robustly for some reason."
+ },
+ {
+  "start": 3537.03,
+  "end": 3538.97,
+  "text": "So as we'll raise in the previous question,"
+ },
+ {
+  "start": 3538.97,
+  "end": 3541.417,
+  "text": "we don't want to activate all the experts during training,"
+ },
+ {
+  "start": 3541.417,
+  "end": 3543.75,
+  "text": "because if we do that, we're going to pay the full flops"
+ },
+ {
+  "start": 3543.75,
+  "end": 3545.05,
+  "text": "cost of all of our experts."
+ },
+ {
+  "start": 3545.05,
+  "end": 3546.95,
+  "text": "And we have a lot of experts."
+ },
+ {
+  "start": 3546.95,
+  "end": 3549.89,
+  "text": "So we need sparsity for efficiency at training time."
+ },
+ {
+  "start": 3549.89,
+  "end": 3553.13,
+  "text": "But if we have sparsity, then gating decisions"
+ },
+ {
+  "start": 3553.13,
+  "end": 3554.35,
+  "text": "are no longer differentiable."
+ },
+ {
+  "start": 3554.35,
+  "end": 3557.375,
+  "text": "And we also don't see all of the different counterfactual experts"
+ },
+ {
+  "start": 3557.375,
+  "end": 3558.25,
+  "text": "we could have picked."
+ },
+ {
+  "start": 3558.25,
+  "end": 3560.575,
+  "text": "So these are both big problems."
+ },
+ {
+  "start": 3560.575,
+  "end": 3561.95,
+  "text": "So there are different solutions."
+ },
+ {
+  "start": 3561.95,
+  "end": 3564.07,
+  "text": "We could use RL to optimize our gating policies."
+ },
+ {
+  "start": 3564.07,
+  "end": 3567.05,
+  "text": "I already mentioned this, not super popular."
+ },
+ {
+  "start": 3567.05,
+  "end": 3569.67,
+  "text": "You could do things like stochastic perturbations."
+ },
+ {
+  "start": 3569.67,
+  "end": 3573.13,
+  "text": "So if you're familiar with explore, exploit, bandit style"
+ },
+ {
+  "start": 3573.13,
+  "end": 3575.01,
+  "text": "stuff, you could do some of that."
+ },
+ {
+  "start": 3575.01,
+  "end": 3577.21,
+  "text": "Now, the third one is, you could have"
+ },
+ {
+  "start": 3577.21,
+  "end": 3579.05,
+  "text": "a whole bunch of weird heuristics"
+ },
+ {
+  "start": 3579.05,
+  "end": 3582.13,
+  "text": "that deal with the fact that the gating decisions are"
+ },
+ {
+  "start": 3582.13,
+  "end": 3586.21,
+  "text": "sparse to balance out which experts go where."
+ },
+ {
+  "start": 3586.21,
+  "end": 3587.95,
+  "text": "Guess which one people use in practice?"
+ },
+ {
+  "start": 3587.95,
+  "end": 3589.85,
+  "text": "I've been hinting at this."
+ },
+ {
+  "start": 3589.85,
+  "end": 3590.89,
+  "text": "It's number 3."
+ },
+ {
+  "start": 3590.89,
+  "end": 3593.69,
+  "text": "It's a collection of really interesting heuristics"
+ },
+ {
+  "start": 3593.69,
+  "end": 3596.09,
+  "text": "that end up working."
+ },
+ {
+  "start": 3596.09,
+  "end": 3598.93,
+  "text": "I'll talk about the other two first."
+ },
+ {
+  "start": 3598.93,
+  "end": 3600.07,
+  "text": "They're not widely used."
+ },
+ {
+  "start": 3600.07,
+  "end": 3602.27,
+  "text": "I would open with that."
+ },
+ {
+  "start": 3602.27,
+  "end": 3604.49,
+  "text": "But I think it's useful to know."
+ },
+ {
+  "start": 3604.49,
+  "end": 3606.49,
+  "text": "So some people have done, this is"
+ },
+ {
+  "start": 3606.49,
+  "end": 3609.46,
+  "text": "from Clark 2020, research on things like,"
+ },
+ {
+  "start": 3609.46,
+  "end": 3611.76,
+  "text": "can you use RL to learn routers?"
+ },
+ {
+  "start": 3611.76,
+  "end": 3612.78,
+  "text": "So it does work."
+ },
+ {
+  "start": 3612.78,
+  "end": 3615.88,
+  "text": "You can use RL, this is the green line over here."
+ },
+ {
+  "start": 3615.88,
+  "end": 3617.88,
+  "text": "That's one of the baseline approaches."
+ },
+ {
+  "start": 3617.88,
+  "end": 3619.02,
+  "text": "It works fine."
+ },
+ {
+  "start": 3619.02,
+  "end": 3621.6,
+  "text": "But because of the gradient variance and complexity,"
+ },
+ {
+  "start": 3621.6,
+  "end": 3624.3,
+  "text": "it's not actually the optimal thing to do."
+ },
+ {
+  "start": 3624.3,
+  "end": 3627.68,
+  "text": "And even some of the approaches that are proposed in this paper"
+ },
+ {
+  "start": 3627.68,
+  "end": 3632.8,
+  "text": "handily beat using reinforced gradients for routing decisions."
+ },
+ {
+  "start": 3632.8,
+  "end": 3637.96,
+  "text": "Now, something that's very close to the idea of RL"
+ },
+ {
+  "start": 3637.96,
+  "end": 3644.52,
+  "text": "but starts to move more towards this heuristic world of write"
+ },
+ {
+  "start": 3644.52,
+  "end": 3647.28,
+  "text": "down objectives and try things is this idea"
+ },
+ {
+  "start": 3647.28,
+  "end": 3649.02,
+  "text": "of a stochastic approximation."
+ },
+ {
+  "start": 3649.02,
+  "end": 3654.52,
+  "text": "And it comes from the earliest MoE paper from Noam, Shazier,"
+ },
+ {
+  "start": 3654.52,
+  "end": 3656.64,
+  "text": "and others, where what you do is,"
+ },
+ {
+  "start": 3656.64,
+  "end": 3659.22,
+  "text": "you don't really make a hard decision during training."
+ },
+ {
+  "start": 3659.22,
+  "end": 3661.88,
+  "text": "What you do is you make stochastic decisions."
+ },
+ {
+  "start": 3661.88,
+  "end": 3666.06,
+  "text": "So what you do is, you still have this routing setup."
+ },
+ {
+  "start": 3666.06,
+  "end": 3670.7,
+  "text": "So this H is, you have the inner product between your parameters"
+ },
+ {
+  "start": 3670.7,
+  "end": 3671.56,
+  "text": "and your inputs."
+ },
+ {
+  "start": 3671.56,
+  "end": 3674.82,
+  "text": "This is your standard routing inner product."
+ },
+ {
+  "start": 3674.82,
+  "end": 3677.1,
+  "text": "But then, instead of just doing this,"
+ },
+ {
+  "start": 3677.1,
+  "end": 3680.54,
+  "text": "I'm going to inject some noise that's"
+ },
+ {
+  "start": 3680.54,
+  "end": 3682.94,
+  "text": "dependent on the scale of the input."
+ },
+ {
+  "start": 3682.94,
+  "end": 3684.74,
+  "text": "And then that's going to be my H."
+ },
+ {
+  "start": 3684.74,
+  "end": 3687.5,
+  "text": "And now, I'm going to keep the TopK and softmax, just like I"
+ },
+ {
+  "start": 3687.5,
+  "end": 3689.9,
+  "text": "was explaining with TopK."
+ },
+ {
+  "start": 3689.9,
+  "end": 3692.34,
+  "text": "And then that's going to be the output that"
+ },
+ {
+  "start": 3692.34,
+  "end": 3696.98,
+  "text": "goes in to my TopK function."
+ },
+ {
+  "start": 3696.98,
+  "end": 3699.2,
+  "text": "Now, if you look at this, what is this doing?"
+ },
+ {
+  "start": 3699.2,
+  "end": 3701.9,
+  "text": "Well, it just means that if you have two experts that"
+ },
+ {
+  "start": 3701.9,
+  "end": 3704.8,
+  "text": "are closely tied or it's very close to each other,"
+ },
+ {
+  "start": 3704.8,
+  "end": 3707.86,
+  "text": "then stochastically, you'll pick one of them and not the other."
+ },
+ {
+  "start": 3707.86,
+  "end": 3710.5,
+  "text": "And as you backprop, you're going to backprop in a way"
+ },
+ {
+  "start": 3710.5,
+  "end": 3713.98,
+  "text": "that the experts that are helpful will get high weights."
+ },
+ {
+  "start": 3713.98,
+  "end": 3717.26,
+  "text": "So this perturbation allows you to tie break and explore"
+ },
+ {
+  "start": 3717.26,
+  "end": 3718.42,
+  "text": "a little bit more."
+ },
+ {
+  "start": 3718.42,
+  "end": 3719.98,
+  "text": "And hopefully, the gradient structure"
+ },
+ {
+  "start": 3719.98,
+  "end": 3722.26,
+  "text": "is such that, if an expert is helpful,"
+ },
+ {
+  "start": 3722.26,
+  "end": 3724.3,
+  "text": "it's going to emphasize that expert more,"
+ },
+ {
+  "start": 3724.3,
+  "end": 3726.77,
+  "text": "and it will get higher and higher weights in general."
+ },
+ {
+  "start": 3726.77,
+  "end": 3729.55,
+  "text": "So this is one reasonable thing that you can do."
+ },
+ {
+  "start": 3729.55,
+  "end": 3732.37,
+  "text": "It leads to experts that are a bit more robust."
+ },
+ {
+  "start": 3732.37,
+  "end": 3735.73,
+  "text": "And the softmax allows you to learn how"
+ },
+ {
+  "start": 3735.73,
+  "end": 3737.61,
+  "text": "to rank all these k experts."
+ },
+ {
+  "start": 3737.61,
+  "end": 3740.15,
+  "text": "Rather than just doing a hard selection of TopK,"
+ },
+ {
+  "start": 3740.15,
+  "end": 3745.33,
+  "text": "you're weighting by these elements."
+ },
+ {
+  "start": 3745.33,
+  "end": 3750.77,
+  "text": "There's another scheme that's very closely related that's"
+ },
+ {
+  "start": 3750.77,
+  "end": 3753.61,
+  "text": "done in Fedus, et al, in 2022, which"
+ },
+ {
+  "start": 3753.61,
+  "end": 3756.89,
+  "text": "does a uniform, multiplicative perturbation."
+ },
+ {
+  "start": 3756.89,
+  "end": 3759.81,
+  "text": "They do this for the reason of hardening the experts,"
+ },
+ {
+  "start": 3759.81,
+  "end": 3762.05,
+  "text": "making them robust."
+ },
+ {
+  "start": 3762.05,
+  "end": 3764.69,
+  "text": "This was a useful thing to do, but this was later"
+ },
+ {
+  "start": 3764.69,
+  "end": 3768.07,
+  "text": "removed in later Google papers that do routing."
+ },
+ {
+  "start": 3768.07,
+  "end": 3771.61,
+  "text": "And it's not really clear that this is necessary at all."
+ },
+ {
+  "start": 3771.61,
+  "end": 3774.73,
+  "text": "You see later ablation, showing that not"
+ },
+ {
+  "start": 3774.73,
+  "end": 3778.77,
+  "text": "doing any of these stochastic or robustness tricks"
+ },
+ {
+  "start": 3778.77,
+  "end": 3783.83,
+  "text": "actually helps with both stability and overall quality"
+ },
+ {
+  "start": 3783.83,
+  "end": 3786.55,
+  "text": "of the final trained MoE."
+ },
+ {
+  "start": 3786.55,
+  "end": 3789.23,
+  "text": "So this suggests, you don't need necessarily"
+ },
+ {
+  "start": 3789.23,
+  "end": 3793.03,
+  "text": "the stochastic exploration terms."
+ },
+ {
+  "start": 3793.03,
+  "end": 3797.47,
+  "text": "So this takes us to what you actually do,"
+ },
+ {
+  "start": 3797.47,
+  "end": 3801.53,
+  "text": "which is a series of heuristics that, in the end,"
+ },
+ {
+  "start": 3801.53,
+  "end": 3804.55,
+  "text": "is going to give us a working MoE."
+ },
+ {
+  "start": 3804.55,
+  "end": 3808.77,
+  "text": "And a lot of these have to do with essentially, balancing."
+ },
+ {
+  "start": 3808.77,
+  "end": 3812.29,
+  "text": "So what's the problem if you just do normal gradient descent,"
+ },
+ {
+  "start": 3812.29,
+  "end": 3815.55,
+  "text": "ignoring any of these exploration, exploitation concerns?"
+ },
+ {
+  "start": 3815.55,
+  "end": 3817.175,
+  "text": "Well, what's going to happen is, you're"
+ },
+ {
+  "start": 3817.175,
+  "end": 3818.97,
+  "text": "going to first route your TopK experts."
+ },
+ {
+  "start": 3818.97,
+  "end": 3822.05,
+  "text": "And then the strongest of those experts will get more signal."
+ },
+ {
+  "start": 3822.05,
+  "end": 3824.57,
+  "text": "Your backprop is going to say, that expert was good."
+ },
+ {
+  "start": 3824.57,
+  "end": 3826.63,
+  "text": "You increase the weight of that expert, move"
+ },
+ {
+  "start": 3826.63,
+  "end": 3828.33,
+  "text": "that parameter closer to that."
+ },
+ {
+  "start": 3828.33,
+  "end": 3830.87,
+  "text": "So you get this rich gets richer effect, where"
+ },
+ {
+  "start": 3830.87,
+  "end": 3832.94,
+  "text": "experts that are chosen get very strong weights."
+ },
+ {
+  "start": 3832.94,
+  "end": 3835.19,
+  "text": "Strong weights means that they're selected more often."
+ },
+ {
+  "start": 3835.19,
+  "end": 3838.45,
+  "text": "And they run away, taking on everything."
+ },
+ {
+  "start": 3838.45,
+  "end": 3843.42,
+  "text": "And so this expert collapse phenomenon or expert starvation"
+ },
+ {
+  "start": 3843.42,
+  "end": 3846.26,
+  "text": "phenomenon is a very, very real problem."
+ },
+ {
+  "start": 3846.26,
+  "end": 3848.3,
+  "text": "And in some sense, this is the core issue"
+ },
+ {
+  "start": 3848.3,
+  "end": 3852.82,
+  "text": "that you have to solve with heuristic training of MoEs."
+ },
+ {
+  "start": 3852.82,
+  "end": 3853.76,
+  "text": "And so what do you do?"
+ },
+ {
+  "start": 3853.76,
+  "end": 3857.82,
+  "text": "Well, what you do is, you add a heuristic loss"
+ },
+ {
+  "start": 3857.82,
+  "end": 3859.6,
+  "text": "to the total modeling loss."
+ },
+ {
+  "start": 3859.6,
+  "end": 3862.38,
+  "text": "And this loss is supposed to balance out the tokens that"
+ },
+ {
+  "start": 3862.38,
+  "end": 3864.78,
+  "text": "go to different experts."
+ },
+ {
+  "start": 3864.78,
+  "end": 3867.06,
+  "text": "And one approach, which is done in the switch"
+ },
+ {
+  "start": 3867.06,
+  "end": 3872.41,
+  "text": "transformer over here, you can look at what this does."
+ },
+ {
+  "start": 3872.41,
+  "end": 3875.86,
+  "text": "You have different experts going from 1 to n"
+ },
+ {
+  "start": 3875.86,
+  "end": 3877.72,
+  "text": "And you have a batch of tokens."
+ },
+ {
+  "start": 3877.72,
+  "end": 3879.54,
+  "text": "And what you want to do is, you want"
+ },
+ {
+  "start": 3879.54,
+  "end": 3882.26,
+  "text": "to make sure that these two inner products are small."
+ },
+ {
+  "start": 3882.26,
+  "end": 3882.76,
+  "text": "OK."
+ },
+ {
+  "start": 3882.76,
+  "end": 3884.34,
+  "text": "So what is happening here?"
+ },
+ {
+  "start": 3884.34,
+  "end": 3886.66,
+  "text": "F is the fraction of tokens that are dispatched"
+ },
+ {
+  "start": 3886.66,
+  "end": 3889.38,
+  "text": "to any single expert."
+ },
+ {
+  "start": 3889.38,
+  "end": 3891.88,
+  "text": "And then P of I is the softer version."
+ },
+ {
+  "start": 3891.88,
+  "end": 3894.62,
+  "text": "This is not just whether the token is dispatched"
+ },
+ {
+  "start": 3894.62,
+  "end": 3897.42,
+  "text": "to an expert, this is the total probability mass"
+ },
+ {
+  "start": 3897.42,
+  "end": 3899.14,
+  "text": "of the router that's allocated."
+ },
+ {
+  "start": 3899.14,
+  "end": 3902.48,
+  "text": "And you multiply these two terms."
+ },
+ {
+  "start": 3902.48,
+  "end": 3905.96,
+  "text": "And this is, at least to me, not a thing,"
+ },
+ {
+  "start": 3905.96,
+  "end": 3908.18,
+  "text": "where you would derive it from first principles."
+ },
+ {
+  "start": 3908.18,
+  "end": 3911.88,
+  "text": "I think the easiest way to see what this thing is doing"
+ },
+ {
+  "start": 3911.88,
+  "end": 3914.02,
+  "text": "is to take the derivative of this object."
+ },
+ {
+  "start": 3914.02,
+  "end": 3916.72,
+  "text": "So if you take the derivative of this with respect to P of I--"
+ },
+ {
+  "start": 3916.72,
+  "end": 3920.48,
+  "text": "and P of I, remember is the probability mass allocated"
+ },
+ {
+  "start": 3920.48,
+  "end": 3922.76,
+  "text": "to an expert, well, the derivative"
+ },
+ {
+  "start": 3922.76,
+  "end": 3926.5,
+  "text": "is going to be the fraction of tokens that are allocated."
+ },
+ {
+  "start": 3926.5,
+  "end": 3928.84,
+  "text": "So in some sense, you can think of this as a penalty"
+ },
+ {
+  "start": 3928.84,
+  "end": 3931.76,
+  "text": "in the gradient space, where the more tokens you get,"
+ },
+ {
+  "start": 3931.76,
+  "end": 3933.86,
+  "text": "the more negative gradient you get."
+ },
+ {
+  "start": 3933.86,
+  "end": 3937.52,
+  "text": "So this is trying to push down the probability mass"
+ },
+ {
+  "start": 3937.52,
+  "end": 3941.68,
+  "text": "on very popular experts proportional to their fraction."
+ },
+ {
+  "start": 3941.68,
+  "end": 3943.645,
+  "text": "And that's the action of this loss."
+ },
+ {
+  "start": 3943.645,
+  "end": 3945.02,
+  "text": "That's the way to think about it."
+ },
+ {
+  "start": 3945.02,
+  "end": 3949.0,
+  "text": "So the objective itself in equation 4"
+ },
+ {
+  "start": 3949.0,
+  "end": 3950.58,
+  "text": "might not be clear to start with,"
+ },
+ {
+  "start": 3950.58,
+  "end": 3953.7,
+  "text": "but once you reason about the action of the gradient,"
+ },
+ {
+  "start": 3953.7,
+  "end": 3955.5,
+  "text": "it becomes clear what this is trying to do,"
+ },
+ {
+  "start": 3955.5,
+  "end": 3960.15,
+  "text": "which is to push down popular experts."
+ },
+ {
+  "start": 3960.15,
+  "end": 3964.67,
+  "text": "So then we can actually take these ideas and essentially"
+ },
+ {
+  "start": 3964.67,
+  "end": 3969.61,
+  "text": "reconstruct DeepSeek v1 and 2s MoE system."
+ },
+ {
+  "start": 3969.61,
+  "end": 3972.19,
+  "text": "So what do you do to build DeepSeekMoE?"
+ },
+ {
+  "start": 3972.19,
+  "end": 3974.12,
+  "text": "Well, you're going to do your normal losses."
+ },
+ {
+  "start": 3974.12,
+  "end": 3975.87,
+  "text": "And you're just going to backprop straight"
+ },
+ {
+  "start": 3975.87,
+  "end": 3978.43,
+  "text": "through the experts, ignoring all this nondifferentiability"
+ },
+ {
+  "start": 3978.43,
+  "end": 3980.35,
+  "text": "and exploration concerns."
+ },
+ {
+  "start": 3980.35,
+  "end": 3982.83,
+  "text": "But you're going to add per expert balancing that's"
+ },
+ {
+  "start": 3982.83,
+  "end": 3985.407,
+  "text": "identical to the switch transformer, what I just showed you."
+ },
+ {
+  "start": 3985.407,
+  "end": 3986.99,
+  "text": "So you're going to have this loss that"
+ },
+ {
+  "start": 3986.99,
+  "end": 3988.97,
+  "text": "multiplies F, which is the fraction,"
+ },
+ {
+  "start": 3988.97,
+  "end": 3991.63,
+  "text": "and P, which is the total mass."
+ },
+ {
+  "start": 3991.63,
+  "end": 3995.77,
+  "text": "But DeepSeek folks, they're very savvy with their systems design,"
+ },
+ {
+  "start": 3995.77,
+  "end": 3997.89,
+  "text": "so they don't just balance the experts,"
+ },
+ {
+  "start": 3997.89,
+  "end": 4000.59,
+  "text": "they also want to balance by device."
+ },
+ {
+  "start": 4000.59,
+  "end": 4003.51,
+  "text": "So if your experts are allocated to some devices-- so let's say,"
+ },
+ {
+  "start": 4003.51,
+  "end": 4006.71,
+  "text": "my machine over here has four experts, this machine over here"
+ },
+ {
+  "start": 4006.71,
+  "end": 4009.63,
+  "text": "has another four experts, you want those two machines"
+ },
+ {
+  "start": 4009.63,
+  "end": 4012.73,
+  "text": "to be balanced, so both of them are running at full utilization."
+ },
+ {
+  "start": 4012.73,
+  "end": 4015.03,
+  "text": "So you don't want to just make the experts even,"
+ },
+ {
+  "start": 4015.03,
+  "end": 4017.67,
+  "text": "you also want to ensure that the devices are even."
+ },
+ {
+  "start": 4017.67,
+  "end": 4019.57,
+  "text": "So this is a secondary objective."
+ },
+ {
+  "start": 4019.57,
+  "end": 4021.15,
+  "text": "It acts in exactly the same way."
+ },
+ {
+  "start": 4021.15,
+  "end": 4023.35,
+  "text": "If you look at the function here instead of experts,"
+ },
+ {
+  "start": 4023.35,
+  "end": 4025.99,
+  "text": "you're just operating on each device's fraction,"
+ },
+ {
+  "start": 4025.99,
+  "end": 4028.17,
+  "text": "you apply the secondary device balancing loss,"
+ },
+ {
+  "start": 4028.17,
+  "end": 4031.85,
+  "text": "just for utilization reasons."
+ },
+ {
+  "start": 4031.85,
+  "end": 4038.25,
+  "text": "In DeepSeek v3, they have a per expert bias term that they use."
+ },
+ {
+  "start": 4038.25,
+  "end": 4043.11,
+  "text": "And they use an online learning trick to balance out experts,"
+ },
+ {
+  "start": 4043.11,
+  "end": 4047.73,
+  "text": "getting rid of some of these auxiliary losses,"
+ },
+ {
+  "start": 4047.73,
+  "end": 4051.25,
+  "text": "but they do, in the end, have to add"
+ },
+ {
+  "start": 4051.25,
+  "end": 4053.45,
+  "text": "some of these auxiliary losses in order"
+ },
+ {
+  "start": 4053.45,
+  "end": 4055.83,
+  "text": "to ensure extreme imbalances don't happen."
+ },
+ {
+  "start": 4055.83,
+  "end": 4060.05,
+  "text": "So I think, I add this as a side note that DeepSeek v3"
+ },
+ {
+  "start": 4060.05,
+  "end": 4062.27,
+  "text": "and others have started to get rid of some of these,"
+ },
+ {
+  "start": 4062.27,
+  "end": 4064.77,
+  "text": "I would say, uglier auxiliary losses,"
+ },
+ {
+  "start": 4064.77,
+  "end": 4068.59,
+  "text": "but there's no solution that fully gets rid of them so far."
+ },
+ {
+  "start": 4072.81,
+  "end": 4075.31,
+  "text": "The last thing I'll talk about with load balancing losses"
+ },
+ {
+  "start": 4075.31,
+  "end": 4078.09,
+  "text": "is, you might ask, do I need to deal with this?"
+ },
+ {
+  "start": 4078.09,
+  "end": 4080.67,
+  "text": "It's all a bunch of complicated heuristics."
+ },
+ {
+  "start": 4080.67,
+  "end": 4083.63,
+  "text": "I wish I could just get rid of the load balancing loss."
+ },
+ {
+  "start": 4083.63,
+  "end": 4086.31,
+  "text": "But if you remove the load balancing loss,"
+ },
+ {
+  "start": 4086.31,
+  "end": 4089.13,
+  "text": "the effects are pretty catastrophic."
+ },
+ {
+  "start": 4089.13,
+  "end": 4091.13,
+  "text": "These Are both from the OlMoE paper, where"
+ },
+ {
+  "start": 4091.13,
+  "end": 4094.15,
+  "text": "they do this nice ablation of removing the load balancing"
+ },
+ {
+  "start": 4094.15,
+  "end": 4095.529,
+  "text": "loss entirely."
+ },
+ {
+  "start": 4095.529,
+  "end": 4097.029,
+  "text": "If you have the load balancing loss,"
+ },
+ {
+  "start": 4097.029,
+  "end": 4099.83,
+  "text": "you get this pink line at the top, very nice normal curves."
+ },
+ {
+  "start": 4099.83,
+  "end": 4103.35,
+  "text": "Remove the load balancing loss, your losses significantly"
+ },
+ {
+  "start": 4103.35,
+  "end": 4106.97,
+  "text": "increase, and your training loss also is not doing so well."
+ },
+ {
+  "start": 4106.97,
+  "end": 4108.55,
+  "text": "Maybe more tellingly, if you look"
+ },
+ {
+  "start": 4108.55,
+  "end": 4112.71,
+  "text": "at which experts are doing what, with load balancing"
+ },
+ {
+  "start": 4112.71,
+  "end": 4114.35,
+  "text": "and without load balancing, that's"
+ },
+ {
+  "start": 4114.35,
+  "end": 4116.87,
+  "text": "these bottom panels over here, you"
+ },
+ {
+  "start": 4116.87,
+  "end": 4118.87,
+  "text": "see a really, really stark difference."
+ },
+ {
+  "start": 4118.87,
+  "end": 4121.71,
+  "text": "Without load balancing, almost all the tokens"
+ },
+ {
+  "start": 4121.71,
+  "end": 4124.31,
+  "text": "are going to two experts-- the yellow expert"
+ },
+ {
+  "start": 4124.31,
+  "end": 4126.91,
+  "text": "and the pinkish expert that you see here."
+ },
+ {
+  "start": 4126.91,
+  "end": 4129.05,
+  "text": "Whereas if you have the load balancing loss,"
+ },
+ {
+  "start": 4129.05,
+  "end": 4131.63,
+  "text": "even though we had this kind of heuristic thing going on,"
+ },
+ {
+  "start": 4131.63,
+  "end": 4134.319,
+  "text": "all of these experts are being utilized across the token."
+ },
+ {
+  "start": 4134.319,
+  "end": 4137.42,
+  "text": "So we have this nice, even utilization."
+ },
+ {
+  "start": 4137.42,
+  "end": 4139.62,
+  "text": "So we do see that the load balancing"
+ },
+ {
+  "start": 4139.62,
+  "end": 4140.76,
+  "text": "loss does what we expect."
+ },
+ {
+  "start": 4140.76,
+  "end": 4143.359,
+  "text": "And without it, we've thrown away a ton of parameters."
+ },
+ {
+  "start": 4143.359,
+  "end": 4145.58,
+  "text": "Those experts are doing absolutely nothing"
+ },
+ {
+  "start": 4145.58,
+  "end": 4147.66,
+  "text": "for most of training."
+ },
+ {
+  "start": 4147.66,
+  "end": 4151.819,
+  "text": "So this is how MoEs are trained."
+ },
+ {
+  "start": 4151.819,
+  "end": 4155.34,
+  "text": "And I think, just to go back, this is pretty surprising to me,"
+ },
+ {
+  "start": 4155.34,
+  "end": 4157.68,
+  "text": "that you've got this thing that's nondifferentiable,"
+ },
+ {
+  "start": 4157.68,
+  "end": 4159.06,
+  "text": "you're doing this TopK selection."
+ },
+ {
+  "start": 4159.06,
+  "end": 4162.42,
+  "text": "And it is, honestly, a pretty complicated object,"
+ },
+ {
+  "start": 4162.42,
+  "end": 4165.66,
+  "text": "and all you really need to do is to just add this balancing"
+ },
+ {
+  "start": 4165.66,
+  "end": 4167.68,
+  "text": "loss to even out the experts."
+ },
+ {
+  "start": 4167.68,
+  "end": 4169.26,
+  "text": "And then the rest of it, you treat it"
+ },
+ {
+  "start": 4169.26,
+  "end": 4172.62,
+  "text": "as if you can just pump gradients through the system,"
+ },
+ {
+  "start": 4172.62,
+  "end": 4174.38,
+  "text": "and the model trains very nicely."
+ },
+ {
+  "start": 4174.38,
+  "end": 4176.046,
+  "text": "And I think a big part of this is,"
+ },
+ {
+  "start": 4176.046,
+  "end": 4178.231,
+  "text": "this dynamic that if an expert is useful,"
+ },
+ {
+  "start": 4178.231,
+  "end": 4179.439,
+  "text": "you're going to reinforce it."
+ },
+ {
+  "start": 4179.439,
+  "end": 4182.62,
+  "text": "And that's a positive reinforcement cycle"
+ },
+ {
+  "start": 4182.62,
+  "end": 4185.8,
+  "text": "that's nicely balanced out by evening things out."
+ },
+ {
+  "start": 4185.8,
+  "end": 4187.96,
+  "text": "Those two dynamics cancel each other out."
+ },
+ {
+  "start": 4190.74,
+  "end": 4191.24,
+  "text": "Cool."
+ },
+ {
+  "start": 4191.24,
+  "end": 4194.24,
+  "text": "Oh, and the final thing I'll say is, that same trick"
+ },
+ {
+  "start": 4194.24,
+  "end": 4196.76,
+  "text": "is used in DSA."
+ },
+ {
+  "start": 4196.76,
+  "end": 4198.34,
+  "text": "We already saw the TopK thing."
+ },
+ {
+  "start": 4198.34,
+  "end": 4199.983,
+  "text": "It's used in things like H-Nets."
+ },
+ {
+  "start": 4199.983,
+  "end": 4201.4,
+  "text": "If you're familiar with that, that"
+ },
+ {
+  "start": 4201.4,
+  "end": 4203.92,
+  "text": "was a temp to remove tokenizers."
+ },
+ {
+  "start": 4203.92,
+  "end": 4207.08,
+  "text": "And so I think you'll see this trick more often"
+ },
+ {
+  "start": 4207.08,
+  "end": 4210.08,
+  "text": "in the future, where this idea of TopK selection"
+ },
+ {
+  "start": 4210.08,
+  "end": 4214.0,
+  "text": "and using load balancing or other kinds of auxiliary losses"
+ },
+ {
+  "start": 4214.0,
+  "end": 4215.88,
+  "text": "to enable that nondifferentiability"
+ },
+ {
+  "start": 4215.88,
+  "end": 4219.76,
+  "text": "will be an ingredient of future architecture design."
+ },
+ {
+  "start": 4219.76,
+  "end": 4220.7,
+  "text": "Yes."
+ },
+ {
+  "start": 4220.7,
+  "end": 4224.22,
+  "text": "[INAUDIBLE] mixture of experts is like a systems optimization."
+ },
+ {
+  "start": 4224.22,
+  "end": 4228.14,
+  "text": "But if you actually exploit, can you look at them?"
+ },
+ {
+  "start": 4228.14,
+  "end": 4230.58,
+  "text": "Are they actually doing something in different domains?"
+ },
+ {
+  "start": 4230.58,
+  "end": 4231.08,
+  "text": "Yeah."
+ },
+ {
+  "start": 4231.08,
+  "end": 4235.12,
+  "text": "So some papers have a visualization of which tokens"
+ },
+ {
+  "start": 4235.12,
+  "end": 4237.08,
+  "text": "are activated by which experts."
+ },
+ {
+  "start": 4237.08,
+  "end": 4238.98,
+  "text": "And because the routers are so simple,"
+ },
+ {
+  "start": 4238.98,
+  "end": 4241.72,
+  "text": "it's not like, experts are like smart experts."
+ },
+ {
+  "start": 4241.72,
+  "end": 4244.577,
+  "text": "They're not like medical experts, legal experts, or whatever."
+ },
+ {
+  "start": 4244.577,
+  "end": 4247.16,
+  "text": "You do see that certain tokens are routed to different things,"
+ },
+ {
+  "start": 4247.16,
+  "end": 4249.23,
+  "text": "like punctuations might be routed"
+ },
+ {
+  "start": 4249.23,
+  "end": 4252.99,
+  "text": "to one expert or other symbols might be routed to one expert,"
+ },
+ {
+  "start": 4252.99,
+  "end": 4254.47,
+  "text": "non-English language character sets"
+ },
+ {
+  "start": 4254.47,
+  "end": 4256.87,
+  "text": "might be routed to another expert."
+ },
+ {
+  "start": 4256.87,
+  "end": 4259.15,
+  "text": "But it's not really something where you can look at it"
+ },
+ {
+  "start": 4259.15,
+  "end": 4261.15,
+  "text": "and be like, oh, this is the Wall Street Journal"
+ },
+ {
+  "start": 4261.15,
+  "end": 4263.39,
+  "text": "expert or something, nothing like that."
+ },
+ {
+  "start": 4263.39,
+  "end": 4265.75,
+  "text": "There's no semantics of maybe one way of putting it."
+ },
+ {
+  "start": 4265.75,
+  "end": 4266.39,
+  "text": "Yeah."
+ },
+ {
+  "start": 4266.39,
+  "end": 4272.19,
+  "text": "[INAUDIBLE]"
+ },
+ {
+  "start": 4272.19,
+  "end": 4275.15,
+  "text": "Yeah, the per expert loss, in principle, if it's perfectly"
+ },
+ {
+  "start": 4275.15,
+  "end": 4277.355,
+  "text": "enforced, will also enforce a per device balancing"
+ },
+ {
+  "start": 4277.355,
+  "end": 4278.73,
+  "text": "if your experts are evenly split."
+ },
+ {
+  "start": 4278.73,
+  "end": 4281.47,
+  "text": "But I think, at least my interpretation of that"
+ },
+ {
+  "start": 4281.47,
+  "end": 4284.35,
+  "text": "is, you don't want to crank up the per expert loss so high"
+ },
+ {
+  "start": 4284.35,
+  "end": 4286.53,
+  "text": "that you get true full uniformity,"
+ },
+ {
+  "start": 4286.53,
+  "end": 4289.093,
+  "text": "because that has deleterious effects on training dynamics."
+ },
+ {
+  "start": 4289.093,
+  "end": 4290.51,
+  "text": "But per device is important enough"
+ },
+ {
+  "start": 4290.51,
+  "end": 4292.843,
+  "text": "that you're willing to add on a little bit of extra loss"
+ },
+ {
+  "start": 4292.843,
+  "end": 4294.85,
+  "text": "to encourage per device balancing over others."
+ },
+ {
+  "start": 4297.55,
+  "end": 4298.15,
+  "text": "Cool."
+ },
+ {
+  "start": 4298.15,
+  "end": 4298.69,
+  "text": "OK."
+ },
+ {
+  "start": 4298.69,
+  "end": 4301.19,
+  "text": "So now, I'm going to talk a little bit about the system side"
+ },
+ {
+  "start": 4301.19,
+  "end": 4303.95,
+  "text": "of things before we wrap up."
+ },
+ {
+  "start": 4303.95,
+  "end": 4308.69,
+  "text": "So training MoEs has additional fun systems dynamics"
+ },
+ {
+  "start": 4308.69,
+  "end": 4310.33,
+  "text": "that are introduced."
+ },
+ {
+  "start": 4310.33,
+  "end": 4312.13,
+  "text": "When I talk about parallelism, I'm"
+ },
+ {
+  "start": 4312.13,
+  "end": 4315.69,
+  "text": "mostly going to talk about the standard, let's call it,"
+ },
+ {
+  "start": 4315.69,
+  "end": 4317.01,
+  "text": "forms of parallelism."
+ },
+ {
+  "start": 4320.707,
+  "end": 4322.79,
+  "text": "You can split up your data over many small chunks."
+ },
+ {
+  "start": 4322.79,
+  "end": 4324.707,
+  "text": "You can take your one data set and split it up"
+ },
+ {
+  "start": 4324.707,
+  "end": 4326.41,
+  "text": "over many machines."
+ },
+ {
+  "start": 4326.41,
+  "end": 4329.63,
+  "text": "You can do model parallelism, where you can take your model,"
+ },
+ {
+  "start": 4329.63,
+  "end": 4333.473,
+  "text": "and maybe you can split up your model over different machines."
+ },
+ {
+  "start": 4333.473,
+  "end": 4335.39,
+  "text": "And you can combine those two in various ways,"
+ },
+ {
+  "start": 4335.39,
+  "end": 4337.81,
+  "text": "you can, of course, do that."
+ },
+ {
+  "start": 4337.81,
+  "end": 4339.497,
+  "text": "But I think the thing that we realize"
+ },
+ {
+  "start": 4339.497,
+  "end": 4342.93,
+  "text": "is that each of those parallelism techniques has some limit."
+ },
+ {
+  "start": 4342.93,
+  "end": 4346.13,
+  "text": "For data parallelism, you're maxed out your batch size."
+ },
+ {
+  "start": 4346.13,
+  "end": 4348.93,
+  "text": "Once you hit your batch size, you can't parallelize by data"
+ },
+ {
+  "start": 4348.93,
+  "end": 4349.73,
+  "text": "anymore."
+ },
+ {
+  "start": 4349.73,
+  "end": 4352.17,
+  "text": "For model size, there's natural cut points,"
+ },
+ {
+  "start": 4352.17,
+  "end": 4353.43,
+  "text": "where you can cut your model."
+ },
+ {
+  "start": 4353.43,
+  "end": 4356.21,
+  "text": "Once you exhaust those, you can't parallelize anymore."
+ },
+ {
+  "start": 4356.21,
+  "end": 4358.11,
+  "text": "If you combine this with expert parallelism,"
+ },
+ {
+  "start": 4358.11,
+  "end": 4362.05,
+  "text": "you get another additional nice access to parallelize on."
+ },
+ {
+  "start": 4362.05,
+  "end": 4367.4,
+  "text": "And when you do this, a lot of the underlying implementations"
+ },
+ {
+  "start": 4367.4,
+  "end": 4371.16,
+  "text": "for this allow you to take advantage of sparse matrix"
+ },
+ {
+  "start": 4371.16,
+  "end": 4374.583,
+  "text": "multiply that has been built into GPUs."
+ },
+ {
+  "start": 4374.583,
+  "end": 4376.0,
+  "text": "So another thing that I'll mention"
+ },
+ {
+  "start": 4376.0,
+  "end": 4380.335,
+  "text": "is, if you have multiple experts, let's say, on one GPU,"
+ },
+ {
+  "start": 4380.335,
+  "end": 4381.96,
+  "text": "one way of thinking about it is to say,"
+ },
+ {
+  "start": 4381.96,
+  "end": 4384.98,
+  "text": "I'm going to have multiple small matrix multiplies."
+ },
+ {
+  "start": 4384.98,
+  "end": 4387.6,
+  "text": "But this is not nice, because you ideally"
+ },
+ {
+  "start": 4387.6,
+  "end": 4389.48,
+  "text": "want these bigger matrix multiplies,"
+ },
+ {
+  "start": 4389.48,
+  "end": 4392.44,
+  "text": "where you can reuse caches and do all sorts of things."
+ },
+ {
+  "start": 4392.44,
+  "end": 4394.64,
+  "text": "So instead, what you can do is, you"
+ },
+ {
+  "start": 4394.64,
+  "end": 4397.44,
+  "text": "can nicely leverage sparsity."
+ },
+ {
+  "start": 4397.44,
+  "end": 4400.34,
+  "text": "And block diagonal, of course, is the most basic form,"
+ },
+ {
+  "start": 4400.34,
+  "end": 4402.76,
+  "text": "but you can use much more of complicated forms"
+ },
+ {
+  "start": 4402.76,
+  "end": 4407.16,
+  "text": "of structured sparsity that are natively supported in hardware"
+ },
+ {
+  "start": 4407.16,
+  "end": 4410.28,
+  "text": "to allow you to essentially multiply"
+ },
+ {
+  "start": 4410.28,
+  "end": 4414.88,
+  "text": "experts and inputs in very, very clean ways, very fast."
+ },
+ {
+  "start": 4414.88,
+  "end": 4417.56,
+  "text": "So this is another reason why MoEs are nice."
+ },
+ {
+  "start": 4417.56,
+  "end": 4421.0,
+  "text": "If you think about the computation patterns of MoEs,"
+ },
+ {
+  "start": 4421.0,
+  "end": 4424.02,
+  "text": "they almost correspond to these kinds of structured matrix"
+ },
+ {
+  "start": 4424.02,
+  "end": 4427.02,
+  "text": "multiplications that are very easy and efficient to support"
+ },
+ {
+  "start": 4427.02,
+  "end": 4427.86,
+  "text": "in hardware."
+ },
+ {
+  "start": 4427.86,
+  "end": 4430.54,
+  "text": "So there's this hardware architecture codesign"
+ },
+ {
+  "start": 4430.54,
+  "end": 4435.42,
+  "text": "that's happening with MoEs."
+ },
+ {
+  "start": 4435.42,
+  "end": 4438.3,
+  "text": "And in terms of parallelism, one thing I'll mention,"
+ },
+ {
+  "start": 4438.3,
+  "end": 4440.12,
+  "text": "this is a very recent development."
+ },
+ {
+  "start": 4440.12,
+  "end": 4443.42,
+  "text": "This is from Nemotron-3."
+ },
+ {
+  "start": 4443.42,
+  "end": 4446.82,
+  "text": "I forgot who asked this question."
+ },
+ {
+  "start": 4446.82,
+  "end": 4448.64,
+  "text": "When we do this expert parallelism,"
+ },
+ {
+  "start": 4448.64,
+  "end": 4450.74,
+  "text": "we have to be shipping activations from device"
+ },
+ {
+  "start": 4450.74,
+  "end": 4454.48,
+  "text": "to device in order to say like, oh, you belong in that expert,"
+ },
+ {
+  "start": 4454.48,
+  "end": 4455.9,
+  "text": "I need to ship you over."
+ },
+ {
+  "start": 4455.9,
+  "end": 4459.143,
+  "text": "That can result in significant communications overhead."
+ },
+ {
+  "start": 4459.143,
+  "end": 4461.06,
+  "text": "So some of the things that people have started"
+ },
+ {
+  "start": 4461.06,
+  "end": 4464.46,
+  "text": "to think about is to say, well, my shared expert, which"
+ },
+ {
+  "start": 4464.46,
+  "end": 4468.54,
+  "text": "I'm not going to communicate, this can be in big dimensions."
+ },
+ {
+  "start": 4468.54,
+  "end": 4471.88,
+  "text": "But my experts, I need to communicate those activations,"
+ },
+ {
+  "start": 4471.88,
+  "end": 4474.96,
+  "text": "I want those to be in smaller lower dimensional vectors."
+ },
+ {
+  "start": 4474.96,
+  "end": 4478.5,
+  "text": "So you might actually take your residual stream"
+ },
+ {
+  "start": 4478.5,
+  "end": 4481.45,
+  "text": "and downproject it first, and then"
+ },
+ {
+  "start": 4481.45,
+  "end": 4484.89,
+  "text": "decide to do the collective communication call of sending"
+ },
+ {
+  "start": 4484.89,
+  "end": 4486.19,
+  "text": "this activation out."
+ },
+ {
+  "start": 4486.19,
+  "end": 4489.93,
+  "text": "And that will significantly save on communication"
+ },
+ {
+  "start": 4489.93,
+  "end": 4493.53,
+  "text": "without fully having the drawbacks of having a smaller"
+ },
+ {
+  "start": 4493.53,
+  "end": 4494.71,
+  "text": "hidden dimension size."
+ },
+ {
+  "start": 4494.71,
+  "end": 4497.53,
+  "text": "So you can actually do these kind of projection tricks"
+ },
+ {
+  "start": 4497.53,
+  "end": 4501.73,
+  "text": "to nicely control the trade-off of communication"
+ },
+ {
+  "start": 4501.73,
+  "end": 4504.75,
+  "text": "and having your MoEs parallelized."
+ },
+ {
+  "start": 4507.65,
+  "end": 4512.85,
+  "text": "One final trivia, let's call it detail of MoEs"
+ },
+ {
+  "start": 4512.85,
+  "end": 4516.21,
+  "text": "that I think is fun, but it has been solved in recent years,"
+ },
+ {
+  "start": 4516.21,
+  "end": 4517.65,
+  "text": "is stochasticity."
+ },
+ {
+  "start": 4517.65,
+  "end": 4522.21,
+  "text": "If you do MoE infrastructure naively, what you'll find"
+ },
+ {
+  "start": 4522.21,
+  "end": 4526.17,
+  "text": "is that, unless your experts are perfectly balanced on your input"
+ },
+ {
+  "start": 4526.17,
+  "end": 4528.53,
+  "text": "distribution, you'll find that certain experts might be"
+ },
+ {
+  "start": 4528.53,
+  "end": 4530.45,
+  "text": "much more popular than others."
+ },
+ {
+  "start": 4530.45,
+  "end": 4532.65,
+  "text": "And if some expert like, let's say, in this case,"
+ },
+ {
+  "start": 4532.65,
+  "end": 4535.55,
+  "text": "expert 0 is just a really popular expert,"
+ },
+ {
+  "start": 4535.55,
+  "end": 4538.05,
+  "text": "you're going to actually start running into situations where"
+ },
+ {
+  "start": 4538.05,
+  "end": 4542.142,
+  "text": "this expert queue of tokens just starts building up, and building up."
+ },
+ {
+  "start": 4542.142,
+  "end": 4544.35,
+  "text": "And eventually, you'll get to a point, where you say,"
+ },
+ {
+  "start": 4544.35,
+  "end": 4548.35,
+  "text": "my queue is so long, I have to start dropping tokens."
+ },
+ {
+  "start": 4548.35,
+  "end": 4550.51,
+  "text": "And the earlier generation of MoE"
+ },
+ {
+  "start": 4550.51,
+  "end": 4553.025,
+  "text": "inference infrastructure and code,"
+ },
+ {
+  "start": 4553.025,
+  "end": 4555.15,
+  "text": "a lot of what happened was, you would just actually"
+ },
+ {
+  "start": 4555.15,
+  "end": 4556.51,
+  "text": "silently drop this expert."
+ },
+ {
+  "start": 4556.51,
+  "end": 4558.63,
+  "text": "And you just proceed on with your computation"
+ },
+ {
+  "start": 4558.63,
+  "end": 4560.03,
+  "text": "as if nothing had happened."
+ },
+ {
+  "start": 4560.03,
+  "end": 4563.63,
+  "text": "You just send a zero back and pretend that that was fine."
+ },
+ {
+  "start": 4563.63,
+  "end": 4568.03,
+  "text": "And this means that you can have these weird stochasticities,"
+ },
+ {
+  "start": 4568.03,
+  "end": 4572.03,
+  "text": "where if other users sent in queries that"
+ },
+ {
+  "start": 4572.03,
+  "end": 4574.27,
+  "text": "hit the experts that you're using, then"
+ },
+ {
+  "start": 4574.27,
+  "end": 4576.07,
+  "text": "you could actually get a worse result,"
+ },
+ {
+  "start": 4576.07,
+  "end": 4578.25,
+  "text": "because they would bump you out of the expert queue."
+ },
+ {
+  "start": 4578.25,
+  "end": 4581.27,
+  "text": "These kinds of very strange things can happen."
+ },
+ {
+  "start": 4581.27,
+  "end": 4584.07,
+  "text": "But these days, they drop less architectures"
+ },
+ {
+  "start": 4584.07,
+  "end": 4586.29,
+  "text": "that have gotten rid of a lot of these issues."
+ },
+ {
+  "start": 4586.29,
+  "end": 4588.33,
+  "text": "So this is no longer really an issue."
+ },
+ {
+  "start": 4588.33,
+  "end": 4592.39,
+  "text": "So mega blocks and other very common open source MoE"
+ },
+ {
+  "start": 4592.39,
+  "end": 4595.75,
+  "text": "frameworks don't have this issue anymore."
+ },
+ {
+  "start": 4595.75,
+  "end": 4598.74,
+  "text": "So the last thing that I'll talk about in terms"
+ },
+ {
+  "start": 4598.74,
+  "end": 4602.02,
+  "text": "of the design of MoEs is this issue of stability."
+ },
+ {
+  "start": 4602.02,
+  "end": 4603.86,
+  "text": "We've already talked about stability issues"
+ },
+ {
+  "start": 4603.86,
+  "end": 4608.18,
+  "text": "in the context of architecture design last lecture."
+ },
+ {
+  "start": 4608.18,
+  "end": 4610.74,
+  "text": "But if you remember what I said then,"
+ },
+ {
+  "start": 4610.74,
+  "end": 4614.16,
+  "text": "I said exponentials are bad, divisions are bad,"
+ },
+ {
+  "start": 4614.16,
+  "end": 4618.1,
+  "text": "which means softmaxes are danger zone for stability issues."
+ },
+ {
+  "start": 4618.1,
+  "end": 4621.3,
+  "text": "Now, what we done with mixture of experts?"
+ },
+ {
+  "start": 4621.3,
+  "end": 4623.86,
+  "text": "Well, we have introduced yet another softmax in the routing,"
+ },
+ {
+  "start": 4623.86,
+  "end": 4625.24,
+  "text": "because we're going to do TopK."
+ },
+ {
+  "start": 4625.24,
+  "end": 4626.6,
+  "text": "We're going to do softmax."
+ },
+ {
+  "start": 4626.6,
+  "end": 4630.18,
+  "text": "And that's going to be how we route to experts."
+ },
+ {
+  "start": 4630.18,
+  "end": 4635.46,
+  "text": "Now, people have long noticed that the softmax operation"
+ },
+ {
+  "start": 4635.46,
+  "end": 4639.06,
+  "text": "in MoEs are potentially very, very dangerous."
+ },
+ {
+  "start": 4639.06,
+  "end": 4642.76,
+  "text": "Barret Zoph and others, in the early days of Google MoE design,"
+ },
+ {
+  "start": 4642.76,
+  "end": 4645.88,
+  "text": "had an entire paper on MoE stability."
+ },
+ {
+  "start": 4645.88,
+  "end": 4648.34,
+  "text": "And this was one of the things that they noticed."
+ },
+ {
+  "start": 4648.34,
+  "end": 4650.9,
+  "text": "And I'm going to go into some of the details."
+ },
+ {
+  "start": 4650.9,
+  "end": 4652.82,
+  "text": "You'll see the solution fairly often"
+ },
+ {
+  "start": 4652.82,
+  "end": 4655.42,
+  "text": "for some of the more sensitive and tricky parts."
+ },
+ {
+  "start": 4655.42,
+  "end": 4657.56,
+  "text": "You might end up using something like Float 32"
+ },
+ {
+  "start": 4657.56,
+  "end": 4659.4,
+  "text": "for just the expert router."
+ },
+ {
+  "start": 4659.4,
+  "end": 4661.6,
+  "text": "You might have a z-loss as well here."
+ },
+ {
+  "start": 4661.6,
+  "end": 4664.08,
+  "text": "We've talked about z-loss before in order"
+ },
+ {
+  "start": 4664.08,
+  "end": 4669.6,
+  "text": "to control the softmax stability issues that we saw."
+ },
+ {
+  "start": 4669.6,
+  "end": 4673.0,
+  "text": "Z-loss, I think, was quite popular, actually,"
+ },
+ {
+  "start": 4673.0,
+  "end": 4678.2,
+  "text": "to do MoE router stability even in the early days."
+ },
+ {
+  "start": 4678.2,
+  "end": 4680.26,
+  "text": "OlMoE, which I've been talking about extensively,"
+ },
+ {
+  "start": 4680.26,
+  "end": 4683.872,
+  "text": "has done ablations on adding or removing z-loss."
+ },
+ {
+  "start": 4683.872,
+  "end": 4686.08,
+  "text": "It's quite clear, from these very spiky training loss"
+ },
+ {
+  "start": 4686.08,
+  "end": 4691.48,
+  "text": "curves, that z-loss on the router can be quite helpful."
+ },
+ {
+  "start": 4691.48,
+  "end": 4695.16,
+  "text": "There are other issues with MoEs that you can end up with."
+ },
+ {
+  "start": 4695.16,
+  "end": 4698.24,
+  "text": "And I think you probably all have experienced this maybe"
+ },
+ {
+  "start": 4698.24,
+  "end": 4701.16,
+  "text": "recently if you work with language models, which"
+ },
+ {
+  "start": 4701.16,
+  "end": 4704.3,
+  "text": "is that MoEs can be pretty annoying to fine tune."
+ },
+ {
+  "start": 4704.3,
+  "end": 4706.32,
+  "text": "They have so many parameters that if you're"
+ },
+ {
+  "start": 4706.32,
+  "end": 4709.44,
+  "text": "trying to fine tune the experts, you actually"
+ },
+ {
+  "start": 4709.44,
+  "end": 4712.34,
+  "text": "end up with very serious overfitting issues."
+ },
+ {
+  "start": 4712.34,
+  "end": 4715.8,
+  "text": "So you can see that if you have your dense models,"
+ },
+ {
+  "start": 4715.8,
+  "end": 4719.8,
+  "text": "train and val are fairly close, they don't overfit crazily."
+ },
+ {
+  "start": 4719.8,
+  "end": 4721.86,
+  "text": "But if you look at the sparse, train and val gap"
+ },
+ {
+  "start": 4721.86,
+  "end": 4724.94,
+  "text": "is extremely large, as you fine tune"
+ },
+ {
+  "start": 4724.94,
+  "end": 4728.58,
+  "text": "these models, or, in this case, downstream task."
+ },
+ {
+  "start": 4728.58,
+  "end": 4731.7,
+  "text": "I think it was one of the glue benchmark tasks."
+ },
+ {
+  "start": 4731.7,
+  "end": 4737.46,
+  "text": "Now, you could have a case, where you fine tune"
+ },
+ {
+  "start": 4737.46,
+  "end": 4739.88,
+  "text": "non-MoE feed forwards."
+ },
+ {
+  "start": 4739.88,
+  "end": 4741.76,
+  "text": "You could also fine tune just attention."
+ },
+ {
+  "start": 4741.76,
+  "end": 4745.84,
+  "text": "These are pretty common interventions that people do,"
+ },
+ {
+  "start": 4745.84,
+  "end": 4747.78,
+  "text": "especially the attention fine-tuning"
+ },
+ {
+  "start": 4747.78,
+  "end": 4752.46,
+  "text": "is something that I see quite often with MoE works recently."
+ },
+ {
+  "start": 4752.46,
+  "end": 4755.4,
+  "text": "But if your model has non-MoE layers, then, of course,"
+ },
+ {
+  "start": 4755.4,
+  "end": 4756.86,
+  "text": "you can also just fine tune those."
+ },
+ {
+  "start": 4756.86,
+  "end": 4760.98,
+  "text": "And there is often others, we're kind of arguing for those."
+ },
+ {
+  "start": 4760.98,
+  "end": 4763.42,
+  "text": "And of course, there's also the bitter lesson version"
+ },
+ {
+  "start": 4763.42,
+  "end": 4765.58,
+  "text": "of this, which is, maybe you should just"
+ },
+ {
+  "start": 4765.58,
+  "end": 4769.2,
+  "text": "use 1.4 million examples instead of whatever number you have."
+ },
+ {
+  "start": 4769.2,
+  "end": 4771.66,
+  "text": "If you have a lot of data, you can retrain, basically,"
+ },
+ {
+  "start": 4771.66,
+  "end": 4774.43,
+  "text": "the MoE entirely during your fine-tuning stage."
+ },
+ {
+  "start": 4774.43,
+  "end": 4779.53,
+  "text": "And you won't have quite as much of a generalization gap."
+ },
+ {
+  "start": 4779.53,
+  "end": 4780.69,
+  "text": "OK."
+ },
+ {
+  "start": 4780.69,
+  "end": 4784.17,
+  "text": "The last MoE-specific trick that I'll mention"
+ },
+ {
+  "start": 4784.17,
+  "end": 4786.71,
+  "text": "is this idea of upcycling."
+ },
+ {
+  "start": 4786.71,
+  "end": 4789.79,
+  "text": "This has actually become a lot less popular in the last year."
+ },
+ {
+  "start": 4789.79,
+  "end": 4793.57,
+  "text": "I don't think I've seen a single upcycled model this year."
+ },
+ {
+  "start": 4793.57,
+  "end": 4794.63,
+  "text": "But it's a cool idea."
+ },
+ {
+  "start": 4794.63,
+  "end": 4796.73,
+  "text": "And also, there were some very nice models"
+ },
+ {
+  "start": 4796.73,
+  "end": 4798.51,
+  "text": "earlier on using this trick."
+ },
+ {
+  "start": 4798.51,
+  "end": 4800.49,
+  "text": "So I want to mention this."
+ },
+ {
+  "start": 4800.49,
+  "end": 4804.97,
+  "text": "So upcycling is this idea that if you want a MoE,"
+ },
+ {
+  "start": 4804.97,
+  "end": 4807.67,
+  "text": "maybe you can just take a dense model that you've trained,"
+ },
+ {
+  "start": 4807.67,
+  "end": 4811.39,
+  "text": "and then you can instantiate a MoE based on that dense model."
+ },
+ {
+  "start": 4811.39,
+  "end": 4815.49,
+  "text": "And the idea is, you just copy everything, including the MLPs."
+ },
+ {
+  "start": 4815.49,
+  "end": 4818.57,
+  "text": "You just make a whole bunch of copies from these MLPs."
+ },
+ {
+  "start": 4818.57,
+  "end": 4822.29,
+  "text": "You have a router, which have a random initialization."
+ },
+ {
+  "start": 4822.29,
+  "end": 4823.79,
+  "text": "And then you just train this model."
+ },
+ {
+  "start": 4823.79,
+  "end": 4827.09,
+  "text": "And if you do this, then because of the stochasticity of which"
+ },
+ {
+  "start": 4827.09,
+  "end": 4829.45,
+  "text": "inputs go to where and the MLP, you're"
+ },
+ {
+  "start": 4829.45,
+  "end": 4832.55,
+  "text": "going to get these experts that start to specialize."
+ },
+ {
+  "start": 4832.55,
+  "end": 4835.99,
+  "text": "And in the end, you'll actually end up with MoE."
+ },
+ {
+  "start": 4835.99,
+  "end": 4840.43,
+  "text": "And in some of the earliest papers that proposed upcycling,"
+ },
+ {
+  "start": 4840.43,
+  "end": 4842.71,
+  "text": "they show that an upcycled method"
+ },
+ {
+  "start": 4842.71,
+  "end": 4846.09,
+  "text": "could get much better language modeling,"
+ },
+ {
+  "start": 4846.09,
+  "end": 4850.07,
+  "text": "in this case, accuracy, performance,"
+ },
+ {
+  "start": 4850.07,
+  "end": 4853.79,
+  "text": "upcycling a dense model rather than continuing"
+ },
+ {
+  "start": 4853.79,
+  "end": 4856.19,
+  "text": "to train the same model, which is"
+ },
+ {
+  "start": 4856.19,
+  "end": 4859.47,
+  "text": "a cool thing that you can show."
+ },
+ {
+  "start": 4859.47,
+  "end": 4863.61,
+  "text": "People have validated this at scale in many ways."
+ },
+ {
+  "start": 4863.61,
+  "end": 4868.77,
+  "text": "So many CPM is another Chinese model that I quite like,"
+ },
+ {
+  "start": 4868.77,
+  "end": 4871.21,
+  "text": "because they do a lot of carefully controlled ablations."
+ },
+ {
+  "start": 4871.21,
+  "end": 4875.69,
+  "text": "They had a MoE, where they took their miniCPM 2.4b model."
+ },
+ {
+  "start": 4875.69,
+  "end": 4878.85,
+  "text": "They upcycled it to a 13.4 billion parameter model."
+ },
+ {
+  "start": 4878.85,
+  "end": 4882.37,
+  "text": "And they got a bunch of almost free wins from doing that."
+ },
+ {
+  "start": 4884.91,
+  "end": 4888.02,
+  "text": "Qwen also, when they did their Qwen MoE,"
+ },
+ {
+  "start": 4888.02,
+  "end": 4891.1,
+  "text": "initialize from there 1.8B Qwen model."
+ },
+ {
+  "start": 4891.1,
+  "end": 4897.34,
+  "text": "They upcycled that to a Qwen 1.5.A, 2.7B model."
+ },
+ {
+  "start": 4897.34,
+  "end": 4899.58,
+  "text": "And they ended up with one of the first"
+ },
+ {
+  "start": 4899.58,
+  "end": 4903.06,
+  "text": "and one of the very high performance models."
+ },
+ {
+  "start": 4903.06,
+  "end": 4905.26,
+  "text": "It's, I think, one of the first larger scale"
+ },
+ {
+  "start": 4905.26,
+  "end": 4906.98,
+  "text": "upcycling successes."
+ },
+ {
+  "start": 4906.98,
+  "end": 4909.18,
+  "text": "Of course, these days, I don't think"
+ },
+ {
+  "start": 4909.18,
+  "end": 4911.06,
+  "text": "anyone's really upcycling anymore,"
+ },
+ {
+  "start": 4911.06,
+  "end": 4913.78,
+  "text": "because you don't really train dense models"
+ },
+ {
+  "start": 4913.78,
+  "end": 4915.12,
+  "text": "and then convert them."
+ },
+ {
+  "start": 4915.12,
+  "end": 4918.1,
+  "text": "You might as well just train your big hero run"
+ },
+ {
+  "start": 4918.1,
+  "end": 4919.82,
+  "text": "on an MoE to start with."
+ },
+ {
+  "start": 4919.82,
+  "end": 4921.76,
+  "text": "So I don't think we see this quite as much,"
+ },
+ {
+  "start": 4921.76,
+  "end": 4923.385,
+  "text": "but I wanted to mention this, because I"
+ },
+ {
+  "start": 4923.385,
+  "end": 4925.06,
+  "text": "think it's an important thing to know"
+ },
+ {
+  "start": 4925.06,
+  "end": 4931.5,
+  "text": "in the action space of mixture of experts models."
+ },
+ {
+  "start": 4931.5,
+  "end": 4932.1,
+  "text": "OK."
+ },
+ {
+  "start": 4932.1,
+  "end": 4935.42,
+  "text": "So the last thing I want to end with is,"
+ },
+ {
+  "start": 4935.42,
+  "end": 4937.54,
+  "text": "I want to just walk us through the DeepSeek"
+ },
+ {
+  "start": 4937.54,
+  "end": 4939.52,
+  "text": "models-- v1, v2, and v3."
+ },
+ {
+  "start": 4939.52,
+  "end": 4942.1,
+  "text": "I think there's a lot to learn from the evolution of DeepSeek"
+ },
+ {
+  "start": 4942.1,
+  "end": 4942.6,
+  "text": "models."
+ },
+ {
+  "start": 4942.6,
+  "end": 4944.1,
+  "text": "And also, if you're interested, just"
+ },
+ {
+  "start": 4944.1,
+  "end": 4946.6,
+  "text": "in general about MoEs or architecture design,"
+ },
+ {
+  "start": 4946.6,
+  "end": 4948.94,
+  "text": "I would encourage that you read the DeepSeek papers."
+ },
+ {
+  "start": 4948.94,
+  "end": 4950.02,
+  "text": "I think they're very well written."
+ },
+ {
+  "start": 4950.02,
+  "end": 4951.437,
+  "text": "I think they have a lot of details"
+ },
+ {
+  "start": 4951.437,
+  "end": 4953.04,
+  "text": "that are worth digging into."
+ },
+ {
+  "start": 4953.04,
+  "end": 4956.72,
+  "text": "So the DeepSeekMoE architecture at v1"
+ },
+ {
+  "start": 4956.72,
+  "end": 4959.84,
+  "text": "is already, actually, the prototype"
+ },
+ {
+  "start": 4959.84,
+  "end": 4961.58,
+  "text": "of a lot of different modern MoE."
+ },
+ {
+  "start": 4961.58,
+  "end": 4963.98,
+  "text": "It's got the shared and fine-grained expert structure."
+ },
+ {
+  "start": 4963.98,
+  "end": 4967.36,
+  "text": "It uses standard TopK routing with the auxiliary loss"
+ },
+ {
+  "start": 4967.36,
+  "end": 4967.98,
+  "text": "balancing."
+ },
+ {
+  "start": 4967.98,
+  "end": 4969.397,
+  "text": "I mean, in some ways, I would say,"
+ },
+ {
+  "start": 4969.397,
+  "end": 4975.04,
+  "text": "this is like the prototypical platonic ideal of MoE model."
+ },
+ {
+  "start": 4975.04,
+  "end": 4978.34,
+  "text": "DeepSeekMoE v2 scales this guy up."
+ },
+ {
+  "start": 4978.34,
+  "end": 4981.08,
+  "text": "So you've got two shared experts, many more fine-grained"
+ },
+ {
+  "start": 4981.08,
+  "end": 4982.2,
+  "text": "experts."
+ },
+ {
+  "start": 4982.2,
+  "end": 4984.92,
+  "text": "And you've got this device routing component,"
+ },
+ {
+  "start": 4984.92,
+  "end": 4987.7,
+  "text": "and you've got a communication balancing component."
+ },
+ {
+  "start": 4987.7,
+  "end": 4990.64,
+  "text": "Both of these are essentially adding auxiliary losses"
+ },
+ {
+  "start": 4990.64,
+  "end": 4991.94,
+  "text": "to optimize systems."
+ },
+ {
+  "start": 4991.94,
+  "end": 4994.92,
+  "text": "I think it's important to realize that successful language"
+ },
+ {
+  "start": 4994.92,
+  "end": 4997.66,
+  "text": "model training is not just about deep learning,"
+ },
+ {
+  "start": 4997.66,
+  "end": 5000.1,
+  "text": "it's also about really respecting your systems."
+ },
+ {
+  "start": 5000.1,
+  "end": 5002.72,
+  "text": "So DeepSeek v2 is really a reflection, I think,"
+ },
+ {
+  "start": 5002.72,
+  "end": 5005.35,
+  "text": "of this philosophy."
+ },
+ {
+  "start": 5005.35,
+  "end": 5008.63,
+  "text": "And then in DeepSeekMoE v3, they've still"
+ },
+ {
+  "start": 5008.63,
+  "end": 5011.41,
+  "text": "got the shared and fine-grained experts design,"
+ },
+ {
+  "start": 5011.41,
+  "end": 5015.53,
+  "text": "but they've got different ways of doing balancing."
+ },
+ {
+  "start": 5015.53,
+  "end": 5017.43,
+  "text": "They've gotten aux-loss-free ways"
+ },
+ {
+  "start": 5017.43,
+  "end": 5020.59,
+  "text": "of balancing the different experts."
+ },
+ {
+  "start": 5020.59,
+  "end": 5024.27,
+  "text": "And they've switched to using sigmoid plus softmax, which"
+ },
+ {
+  "start": 5024.27,
+  "end": 5028.67,
+  "text": "is a different way of weighting their experts, but really,"
+ },
+ {
+  "start": 5028.67,
+  "end": 5030.07,
+  "text": "mostly similar."
+ },
+ {
+  "start": 5030.07,
+  "end": 5031.638,
+  "text": "Finally, since we're already here,"
+ },
+ {
+  "start": 5031.638,
+  "end": 5033.43,
+  "text": "we might as well just walk through the rest"
+ },
+ {
+  "start": 5033.43,
+  "end": 5034.89,
+  "text": "of DeepSeekMoE V3."
+ },
+ {
+  "start": 5034.89,
+  "end": 5036.79,
+  "text": "They've got lots of other cool things."
+ },
+ {
+  "start": 5036.79,
+  "end": 5039.87,
+  "text": "I'm a big fan of how they think about systems."
+ },
+ {
+  "start": 5039.87,
+  "end": 5041.67,
+  "text": "They've got multihead latent attention,"
+ },
+ {
+  "start": 5041.67,
+  "end": 5045.31,
+  "text": "where instead of doing QKV directly,"
+ },
+ {
+  "start": 5045.31,
+  "end": 5046.87,
+  "text": "what you're going to do is you're"
+ },
+ {
+  "start": 5046.87,
+  "end": 5051.05,
+  "text": "going to represent them as this lower dimensional latent c."
+ },
+ {
+  "start": 5051.05,
+  "end": 5052.39,
+  "text": "So you have your hidden input."
+ },
+ {
+  "start": 5052.39,
+  "end": 5055.33,
+  "text": "Instead of directly producing your Qs, Ks, and Vs,"
+ },
+ {
+  "start": 5055.33,
+  "end": 5057.31,
+  "text": "you're going to first produce the c."
+ },
+ {
+  "start": 5057.31,
+  "end": 5059.71,
+  "text": "And then you're going to produce your Q, Ks, and Vs"
+ },
+ {
+  "start": 5059.71,
+  "end": 5060.97,
+  "text": "as a function of that."
+ },
+ {
+  "start": 5060.97,
+  "end": 5065.65,
+  "text": "And that allows you to get significantly improved savings."
+ },
+ {
+  "start": 5065.65,
+  "end": 5068.35,
+  "text": "Instead of KB cashing all your Ks and Vs,"
+ },
+ {
+  "start": 5068.35,
+  "end": 5070.49,
+  "text": "I only need to store these Cs."
+ },
+ {
+  "start": 5070.49,
+  "end": 5072.65,
+  "text": "And the Cs are hopefully, lower dimensional."
+ },
+ {
+  "start": 5072.65,
+  "end": 5075.93,
+  "text": "And that's why it's called MLA, latent activation,"
+ },
+ {
+  "start": 5075.93,
+  "end": 5077.99,
+  "text": "because the Cs, which are latent,"
+ },
+ {
+  "start": 5077.99,
+  "end": 5082.41,
+  "text": "are the KB cache quantities that you need to save."
+ },
+ {
+  "start": 5082.41,
+  "end": 5085.13,
+  "text": "The only complexity that you might need to worry about"
+ },
+ {
+  "start": 5085.13,
+  "end": 5088.71,
+  "text": "is that this is going to conflict with rope"
+ },
+ {
+  "start": 5088.71,
+  "end": 5091.15,
+  "text": "when you do KB caching."
+ },
+ {
+  "start": 5091.15,
+  "end": 5094.45,
+  "text": "So you have to be a little bit careful about how you rotate"
+ },
+ {
+  "start": 5094.45,
+  "end": 5096.29,
+  "text": "different dimensions and so on."
+ },
+ {
+  "start": 5096.29,
+  "end": 5098.89,
+  "text": "And so the trick is, you have nonlatent dimensions"
+ },
+ {
+  "start": 5098.89,
+  "end": 5101.33,
+  "text": "that encode positions, but I'm not"
+ },
+ {
+  "start": 5101.33,
+  "end": 5104.75,
+  "text": "going to go into too much more details about that."
+ },
+ {
+  "start": 5104.75,
+  "end": 5106.29,
+  "text": "Finally, something that I thought"
+ },
+ {
+  "start": 5106.29,
+  "end": 5108.73,
+  "text": "was a very cool idea for MoE, actually,"
+ },
+ {
+  "start": 5108.73,
+  "end": 5111.77,
+  "text": "DeepSeekMoE v3, but hasn't caught on very much,"
+ },
+ {
+  "start": 5111.77,
+  "end": 5114.91,
+  "text": "is the idea of MTP or multitoken prediction."
+ },
+ {
+  "start": 5114.91,
+  "end": 5116.87,
+  "text": "Instead of predicting one future token,"
+ },
+ {
+  "start": 5116.87,
+  "end": 5120.01,
+  "text": "you predict multiple tokens all at once."
+ },
+ {
+  "start": 5120.01,
+  "end": 5123.045,
+  "text": "That has a statistical arguments for why that's a good idea."
+ },
+ {
+  "start": 5123.045,
+  "end": 5125.42,
+  "text": "Maybe it lets you predict the future a little bit better."
+ },
+ {
+  "start": 5125.42,
+  "end": 5127.44,
+  "text": "But also, there's this nice systems argument"
+ },
+ {
+  "start": 5127.44,
+  "end": 5130.84,
+  "text": "that you now have a speculative decoder built in."
+ },
+ {
+  "start": 5130.84,
+  "end": 5134.68,
+  "text": "Percy will talk about that when he talks about inference later,"
+ },
+ {
+  "start": 5134.68,
+  "end": 5138.0,
+  "text": "but it's just a trick that you can use to speed up"
+ },
+ {
+  "start": 5138.0,
+  "end": 5140.78,
+  "text": "your decoding from your model."
+ },
+ {
+  "start": 5140.78,
+  "end": 5141.28,
+  "text": "OK."
+ },
+ {
+  "start": 5141.28,
+  "end": 5142.76,
+  "text": "I think we're roughly at time."
+ },
+ {
+  "start": 5142.76,
+  "end": 5144.86,
+  "text": "So to put everything together right,"
+ },
+ {
+  "start": 5144.86,
+  "end": 5149.4,
+  "text": "MoEs are this very clever idea to take advantage of sparsity,"
+ },
+ {
+  "start": 5149.4,
+  "end": 5153.04,
+  "text": "so that you can have more parameters than you're paying for."
+ },
+ {
+  "start": 5153.04,
+  "end": 5156.54,
+  "text": "So you don't pay for the compute cost of all of your parameters,"
+ },
+ {
+  "start": 5156.54,
+  "end": 5159.64,
+  "text": "but you are getting the parameter benefits."
+ },
+ {
+  "start": 5159.64,
+  "end": 5162.4,
+  "text": "You might initially think that this kind of routing problem"
+ },
+ {
+  "start": 5162.4,
+  "end": 5165.48,
+  "text": "is very hard, but it turns out that very simple things"
+ },
+ {
+  "start": 5165.48,
+  "end": 5167.68,
+  "text": "work well, even at scale."
+ },
+ {
+  "start": 5167.68,
+  "end": 5170.58,
+  "text": "And at this point, it's clear that MoEs are here to stay,"
+ },
+ {
+  "start": 5170.58,
+  "end": 5173.96,
+  "text": "so you should understand how they work and what they are."
+ },
+ {
+  "start": 5173.96,
+  "end": 5175.51,
+  "text": "Thanks."
+ }
+]

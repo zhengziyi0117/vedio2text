@@ -1,0 +1,7175 @@
+1
+00:00:06,040 --> 00:00:08,980
+We will get started.
+
+2
+00:00:08,980 --> 00:00:12,640
+Well, temporarily leaving the land of systems
+
+3
+00:00:12,640 --> 00:00:16,239
+to talk about more deep learning stuff, which we're
+
+4
+00:00:16,239 --> 00:00:19,280
+going to have two lectures on scaling law and scaling
+
+5
+00:00:19,280 --> 00:00:20,420
+law adjacent phenomena.
+
+6
+00:00:20,420 --> 00:00:22,560
+So today is going to be the basics.
+
+7
+00:00:22,560 --> 00:00:25,260
+We're just going to talk about pretty basic scaling law stuff.
+
+8
+00:00:25,260 --> 00:00:26,620
+Some of the classic works.
+
+9
+00:00:26,620 --> 00:00:29,200
+How does the basic idea of scaling laws
+
+10
+00:00:29,200 --> 00:00:33,120
+connect to maybe things you know about from machine learning 101.
+
+11
+00:00:33,120 --> 00:00:35,120
+And then in two lectures, we're going
+
+12
+00:00:35,120 --> 00:00:37,560
+to do the more advanced version of the scaling laws
+
+13
+00:00:37,560 --> 00:00:39,360
+lecture, where we're going to basically go
+
+14
+00:00:39,360 --> 00:00:46,000
+into a bunch of modern, open model tech reports, things
+
+15
+00:00:46,000 --> 00:00:48,165
+like mu P and other parameter initializations,
+
+16
+00:00:48,165 --> 00:00:50,040
+and this year I'm going to throw in some more
+
+17
+00:00:50,040 --> 00:00:51,060
+stuff for optimizers.
+
+18
+00:00:51,060 --> 00:00:52,560
+So there will be an advanced version
+
+19
+00:00:52,560 --> 00:00:54,893
+of this that will try to really get to the cutting edge.
+
+20
+00:00:54,893 --> 00:00:58,840
+Today, we're going to start with all the really basic stuff.
+
+21
+00:00:58,840 --> 00:01:01,362
+And due to some scheduling constraints,
+
+22
+00:01:01,362 --> 00:01:03,070
+next lecture will be inference, so you're
+
+23
+00:01:03,070 --> 00:01:04,129
+going to go back and forth.
+
+24
+00:01:04,129 --> 00:01:06,712
+You're going to do scaling laws and inference and then scaling
+
+25
+00:01:06,712 --> 00:01:09,150
+laws again.
+
+26
+00:01:09,150 --> 00:01:13,970
+So scaling laws is really the following scenario in some ways,
+
+27
+00:01:13,970 --> 00:01:17,050
+or you run into it very quickly once you run into this scenario.
+
+28
+00:01:17,050 --> 00:01:19,830
+So you have your very wealthy friend,
+
+29
+00:01:19,830 --> 00:01:22,870
+who has given you 10,000 B200s for a month,
+
+30
+00:01:22,870 --> 00:01:25,950
+and he or she has asked you to build a very good open source
+
+31
+00:01:25,950 --> 00:01:26,650
+language model.
+
+32
+00:01:26,650 --> 00:01:30,070
+They would like to get something out of those B200s.
+
+33
+00:01:30,070 --> 00:01:32,450
+And so you've already put together your infra team.
+
+34
+00:01:32,450 --> 00:01:35,830
+That's your assignment to buddies.
+
+35
+00:01:35,830 --> 00:01:38,295
+And you have, let's say a good pre-training data set.
+
+36
+00:01:38,295 --> 00:01:40,170
+That's going to be the assignment after this,
+
+37
+00:01:40,170 --> 00:01:42,070
+but let's say you already have that.
+
+38
+00:01:42,070 --> 00:01:44,370
+And then you're going to go and train a big model,
+
+39
+00:01:44,370 --> 00:01:47,430
+but there's lots of choices in training a big model— all
+
+40
+00:01:47,430 --> 00:01:50,830
+the assignments, the earlier lecture two stuff that we had
+
+41
+00:01:50,830 --> 00:01:54,350
+earlier, where you have questions like what architecture
+
+42
+00:01:54,350 --> 00:01:54,930
+should I use?
+
+43
+00:01:54,930 --> 00:01:56,730
+What should my hyperparameters be?
+
+44
+00:01:56,730 --> 00:01:58,580
+And it's very scary to run these things
+
+45
+00:01:58,580 --> 00:02:00,540
+on a run that is basically, potentially
+
+46
+00:02:00,540 --> 00:02:03,700
+millions of dollars in cost, so how
+
+47
+00:02:03,700 --> 00:02:06,400
+do you really take this idea of scaling up very seriously?
+
+48
+00:02:06,400 --> 00:02:10,940
+How do you make sure that your big run is actually successful?
+
+49
+00:02:10,940 --> 00:02:13,460
+So of these many choices, some of which
+
+50
+00:02:13,460 --> 00:02:15,605
+you're going to just copy out of the literature.
+
+51
+00:02:15,605 --> 00:02:17,980
+The stuff that I talked about earlier in the architecture
+
+52
+00:02:17,980 --> 00:02:23,120
+lecture is really about well-adopted best practices,
+
+53
+00:02:23,120 --> 00:02:26,080
+and you will probably just pick some of these out of a hat.
+
+54
+00:02:26,080 --> 00:02:29,520
+That's fine, but really, let's say you're at the frontier.
+
+55
+00:02:29,520 --> 00:02:31,140
+You would like to build something
+
+56
+00:02:31,140 --> 00:02:34,460
+that's actually better than the best available models today.
+
+57
+00:02:34,460 --> 00:02:36,420
+You have to start really optimizing these.
+
+58
+00:02:36,420 --> 00:02:38,700
+You can't just copy the choices of others
+
+59
+00:02:38,700 --> 00:02:41,620
+and get something that's better than the state of the art.
+
+60
+00:02:41,620 --> 00:02:42,880
+So how do we do that?
+
+61
+00:02:42,880 --> 00:02:45,340
+Well, that's going to require us to really engage
+
+62
+00:02:45,340 --> 00:02:48,220
+with this idea of scaling.
+
+63
+00:02:48,220 --> 00:02:52,260
+So scaling laws have been one very powerful tool.
+
+64
+00:02:52,260 --> 00:02:53,980
+You might also call it a paradigm.
+
+65
+00:02:53,980 --> 00:02:57,020
+Scaling laws, if you talk to some people who are really
+
+66
+00:02:57,020 --> 00:02:59,080
+in these big labs doing scaling work,
+
+67
+00:02:59,080 --> 00:03:00,593
+it's almost kind of a way of life.
+
+68
+00:03:00,593 --> 00:03:02,760
+They're like, we really believe in the scaling laws.
+
+69
+00:03:02,760 --> 00:03:04,420
+It's almost a belief, and you'll see
+
+70
+00:03:04,420 --> 00:03:08,820
+why scaling laws can sometimes be quite tricky objects.
+
+71
+00:03:08,820 --> 00:03:11,700
+But really, scaling laws are these simple, predictive rules
+
+72
+00:03:11,700 --> 00:03:16,200
+of how to go from small scale model performance and behavior,
+
+73
+00:03:16,200 --> 00:03:19,440
+and to try to extrapolate them up to large scale behavior.
+
+74
+00:03:19,440 --> 00:03:23,620
+And so the basic naive way to approach model training
+
+75
+00:03:23,620 --> 00:03:25,480
+might be to say, I have a big budget,
+
+76
+00:03:25,480 --> 00:03:28,460
+I'm going to do multiple training runs on these very
+
+77
+00:03:28,460 --> 00:03:30,460
+big runs, and I'm going to tune hyperparameters
+
+78
+00:03:30,460 --> 00:03:33,260
+on those big runs, but that's very wasteful.
+
+79
+00:03:33,260 --> 00:03:34,740
+So instead, what I would like to do
+
+80
+00:03:34,740 --> 00:03:38,180
+is I would like to do all of my optimization at the small scale
+
+81
+00:03:38,180 --> 00:03:40,100
+and have some simple rule that allows
+
+82
+00:03:40,100 --> 00:03:43,140
+me to extrapolate small scale behaviors to large scale
+
+83
+00:03:43,140 --> 00:03:43,960
+behaviors.
+
+84
+00:03:43,960 --> 00:03:45,940
+And if the small scale and large scale
+
+85
+00:03:45,940 --> 00:03:50,300
+are connected by some very simple, robust connections
+
+86
+00:03:50,300 --> 00:03:52,100
+like regularities of some kind, then you
+
+87
+00:03:52,100 --> 00:03:55,410
+would have confidence in this kind of new scaling approach
+
+88
+00:03:55,410 --> 00:03:57,170
+to optimizing your system.
+
+89
+00:03:57,170 --> 00:03:58,810
+And that's really what today is all
+
+90
+00:03:58,810 --> 00:04:04,790
+going to be about-- this engineering view of a scaling law.
+
+91
+00:04:04,790 --> 00:04:07,890
+And to start with, I'm going to talk a little bit
+
+92
+00:04:07,890 --> 00:04:10,490
+about background, because scaling laws are very
+
+93
+00:04:10,490 --> 00:04:14,570
+interesting in that not only are they the newest paradigm, that's
+
+94
+00:04:14,570 --> 00:04:17,329
+how a lot of these models are designed and thought,
+
+95
+00:04:17,329 --> 00:04:21,470
+but also they connect very closely to very classical ideas.
+
+96
+00:04:21,470 --> 00:04:25,923
+So if you're a person that's a machine learning theorist,
+
+97
+00:04:25,923 --> 00:04:28,090
+actually, there are some things that you will really
+
+98
+00:04:28,090 --> 00:04:30,970
+feel at home with in some ways, so they're like empirical sample
+
+99
+00:04:30,970 --> 00:04:32,090
+complexities.
+
+100
+00:04:32,090 --> 00:04:35,730
+And then I'll talk through the history of scaling laws of one
+
+101
+00:04:35,730 --> 00:04:38,365
+kind and show you that this is not something that's really new.
+
+102
+00:04:38,365 --> 00:04:40,490
+It's something with actually quite a bit of history
+
+103
+00:04:40,490 --> 00:04:44,090
+and research done to it.
+
+104
+00:04:44,090 --> 00:04:47,270
+So I really, really had to put some math into my slides.
+
+105
+00:04:47,270 --> 00:04:50,690
+I really feel the need to do so, but one
+
+106
+00:04:50,690 --> 00:04:52,530
+of the things that is very interesting
+
+107
+00:04:52,530 --> 00:04:55,320
+is that for the longest time, machine learning
+
+108
+00:04:55,320 --> 00:04:58,600
+has thought about this question of how will my model perform,
+
+109
+00:04:58,600 --> 00:05:00,300
+especially from a theory perspective?
+
+110
+00:05:00,300 --> 00:05:04,280
+I have this model class, how good is my model going to be?
+
+111
+00:05:04,280 --> 00:05:06,840
+And generalization bound is the theorists answer
+
+112
+00:05:06,840 --> 00:05:09,400
+to this question, so you have your error,
+
+113
+00:05:09,400 --> 00:05:11,000
+over some finite hypothesis class,
+
+114
+00:05:11,000 --> 00:05:12,417
+and you say, oh, my error is going
+
+115
+00:05:12,417 --> 00:05:15,600
+to be at most this much worse than the model's
+
+116
+00:05:15,600 --> 00:05:17,040
+performance on my training set.
+
+117
+00:05:17,040 --> 00:05:20,000
+This is classic generalization bounds.
+
+118
+00:05:20,000 --> 00:05:22,240
+You can write this down for more complex classes
+
+119
+00:05:22,240 --> 00:05:24,320
+like smooth densities or whatever,
+
+120
+00:05:24,320 --> 00:05:26,280
+but importantly, not only does this
+
+121
+00:05:26,280 --> 00:05:28,480
+tell you some of performance, notice
+
+122
+00:05:28,480 --> 00:05:31,880
+that these bounds are often dependent on the sample size.
+
+123
+00:05:31,880 --> 00:05:36,720
+And so this is telling you, well, this a theoretical upper bound on my loss values
+
+124
+00:05:36,720 --> 00:05:39,220
+as a function of how my training set grows.
+
+125
+00:05:39,220 --> 00:05:42,400
+And in some ways, that's very closely related to this idea
+
+126
+00:05:42,400 --> 00:05:45,860
+of what happens as I scale up the amount of data that I have?
+
+127
+00:05:45,860 --> 00:05:47,760
+Those are closely related questions,
+
+128
+00:05:47,760 --> 00:05:51,590
+where you might believe me that that's true.
+
+129
+00:05:51,590 --> 00:05:55,030
+And if you try to figure out what is the very first scaling
+
+130
+00:05:55,030 --> 00:05:56,410
+law paper that exists?
+
+131
+00:05:56,410 --> 00:05:58,950
+It turns out you can go back quite far.
+
+132
+00:05:58,950 --> 00:06:02,750
+You can go back to Bell Labs and Corinna Cortes and Vladimir
+
+133
+00:06:02,750 --> 00:06:06,750
+Vapnik and these folks that were doing very serious theory
+
+134
+00:06:06,750 --> 00:06:10,550
+work on machine learning, ask this question, well,
+
+135
+00:06:10,550 --> 00:06:12,990
+training classifiers on a really large data set
+
+136
+00:06:12,990 --> 00:06:14,650
+is often very expensive.
+
+137
+00:06:14,650 --> 00:06:16,530
+We would like to avoid doing that,
+
+138
+00:06:16,530 --> 00:06:19,870
+and to do so maybe we can just fit classifiers on a smaller
+
+139
+00:06:19,870 --> 00:06:23,390
+sample, fit a curve to how their error rates decay,
+
+140
+00:06:23,390 --> 00:06:25,630
+and use that as a way to estimate their performance.
+
+141
+00:06:25,630 --> 00:06:29,990
+That's almost literally a data scaling law back in 1993.
+
+142
+00:06:29,990 --> 00:06:33,190
+So this idea, at the very least, thinking
+
+143
+00:06:33,190 --> 00:06:34,710
+about how your model's performance
+
+144
+00:06:34,710 --> 00:06:37,430
+changes as a function of data set size is just a very
+
+145
+00:06:37,430 --> 00:06:40,310
+classical one, and there's a lot of work that
+
+146
+00:06:40,310 --> 00:06:41,970
+supports this kind of idea.
+
+147
+00:06:41,970 --> 00:06:44,650
+I just want to connect this to some of these older ideas
+
+148
+00:06:44,650 --> 00:06:47,950
+so you don't really think of scaling laws as this very
+
+149
+00:06:47,950 --> 00:06:49,590
+new, purely neural thing.
+
+150
+00:06:49,590 --> 00:06:53,070
+It's an idea that has a lot of roots in empirical machine
+
+151
+00:06:53,070 --> 00:06:56,790
+learning, and also connections to theoretical machine learning.
+
+152
+00:06:56,790 --> 00:06:59,550
+And if you start to look at the history of this,
+
+153
+00:06:59,550 --> 00:07:03,150
+there's a lot of people that have said, isn't it the case
+
+154
+00:07:03,150 --> 00:07:06,290
+that maybe instead of spending money on algorithm development,
+
+155
+00:07:06,290 --> 00:07:08,370
+maybe we should just go collect more data,
+
+156
+00:07:08,370 --> 00:07:11,830
+because if we plot how the performance of our systems
+
+157
+00:07:11,830 --> 00:07:14,390
+behave as a function of the amount of data that we have,
+
+158
+00:07:14,390 --> 00:07:17,670
+it turns out that they are all increasing or improving
+
+159
+00:07:17,670 --> 00:07:18,610
+in predictable ways?
+
+160
+00:07:18,610 --> 00:07:24,750
+Banko and Brill, is one of the canonical NLP references in how
+
+161
+00:07:24,750 --> 00:07:27,550
+the amount of data and thinking about scaling
+
+162
+00:07:27,550 --> 00:07:30,790
+is a really valid way of improving system performance,
+
+163
+00:07:30,790 --> 00:07:34,510
+so there's lots of ways of thinking about this.
+
+164
+00:07:34,510 --> 00:07:38,750
+And there's also work by other NLP folks
+
+165
+00:07:38,750 --> 00:07:40,450
+like Kolachina et al. in 2012.
+
+166
+00:07:40,450 --> 00:07:42,630
+This is one of the earlier works on different kinds
+
+167
+00:07:42,630 --> 00:07:45,390
+of functional forms for scaling laws, where once again, they're
+
+168
+00:07:45,390 --> 00:07:47,870
+increasing the amount of data that they're using to train.
+
+169
+00:07:47,870 --> 00:07:51,380
+In this case, machine translation systems or BLEU scores.
+
+170
+00:07:51,380 --> 00:07:54,500
+And they're asking like, what is the right functional form
+
+171
+00:07:54,500 --> 00:07:57,060
+for how a model's performance behaves
+
+172
+00:07:57,060 --> 00:07:59,680
+as a function of increased data amount?
+
+173
+00:07:59,680 --> 00:08:02,960
+And they maybe surprisingly or not surprisingly,
+
+174
+00:08:02,960 --> 00:08:07,660
+end up with the same power laws, which is pow 3 and 4 as really
+
+175
+00:08:07,660 --> 00:08:08,400
+we do today.
+
+176
+00:08:08,400 --> 00:08:10,020
+For the rest of the lecture, you're
+
+177
+00:08:10,020 --> 00:08:14,060
+going to keep seeing essentially these polynomial functions, pow
+
+178
+00:08:14,060 --> 00:08:17,080
+3 and pow 4 as I talk about scaling laws.
+
+179
+00:08:17,080 --> 00:08:21,260
+And we knew about a lot of this back in the 2010s
+
+180
+00:08:21,260 --> 00:08:23,380
+that these kinds of functional forms
+
+181
+00:08:23,380 --> 00:08:27,940
+were very predictive of model behavior as we scaled them up.
+
+182
+00:08:27,940 --> 00:08:31,820
+And then finally, I really like mentioning this paper because
+
+183
+00:08:31,820 --> 00:08:33,700
+for whatever reason, they don't get,
+
+184
+00:08:33,700 --> 00:08:35,179
+or Hestness et al. don't get cited
+
+185
+00:08:35,179 --> 00:08:37,020
+quite as much as they should.
+
+186
+00:08:37,020 --> 00:08:40,500
+The origins of neural scaling, I would point back
+
+187
+00:08:40,500 --> 00:08:42,580
+to Hestness in 2017.
+
+188
+00:08:42,580 --> 00:08:44,820
+Really a very forward looking work
+
+189
+00:08:44,820 --> 00:08:47,530
+in many ways that built these scaling
+
+190
+00:08:47,530 --> 00:08:49,570
+laws as a function of data set size
+
+191
+00:08:49,570 --> 00:08:52,370
+for a wide variety of systems, different kinds of speech
+
+192
+00:08:52,370 --> 00:08:55,010
+recognition systems, machine translation systems, language
+
+193
+00:08:55,010 --> 00:08:58,530
+models, and they showed that these things follow
+
+194
+00:08:58,530 --> 00:09:02,290
+these nice polynomial trends across a really large number
+
+195
+00:09:02,290 --> 00:09:04,330
+of domains.
+
+196
+00:09:04,330 --> 00:09:05,930
+And it was really ahead of its time,
+
+197
+00:09:05,930 --> 00:09:09,970
+because 2017 was long before some of the earlier OpenAI
+
+198
+00:09:09,970 --> 00:09:12,890
+scaling laws and so on in the 2020s.
+
+199
+00:09:12,890 --> 00:09:15,230
+And they talked about stuff that we talk about today,
+
+200
+00:09:15,230 --> 00:09:18,250
+like emergence, where suddenly models
+
+201
+00:09:18,250 --> 00:09:19,970
+可能会展现出某些类型的能力
+
+202
+00:09:19,970 --> 00:09:22,530
+因为准确率是一个更加不连续的度量
+
+203
+00:09:22,530 --> 00:09:24,250
+而不是损失。
+
+204
+00:09:24,250 --> 00:09:27,490
+而实际上，按计算量进行缩放，如果我们有系统
+
+205
+00:09:27,490 --> 00:09:30,650
+能够可预测地扩展到大规模训练数据，那么
+
+206
+00:09:30,650 --> 00:09:32,950
+计算量确实会变得非常重要。
+
+207
+00:09:32,950 --> 00:09:36,330
+最后，既然我们按计算量进行缩放，那么
+
+208
+00:09:36,330 --> 00:09:39,390
+速度和系统优化将会转化为准确率。
+
+209
+00:09:39,390 --> 00:09:42,070
+所以在某些方面，我们今天看到的很多事情，
+
+210
+00:09:42,070 --> 00:09:45,240
+比如系统缩放的现象等等，
+
+211
+00:09:45,240 --> 00:09:48,440
+我们本可以知道，或者我在2017年本可以知道，
+
+212
+00:09:48,440 --> 00:09:52,280
+如果我当时阅读并思考了这些缩放定律论文
+
+213
+00:09:52,280 --> 00:09:54,360
+并更认真地思考它们。
+
+214
+00:09:54,360 --> 00:10:00,200
+所以在我讲的每一场缩放定律
+
+215
+00:10:00,200 --> 00:10:03,760
+讲座中都要提到那篇论文，只是为了说明，很多这些现象
+
+216
+00:10:03,760 --> 00:10:06,080
+在现代时代之前就早已为人所知，
+
+217
+00:10:06,080 --> 00:10:10,080
+或者说在现代语言模型时代之前，因为
+
+218
+00:10:10,080 --> 00:10:12,280
+我们有可能在见到这些大型语言模型之前
+
+219
+00:10:12,280 --> 00:10:14,960
+就已经知道我们所处的状态。
+
+220
+00:10:14,960 --> 00:10:17,160
+知道这一点非常酷。
+
+221
+00:10:17,160 --> 00:10:20,420
+关于这段半历史性的部分有什么问题吗？
+
+222
+00:10:20,420 --> 00:10:21,260
+是的。
+
+223
+00:10:21,260 --> 00:10:28,120
+[听不清]，我想知道那些只是纯粹经验上的，还是有什么方法
+
+224
+00:10:28,120 --> 00:10:30,200
+可以证明这一切的合理性？
+
+225
+00:10:30,200 --> 00:10:32,160
+你问的是这些缩放定律，
+
+226
+00:10:32,160 --> 00:10:33,680
+它们从何而来？
+
+227
+00:10:33,680 --> 00:10:37,760
+这些是纯粹的曲线拟合练习。
+
+228
+00:10:37,760 --> 00:10:40,960
+我会稍微谈一下缩放定律可能从何而来，
+
+229
+00:10:40,960 --> 00:10:45,120
+以及为什么多项式可以说是非常自然的一类缩放
+
+230
+00:10:45,120 --> 00:10:49,980
+定律，但并没有金科玉律说它们只能是这些。
+
+231
+00:10:49,980 --> 00:10:52,620
+不过我会说，在某些方面，
+
+232
+00:10:52,620 --> 00:10:55,680
+理论提供了一个非常丰富的地方，缩放定律的
+
+233
+00:10:55,680 --> 00:10:58,240
+函数形式可以从中而来，因为理论
+
+234
+00:10:58,240 --> 00:11:01,360
+经常在思考误差率如何衰减
+
+235
+00:11:01,360 --> 00:11:02,860
+作为各种对象的函数？
+
+236
+00:11:02,860 --> 00:11:04,693
+它们会给你各种类型的
+
+237
+00:11:04,693 --> 00:11:05,460
+候选函数形式。
+
+238
+00:11:05,460 --> 00:11:06,640
+物理学家也非常擅长这个
+
+239
+00:11:06,640 --> 00:11:07,670
+因为他们思考极限，
+
+240
+00:11:07,670 --> 00:11:09,340
+比如极限如何表现？
+
+241
+00:11:09,340 --> 00:11:12,980
+And that gives you different scaling law functional forms.
+
+242
+00:11:12,980 --> 00:11:13,480
+Cool.
+
+243
+00:11:18,640 --> 00:11:21,560
+All right, any other questions?
+
+244
+00:11:21,560 --> 00:11:22,840
+Good.
+
+245
+00:11:22,840 --> 00:11:26,320
+So now I'm going to start talking about more modern neural
+
+246
+00:11:26,320 --> 00:11:28,440
+language model scaling, and I'm going
+
+247
+00:11:28,440 --> 00:11:31,480
+to start with data scaling laws because to me, they're the most
+
+248
+00:11:31,480 --> 00:11:34,320
+simple and natural objects.
+
+249
+00:11:34,320 --> 00:11:35,960
+Talking about data scaling laws also
+
+250
+00:11:35,960 --> 00:11:39,760
+allows me to walk you through very step-by-step on how
+
+251
+00:11:39,760 --> 00:11:43,990
+we might guess what the functional form of a scaling law
+
+252
+00:11:43,990 --> 00:11:47,150
+might be and why the polynomial form is a natural one.
+
+253
+00:11:47,150 --> 00:11:49,670
+And then I'm going to start talking about hyperparameters
+
+254
+00:11:49,670 --> 00:11:53,070
+and architectures and all sorts of other more exotic objects
+
+255
+00:11:53,070 --> 00:11:55,730
+that are going to be harder to justify from intuition,
+
+256
+00:11:55,730 --> 00:12:00,910
+but still turn out to have very nice scaling law behaviors.
+
+257
+00:12:00,910 --> 00:12:04,310
+One of the things that's remarkable about this scaling
+
+258
+00:12:04,310 --> 00:12:07,950
+law style analysis has been that these power law relationships
+
+259
+00:12:07,950 --> 00:12:12,510
+seem to hold for a huge variety of different factors.
+
+260
+00:12:12,510 --> 00:12:14,970
+So the basic ones that we see in pre-training,
+
+261
+00:12:14,970 --> 00:12:16,762
+and those are going to be the ones that I'm
+
+262
+00:12:16,762 --> 00:12:18,230
+going to talk about today.
+
+263
+00:12:18,230 --> 00:12:21,677
+The usual ones that you see are compute on the x-axis.
+
+264
+00:12:21,677 --> 00:12:22,510
+This is log compute.
+
+265
+00:12:22,510 --> 00:12:25,750
+Sorry, on the x-axis, log of test loss on the y-axis,
+
+266
+00:12:25,750 --> 00:12:28,050
+or log of the data set on x-axis,
+
+267
+00:12:28,050 --> 00:12:30,550
+log of loss on the y-axis, log of parameters
+
+268
+00:12:30,550 --> 00:12:33,610
+on x-axis, log of loss, once again, on the y-axis.
+
+269
+00:12:33,610 --> 00:12:36,150
+So we can get a variety of different x-axes
+
+270
+00:12:36,150 --> 00:12:39,130
+that you might think of as resources in the log axis.
+
+271
+00:12:39,130 --> 00:12:43,100
+All of them linearize log test loss here.
+
+272
+00:12:43,100 --> 00:12:47,000
+You can see also much more exotic scaling laws.
+
+273
+00:12:47,000 --> 00:12:50,900
+You can see scaling laws that are basically
+
+274
+00:12:50,900 --> 00:12:53,280
+the equivalent to these in downstream benchmarks.
+
+275
+00:12:53,280 --> 00:12:56,340
+In those cases, you expect to see a sigmoid functional form
+
+276
+00:12:56,340 --> 00:12:59,740
+as a function of compute or compute-like quantities.
+
+277
+00:12:59,740 --> 00:13:02,340
+There's even been many works recently, more
+
+278
+00:13:02,340 --> 00:13:04,700
+on the forecasting side, where people are doing things
+
+279
+00:13:04,700 --> 00:13:07,440
+like putting dates as the x-axis.
+
+280
+00:13:07,440 --> 00:13:09,140
+And strangely enough, at least for these
+
+281
+00:13:09,140 --> 00:13:11,540
+plots—like the upper envelope of these curves
+
+282
+00:13:11,540 --> 00:13:16,220
+are often linear in various forms of capabilities.
+
+283
+00:13:16,220 --> 00:13:18,880
+There's no reason that on this bottom side,
+
+284
+00:13:18,880 --> 00:13:21,980
+the more exotic scaling laws need to be true.
+
+285
+00:13:21,980 --> 00:13:25,540
+But it turns out to be the case that, I guess, language model
+
+286
+00:13:25,540 --> 00:13:28,620
+performance is often much more regular as a function of scale
+
+287
+00:13:28,620 --> 00:13:33,860
+and resources than it initially might appear.
+
+288
+00:13:33,860 --> 00:13:37,200
+So to begin with, I'm going to start with data scaling laws.
+
+289
+00:13:37,200 --> 00:13:39,650
+And data scaling laws are a very simple kind
+
+290
+00:13:39,650 --> 00:13:42,530
+of univariate relationship that we're going to think about.
+
+291
+00:13:42,530 --> 00:13:45,050
+So in this world, we're going to fix our model training
+
+292
+00:13:45,050 --> 00:13:46,010
+procedure.
+
+293
+00:13:46,010 --> 00:13:48,070
+And in general, unless I say otherwise,
+
+294
+00:13:48,070 --> 00:13:49,570
+the models are going to generally be
+
+295
+00:13:49,570 --> 00:13:51,530
+bigger than the data set size.
+
+296
+00:13:51,530 --> 00:13:55,190
+And I'm going to increase my data set size in a regular way,
+
+297
+00:13:55,190 --> 00:13:57,390
+and I'm going to see how the error reduces.
+
+298
+00:13:57,390 --> 00:13:59,690
+And what do we expect out of this relationship?
+
+299
+00:13:59,690 --> 00:14:02,250
+In general, it's going to be monotone-ish
+
+300
+00:14:02,250 --> 00:14:03,990
+if we tune our hyperparameters well.
+
+301
+00:14:03,990 --> 00:14:05,970
+Because we have more data, more data
+
+302
+00:14:05,970 --> 00:14:08,550
+should help us do better at our task.
+
+303
+00:14:08,550 --> 00:14:10,050
+The error should decrease.
+
+304
+00:14:10,050 --> 00:14:12,570
+And if you're doing something like classification, or even
+
+305
+00:14:12,570 --> 00:14:14,810
+for next token prediction, you should really
+
+306
+00:14:14,810 --> 00:14:18,490
+go from random guessing to some entropy-like object
+
+307
+00:14:18,490 --> 00:14:21,690
+where you can't do any better than the irreducible error
+
+308
+00:14:21,690 --> 00:14:22,350
+of your task.
+
+309
+00:14:22,350 --> 00:14:23,350
+That's the noise floor.
+
+310
+00:14:23,350 --> 00:14:26,970
+So we're going to have some sigmoidal-like object over here.
+
+311
+00:14:26,970 --> 00:14:31,290
+So this is generally what we expect out of our system.
+
+312
+00:14:31,290 --> 00:14:34,630
+So we're going to start with an empirical observation,
+
+313
+00:14:34,630 --> 00:14:38,510
+and should make this on your own.
+
+314
+00:14:38,510 --> 00:14:40,370
+You'll make something that looks roughly
+
+315
+00:14:40,370 --> 00:14:43,610
+like this in parts of assignment 3,
+
+316
+00:14:43,610 --> 00:14:46,410
+which is if we just have a very big model,
+
+317
+00:14:46,410 --> 00:14:48,650
+much bigger than our data set, and we
+
+318
+00:14:48,650 --> 00:14:51,530
+increase the data set size, and we put that on the log axis,
+
+319
+00:14:51,530 --> 00:14:54,230
+and on the y-axis, we have log test loss.
+
+320
+00:14:54,230 --> 00:14:59,050
+Once again, you will find that the two points that you plot
+
+321
+00:14:59,050 --> 00:15:01,790
+会形成一条非常清晰的线性趋势。
+
+322
+00:15:01,790 --> 00:15:04,890
+我从 Kaplan 2020 年的论文中取了这个。
+
+323
+00:15:04,890 --> 00:15:06,870
+我会反复引用这篇论文。
+
+324
+00:15:06,870 --> 00:15:09,970
+这是 OpenAI 的《神经缩放定律》论文。
+
+325
+00:15:09,970 --> 00:15:13,930
+他们做了很多漂亮的消融实验和大量漂亮的数据。
+
+326
+00:15:13,930 --> 00:15:16,610
+现在，这个关系，我
+
+327
+00:15:16,610 --> 00:15:18,910
+在对数-对数图上画了一条线，
+
+328
+00:15:18,910 --> 00:15:23,090
+这是一个无尺度或幂律关系。
+
+329
+00:15:23,090 --> 00:15:24,110
+那这意味着什么？
+
+330
+00:15:24,110 --> 00:15:26,258
+如果我在对数-对数图上有一条线？
+
+331
+00:15:26,258 --> 00:15:28,550
+对很多人来说，这可能是显而易见的。
+
+332
+00:15:28,550 --> 00:15:30,210
+但为了真正强调这一点，
+
+333
+00:15:30,210 --> 00:15:32,130
+如果某个东西在对数-对数图上是线性的，那
+
+334
+00:15:32,130 --> 00:15:33,050
+意味着什么？
+
+335
+00:15:33,050 --> 00:15:35,530
+这意味着我有的误差
+
+336
+00:15:35,530 --> 00:15:37,280
+是多项式衰减的。
+
+337
+00:15:37,280 --> 00:15:39,400
+而且，这通常意味着我离
+
+338
+00:15:39,400 --> 00:15:40,340
+我的渐近线还很远。
+
+339
+00:15:40,340 --> 00:15:41,940
+因为一旦我接近我的渐近线，
+
+340
+00:15:41,940 --> 00:15:45,280
+我会逐渐变缓，而不是保持一条直线。
+
+341
+00:15:45,280 --> 00:15:48,320
+所以让我们看一个例子，只是为了向你展示
+
+342
+00:15:48,320 --> 00:15:51,880
+缩放定律如何非常自然地出现在一个非常
+
+343
+00:15:51,880 --> 00:15:55,120
+简单的估计问题上。
+
+344
+00:15:55,120 --> 00:15:57,420
+所以暂时忘掉语言模型。
+
+345
+00:15:57,420 --> 00:15:59,140
+这是一门语言模型课，
+
+346
+00:15:59,140 --> 00:16:01,200
+但现在它是统计课，接下来的一
+
+347
+00:16:01,200 --> 00:16:03,280
+张幻灯片，或者实际上是两张幻灯片。
+
+348
+00:16:03,280 --> 00:16:06,080
+不，也许是三张幻灯片。
+
+349
+00:16:06,080 --> 00:16:07,720
+所以在这种情况下，我想做的是
+
+350
+00:16:07,720 --> 00:16:10,535
+我想从一堆数据中估计均值。
+
+351
+00:16:10,535 --> 00:16:12,660
+所以我有一个输入，它是从高斯分布中抽取的。
+
+352
+00:16:12,660 --> 00:16:14,420
+我要估计这个对象的均值。
+
+353
+00:16:14,420 --> 00:16:16,240
+我就写下经验均值。
+
+354
+00:16:16,240 --> 00:16:18,220
+然后，你可以写下误差是多少。
+
+355
+00:16:18,220 --> 00:16:19,428
+那么期望误差是多少？
+
+356
+00:16:19,428 --> 00:16:21,415
+这些每个都是高斯分布，
+
+357
+00:16:21,415 --> 00:16:24,040
+而且 mu hat 是高斯分布，所以我可以写下误差。
+
+358
+00:16:24,040 --> 00:16:26,480
+那将是 sigma 平方除以 n。
+
+359
+00:16:26,480 --> 00:16:30,900
+所以，如果你看这个，这就是一个缩放定律。
+
+360
+00:16:30,900 --> 00:16:35,030
+我写下了误差，而误差，如果我取对数，
+
+361
+00:16:35,030 --> 00:16:40,590
+is a function of log n, log n being the log x-axis.
+
+362
+00:16:40,590 --> 00:16:42,710
+So in general, if you can come up
+
+363
+00:16:42,710 --> 00:16:44,990
+with anything that is essentially
+
+364
+00:16:44,990 --> 00:16:47,950
+1 over n to the alpha plus some constant,
+
+365
+00:16:47,950 --> 00:16:50,090
+when you plot that on a log-log plot,
+
+366
+00:16:50,090 --> 00:16:51,510
+subtracting out the constant term,
+
+367
+00:16:51,510 --> 00:16:53,295
+you're going to get a scaling law.
+
+368
+00:16:53,295 --> 00:16:55,670
+So anything of this form, where you have polynomial decay
+
+369
+00:16:55,670 --> 00:16:59,250
+and errors, is going to end up giving you a scaling law.
+
+370
+00:16:59,250 --> 00:17:02,230
+And of course, in parametric estimation like mean estimation
+
+371
+00:17:02,230 --> 00:17:05,329
+or regression, you of course, expect a polynomial rate.
+
+372
+00:17:05,329 --> 00:17:08,829
+You don't really expect anything else.
+
+373
+00:17:08,829 --> 00:17:11,589
+And if you've taken your stats estimation courses,
+
+374
+00:17:11,589 --> 00:17:14,030
+you know that essentially all the classical
+
+375
+00:17:14,030 --> 00:17:17,349
+models you are expected to have a 1 over n scaling.
+
+376
+00:17:17,349 --> 00:17:19,990
+If you fit a regression or so on, you might get D over n
+
+377
+00:17:19,990 --> 00:17:21,710
+or whatever else.
+
+378
+00:17:21,710 --> 00:17:25,470
+And so if this is true, and this is the origins of scaling laws,
+
+379
+00:17:25,470 --> 00:17:27,710
+if we plot our lines, we should expect
+
+380
+00:17:27,710 --> 00:17:30,830
+to see roughly a slope of minus 1
+
+381
+00:17:30,830 --> 00:17:32,740
+because that's the exponent on the x.
+
+382
+00:17:32,740 --> 00:17:34,780
+Y equals minus x plus C.
+
+383
+00:17:34,780 --> 00:17:36,760
+If we fit our neural scaling laws,
+
+384
+00:17:36,760 --> 00:17:39,740
+we will find that our exponents are quite different.
+
+385
+00:17:39,740 --> 00:17:43,300
+These exponents-- I've taken from these two
+
+386
+00:17:43,300 --> 00:17:45,780
+on the left from Hestenes, I've taken the one on the right
+
+387
+00:17:45,780 --> 00:17:46,860
+from Kaplan.
+
+388
+00:17:46,860 --> 00:17:51,600
+They're about -0.1, -0.3, -0.1, roughly speaking.
+
+389
+00:17:51,600 --> 00:17:53,760
+And so what does that mean?
+
+390
+00:17:53,760 --> 00:17:56,740
+That means this is much slower than estimating a mean
+
+391
+00:17:56,740 --> 00:17:58,880
+or estimating a linear regression.
+
+392
+00:17:58,880 --> 00:18:01,540
+So this is much, much slower convergence rate, still
+
+393
+00:18:01,540 --> 00:18:03,740
+polynomial, but much slower.
+
+394
+00:18:03,740 --> 00:18:05,760
+Now this is interesting.
+
+395
+00:18:05,760 --> 00:18:07,820
+It's saying that we're getting these kind
+
+396
+00:18:07,820 --> 00:18:11,320
+of nice polynomial rates, but the exponents are not so great.
+
+397
+00:18:11,320 --> 00:18:12,780
+They're -0.1.
+
+398
+00:18:12,780 --> 00:18:15,460
+Where might you get an estimation rate like this?
+
+399
+00:18:15,460 --> 00:18:19,680
+Well, you would get this if your model was more nonparametric.
+
+400
+00:18:19,680 --> 00:18:21,460
+I promise this will be the last statistics
+
+401
+00:18:21,460 --> 00:18:23,460
+slide of this lecture.
+
+402
+00:18:23,460 --> 00:18:25,100
+Let's say that I want to estimate now,
+
+403
+00:18:25,100 --> 00:18:28,040
+instead of a mean, an arbitrary smooth function.
+
+404
+00:18:28,040 --> 00:18:31,780
+So one thing I could do is, if I'm doing a regression problem,
+
+405
+00:18:31,780 --> 00:18:34,220
+I have my inputs, x1 through xn.
+
+406
+00:18:34,220 --> 00:18:35,777
+Let's say they're in the unit box.
+
+407
+00:18:35,777 --> 00:18:37,360
+I have a little bit of Gaussian noise,
+
+408
+00:18:37,360 --> 00:18:40,540
+and I have an unknown function f that I would like to estimate.
+
+409
+00:18:40,540 --> 00:18:44,320
+A trivial estimator for this is I can take my space,
+
+410
+00:18:44,320 --> 00:18:47,100
+I can cut it up into little 2D boxes of length n
+
+411
+00:18:47,100 --> 00:18:49,460
+to the negative 1 to the fourth.
+
+412
+00:18:49,460 --> 00:18:51,160
+And then what's our estimation error?
+
+413
+00:18:51,160 --> 00:18:53,000
+I'll have square root n boxes.
+
+414
+00:18:53,000 --> 00:18:55,557
+Each box is going to get square root n samples.
+
+415
+00:18:55,557 --> 00:18:57,140
+And the error is going to be roughly 1
+
+416
+00:18:57,140 --> 00:18:58,840
+over square root of n or something.
+
+417
+00:18:58,840 --> 00:19:02,400
+And in general, if have a D-dimensional function
+
+418
+00:19:02,400 --> 00:19:06,180
+I would like to estimate in this very nonparametric, arbitrary
+
+419
+00:19:06,180 --> 00:19:09,340
+way, my error is going to be roughly equal to n
+
+420
+00:19:09,340 --> 00:19:11,040
+to the negative 1 over d.
+
+421
+00:19:11,040 --> 00:19:13,180
+So my scaling is going to be y equals negative 1
+
+422
+00:19:13,180 --> 00:19:14,940
+over D times x.
+
+423
+00:19:14,940 --> 00:19:17,860
+And so now these kinds more flexible functions, functions
+
+424
+00:19:17,860 --> 00:19:20,260
+that are more flexible than the linear class,
+
+425
+00:19:20,260 --> 00:19:23,940
+now have rates in their scaling laws that are not just 1,
+
+426
+00:19:23,940 --> 00:19:25,080
+they're 1 over D.
+
+427
+00:19:25,080 --> 00:19:28,380
+And so one mental model that you could have
+
+428
+00:19:28,380 --> 00:19:31,450
+is that the neural networks I was showing you in these slides
+
+429
+00:19:31,450 --> 00:19:34,610
+are behaving kind of non-parametric regressors in 10
+
+430
+00:19:34,610 --> 00:19:36,730
+dimensions, like a nearest neighbor or other kinds
+
+431
+00:19:36,730 --> 00:19:38,750
+of estimators in 10 dimensions.
+
+432
+00:19:38,750 --> 00:19:41,230
+That's roughly the rate at which they learn from data.
+
+433
+00:19:41,230 --> 00:19:42,605
+That's kind of a cool thing to be
+
+434
+00:19:42,605 --> 00:19:46,850
+able to know just by looking at some of these scaling laws.
+
+435
+00:19:46,850 --> 00:19:49,690
+Some people have argued this more strongly.
+
+436
+00:19:49,690 --> 00:19:53,010
+Bari et al. and some other scaling law theory folks
+
+437
+00:19:53,010 --> 00:19:56,090
+have argued that the scaling law exponents are actually
+
+438
+00:19:56,090 --> 00:19:58,530
+literally telling us that the neural network
+
+439
+00:19:58,530 --> 00:20:00,730
+is behaving like a non-parametric smoother,
+
+440
+00:20:00,730 --> 00:20:02,568
+and so on and so forth.
+
+441
+00:20:02,568 --> 00:20:04,110
+It's an interesting set of arguments,
+
+442
+00:20:04,110 --> 00:20:07,330
+and you can buy that intuition to whatever extent you'd like.
+
+443
+00:20:07,330 --> 00:20:10,490
+I don't quite know how much I truly, truly buy this argument.
+
+444
+00:20:10,490 --> 00:20:13,350
+There's some of the evidence that might be a little sketchy.
+
+445
+00:20:13,350 --> 00:20:16,297
+It relies on estimators of intrinsic dimension,
+
+446
+00:20:16,297 --> 00:20:18,130
+but it's an interesting thing to think about
+
+447
+00:20:18,130 --> 00:20:20,570
+that somehow these exponents are telling us
+
+448
+00:20:20,570 --> 00:20:24,490
+how fast are these neural networks really learning.
+
+449
+00:20:24,490 --> 00:20:27,830
+OK, so actually, I'll pause for the moment here.
+
+450
+00:20:27,830 --> 00:20:30,360
+That's really the end of the really basic data scaling
+
+451
+00:20:30,360 --> 00:20:33,200
+law of one distribution, and you sample from it,
+
+452
+00:20:33,200 --> 00:20:34,320
+and you learn from it.
+
+453
+00:20:34,320 --> 00:20:37,700
+Is that all clear, like the examples and so on?
+
+454
+00:20:37,700 --> 00:20:38,200
+Good.
+
+455
+00:20:38,200 --> 00:20:39,620
+Oh yes, question.
+
+456
+00:20:39,620 --> 00:20:42,280
+When you say that the model is always larger
+
+457
+00:20:42,280 --> 00:20:45,510
+than data set size, do you mean one-to-one number of parameters
+
+458
+00:20:45,510 --> 00:20:47,652
+to number of tokens [INAUDIBLE]?
+
+459
+00:20:47,652 --> 00:20:48,860
+Yeah, that's a good question.
+
+460
+00:20:48,860 --> 00:20:49,760
+So the question was something like,
+
+461
+00:20:49,760 --> 00:20:51,400
+What do I mean when I say the model is larger
+
+462
+00:20:51,400 --> 00:20:52,580
+than the data set size?
+
+463
+00:20:52,580 --> 00:20:58,250
+What I mean is when the model gets small relative to the data,
+
+464
+00:20:58,250 --> 00:21:00,900
+like you have way more data than you have model size,
+
+465
+00:21:00,900 --> 00:21:03,000
+you enter this irreducible error regime.
+
+466
+00:21:03,000 --> 00:21:05,400
+You basically fitted the data as well
+
+467
+00:21:05,400 --> 00:21:07,120
+as you can for your model class, and you
+
+468
+00:21:07,120 --> 00:21:10,280
+can't do any better no matter how much data you add.
+
+469
+00:21:10,280 --> 00:21:12,740
+So we want to--when we're thinking about scaling laws,
+
+470
+00:21:12,740 --> 00:21:15,840
+we usually want to think about this power law regime, which
+
+471
+00:21:15,840 --> 00:21:17,060
+is the simpler case.
+
+472
+00:21:17,060 --> 00:21:19,440
+Either that or you explicitly fit the asymptote
+
+473
+00:21:19,440 --> 00:21:20,618
+and then you correct for it.
+
+474
+00:21:20,618 --> 00:21:21,660
+Those are the two things.
+
+475
+00:21:21,660 --> 00:21:24,020
+So when I say the model is larger than the data,
+
+476
+00:21:24,020 --> 00:21:27,095
+it can be basically any amount that is larger than the data,
+
+477
+00:21:27,095 --> 00:21:28,470
+as long as it's in this power law
+
+478
+00:21:28,470 --> 00:21:31,710
+regime, usually like 10 times bigger than the data, what
+
+479
+00:21:31,710 --> 00:21:33,470
+have you.
+
+480
+00:21:33,470 --> 00:21:34,310
+Cool.
+
+481
+00:21:34,310 --> 00:21:35,030
+Good.
+
+482
+00:21:35,030 --> 00:21:39,250
+OK, now we are back to other data scaling laws.
+
+483
+00:21:39,250 --> 00:21:42,790
+So data scaling laws by themselves
+
+484
+00:21:42,790 --> 00:21:45,610
+are not quite as useful as you'd like them to be.
+
+485
+00:21:45,610 --> 00:21:48,450
+They just tell you how fast does my model learn.
+
+486
+00:21:48,450 --> 00:21:51,250
+And that's kind of useful for forecasting.
+
+487
+00:21:51,250 --> 00:21:53,870
+It's not useful for very much else.
+
+488
+00:21:53,870 --> 00:21:55,310
+If you want to do engineering, you
+
+489
+00:21:55,310 --> 00:21:57,190
+are probably interested in other questions,
+
+490
+00:21:57,190 --> 00:21:59,730
+like what is my optimal data mixture?
+
+491
+00:21:59,730 --> 00:22:02,190
+What is the best way for me to pick my training
+
+492
+00:22:02,190 --> 00:22:03,330
+data for my model?
+
+493
+00:22:03,330 --> 00:22:05,550
+Very useful engineering question.
+
+494
+00:22:05,550 --> 00:22:07,790
+Should I repeat my data, or should I
+
+495
+00:22:07,790 --> 00:22:12,150
+just not repeat my data, save the compute for something else?
+
+496
+00:22:12,150 --> 00:22:15,350
+Or maybe I should repeat some high-quality stuff
+
+497
+00:22:15,350 --> 00:22:18,050
+and not repeat the low-quality stuff.
+
+498
+00:22:18,050 --> 00:22:20,310
+I could do various other things with repetition.
+
+499
+00:22:20,310 --> 00:22:22,430
+There's a lot of different engineering decisions
+
+500
+00:22:22,430 --> 00:22:23,450
+I can make with data.
+
+501
+00:22:23,450 --> 00:22:28,420
+So how can scaling laws help us make some of those decisions?
+
+502
+00:22:28,420 --> 00:22:30,420
+And I think one of the things that's interesting
+
+503
+00:22:30,420 --> 00:22:33,820
+is if we think a little bit about how classical
+
+504
+00:22:33,820 --> 00:22:35,500
+models behave.
+
+505
+00:22:35,500 --> 00:22:38,340
+Data scaling laws, if we think about their origins
+
+506
+00:22:38,340 --> 00:22:41,420
+as essentially empirical versions of generalization
+
+507
+00:22:41,420 --> 00:22:45,700
+bounds, they tell us, well, data set composition for many models
+
+508
+00:22:45,700 --> 00:22:48,460
+really affect the offset of these scaling laws,
+
+509
+00:22:48,460 --> 00:22:51,498
+but their slopes are actually determined by the model class.
+
+510
+00:22:51,498 --> 00:22:54,040
+They're not really determined by the distribution themselves.
+
+511
+00:22:54,040 --> 00:22:55,540
+So the slopes might remain the same,
+
+512
+00:22:55,540 --> 00:22:57,333
+and only the intercepts might change.
+
+513
+00:22:57,333 --> 00:23:00,000
+And the intercept might actually be really interestingly shaped.
+
+514
+00:23:00,000 --> 00:23:03,780
+So this is a case of a toy model with a linear regression
+
+515
+00:23:03,780 --> 00:23:05,960
+with two different things you can sample from.
+
+516
+00:23:05,960 --> 00:23:08,420
+If you get only one kind of data,
+
+517
+00:23:08,420 --> 00:23:10,280
+the errors are high no matter what.
+
+518
+00:23:10,280 --> 00:23:12,040
+You actually want a mixture of both, right.
+
+519
+00:23:12,040 --> 00:23:15,640
+So if you write down how this intercept behaves,
+
+520
+00:23:15,640 --> 00:23:18,580
+you actually start to get some very interesting insights
+
+521
+00:23:18,580 --> 00:23:22,020
+about how having more data diversity is very helpful.
+
+522
+00:23:22,020 --> 00:23:25,140
+But what does this practically mean?
+
+523
+00:23:25,140 --> 00:23:27,660
+Well, practically speaking, what this means
+
+524
+00:23:27,660 --> 00:23:31,400
+is you can actually fit data scaling laws on mixtures,
+
+525
+00:23:31,400 --> 00:23:34,080
+and that can help you do some data--
+
+526
+00:23:34,080 --> 00:23:37,122
+sorry, pre-training, data optimization.
+
+527
+00:23:37,122 --> 00:23:38,080
+So what does this mean?
+
+528
+00:23:38,080 --> 00:23:41,160
+Let's say you have two data sources for simplicity.
+
+529
+00:23:41,160 --> 00:23:43,480
+You have news, and you have Wikipedia.
+
+530
+00:23:43,480 --> 00:23:46,580
+And how much news to use and how much Wikipedia to use.
+
+531
+00:23:46,580 --> 00:23:48,000
+How can you determine that?
+
+532
+00:23:48,000 --> 00:23:50,820
+Well, you can train really small models
+
+533
+00:23:50,820 --> 00:23:52,795
+on a really small amount of data.
+
+534
+00:23:52,795 --> 00:23:54,420
+And then you can basically train or you
+
+535
+00:23:54,420 --> 00:23:58,500
+can fit a function of how different mixture levels affect
+
+536
+00:23:58,500 --> 00:23:59,640
+your performance.
+
+537
+00:23:59,640 --> 00:24:03,400
+You can do this while you scale up your models little by little.
+
+538
+00:24:03,400 --> 00:24:05,083
+And you can see how the trends change.
+
+539
+00:24:05,083 --> 00:24:07,500
+And you can try to extrapolate that out the exact same way
+
+540
+00:24:07,500 --> 00:24:09,860
+as you would extrapolate out a data scaling law.
+
+541
+00:24:09,860 --> 00:24:11,900
+And then you can ask which one will be optimal
+
+542
+00:24:11,900 --> 00:24:14,460
+if I keep scaling it out to my full training run.
+
+543
+00:24:14,460 --> 00:24:18,740
+So this is a very simple idea of essentially fitting
+
+544
+00:24:18,740 --> 00:24:21,530
+a functional form at a small amount of compute,
+
+545
+00:24:21,530 --> 00:24:24,610
+finding the minimum, and then scaling that guy out.
+
+546
+00:24:24,610 --> 00:24:28,530
+So this is a data mixing loss paper.
+
+547
+00:24:28,530 --> 00:24:30,050
+Unfortunately, I think if you talk
+
+548
+00:24:30,050 --> 00:24:32,810
+to anyone who's done a lot of these data mixture work,
+
+549
+00:24:32,810 --> 00:24:35,370
+they will tell you reality is a lot more
+
+550
+00:24:35,370 --> 00:24:38,730
+noisy than this ideal world would suggest.
+
+551
+00:24:38,730 --> 00:24:42,450
+And really, what has, as far as I know, happened in many cases
+
+552
+00:24:42,450 --> 00:24:45,430
+is you end up training a bunch of small models.
+
+553
+00:24:45,430 --> 00:24:48,010
+You pick the best data mix from the small model,
+
+554
+00:24:48,010 --> 00:24:51,250
+and you just scale that guy up, no scaling law required.
+
+555
+00:24:51,250 --> 00:24:53,930
+And data decide if you're interested in this kind of thing
+
+556
+00:24:53,930 --> 00:24:58,650
+is a nice, large-scale empirical study of these kinds of data
+
+557
+00:24:58,650 --> 00:24:59,930
+mixture things.
+
+558
+00:24:59,930 --> 00:25:01,710
+And what they found was actually,
+
+559
+00:25:01,710 --> 00:25:03,890
+if you don't fit a scaling law, and instead you
+
+560
+00:25:03,890 --> 00:25:06,350
+just pick the best data mix at the small scale,
+
+561
+00:25:06,350 --> 00:25:07,810
+that works well.
+
+562
+00:25:07,810 --> 00:25:10,290
+For what it's worth, that's consistent with the argument
+
+563
+00:25:10,290 --> 00:25:13,250
+that the intercepts differ, but the slopes don't change.
+
+564
+00:25:13,250 --> 00:25:15,150
+Because if the slopes don't change,
+
+565
+00:25:15,150 --> 00:25:17,850
+the best mixture at small scale is also the best mixture
+
+566
+00:25:17,850 --> 00:25:20,080
+at large scale.
+
+567
+00:25:20,080 --> 00:25:23,760
+OK, another really interesting set
+
+568
+00:25:23,760 --> 00:25:27,800
+of questions that I'll also mention in the context of data
+
+569
+00:25:27,800 --> 00:25:29,440
+is repetition.
+
+570
+00:25:29,440 --> 00:25:33,820
+I think it's increasingly the case that compute is growing,
+
+571
+00:25:33,820 --> 00:25:35,932
+the amount of data that we have is not growing.
+
+572
+00:25:35,932 --> 00:25:37,640
+And so there's a lot of people interested
+
+573
+00:25:37,640 --> 00:25:40,160
+in questions of what happens when you repeat
+
+574
+00:25:40,160 --> 00:25:42,600
+data more and more times.
+
+575
+00:25:42,600 --> 00:25:45,720
+And there was a nice study a few years back called "Scaling Data-
+
+576
+00:25:45,720 --> 00:25:48,000
+Constrained Language Models," where they roughly show
+
+577
+00:25:48,000 --> 00:25:51,300
+something like up to four epochs with standard training recipes,
+
+578
+00:25:51,300 --> 00:25:53,280
+you just don't get hurt at all.
+
+579
+00:25:53,280 --> 00:25:56,040
+But if you go past that point, then actually
+
+580
+00:25:56,040 --> 00:25:58,840
+your realized scaling law, this dark curve
+
+581
+00:25:58,840 --> 00:26:01,543
+is much worse than the projected scaling law
+
+582
+00:26:01,543 --> 00:26:02,460
+if you had fresh data.
+
+583
+00:26:02,460 --> 00:26:04,217
+That's the dashed line over here.
+
+584
+00:26:04,217 --> 00:26:06,800
+And you can also, once again, write down a modified functional
+
+585
+00:26:06,800 --> 00:26:11,120
+form that's generally predictive of the behavior of this scaling
+
+586
+00:26:11,120 --> 00:26:14,440
+law under repetition.
+
+587
+00:26:14,440 --> 00:26:17,140
+And we can take this idea even more to the extreme.
+
+588
+00:26:17,140 --> 00:26:19,990
+This was kind of recent work with Percy
+
+589
+00:26:19,990 --> 00:26:21,530
+in one of our co-advise students,
+
+590
+00:26:21,530 --> 00:26:23,030
+where we were asking, like, OK, what
+
+591
+00:26:23,030 --> 00:26:25,030
+happens if you take this idea to the extreme
+
+592
+00:26:25,030 --> 00:26:27,570
+and you just consider infinite amounts of compute?
+
+593
+00:26:27,570 --> 00:26:29,850
+So you're allowed to epoch as many times as you want,
+
+594
+00:26:29,850 --> 00:26:31,332
+like an infinite amount of times.
+
+595
+00:26:31,332 --> 00:26:33,790
+What is the best thing that you can get out of this system?
+
+596
+00:26:33,790 --> 00:26:35,350
+Well, it turns out you can't just
+
+597
+00:26:35,350 --> 00:26:37,422
+keep repeating passes over the data.
+
+598
+00:26:37,422 --> 00:26:39,130
+You can't keep making your models bigger.
+
+599
+00:26:39,130 --> 00:26:40,590
+Those have diminishing returns.
+
+600
+00:26:40,590 --> 00:26:42,570
+And so you end up reaching for other things,
+
+601
+00:26:42,570 --> 00:26:45,342
+like ensembling your models to try to squeeze more and more
+
+602
+00:26:45,342 --> 00:26:46,050
+out of your data.
+
+603
+00:26:46,050 --> 00:26:48,258
+But really, I think the one thing that I'll point out
+
+604
+00:26:48,258 --> 00:26:50,350
+that's really interesting is your standard data
+
+605
+00:26:50,350 --> 00:26:51,690
+scaling laws here in the red.
+
+606
+00:26:51,690 --> 00:26:55,110
+It's a very nice, predictable improvement in performance
+
+607
+00:26:55,110 --> 00:26:56,810
+as you increase the amount of data.
+
+608
+00:26:56,810 --> 00:26:59,830
+We do all sorts of interventions like regularizing and adding
+
+609
+00:26:59,830 --> 00:27:00,950
+ensembles.
+
+610
+00:27:00,950 --> 00:27:02,850
+You get improvements in performance,
+
+611
+00:27:02,850 --> 00:27:05,690
+but the slopes look actually surprisingly similar.
+
+612
+00:27:05,690 --> 00:27:08,117
+This is a lesson that you'll learn
+
+613
+00:27:08,117 --> 00:27:10,450
+once you start fitting your own scaling laws, that very,
+
+614
+00:27:10,450 --> 00:27:13,410
+very often your slopes don't change.
+
+615
+00:27:13,410 --> 00:27:15,150
+Often, the interventions that you do just
+
+616
+00:27:15,150 --> 00:27:19,710
+change the intercept of the scaling laws.
+
+617
+00:27:19,710 --> 00:27:22,070
+One last thing that I'll mention,
+
+618
+00:27:22,070 --> 00:27:24,550
+because I like this paper in the context of scaling
+
+619
+00:27:24,550 --> 00:27:27,670
+laws and scaling in general, is that a lot
+
+620
+00:27:27,670 --> 00:27:30,070
+of the phenomena we care about in data
+
+621
+00:27:30,070 --> 00:27:31,950
+is actually very scale-dependent.
+
+622
+00:27:31,950 --> 00:27:34,790
+And one example of this is data filtering.
+
+623
+00:27:34,790 --> 00:27:37,870
+So if you or I tomorrow decide to filter some data
+
+624
+00:27:37,870 --> 00:27:39,870
+for the models we're training, we would probably
+
+625
+00:27:39,870 --> 00:27:41,090
+filter very aggressively.
+
+626
+00:27:41,090 --> 00:27:43,590
+We would only keep the highest quality stuff
+
+627
+00:27:43,590 --> 00:27:45,770
+because both you and I don't have very much compute.
+
+628
+00:27:45,770 --> 00:27:48,050
+So we can't train on all the internet anyway.
+
+629
+00:27:48,050 --> 00:27:52,190
+We might as well filter down to the most high-quality stuff.
+
+630
+00:27:52,190 --> 00:27:54,635
+On the other hand, if you have a lot of compute,
+
+631
+00:27:54,635 --> 00:27:56,510
+then you want to train on more and more stuff
+
+632
+00:27:56,510 --> 00:27:58,470
+because you're going to not want to repeat
+
+633
+00:27:58,470 --> 00:28:00,150
+on this very high-quality data.
+
+634
+00:28:00,150 --> 00:28:01,690
+So as you get more and more compute,
+
+635
+00:28:01,690 --> 00:28:03,958
+your filter has become looser and looser,
+
+636
+00:28:03,958 --> 00:28:05,750
+and potentially you start training on stuff
+
+637
+00:28:05,750 --> 00:28:07,830
+that's lower and lower quality.
+
+638
+00:28:07,830 --> 00:28:09,390
+So a lot of the things that we often
+
+639
+00:28:09,390 --> 00:28:11,710
+think about statically, things like data
+
+640
+00:28:11,710 --> 00:28:13,578
+filtering or the quality of data,
+
+641
+00:28:13,578 --> 00:28:14,870
+are actually much more dynamic.
+
+642
+00:28:14,870 --> 00:28:17,305
+As you increase scale, you have to think about
+
+643
+00:28:17,305 --> 00:28:19,180
+where am I going to get the rest of the data.
+
+644
+00:28:19,180 --> 00:28:22,000
+The filters can't stay fixed as a function of the data,
+
+645
+00:28:22,000 --> 00:28:23,580
+and certainly the optimal filters
+
+646
+00:28:23,580 --> 00:28:25,960
+turn out to not be fixed as a function of scale.
+
+647
+00:28:28,660 --> 00:28:31,838
+OK, so that's it for data scaling laws.
+
+648
+00:28:31,838 --> 00:28:34,640
+This is the part that I think is most straightforward to understand.
+
+649
+00:28:34,640 --> 00:28:37,720
+Even as a stats/ML-minded person,
+
+650
+00:28:37,720 --> 00:28:40,880
+this stuff is all very simple and straightforward to me.
+
+651
+00:28:40,880 --> 00:28:42,820
+You increase data, performance gets better
+
+652
+00:28:42,820 --> 00:28:44,060
+in a very predictable way.
+
+653
+00:28:44,060 --> 00:28:45,720
+I think this is uncontroversial.
+
+654
+00:28:45,720 --> 00:28:47,980
+The fact that it does so polynomially for such
+
+655
+00:28:47,980 --> 00:28:52,220
+a big model is still cool, but nothing really crazy.
+
+656
+00:28:52,220 --> 00:28:55,020
+So hopefully this is reasonable to all of you
+
+657
+00:28:55,020 --> 00:28:57,860
+that there's so much predictability when you
+
+658
+00:28:57,860 --> 00:29:00,900
+increase the amount of data.
+
+659
+00:29:00,900 --> 00:29:02,940
+Oh, yes.
+
+660
+00:29:02,940 --> 00:29:05,140
+So on this slide for the pre-training
+
+661
+00:29:05,140 --> 00:29:10,620
+under infinite compute, so that graph on the right
+
+662
+00:29:10,620 --> 00:29:16,450
+is linear in both the loss and data set size,
+
+663
+00:29:16,450 --> 00:29:20,150
+whereas the previous example I gave was log-log scale.
+
+664
+00:29:20,150 --> 00:29:22,450
+And I was wondering why it's linear in both.
+
+665
+00:29:22,450 --> 00:29:25,750
+Yeah, so this is a bad axis.
+
+666
+00:29:25,750 --> 00:29:28,890
+Herman and I just talked about bad axis like this.
+
+667
+00:29:28,890 --> 00:29:30,390
+This is actually doubling.
+
+668
+00:29:30,390 --> 00:29:32,390
+So it looks linear, but it's actually log scale.
+
+669
+00:29:32,390 --> 00:29:33,730
+[LAUGHS] I fixed it now.
+
+670
+00:29:33,730 --> 00:29:35,210
+You fixed it now.
+
+671
+00:29:35,210 --> 00:29:38,310
+And the y-axis here, it doesn't look logged,
+
+672
+00:29:38,310 --> 00:29:39,723
+but the range of this is so small
+
+673
+00:29:39,723 --> 00:29:41,390
+that linear logs are basically the same.
+
+674
+00:29:41,390 --> 00:29:43,510
+If you look at the fitted functional forms here,
+
+675
+00:29:43,510 --> 00:29:44,750
+these are still polynomials.
+
+676
+00:29:44,750 --> 00:29:46,542
+So we're fitting the same functional forms,
+
+677
+00:29:46,542 --> 00:29:48,773
+and those are the ones that are plotted here.
+
+678
+00:29:48,773 --> 00:29:49,690
+This is another point.
+
+679
+00:29:49,690 --> 00:29:52,850
+I'll get to it at the end of the lecture.
+
+680
+00:29:52,850 --> 00:29:55,610
+If you only have a tiny slice of a compute range,
+
+681
+00:29:55,610 --> 00:29:57,170
+很难非常、非常明确地分辨
+
+682
+00:29:57,170 --> 00:29:58,770
+某个东西是按多项式缩放的
+
+683
+00:29:58,770 --> 00:30:00,550
+还是按指数缩放的。
+
+684
+00:30:00,550 --> 00:30:02,510
+因为泰勒近似确实存在。
+
+685
+00:30:02,510 --> 00:30:05,070
+只要放大得足够多，一切看起来都是线性的。
+
+686
+00:30:05,070 --> 00:30:07,753
+所以它究竟是多项式
+
+687
+00:30:07,753 --> 00:30:09,170
+还是某种其他函数形式，你
+
+688
+00:30:09,170 --> 00:30:13,500
+总是要稍微小心和保持怀疑。
+
+689
+00:30:13,500 --> 00:30:14,000
+好。
+
+690
+00:30:14,000 --> 00:30:16,120
+OK。
+
+691
+00:30:16,120 --> 00:30:19,560
+好，所以这就是关于数据的缩放定律，
+
+692
+00:30:19,560 --> 00:30:21,080
+在很多方面都很直接。
+
+693
+00:30:21,080 --> 00:30:24,840
+现在我想谈谈更奇特的缩放形式
+
+694
+00:30:24,840 --> 00:30:29,217
+以及各种模型工程的缩放定律。
+
+695
+00:30:29,217 --> 00:30:30,800
+所以我们现在要做的是，
+
+696
+00:30:30,800 --> 00:30:34,480
+尝试设计大型语言模型。
+
+697
+00:30:34,480 --> 00:30:37,745
+也许你是个激进派，相信也许 LSTM
+
+698
+00:30:37,745 --> 00:30:38,370
+才是未来。
+
+699
+00:30:38,370 --> 00:30:41,480
+比如，为什么我不能用 LSTM 代替 transformer？
+
+700
+00:30:41,480 --> 00:30:44,380
+我想把我的 B200 算力花在我的 LSTM 上。
+
+701
+00:30:44,380 --> 00:30:46,600
+或者也许你是另一种激进派，
+
+702
+00:30:46,600 --> 00:30:48,020
+想用 SGD 来训练。
+
+703
+00:30:48,020 --> 00:30:50,600
+比如，为什么我不能用 SGD 训练？
+
+704
+00:30:50,600 --> 00:30:51,780
+你可能也会想。
+
+705
+00:30:51,780 --> 00:30:54,300
+如果你的资源有限，
+
+706
+00:30:54,300 --> 00:30:56,760
+你有不同的方式来分配它。
+
+707
+00:30:56,760 --> 00:30:58,417
+也许你应该把模型训练更久，
+
+708
+00:30:58,417 --> 00:31:00,000
+也许你训练更大的模型，也许我
+
+709
+00:31:00,000 --> 00:31:01,380
+应该去收集更多数据。
+
+710
+00:31:01,380 --> 00:31:03,640
+总是有各种各样的权衡在起作用，
+
+711
+00:31:03,640 --> 00:31:06,720
+而缩放定律给了我们定量的方式来做
+
+712
+00:31:06,720 --> 00:31:10,040
+这些权衡，希望如此。
+
+713
+00:31:10,040 --> 00:31:12,400
+我要从一些简单的超参数
+
+714
+00:31:12,400 --> 00:31:15,680
+问题开始，比如我如何选择我的架构
+
+715
+00:31:15,680 --> 00:31:18,000
+或优化器，这些我在
+
+716
+00:31:18,000 --> 00:31:20,120
+第二讲中谈过的东西。
+
+717
+00:31:20,120 --> 00:31:22,640
+在那里我给了你这样的视角：也许
+
+718
+00:31:22,640 --> 00:31:24,783
+你可以研究别人怎么做。
+
+719
+00:31:24,783 --> 00:31:27,200
+现在我要试着给你一些第一性原理的答案
+
+720
+00:31:27,200 --> 00:31:29,640
+来回答那些问题，用稍微不同的视角
+
+721
+00:31:29,640 --> 00:31:30,360
+of trade-offs.
+
+722
+00:31:30,360 --> 00:31:32,820
+So you have to believe in scaling laws in this lecture,
+
+723
+00:31:32,820 --> 00:31:36,160
+but as long as you do, you get to try things on your own
+
+724
+00:31:36,160 --> 00:31:37,440
+and find out.
+
+725
+00:31:37,440 --> 00:31:40,840
+OK, the very first question we might start with is to say,
+
+726
+00:31:40,840 --> 00:31:44,320
+Are transformers really better than LSTMs?
+
+727
+00:31:44,320 --> 00:31:45,320
+LSTMs.
+
+728
+00:31:45,320 --> 00:31:46,640
+They can work OK, too.
+
+729
+00:31:46,640 --> 00:31:48,500
+They will fit distributions.
+
+730
+00:31:48,500 --> 00:31:50,660
+With the advent of things like Mamba,
+
+731
+00:31:50,660 --> 00:31:53,000
+we know that SSMs can work.
+
+732
+00:31:53,000 --> 00:31:54,768
+So are they better?
+
+733
+00:31:54,768 --> 00:31:56,560
+The brute force way to answer this question
+
+734
+00:31:56,560 --> 00:32:02,400
+is to train a big LSTM GPT-3 or even bigger class of models.
+
+735
+00:32:02,400 --> 00:32:06,610
+The scaling law way would be to train a bunch of smaller models
+
+736
+00:32:06,610 --> 00:32:08,360
+and say, I'm going to train my transformer
+
+737
+00:32:08,360 --> 00:32:11,008
+across a different variety of compute ranges,
+
+738
+00:32:11,008 --> 00:32:13,550
+and I'm going to train different LSTMs with different numbers
+
+739
+00:32:13,550 --> 00:32:15,630
+of layers on, once again, a variety
+
+740
+00:32:15,630 --> 00:32:17,750
+of different compute ranges.
+
+741
+00:32:17,750 --> 00:32:19,130
+Now, what does this show?
+
+742
+00:32:19,130 --> 00:32:23,990
+This shows LSTMs have definitely different intercept, maybe even
+
+743
+00:32:23,990 --> 00:32:25,890
+different slope than the transformer.
+
+744
+00:32:25,890 --> 00:32:30,390
+And because of this, probably you don't want to pick LSTM.
+
+745
+00:32:30,390 --> 00:32:33,510
+This plot would justify scaling up the transformer instead
+
+746
+00:32:33,510 --> 00:32:34,625
+of the LSTM.
+
+747
+00:32:34,625 --> 00:32:36,750
+And if you look at a lot of the architecture papers
+
+748
+00:32:36,750 --> 00:32:38,250
+today, like you go look at the Mamba
+
+749
+00:32:38,250 --> 00:32:40,575
+paper or the gated delta net papers,
+
+750
+00:32:40,575 --> 00:32:41,950
+they will always have a plot that
+
+751
+00:32:41,950 --> 00:32:45,510
+looks like this, where you have vanilla transformer, our really
+
+752
+00:32:45,510 --> 00:32:46,250
+cool model.
+
+753
+00:32:46,250 --> 00:32:48,843
+And our really cool models, usually either on top or below,
+
+754
+00:32:48,843 --> 00:32:51,510
+because that's what would prove that your model is doing better.
+
+755
+00:32:51,510 --> 00:32:54,310
+And you certainly don't want something where your slopes are
+
+756
+00:32:54,310 --> 00:32:56,970
+worse because that means as you scale up larger and larger,
+
+757
+00:32:56,970 --> 00:32:58,950
+your models will eventually do worse.
+
+758
+00:32:58,950 --> 00:33:01,310
+So this is one way of really reasoning
+
+759
+00:33:01,310 --> 00:33:08,020
+about architectures without training gigantic models.
+
+760
+00:33:08,020 --> 00:33:10,220
+There haven't been, I think, quite
+
+761
+00:33:10,220 --> 00:33:15,820
+as many recent and good architecture scaling law papers.
+
+762
+00:33:15,820 --> 00:33:18,980
+I think the one that is relatively recent
+
+763
+00:33:18,980 --> 00:33:22,858
+and that I like quite a lot is by Ek and others at Google,
+
+764
+00:33:22,858 --> 00:33:24,900
+back when they were publishing this kind of work,
+
+765
+00:33:24,900 --> 00:33:28,660
+where they did a whole bunch of scaling studies on T5-style
+
+766
+00:33:28,660 --> 00:33:32,660
+models, where they trained larger and larger variants of T5
+
+767
+00:33:32,660 --> 00:33:35,692
+models on many different architectures.
+
+768
+00:33:35,692 --> 00:33:37,400
+And I think one thing that's really cool,
+
+769
+00:33:37,400 --> 00:33:39,820
+and one of the reasons why I still bring this paper up,
+
+770
+00:33:39,820 --> 00:33:43,340
+is they capture exactly the architecture
+
+771
+00:33:43,340 --> 00:33:46,920
+changes that we implement today in our frontier models.
+
+772
+00:33:46,920 --> 00:33:51,620
+So things like performer, which is an efficient attention, that
+
+773
+00:33:51,620 --> 00:33:52,680
+doesn't scale very well.
+
+774
+00:33:52,680 --> 00:33:55,100
+We do not implement those.
+
+775
+00:33:55,100 --> 00:33:57,880
+The things that we implement are the gated linear unit.
+
+776
+00:33:57,880 --> 00:34:01,028
+Red line better than green line throughout the scaling trends.
+
+777
+00:34:01,028 --> 00:34:01,820
+Switch transformer.
+
+778
+00:34:01,820 --> 00:34:03,695
+I don't know what happened with their biggest run,
+
+779
+00:34:03,695 --> 00:34:07,130
+but generally speaking, it's got good scaling trends.
+
+780
+00:34:07,130 --> 00:34:09,971
+And I forgot, oh, mixture of softmaxes.
+
+781
+00:34:09,971 --> 00:34:11,429
+Actually, we don't do this anymore,
+
+782
+00:34:11,429 --> 00:34:13,389
+but this is probably an effective intervention
+
+783
+00:34:13,389 --> 00:34:15,330
+given the scaling trends.
+
+784
+00:34:15,330 --> 00:34:18,370
+So you see that through these scaling trends,
+
+785
+00:34:18,370 --> 00:34:20,889
+even though a lot of these papers
+
+786
+00:34:20,889 --> 00:34:23,090
+were operating on much, much smaller compute scales
+
+787
+00:34:23,090 --> 00:34:25,250
+than what we operate today, they're
+
+788
+00:34:25,250 --> 00:34:27,530
+able to see the kinds of architecture trends
+
+789
+00:34:27,530 --> 00:34:31,429
+that are driving frontier model development back then.
+
+790
+00:34:31,429 --> 00:34:35,050
+And I think this is why a lot of people use scaling laws
+
+791
+00:34:35,050 --> 00:34:38,270
+as a really, almost paradigmatic way, saying, "Oh,
+
+792
+00:34:38,270 --> 00:34:40,300
+if it doesn't show up in the scaling law,
+
+793
+00:34:40,300 --> 00:34:41,550
+it's not a good intervention."
+
+794
+00:34:41,550 --> 00:34:43,969
+Because in some ways, a lot of the past work
+
+795
+00:34:43,969 --> 00:34:47,370
+has captured what we see today.
+
+796
+00:34:47,370 --> 00:34:48,690
+Good.
+
+797
+00:34:48,690 --> 00:34:51,610
+OK, going beyond architectures, we
+
+798
+00:34:51,610 --> 00:34:54,250
+can extend this kind of analysis to all sorts of other things
+
+799
+00:34:54,250 --> 00:34:57,390
+that we might want to understand.
+
+800
+00:34:57,390 --> 00:35:00,613
+We might ask, OK, is SGD better or worse than ADAM?
+
+801
+00:35:00,613 --> 00:35:02,530
+If you do the scaling law analysis, this one's
+
+802
+00:35:02,530 --> 00:35:05,372
+by Hestness, you'll see very clear trends.
+
+803
+00:35:05,372 --> 00:35:07,330
+This is once again, the really mysterious thing
+
+804
+00:35:07,330 --> 00:35:11,450
+of the intercepts are different, but the slopes are very similar.
+
+805
+00:35:11,450 --> 00:35:13,490
+If you fix the data and you fix the models,
+
+806
+00:35:13,490 --> 00:35:15,190
+slopes are often very, very similar.
+
+807
+00:35:15,190 --> 00:35:17,910
+I am very surprised by this every time I see it.
+
+808
+00:35:17,910 --> 00:35:19,130
+And yet, it's very true.
+
+809
+00:35:19,130 --> 00:35:21,590
+It's rare to get different slopes,
+
+810
+00:35:21,590 --> 00:35:24,010
+even with an intervention as big as SGD to ADAM.
+
+811
+00:35:24,010 --> 00:35:27,150
+If you were the one training with SGD or ADAM,
+
+812
+00:35:27,150 --> 00:35:29,130
+you would think that's a huge change.
+
+813
+00:35:29,130 --> 00:35:31,290
+Scaling trends remain roughly the same.
+
+814
+00:35:31,290 --> 00:35:33,730
+In this case, this is a language modeling
+
+815
+00:35:33,730 --> 00:35:35,190
+with a recurrent highway net.
+
+816
+00:35:38,170 --> 00:35:42,470
+Similarly, in lecture 2, I told you about aspect ratios.
+
+817
+00:35:42,470 --> 00:35:44,770
+How do you pick your depth-to-width trade-off?
+
+818
+00:35:44,770 --> 00:35:46,890
+And I told you, well, you can just
+
+819
+00:35:46,890 --> 00:35:49,990
+pick some random number that's somewhat roughly reasonable.
+
+820
+00:35:49,990 --> 00:35:52,410
+It's like four times the reasonable multiplier.
+
+821
+00:35:52,410 --> 00:35:55,310
+But if you're doing this kind of scaling analysis,
+
+822
+00:35:55,310 --> 00:35:58,030
+you could much more precisely what is happening.
+
+823
+00:35:58,030 --> 00:36:00,410
+So the first thing you could do is
+
+824
+00:36:00,410 --> 00:36:02,830
+you could look at scaling trends as a function of layers,
+
+825
+00:36:02,830 --> 00:36:05,880
+and you would immediately see that having extremely few layers
+
+826
+00:36:05,880 --> 00:36:07,460
+is very, very bad for your model.
+
+827
+00:36:07,460 --> 00:36:09,860
+If you have one layer, you're not going anywhere.
+
+828
+00:36:09,860 --> 00:36:11,920
+That's a terrible, terrible scaling trend.
+
+829
+00:36:11,920 --> 00:36:13,480
+Greater than 1 layer, actually, it's
+
+830
+00:36:13,480 --> 00:36:15,600
+surprisingly more competitive, although you
+
+831
+00:36:15,600 --> 00:36:18,840
+do see that at every compute level, more layers, at least
+
+832
+00:36:18,840 --> 00:36:21,468
+in this case is better.
+
+833
+00:36:21,468 --> 00:36:23,760
+And if you can do a much more fine-grained study, which
+
+834
+00:36:23,760 --> 00:36:28,440
+they do in Kaplan, where you try to identify what
+
+835
+00:36:28,440 --> 00:36:30,420
+you might call scale-invariant quantities,
+
+836
+00:36:30,420 --> 00:36:32,000
+like the aspect ratio.
+
+837
+00:36:32,000 --> 00:36:34,620
+The number of layers is not a scale-invariant quantity.
+
+838
+00:36:34,620 --> 00:36:38,120
+As you make your model bigger, you do want more layers.
+
+839
+00:36:38,120 --> 00:36:40,020
+But as you make your model bigger,
+
+840
+00:36:40,020 --> 00:36:43,360
+maybe the aspect ratio, the optimal one should stay the same.
+
+841
+00:36:43,360 --> 00:36:45,040
+This one is scale invariant.
+
+842
+00:36:45,040 --> 00:36:47,020
+And so if we look at the aspect ratio,
+
+843
+00:36:47,020 --> 00:36:49,960
+we see that at different model sizes,
+
+844
+00:36:49,960 --> 00:36:53,880
+we get basically the same minima around 100d model for every
+
+845
+00:36:53,880 --> 00:36:56,440
+layer, or maybe a little bit less.
+
+846
+00:36:56,440 --> 00:36:58,180
+And it does shift a little bit right.
+
+847
+00:36:58,180 --> 00:37:01,950
+There is a shift towards aspect ratio
+
+848
+00:37:01,950 --> 00:37:04,810
+that is smaller for deeper models, but for the most part,
+
+849
+00:37:04,810 --> 00:37:07,030
+the minima stays roughly similar.
+
+850
+00:37:07,030 --> 00:37:09,003
+You can do similar kinds of analysis
+
+851
+00:37:09,003 --> 00:37:11,170
+for things like attention head dimension and others.
+
+852
+00:37:11,170 --> 00:37:12,910
+And if you look at the Kaplan paper,
+
+853
+00:37:12,910 --> 00:37:15,330
+they do quite a good job at doing all of this.
+
+854
+00:37:15,330 --> 00:37:18,270
+And this is one way that you can be confident about your scaling
+
+855
+00:37:18,270 --> 00:37:19,030
+strategy.
+
+856
+00:37:19,030 --> 00:37:21,870
+So if your scaling strategy is "I'm going to fix my aspect
+
+857
+00:37:21,870 --> 00:37:23,410
+ratio, and I'm going to scale up,"
+
+858
+00:37:23,410 --> 00:37:26,670
+you can make plots like this and convince yourself we're probably
+
+859
+00:37:26,670 --> 00:37:29,790
+good because our optimization shifting too much as I go
+
+860
+00:37:29,790 --> 00:37:31,690
+to larger and larger and larger models.
+
+861
+00:37:34,910 --> 00:37:39,110
+One thing that's important, and this is a huge can of worms,
+
+862
+00:37:39,110 --> 00:37:40,750
+and a sufficiently big can of worms
+
+863
+00:37:40,750 --> 00:37:43,210
+that I will talk about it on more than one slide,
+
+864
+00:37:43,210 --> 00:37:47,410
+I will come back, not all parameters are created equal.
+
+865
+00:37:47,410 --> 00:37:49,690
+And because not all parameters are created equal,
+
+866
+00:37:49,690 --> 00:37:51,910
+your scaling laws may look good or bad
+
+867
+00:37:51,910 --> 00:37:55,870
+depending on how you define what a parameter is.
+
+868
+00:37:55,870 --> 00:37:58,790
+So in the Kaplan paper, they made this observation that
+
+869
+00:37:58,790 --> 00:38:02,900
+if they drew their scaling laws for depth with the embedding
+
+870
+00:38:02,900 --> 00:38:05,540
+parameters, they got these very funky-looking scaling laws,
+
+871
+00:38:05,540 --> 00:38:08,245
+and they said, "Oh, this is no good at all, no good at all."
+
+872
+00:38:08,245 --> 00:38:09,620
+Because it's no good at all, they
+
+873
+00:38:09,620 --> 00:38:11,780
+decided that they were going to exclude
+
+874
+00:38:11,780 --> 00:38:14,300
+all the embedding parameters, and they were only
+
+875
+00:38:14,300 --> 00:38:17,520
+going to count the non-embedding parameters because you could
+
+876
+00:38:17,520 --> 00:38:19,020
+justify it to yourself, saying these
+
+877
+00:38:19,020 --> 00:38:23,363
+are the parameters that are doing computation or whatever.
+
+878
+00:38:23,363 --> 00:38:27,620
+We're going to see later that this going to have non-trivial implications on the validity
+
+879
+00:38:27,620 --> 00:38:28,960
+of some of the results.
+
+880
+00:38:28,960 --> 00:38:31,720
+But the point here is scaling laws aren't magic.
+
+881
+00:38:31,720 --> 00:38:33,820
+I think Percy likes to make this point,
+
+882
+00:38:33,820 --> 00:38:36,940
+that scaling laws and all these kinds of predictability
+
+883
+00:38:36,940 --> 00:38:38,700
+across scales is engineered.
+
+884
+00:38:38,700 --> 00:38:40,480
+They don't happen automatically.
+
+885
+00:38:40,480 --> 00:38:43,677
+We need to pick the right kinds of x-axes to look at.
+
+886
+00:38:43,677 --> 00:38:46,260
+We need to make sure that the hyperparameters for these things
+
+887
+00:38:46,260 --> 00:38:48,620
+are set right, and only under those conditions
+
+888
+00:38:48,620 --> 00:38:51,300
+does it become possible to get predictable scaling
+
+889
+00:38:51,300 --> 00:38:53,480
+across many orders of magnitude compute.
+
+890
+00:38:53,480 --> 00:38:57,520
+So this is what a lot of scaling law researchers do.
+
+891
+00:38:57,520 --> 00:38:59,140
+They think about what the right way
+
+892
+00:38:59,140 --> 00:39:01,980
+is to get very predictable scaling.
+
+893
+00:39:01,980 --> 00:39:04,380
+Now, related to this, I think are
+
+894
+00:39:04,380 --> 00:39:07,780
+very interesting recent papers on things like scaling
+
+895
+00:39:07,780 --> 00:39:09,460
+for mixture of experts.
+
+896
+00:39:09,460 --> 00:39:11,960
+Now, that mixture of experts is, you would say,
+
+897
+00:39:11,960 --> 00:39:15,380
+the dominant way of training large models,
+
+898
+00:39:15,380 --> 00:39:18,020
+it is quite important to think about what is the value
+
+899
+00:39:18,020 --> 00:39:20,180
+or what is a parameter in this new world
+
+900
+00:39:20,180 --> 00:39:22,860
+where the number of parameters and the number of parameters
+
+901
+00:39:22,860 --> 00:39:24,500
+are kind of decoupled.
+
+902
+00:39:24,500 --> 00:39:26,780
+And there's a nice, clean analysis
+
+903
+00:39:26,780 --> 00:39:30,460
+by some folks at Apple and MIT that
+
+904
+00:39:30,460 --> 00:39:36,220
+show the scaling trends as a function of both parameters
+
+905
+00:39:36,220 --> 00:39:37,640
+and active parameters.
+
+906
+00:39:37,640 --> 00:39:40,140
+And the cool thing that you see is,
+
+907
+00:39:40,140 --> 00:39:43,040
+as you start to train bigger and bigger models,
+
+908
+00:39:43,040 --> 00:39:45,460
+if you increase the amount of total parameters
+
+909
+00:39:45,460 --> 00:39:49,220
+on the x-axis over here, and you want to minimize your loss,
+
+910
+00:39:49,220 --> 00:39:52,240
+you're going to end up with more sparse and sparse models.
+
+911
+00:39:52,240 --> 00:39:55,340
+See how the color becomes darker and darker and darker.
+
+912
+00:39:55,340 --> 00:39:59,530
+Similarly, here, if you like the number of active parameters
+
+913
+00:39:59,530 --> 00:40:03,370
+decreases as a function of MoE sparsity.
+
+914
+00:40:03,370 --> 00:40:05,730
+And you get the result that I think
+
+915
+00:40:05,730 --> 00:40:07,450
+is somewhat intuitive here, which
+
+916
+00:40:07,450 --> 00:40:09,450
+is you can draw these surfaces.
+
+917
+00:40:09,450 --> 00:40:12,890
+For every compute amount, you can ask, OK,
+
+918
+00:40:12,890 --> 00:40:17,850
+would I rather spend that compute on active parameters
+
+919
+00:40:17,850 --> 00:40:19,770
+and how much sparsity do I want?
+
+920
+00:40:19,770 --> 00:40:23,210
+I can vary my sparsity without really changing the amount
+
+921
+00:40:23,210 --> 00:40:25,290
+of compute that I'm spending.
+
+922
+00:40:25,290 --> 00:40:27,130
+Now, given that you can ask, OK, what
+
+923
+00:40:27,130 --> 00:40:29,590
+happens if I add more of empty parameters,
+
+924
+00:40:29,590 --> 00:40:32,250
+same active parameters, but more total parameters?
+
+925
+00:40:32,250 --> 00:40:34,570
+As you move from back on the plot
+
+926
+00:40:34,570 --> 00:40:39,090
+to in the front of the plot, you see the losses are improving.
+
+927
+00:40:39,090 --> 00:40:41,330
+So in other words, this is saying
+
+928
+00:40:41,330 --> 00:40:43,810
+that the parameters in an MoE that are not active
+
+929
+00:40:43,810 --> 00:40:45,843
+are still helping you reduce your loss, which
+
+930
+00:40:45,843 --> 00:40:46,510
+is kind of cool.
+
+931
+00:40:46,510 --> 00:40:49,110
+And you can write down what the functional forms of this are.
+
+932
+00:40:49,110 --> 00:40:51,570
+I won't go into that part in more detail,
+
+933
+00:40:51,570 --> 00:40:54,890
+but the point here is to say all of these kinds of quantities
+
+934
+00:40:54,890 --> 00:40:57,440
+that we care about in optimizing MoE
+
+935
+00:40:57,440 --> 00:41:00,620
+are things that have predictable scaling and regularities.
+
+936
+00:41:03,700 --> 00:41:07,960
+And the two things I want to now talk about are actually really--
+
+937
+00:41:07,960 --> 00:41:10,400
+yeah, two things that I now want to talk about.
+
+938
+00:41:10,400 --> 00:41:12,760
+When you're going to train a new big model,
+
+939
+00:41:12,760 --> 00:41:15,200
+actually, most of the things that I talk about are fixed.
+
+940
+00:41:15,200 --> 00:41:16,920
+You're probably all not radical enough
+
+941
+00:41:16,920 --> 00:41:18,340
+that you're going to switch to an LSTM.
+
+942
+00:41:18,340 --> 00:41:20,382
+You're probably going to pick like, I don't know,
+
+943
+00:41:20,382 --> 00:41:23,960
+a DeepSeek-V4-inspired MoE or something.
+
+944
+00:41:23,960 --> 00:41:26,880
+And you're probably going to pick architecture choices that
+
+945
+00:41:26,880 --> 00:41:27,980
+are tried and tested.
+
+946
+00:41:27,980 --> 00:41:30,000
+You're not going to really throw everything out.
+
+947
+00:41:30,000 --> 00:41:31,840
+But two things that you really do
+
+948
+00:41:31,840 --> 00:41:34,440
+have to maybe reinvent in some sense
+
+949
+00:41:34,440 --> 00:41:36,600
+is the batch size and the learning rate.
+
+950
+00:41:36,600 --> 00:41:38,400
+If you train your deep learning models,
+
+951
+00:41:38,400 --> 00:41:41,160
+you know that you have to be very careful
+
+952
+00:41:41,160 --> 00:41:43,920
+about the combination of your batch size and learning rate.
+
+953
+00:41:43,920 --> 00:41:45,880
+You change one, you have to change the other.
+
+954
+00:41:45,880 --> 00:41:48,880
+Now, batch size, from the previous lecture,
+
+955
+00:41:48,880 --> 00:41:51,020
+is very tricky for another reason.
+
+956
+00:41:51,020 --> 00:41:53,180
+We want the batch size to be as big as possible
+
+957
+00:41:53,180 --> 00:41:55,350
+because a big batch size gives us opportunity
+
+958
+00:41:55,350 --> 00:41:56,430
+for parallelization.
+
+959
+00:41:56,430 --> 00:41:59,910
+Remember, data parallel requires large batch size.
+
+960
+00:41:59,910 --> 00:42:02,550
+So now, having said all that, what we really want to
+
+961
+00:42:02,550 --> 00:42:05,790
+is how large can we make our batch size
+
+962
+00:42:05,790 --> 00:42:07,130
+before we start to suffer?
+
+963
+00:42:07,130 --> 00:42:10,150
+That's the relevant systems question.
+
+964
+00:42:10,150 --> 00:42:12,350
+And you also want to know how does that change
+
+965
+00:42:12,350 --> 00:42:14,030
+as a function of model size.
+
+966
+00:42:14,030 --> 00:42:19,750
+So given that preface, there is this very important idea
+
+967
+00:42:19,750 --> 00:42:21,615
+that is used in a variety of papers
+
+968
+00:42:21,615 --> 00:42:22,990
+and talked about very frequently,
+
+969
+00:42:22,990 --> 00:42:24,990
+called the critical batch size.
+
+970
+00:42:24,990 --> 00:42:27,510
+The critical batch size is roughly this idea that
+
+971
+00:42:27,510 --> 00:42:29,230
+up until a certain point, when you
+
+972
+00:42:29,230 --> 00:42:31,010
+start to get diminishing returns,
+
+973
+00:42:31,010 --> 00:42:34,610
+there are returns, perfect returns, to increased batch size.
+
+974
+00:42:34,610 --> 00:42:38,170
+So I might call this the noise-limited regime.
+
+975
+00:42:38,170 --> 00:42:40,870
+So in the noise-limited regime, every additional element
+
+976
+00:42:40,870 --> 00:42:44,670
+that you throw in your batch reduces the gradient noise
+
+977
+00:42:44,670 --> 00:42:45,770
+in your SGD step.
+
+978
+00:42:45,770 --> 00:42:48,230
+And since you're variance-limited,
+
+979
+00:42:48,230 --> 00:42:50,770
+that reduction in variance is very, very helpful.
+
+980
+00:42:50,770 --> 00:42:52,600
+That gives you big returns.
+
+981
+00:42:52,600 --> 00:42:55,000
+So this is the regime in which you have perfect scaling.
+
+982
+00:42:55,000 --> 00:42:57,100
+You're doing about as well as you can,
+
+983
+00:42:57,100 --> 00:43:00,940
+given the amount of extra examples that you're processing.
+
+984
+00:43:00,940 --> 00:43:02,660
+As you get to a certain point where
+
+985
+00:43:02,660 --> 00:43:05,660
+you've reached the noise scale of your gradients,
+
+986
+00:43:05,660 --> 00:43:08,880
+you get to a point where you are no longer variance-limited.
+
+987
+00:43:08,880 --> 00:43:10,320
+You're now bias-limited.
+
+988
+00:43:10,320 --> 00:43:11,360
+What does that mean?
+
+989
+00:43:11,360 --> 00:43:13,000
+Well, remember, in gradient descent,
+
+990
+00:43:13,000 --> 00:43:15,480
+you're looking at the local structure of your objective.
+
+991
+00:43:15,480 --> 00:43:19,520
+You don't have a global view of where the minimum is.
+
+992
+00:43:19,520 --> 00:43:22,580
+So no matter how low noise I am, I'm
+
+993
+00:43:22,580 --> 00:43:25,040
+only going to point in this light blue direction over here.
+
+994
+00:43:25,040 --> 00:43:26,540
+And there's always a disagreement
+
+995
+00:43:26,540 --> 00:43:28,380
+between my local descent direction
+
+996
+00:43:28,380 --> 00:43:30,900
+and where the global optimum is.
+
+997
+00:43:30,900 --> 00:43:32,780
+Because of that, at a certain point,
+
+998
+00:43:32,780 --> 00:43:34,300
+I'm going to get diminishing returns
+
+999
+00:43:34,300 --> 00:43:37,800
+because now my limiting factor is no longer variance.
+
+1000
+00:43:37,800 --> 00:43:39,400
+It is this bias term.
+
+1001
+00:43:39,400 --> 00:43:44,100
+So now I'm bias-limited past this point over here.
+
+1002
+00:43:44,100 --> 00:43:46,940
+And so critical batch is kind of a rule of thumb,
+
+1003
+00:43:46,940 --> 00:43:51,340
+you might call it, or a convenient trade-off point where
+
+1004
+00:43:51,340 --> 00:43:53,540
+you say this is the point at which we're starting
+
+1005
+00:43:53,540 --> 00:43:55,780
+to cross over from our perfect scaling
+
+1006
+00:43:55,780 --> 00:43:59,140
+regime to our ineffective scaling regime.
+
+1007
+00:43:59,140 --> 00:44:01,097
+And so it gives you a good rule of thumb
+
+1008
+00:44:01,097 --> 00:44:03,180
+of where to be setting your batch size if you want
+
+1009
+00:44:03,180 --> 00:44:05,860
+your batch size to be as big as possible without suffering
+
+1010
+00:44:05,860 --> 00:44:08,480
+these huge efficiency losses.
+
+1011
+00:44:08,480 --> 00:44:11,340
+Hopefully, that idea is very clear.
+
+1012
+00:44:11,340 --> 00:44:16,060
+Now, critical batch size is kind of a strange object.
+
+1013
+00:44:16,060 --> 00:44:20,860
+It is derived from a variety of complicated calculations
+
+1014
+00:44:20,860 --> 00:44:24,940
+about the local quadratic approximations to the objective.
+
+1015
+00:44:24,940 --> 00:44:28,020
+But I will maybe give you the mechanical steps
+
+1016
+00:44:28,020 --> 00:44:32,420
+of what is actually used to estimate this quantity.
+
+1017
+00:44:32,420 --> 00:44:36,180
+So what you do is first, you pick a target loss.
+
+1018
+00:44:36,180 --> 00:44:38,480
+Target loss might be some numbers that you want to hit.
+
+1019
+00:44:38,480 --> 00:44:40,580
+So your goal is to hit this target loss
+
+1020
+00:44:40,580 --> 00:44:41,860
+as quickly as possible.
+
+1021
+00:44:41,860 --> 00:44:44,020
+That's my goal right now.
+
+1022
+00:44:44,020 --> 00:44:45,820
+What I'm going to do is I'm going to sweep
+
+1023
+00:44:45,820 --> 00:44:47,980
+over all the different batch sizes or number
+
+1024
+00:44:47,980 --> 00:44:49,690
+of different batch sizes, and I'm
+
+1025
+00:44:49,690 --> 00:44:52,130
+going to write down the number of steps that I needed
+
+1026
+00:44:52,130 --> 00:44:54,730
+to reach my target loss, and the number of examples
+
+1027
+00:44:54,730 --> 00:44:57,310
+that were needed to get to that target loss.
+
+1028
+00:44:57,310 --> 00:45:01,250
+Of course, number one and two are related by a batch size factor.
+
+1029
+00:45:01,250 --> 00:45:03,290
+The number of steps times my batch size
+
+1030
+00:45:03,290 --> 00:45:05,810
+is equal to the number of examples.
+
+1031
+00:45:05,810 --> 00:45:11,250
+Now, through some calculations, OpenAI folks, McCandless
+
+1032
+00:45:11,250 --> 00:45:15,810
+and others, argue that this is the rough functional form
+
+1033
+00:45:15,810 --> 00:45:19,010
+that we should follow, that the number of steps that you need
+
+1034
+00:45:19,010 --> 00:45:20,730
+and the number of examples that you need
+
+1035
+00:45:20,730 --> 00:45:24,090
+are inversely related, with this estimate, which
+
+1036
+00:45:24,090 --> 00:45:26,170
+is the minimum number of possible steps
+
+1037
+00:45:26,170 --> 00:45:28,890
+and the minimum number of examples,
+
+1038
+00:45:28,890 --> 00:45:31,990
+normalizing these two quantities.
+
+1039
+00:45:31,990 --> 00:45:34,052
+And so there's a trade-off between these two.
+
+1040
+00:45:34,052 --> 00:45:36,010
+If you want to minimize the number of examples,
+
+1041
+00:45:36,010 --> 00:45:37,550
+you're going to have a lot of steps.
+
+1042
+00:45:37,550 --> 00:45:39,170
+And if you want to minimize the number of steps,
+
+1043
+00:45:39,170 --> 00:45:40,795
+you're going to need a lot of examples.
+
+1044
+00:45:40,795 --> 00:45:42,190
+That's a very natural trade-off.
+
+1045
+00:45:42,190 --> 00:45:44,690
+And if you increase or decrease your batch size,
+
+1046
+00:45:44,690 --> 00:45:48,000
+you're going to have trade-offs that go one side or the other.
+
+1047
+00:45:48,000 --> 00:45:49,960
+Now, they argue the goal now should
+
+1048
+00:45:49,960 --> 00:45:51,580
+be to balance these two sides.
+
+1049
+00:45:51,580 --> 00:45:54,080
+I want to make sure that my number of steps term
+
+1050
+00:45:54,080 --> 00:45:56,560
+and the number of examples terms are roughly
+
+1051
+00:45:56,560 --> 00:45:58,020
+balanced with each other.
+
+1052
+00:45:58,020 --> 00:45:59,480
+And if you solve for that, you're
+
+1053
+00:45:59,480 --> 00:46:01,640
+going to get this particular solution, which
+
+1054
+00:46:01,640 --> 00:46:04,480
+is that the critical batch size is
+
+1055
+00:46:04,480 --> 00:46:06,640
+the minimum number of examples that I
+
+1056
+00:46:06,640 --> 00:46:09,940
+need divided by the minimum number of steps that I need.
+
+1057
+00:46:09,940 --> 00:46:14,120
+And these two are estimated by fitting this to the observed
+
+1058
+00:46:14,120 --> 00:46:15,653
+data that I have.
+
+1059
+00:46:15,653 --> 00:46:17,820
+This is going to balance both sides of the equation.
+
+1060
+00:46:17,820 --> 00:46:20,920
+It's going to give me a little bit more number of steps
+
+1061
+00:46:20,920 --> 00:46:21,620
+than optimal.
+
+1062
+00:46:21,620 --> 00:46:24,700
+It's going to require a little bit more examples than optimal,
+
+1063
+00:46:24,700 --> 00:46:26,100
+but it balances the two sides.
+
+1064
+00:46:26,100 --> 00:46:32,640
+And you can think of this as optimizing the convergence rate
+
+1065
+00:46:32,640 --> 00:46:37,000
+without blowing up the number of steps that you need.
+
+1066
+00:46:37,000 --> 00:46:39,375
+There's another added point that I won't really
+
+1067
+00:46:39,375 --> 00:46:41,500
+belabor because this gets even more into the weeds.
+
+1068
+00:46:41,500 --> 00:46:43,680
+You should really read the critical batch size paper
+
+1069
+00:46:43,680 --> 00:46:46,390
+if you're interested into this, where one of their arguments
+
+1070
+00:46:46,390 --> 00:46:48,690
+is estimating this is quite complicated.
+
+1071
+00:46:48,690 --> 00:46:51,430
+You can do this by just looking at the ratio
+
+1072
+00:46:51,430 --> 00:46:53,470
+of the gradient covariance in the squared norm
+
+1073
+00:46:53,470 --> 00:46:56,390
+of your gradient.
+
+1074
+00:46:56,390 --> 00:46:59,370
+So why is that even in the scaling lecture?
+
+1075
+00:46:59,370 --> 00:47:04,550
+This is a thing that is not really related to scaling so far.
+
+1076
+00:47:04,550 --> 00:47:07,270
+The reason why this is in the scaling lecture
+
+1077
+00:47:07,270 --> 00:47:09,590
+is because, first of all, the critical batch size
+
+1078
+00:47:09,590 --> 00:47:11,370
+is a reasonable batch size to pick.
+
+1079
+00:47:11,370 --> 00:47:13,550
+That's a batch size that balances convergence rate
+
+1080
+00:47:13,550 --> 00:47:15,110
+and the size of the batch.
+
+1081
+00:47:15,110 --> 00:47:19,070
+So if I want to pick my batch size equal to my critical batch
+
+1082
+00:47:19,070 --> 00:47:21,310
+size, you might ask, how does this thing
+
+1083
+00:47:21,310 --> 00:47:24,370
+scale as a function of my target loss?
+
+1084
+00:47:24,370 --> 00:47:27,350
+Target loss can be thought of as compute.
+
+1085
+00:47:27,350 --> 00:47:30,750
+If I want to have a model that is better and better and better,
+
+1086
+00:47:30,750 --> 00:47:33,690
+what is the batch size that I should use?
+
+1087
+00:47:33,690 --> 00:47:36,990
+And the reason why this isn't the scaling law lecture
+
+1088
+00:47:36,990 --> 00:47:40,910
+is as you go down in scale in the loss, so your loss is
+
+1089
+00:47:40,910 --> 00:47:44,430
+improving, the amount of critical batch size increases.
+
+1090
+00:47:44,430 --> 00:47:46,750
+And it increases in this very predictable way, which
+
+1091
+00:47:46,750 --> 00:47:48,590
+is once again, a power law.
+
+1092
+00:47:48,590 --> 00:47:51,230
+So this is the relationship that they argue,
+
+1093
+00:47:51,230 --> 00:47:56,430
+which is roughly inverse polynomial in batch size.
+
+1094
+00:47:56,430 --> 00:47:59,080
+So given this, this is actually quite nice
+
+1095
+00:47:59,080 --> 00:48:00,830
+because what this is saying is if you have
+
+1096
+00:48:00,830 --> 00:48:02,910
+a really large-scale training run where you go all
+
+1097
+00:48:02,910 --> 00:48:04,327
+the way to the right of this plot,
+
+1098
+00:48:04,327 --> 00:48:06,590
+your batch sizes can be quite large.
+
+1099
+00:48:06,590 --> 00:48:07,670
+And that makes sense.
+
+1100
+00:48:07,670 --> 00:48:10,810
+As you get closer and closer and closer to the minimum,
+
+1101
+00:48:10,810 --> 00:48:13,028
+the value of variance reduction increases.
+
+1102
+00:48:13,028 --> 00:48:17,030
+Because you're trying to optimize finer and finer grained objects, the noise
+
+1103
+00:48:17,030 --> 00:48:19,870
+matters a lot more once you're minimizing really, really
+
+1104
+00:48:19,870 --> 00:48:22,590
+tiny differences.
+
+1105
+00:48:22,590 --> 00:48:25,990
+So that's the batch size story.
+
+1106
+00:48:25,990 --> 00:48:27,950
+The other side-- so the two quantities,
+
+1107
+00:48:27,950 --> 00:48:30,150
+remember, that you're going to always have to tune
+
+1108
+00:48:30,150 --> 00:48:32,830
+is batch size and learning rate.
+
+1109
+00:48:32,830 --> 00:48:34,870
+The learning rate side of the story
+
+1110
+00:48:34,870 --> 00:48:36,530
+is also a little bit complicated.
+
+1111
+00:48:36,530 --> 00:48:40,310
+I'll go into this much more detail in the advanced scaling
+
+1112
+00:48:40,310 --> 00:48:42,390
+lecture.
+
+1113
+00:48:42,390 --> 00:48:44,820
+But learning rates generally shift.
+
+1114
+00:48:44,820 --> 00:48:46,940
+I think this is a good mental picture for how
+
+1115
+00:48:46,940 --> 00:48:49,460
+to think about learning rates in the standard world
+
+1116
+00:48:49,460 --> 00:48:51,540
+that you start with, which is, let's say,
+
+1117
+00:48:51,540 --> 00:48:53,300
+that you have just like a MLP.
+
+1118
+00:48:53,300 --> 00:48:55,860
+Just a standard neural network of some kind.
+
+1119
+00:48:55,860 --> 00:48:57,360
+I'm not going to do depth scaling.
+
+1120
+00:48:57,360 --> 00:48:59,020
+I'm only going to do width scaling.
+
+1121
+00:48:59,020 --> 00:49:01,140
+Now, if I'm doing width scaling, the bigger
+
+1122
+00:49:01,140 --> 00:49:03,820
+my model, the bigger my model, the smaller
+
+1123
+00:49:03,820 --> 00:49:05,240
+my learning rate should be.
+
+1124
+00:49:05,240 --> 00:49:07,580
+And the reason why my learning rate should be smaller
+
+1125
+00:49:07,580 --> 00:49:10,000
+is because I have bigger, more parameters,
+
+1126
+00:49:10,000 --> 00:49:11,480
+I'm changing more things at once.
+
+1127
+00:49:11,480 --> 00:49:13,460
+Maybe I should move less.
+
+1128
+00:49:13,460 --> 00:49:15,580
+It kind of makes sense.
+
+1129
+00:49:15,580 --> 00:49:18,660
+And in fact, there's a rule of thumb
+
+1130
+00:49:18,660 --> 00:49:21,160
+that maybe you want to scale by 1 over the width.
+
+1131
+00:49:21,160 --> 00:49:23,460
+That's a very commonly known rule of thumb
+
+1132
+00:49:23,460 --> 00:49:26,900
+that you want to just decrease the learning rate regularly
+
+1133
+00:49:26,900 --> 00:49:28,540
+as a function of your width, and that
+
+1134
+00:49:28,540 --> 00:49:32,340
+will give you a rule of thumb to scale your learning rate.
+
+1135
+00:49:32,340 --> 00:49:35,620
+There is another school of thought,
+
+1136
+00:49:35,620 --> 00:49:38,100
+or another set of tricks that people do,
+
+1137
+00:49:38,100 --> 00:49:40,260
+which is that people also rescale
+
+1138
+00:49:40,260 --> 00:49:41,710
+the network in various ways.
+
+1139
+00:49:41,710 --> 00:49:43,810
+They will change the initialization sizes,
+
+1140
+00:49:43,810 --> 00:49:46,970
+and they will change the step sizes
+
+1141
+00:49:46,970 --> 00:49:50,650
+of the optimizer for various parts of the network
+
+1142
+00:49:50,650 --> 00:49:55,250
+in order to force the model to have the same learning rate
+
+1143
+00:49:55,250 --> 00:49:57,410
+minimum across scales.
+
+1144
+00:49:57,410 --> 00:50:03,105
+And this is an idea that is called muP and others like it.
+
+1145
+00:50:03,105 --> 00:50:04,730
+Some people have reported great success
+
+1146
+00:50:04,730 --> 00:50:06,850
+with these kinds of approaches, others
+
+1147
+00:50:06,850 --> 00:50:08,450
+have reported less success.
+
+1148
+00:50:08,450 --> 00:50:11,650
+The two ways, basically, of setting a learning rate
+
+1149
+00:50:11,650 --> 00:50:14,750
+for large-scale runs really is captured in this plot.
+
+1150
+00:50:14,750 --> 00:50:16,370
+In one way, you can try to estimate
+
+1151
+00:50:16,370 --> 00:50:18,290
+what these minima are and try to predict
+
+1152
+00:50:18,290 --> 00:50:19,890
+what your minimum will be.
+
+1153
+00:50:19,890 --> 00:50:22,590
+And the way in which the minimum changes is pretty predictable,
+
+1154
+00:50:22,590 --> 00:50:24,330
+so this is not a crazy idea.
+
+1155
+00:50:24,330 --> 00:50:26,570
+Or you can reparameterize your model
+
+1156
+00:50:26,570 --> 00:50:28,910
+to try to keep the learning rate minimum the same,
+
+1157
+00:50:28,910 --> 00:50:31,390
+and then just pick your best learning rate and go.
+
+1158
+00:50:31,390 --> 00:50:34,670
+Those are the two philosophies to picking your learning rate.
+
+1159
+00:50:34,670 --> 00:50:37,630
+Both of them have been applied successfully at scale.
+
+1160
+00:50:37,630 --> 00:50:39,170
+There are large-scale training runs
+
+1161
+00:50:39,170 --> 00:50:41,560
+that have used both approaches.
+
+1162
+00:50:41,560 --> 00:50:46,520
+I think anecdotally it does seem more people are maybe favoring
+
+1163
+00:50:46,520 --> 00:50:49,560
+the scaling law approach, but both are certainly
+
+1164
+00:50:49,560 --> 00:50:50,800
+viable approaches.
+
+1165
+00:50:50,800 --> 00:50:55,600
+I'll talk in detail about both of these next lecture.
+
+1166
+00:50:55,600 --> 00:51:01,640
+So before I get into the last part of this lecture,
+
+1167
+00:51:01,640 --> 00:51:03,640
+where I want to talk about not quite
+
+1168
+00:51:03,640 --> 00:51:09,320
+pitfalls but various details of scaling law things,
+
+1169
+00:51:09,320 --> 00:51:11,160
+one thing I want to end this section with
+
+1170
+00:51:11,160 --> 00:51:14,240
+is the idea that upstream and downstream performance
+
+1171
+00:51:14,240 --> 00:51:15,960
+can be quite different.
+
+1172
+00:51:15,960 --> 00:51:19,680
+So if you look at something like log likelihood,
+
+1173
+00:51:19,680 --> 00:51:23,360
+this is from the Yi Tay architectures paper,
+
+1174
+00:51:23,360 --> 00:51:28,080
+you find that perplexity and negative perplexity in this case
+
+1175
+00:51:28,080 --> 00:51:29,900
+parameters are very correlated.
+
+1176
+00:51:29,900 --> 00:51:32,420
+The more parameters you have, the better your model,
+
+1177
+00:51:32,420 --> 00:51:33,260
+very predictably.
+
+1178
+00:51:33,260 --> 00:51:35,640
+This is a very beautiful linear trend.
+
+1179
+00:51:35,640 --> 00:51:37,375
+Now you're like, OK, this is great.
+
+1180
+00:51:37,375 --> 00:51:39,000
+Now we're going to ship our best model.
+
+1181
+00:51:39,000 --> 00:51:40,360
+NL12.
+
+1182
+00:51:40,360 --> 00:51:42,420
+Turns out NL12 is not your best model.
+
+1183
+00:51:42,420 --> 00:51:45,600
+It was actually NL32XL, which was a much worse model
+
+1184
+00:51:45,600 --> 00:51:46,640
+in perplexity.
+
+1185
+00:51:46,640 --> 00:51:48,800
+This is a very common thing that does happen.
+
+1186
+00:51:48,800 --> 00:51:51,603
+Upstream and downstream are often correlated.
+
+1187
+00:51:51,603 --> 00:51:53,520
+This is probably one of the worst correlations
+
+1188
+00:51:53,520 --> 00:51:55,378
+that I've seen from upstream to downstream.
+
+1189
+00:51:55,378 --> 00:51:56,920
+But I think it's very, very important
+
+1190
+00:51:56,920 --> 00:52:00,440
+to remember that scaling laws, generally speaking, are objects
+
+1191
+00:52:00,440 --> 00:52:02,500
+that you want to apply on the perplexity side.
+
+1192
+00:52:02,500 --> 00:52:03,860
+They're very clean, they're very regular,
+
+1193
+00:52:03,860 --> 00:52:05,040
+they're very predictable.
+
+1194
+00:52:05,040 --> 00:52:07,400
+But transfer from perplexity to downstream
+
+1195
+00:52:07,400 --> 00:52:09,880
+is a lot less certain than it might initially seem.
+
+1196
+00:52:09,880 --> 00:52:13,080
+This is a place where you want to be very cautious.
+
+1197
+00:52:13,080 --> 00:52:17,040
+And as an anecdote, I have former students
+
+1198
+00:52:17,040 --> 00:52:19,580
+that have gone and done post-training of various places,
+
+1199
+00:52:19,580 --> 00:52:20,380
+and they always complain.
+
+1200
+00:52:20,380 --> 00:52:22,120
+They're like, "Oh, those pre-training people,
+
+1201
+00:52:22,120 --> 00:52:23,120
+they hand you this model.
+
+1202
+00:52:23,120 --> 00:52:24,260
+They are like, the perplexity is good.
+
+1203
+00:52:24,260 --> 00:52:25,580
+It's all your problem now."
+
+1204
+00:52:25,580 --> 00:52:27,760
+But it's often the problems have started
+
+1205
+00:52:27,760 --> 00:52:29,140
+at the pre-training side.
+
+1206
+00:52:29,140 --> 00:52:31,060
+So you don't want to be one of those people.
+
+1207
+00:52:31,060 --> 00:52:33,060
+You want to really think about transfer as well,
+
+1208
+00:52:33,060 --> 00:52:36,990
+not just focus on perplexities.
+
+1209
+00:52:36,990 --> 00:52:39,970
+OK, so maybe this is surprising, maybe this is not.
+
+1210
+00:52:39,970 --> 00:52:42,230
+But the point that I want to drill in here
+
+1211
+00:52:42,230 --> 00:52:45,130
+is that before you do your big training run,
+
+1212
+00:52:45,130 --> 00:52:47,510
+you should have a rough idea of what you're going to see.
+
+1213
+00:52:47,510 --> 00:52:50,350
+Not just is it going to train at all.
+
+1214
+00:52:50,350 --> 00:52:51,870
+In fact, if you do scaling laws, you
+
+1215
+00:52:51,870 --> 00:52:55,310
+should be able to actually predict fairly precisely
+
+1216
+00:52:55,310 --> 00:52:58,070
+the numerical values, almost, of how good
+
+1217
+00:52:58,070 --> 00:52:59,110
+your run is going to be.
+
+1218
+00:52:59,110 --> 00:53:01,250
+If I choose one optimizer versus the other,
+
+1219
+00:53:01,250 --> 00:53:02,370
+what will the gain be?
+
+1220
+00:53:02,370 --> 00:53:04,990
+You should be able to predict that.
+
+1221
+00:53:04,990 --> 00:53:06,670
+So the scaling law-based procedure
+
+1222
+00:53:06,670 --> 00:53:09,250
+is to say I'm going to train a bunch of smaller models,
+
+1223
+00:53:09,250 --> 00:53:11,670
+I'm going to establish some of a scaling law
+
+1224
+00:53:11,670 --> 00:53:14,210
+by fitting these lines onto log-log plots.
+
+1225
+00:53:14,210 --> 00:53:15,890
+And then if the fit is good enough,
+
+1226
+00:53:15,890 --> 00:53:18,015
+I'm going to have some confidence that the gap will
+
+1227
+00:53:18,015 --> 00:53:20,310
+persist, and then I'm just going to deploy that
+
+1228
+00:53:20,310 --> 00:53:21,910
+onto my large-scale training run.
+
+1229
+00:53:21,910 --> 00:53:24,970
+This is the naive version of a scaling law procedure,
+
+1230
+00:53:24,970 --> 00:53:26,790
+but I think one that is reasonably
+
+1231
+00:53:26,790 --> 00:53:29,970
+accurate for how you might think about these things in practice.
+
+1232
+00:53:29,970 --> 00:53:31,390
+What else are you going to do?
+
+1233
+00:53:31,390 --> 00:53:33,610
+Just deploy a run out of nowhere?
+
+1234
+00:53:33,610 --> 00:53:35,860
+Probably not.
+
+1235
+00:53:35,860 --> 00:53:37,940
+OK, I can pause here and take some questions
+
+1236
+00:53:37,940 --> 00:53:42,140
+before I get into the last part of this lecture.
+
+1237
+00:53:42,140 --> 00:53:43,380
+Yes.
+
+1238
+00:53:43,380 --> 00:53:45,520
+For each of the data points on the scaling law,
+
+1239
+00:53:45,520 --> 00:53:47,320
+how do you think about variance?
+
+1240
+00:53:47,320 --> 00:53:49,320
+How many runs do you do?
+
+1241
+00:53:49,320 --> 00:53:51,940
+And is aggregation usually like the average,
+
+1242
+00:53:51,940 --> 00:53:54,660
+or do you take min or max depending on [INAUDIBLE]?
+
+1243
+00:53:54,660 --> 00:53:59,820
+Yeah, I think in most cases, if not all cases that I've seen,
+
+1244
+00:53:59,820 --> 00:54:01,380
+those are singletons.
+
+1245
+00:54:01,380 --> 00:54:03,420
+And the reason why it's a singleton
+
+1246
+00:54:03,420 --> 00:54:06,060
+is because when you're looking at perplexities,
+
+1247
+00:54:06,060 --> 00:54:08,480
+perplexities are very, very clean.
+
+1248
+00:54:08,480 --> 00:54:12,282
+These objects, if you rerun them,
+
+1249
+00:54:12,282 --> 00:54:13,740
+they're probably like the variances
+
+1250
+00:54:13,740 --> 00:54:16,340
+in the second decimal place or something
+
+1251
+00:54:16,340 --> 00:54:18,340
+because the training data is very
+
+1252
+00:54:18,340 --> 00:54:21,740
+homogeneous, you've got a lot of it, your eval sets are very big.
+
+1253
+00:54:21,740 --> 00:54:23,740
+You've really pushed the variance very, very low
+
+1254
+00:54:23,740 --> 00:54:25,500
+on these things.
+
+1255
+00:54:25,500 --> 00:54:30,020
+But if you're doing something like learning rate or critical batch
+
+1256
+00:54:30,020 --> 00:54:34,010
+size scaling laws, you will see some truly horrendous stuff.
+
+1257
+00:54:34,010 --> 00:54:36,350
+I do think people do some variance reduction,
+
+1258
+00:54:36,350 --> 00:54:38,770
+but it's actually not that common as common
+
+1259
+00:54:38,770 --> 00:54:41,970
+as it should be, maybe.
+
+1260
+00:54:41,970 --> 00:54:43,702
+Yes.
+
+1261
+00:54:43,702 --> 00:54:47,930
+Do people use just downstream metrics directly
+
+1262
+00:54:47,930 --> 00:54:49,570
+instead of using perplexity?
+
+1263
+00:54:49,570 --> 00:54:52,830
+Yeah, people do scaling laws directly on downstream metrics,
+
+1264
+00:54:52,830 --> 00:54:54,770
+but that has the same problem as this.
+
+1265
+00:54:54,770 --> 00:54:58,290
+So I think the way to think about scaling laws
+
+1266
+00:54:58,290 --> 00:55:01,420
+is to really reliably establish at least one thing.
+
+1267
+00:55:01,420 --> 00:55:03,170
+So the way to think about it is, let's say
+
+1268
+00:55:03,170 --> 00:55:06,970
+I see something like this, I have
+
+1269
+00:55:06,970 --> 00:55:08,627
+a strong belief that this transformer
+
+1270
+00:55:08,627 --> 00:55:09,710
+line is going to continue.
+
+1271
+00:55:09,710 --> 00:55:11,745
+This is a very regular trend.
+
+1272
+00:55:11,745 --> 00:55:13,370
+And it might curve a little bit, but we
+
+1273
+00:55:13,370 --> 00:55:15,328
+do think there's probably some regularity here.
+
+1274
+00:55:15,328 --> 00:55:18,490
+But instead, imagine this was a very noisy jaggedy line
+
+1275
+00:55:18,490 --> 00:55:19,510
+of this form.
+
+1276
+00:55:19,510 --> 00:55:22,070
+You would not really know what is going on.
+
+1277
+00:55:22,070 --> 00:55:24,190
+You would say, I maybe believe that it will go on,
+
+1278
+00:55:24,190 --> 00:55:26,450
+but maybe it's a line, maybe it's a curve.
+
+1279
+00:55:26,450 --> 00:55:28,090
+So I think the general--
+
+1280
+00:55:28,090 --> 00:55:30,630
+if I'm trying to explain the philosophy of this stuff,
+
+1281
+00:55:30,630 --> 00:55:33,370
+is to say, OK, let's start with the low variance measurement
+
+1282
+00:55:33,370 --> 00:55:37,010
+and then establish scaling regularity there and then rely
+
+1283
+00:55:37,010 --> 00:55:40,690
+on some belief about transfer or establish transfer
+
+1284
+00:55:40,690 --> 00:55:43,570
+or elsewhere to try to show that would transfer over
+
+1285
+00:55:43,570 --> 00:55:44,470
+to downstream.
+
+1286
+00:55:48,530 --> 00:55:50,090
+Yeah.
+
+1287
+00:55:50,090 --> 00:55:52,490
+So some of these are [INAUDIBLE],
+
+1288
+00:55:52,490 --> 00:55:54,270
+and some are just [INAUDIBLE] loss.
+
+1289
+00:55:54,270 --> 00:55:55,770
+When do you do either?
+
+1290
+00:55:55,770 --> 00:55:57,330
+I see, yes.
+
+1291
+00:55:57,330 --> 00:56:00,570
+You fit to test loss when you're doing good scientific practice,
+
+1292
+00:56:00,570 --> 00:56:01,910
+like Kaplan 2021.
+
+1293
+00:56:01,910 --> 00:56:07,450
+But realistically, all the models, except for a very few,
+
+1294
+00:56:07,450 --> 00:56:11,430
+like the infinite compute one and the repetition stuff,
+
+1295
+00:56:11,430 --> 00:56:15,730
+unless you're doing some of that, you're doing one-pass SGD.
+
+1296
+00:56:15,730 --> 00:56:17,850
+So the generalization gap for all of these models
+
+1297
+00:56:17,850 --> 00:56:19,130
+is very, very small.
+
+1298
+00:56:19,130 --> 00:56:21,370
+So train and val are very similar.
+
+1299
+00:56:21,370 --> 00:56:23,730
+I've seen some pre-training code bases that don't even
+
+1300
+00:56:23,730 --> 00:56:24,990
+have validation loss.
+
+1301
+00:56:24,990 --> 00:56:27,570
+Because if you're doing one pass, most likely
+
+1302
+00:56:27,570 --> 00:56:29,610
+your train and val are very, very close.
+
+1303
+00:56:29,610 --> 00:56:32,060
+That's why a lot of these plots exchange those two,
+
+1304
+00:56:32,060 --> 00:56:35,343
+because they're all in the one-pass regime.
+
+1305
+00:56:35,343 --> 00:56:36,260
+Good question, though.
+
+1306
+00:56:36,260 --> 00:56:40,920
+OK, all right, we will continue to move on to--
+
+1307
+00:56:40,920 --> 00:56:44,100
+sorry, I moved on too far backwards here.
+
+1308
+00:56:44,100 --> 00:56:47,680
+OK, so now I'm going to talk about one
+
+1309
+00:56:47,680 --> 00:56:51,800
+of the most well-known uses of a scaling law.
+
+1310
+00:56:51,800 --> 00:56:55,340
+Even though you might not personally be using this,
+
+1311
+00:56:55,340 --> 00:56:58,240
+you've certainly used the rule of thumb at some point.
+
+1312
+00:56:58,240 --> 00:57:01,080
+And also, I think because this set of things
+
+1313
+00:57:01,080 --> 00:57:04,400
+will tell us something really interesting about the actual
+
+1314
+00:57:04,400 --> 00:57:06,680
+execution of a scaling law.
+
+1315
+00:57:06,680 --> 00:57:09,280
+OK, the motivating question is, do I
+
+1316
+00:57:09,280 --> 00:57:11,020
+want more data or bigger models?
+
+1317
+00:57:11,020 --> 00:57:13,640
+So the resource that you have, the resource
+
+1318
+00:57:13,640 --> 00:57:15,160
+that you have to spend, is compute.
+
+1319
+00:57:15,160 --> 00:57:17,920
+Someone's going to hand you metaphorically a certain amount
+
+1320
+00:57:17,920 --> 00:57:18,620
+of FLOPs.
+
+1321
+00:57:18,620 --> 00:57:21,180
+And you're going to take those FLOPs,
+
+1322
+00:57:21,180 --> 00:57:22,880
+and you're going to spend them somehow
+
+1323
+00:57:22,880 --> 00:57:26,320
+on—if you remember Percy's very first lecture, it's
+
+1324
+00:57:26,320 --> 00:57:28,870
+going to be data times the parameters is roughly
+
+1325
+00:57:28,870 --> 00:57:30,670
+your FLOPs, linear in that.
+
+1326
+00:57:30,670 --> 00:57:32,890
+So do I want more data or more models?
+
+1327
+00:57:32,890 --> 00:57:36,990
+Well, we know that if we take a teeny tiny model
+
+1328
+00:57:36,990 --> 00:57:40,170
+and we dump tons of data into it, that will just be wasted.
+
+1329
+00:57:40,170 --> 00:57:43,850
+That's the dark purple line at the very top here.
+
+1330
+00:57:43,850 --> 00:57:45,830
+I've taken a teeny tiny language model,
+
+1331
+00:57:45,830 --> 00:57:49,010
+and I've passed a huge amount of data into it,
+
+1332
+00:57:49,010 --> 00:57:51,330
+and this thing has been flat for a very long time.
+
+1333
+00:57:51,330 --> 00:57:53,270
+This is a complete waste of compute.
+
+1334
+00:57:53,270 --> 00:57:55,790
+You would have much rather trained this big yellow model
+
+1335
+00:57:55,790 --> 00:57:58,030
+to the same amount of tokens or even earlier
+
+1336
+00:57:58,030 --> 00:58:01,150
+on, if you're having the same amount of compute.
+
+1337
+00:58:01,150 --> 00:58:06,030
+Now, if you could understand the interaction of how
+
+1338
+00:58:06,030 --> 00:58:11,270
+data amount and model size come together to give you
+
+1339
+00:58:11,270 --> 00:58:13,610
+performance, if you understood that relationship,
+
+1340
+00:58:13,610 --> 00:58:16,010
+you could optimize this very precisely.
+
+1341
+00:58:16,010 --> 00:58:21,350
+And so there are scaling laws that are more advanced
+
+1342
+00:58:21,350 --> 00:58:24,890
+and relate kind of joint behaviors of objects.
+
+1343
+00:58:24,890 --> 00:58:30,100
+So almost simultaneously, Kaplan and Rosenfeld
+
+1344
+00:58:30,100 --> 00:58:32,920
+both proposed these functional forms,
+
+1345
+00:58:32,920 --> 00:58:35,740
+which are roughly equivalent, describing
+
+1346
+00:58:35,740 --> 00:58:38,420
+how the size of the model and the amount of data
+
+1347
+00:58:38,420 --> 00:58:40,500
+relate to the error.
+
+1348
+00:58:40,500 --> 00:58:41,840
+Rosenfeld is very simple.
+
+1349
+00:58:41,840 --> 00:58:44,120
+It's really just the sum of two inverse terms.
+
+1350
+00:58:44,120 --> 00:58:46,980
+These are two scaling laws that are added together.
+
+1351
+00:58:46,980 --> 00:58:49,480
+And Kaplan is a little bit more complicated,
+
+1352
+00:58:49,480 --> 00:58:52,128
+but it's roughly the same idea.
+
+1353
+00:58:52,128 --> 00:58:53,920
+And if you look at, think about the limits,
+
+1354
+00:58:53,920 --> 00:58:54,960
+this is very intuitive.
+
+1355
+00:58:54,960 --> 00:58:58,660
+If I have an infinite amount of data, then what happens?
+
+1356
+00:58:58,660 --> 00:59:00,260
+Then this goes to 0.
+
+1357
+00:59:00,260 --> 00:59:01,920
+You're basically model-size limited.
+
+1358
+00:59:01,920 --> 00:59:03,880
+You become a pure model size scaling law.
+
+1359
+00:59:03,880 --> 00:59:06,120
+If I send my model size to infinity,
+
+1360
+00:59:06,120 --> 00:59:08,200
+then I'm going to be bounded by data.
+
+1361
+00:59:08,200 --> 00:59:10,000
+I'm going to have a pure data scaling law.
+
+1362
+00:59:10,000 --> 00:59:12,600
+So it makes sense if you take the limits of both of these.
+
+1363
+00:59:12,600 --> 00:59:15,940
+It's often a good idea if someone tells you a scaling law
+
+1364
+00:59:15,940 --> 00:59:17,740
+to take the limits of all the variables
+
+1365
+00:59:17,740 --> 00:59:21,100
+to understand the behavior of the system.
+
+1366
+00:59:21,100 --> 00:59:22,820
+Now, the thing that's kind of cool
+
+1367
+00:59:22,820 --> 00:59:25,730
+is Rosenfeld and many others that
+
+1368
+00:59:25,730 --> 00:59:28,890
+have proposed these kinds of joint scaling laws
+
+1369
+00:59:28,890 --> 00:59:31,870
+show that these things fit quite well, even if you extrapolate.
+
+1370
+00:59:31,870 --> 00:59:33,370
+So what you're going to do is you're
+
+1371
+00:59:33,370 --> 00:59:36,010
+going to fit on these green points, which is a low compute
+
+1372
+00:59:36,010 --> 00:59:37,910
+regime and low data regime.
+
+1373
+00:59:37,910 --> 00:59:41,730
+You never see things that have either high data or high model
+
+1374
+00:59:41,730 --> 00:59:42,430
+sizes.
+
+1375
+00:59:42,430 --> 00:59:44,570
+And then you can extrapolate on the basis
+
+1376
+00:59:44,570 --> 00:59:47,250
+of these tiny runs in this corner over here
+
+1377
+00:59:47,250 --> 00:59:51,850
+to essentially this high compute or high data, high model size
+
+1378
+00:59:51,850 --> 00:59:52,350
+regime.
+
+1379
+00:59:52,350 --> 00:59:54,610
+And you can very accurately predict the error
+
+1380
+00:59:54,610 --> 00:59:56,210
+based on your predictions.
+
+1381
+00:59:56,210 --> 00:59:58,690
+Great predictions.
+
+1382
+00:59:58,690 --> 01:00:01,650
+And so once you have that, now what you can do is to say,
+
+1383
+01:00:01,650 --> 01:00:05,050
+well, I have a fixed amount of FLOPs subject to my FLOPs
+
+1384
+01:00:05,050 --> 01:00:07,110
+constraints, minimize this.
+
+1385
+01:00:07,110 --> 01:00:09,830
+That's a simple nonlinear optimization problem.
+
+1386
+01:00:09,830 --> 01:00:11,850
+You can do that to solve for this.
+
+1387
+01:00:11,850 --> 01:00:19,250
+Now, both Kaplan and Rosenfeld provide equations of this form.
+
+1388
+01:00:19,250 --> 01:00:21,790
+What do they say?
+
+1389
+01:00:21,790 --> 01:00:25,462
+Well, if you look at Kaplan, and they solve for this equation,
+
+1390
+01:00:25,462 --> 01:00:26,670
+they say something like this.
+
+1391
+01:00:26,670 --> 01:00:30,710
+Well, the amount of--they always flip this.
+
+1392
+01:00:30,710 --> 01:00:31,570
+It confuses me.
+
+1393
+01:00:31,570 --> 01:00:35,950
+The amount of data it should be C to the 0.73,
+
+1394
+01:00:35,950 --> 01:00:39,722
+and the amount of model size should be C to the 0.27.
+
+1395
+01:00:39,722 --> 01:00:40,430
+Is that reversed?
+
+1396
+01:00:40,430 --> 01:00:41,230
+I think it's reversed, sorry.
+
+1397
+01:00:41,230 --> 01:00:42,730
+N should be the amount of parameters
+
+1398
+01:00:42,730 --> 01:00:46,010
+and D should be the amount of data.
+
+1399
+01:00:46,010 --> 01:00:49,250
+And so tokens per parameters decreases with C.
+
+1400
+01:00:49,250 --> 01:00:51,490
+So as you increase the compute amounts,
+
+1401
+01:00:51,490 --> 01:00:53,450
+this prescription by Kaplan tells
+
+1402
+01:00:53,450 --> 01:00:56,010
+you to train bigger and bigger and bigger models.
+
+1403
+01:00:56,010 --> 01:00:58,303
+And so if you were around in the days of GPT-3,
+
+1404
+01:00:58,303 --> 01:00:59,970
+it kind of shocks me to think that there
+
+1405
+01:00:59,970 --> 01:01:02,890
+are people who were not, you would
+
+1406
+01:01:02,890 --> 01:01:05,410
+know that there was a period where everyone was
+
+1407
+01:01:05,410 --> 01:01:06,730
+training these gigantic models.
+
+1408
+01:01:06,730 --> 01:01:09,370
+Like hundreds of billions of parameters
+
+1409
+01:01:09,370 --> 01:01:12,770
+of models, trillion-parameter dense models, what have you.
+
+1410
+01:01:12,770 --> 01:01:14,570
+And part of that was driven by this.
+
+1411
+01:01:14,570 --> 01:01:17,110
+They saw GPT-3, they saw these Kaplan predictions,
+
+1412
+01:01:17,110 --> 01:01:19,570
+and they said, "Wow, I'm going to do my big training runs
+
+1413
+01:01:19,570 --> 01:01:24,520
+on these gigantic model size models."
+
+1414
+01:01:24,520 --> 01:01:29,943
+But a few years later, in 2022, some folks at DeepMind, Hoffman
+
+1415
+01:01:29,943 --> 01:01:31,860
+et al., came in and they said, well, actually,
+
+1416
+01:01:31,860 --> 01:01:33,793
+these predictions are all terribly off.
+
+1417
+01:01:33,793 --> 01:01:35,960
+You've been training these giant models, these three
+
+1418
+01:01:35,960 --> 01:01:39,060
+stars over here, but actually, those are way too big.
+
+1419
+01:01:39,060 --> 01:01:40,560
+What we should be training instead
+
+1420
+01:01:40,560 --> 01:01:45,000
+is a very different trend, this line on the blue over here,
+
+1421
+01:01:45,000 --> 01:01:47,440
+and we should be training this teal star, which
+
+1422
+01:01:47,440 --> 01:01:48,640
+is a much better model.
+
+1423
+01:01:48,640 --> 01:01:51,480
+So they argued that we should be training much smaller models
+
+1424
+01:01:51,480 --> 01:01:53,160
+relative to this.
+
+1425
+01:01:53,160 --> 01:01:55,960
+And I think, of course, many of you
+
+1426
+01:01:55,960 --> 01:01:57,953
+or all of you probably the Chinchilla paper,
+
+1427
+01:01:57,953 --> 01:02:00,160
+you know what the token multipliers are.
+
+1428
+01:02:00,160 --> 01:02:02,080
+It's 20 tokens to every parameter.
+
+1429
+01:02:02,080 --> 01:02:04,600
+But I think this is useful to go in detail
+
+1430
+01:02:04,600 --> 01:02:08,420
+because the Chinchilla-Kaplan disagreement and all of this
+
+1431
+01:02:08,420 --> 01:02:10,680
+tells us something important about how we should
+
+1432
+01:02:10,680 --> 01:02:11,972
+be thinking about scaling laws.
+
+1433
+01:02:11,972 --> 01:02:14,013
+It's not just something where you turn the crank,
+
+1434
+01:02:14,013 --> 01:02:15,200
+and you get the answer.
+
+1435
+01:02:15,200 --> 01:02:17,660
+It's something that's actually careful and sensitive,
+
+1436
+01:02:17,660 --> 01:02:21,887
+and we have to respect the process.
+
+1437
+01:02:21,887 --> 01:02:23,970
+So I'm going to walk through the Chinchilla paper.
+
+1438
+01:02:23,970 --> 01:02:25,650
+And after I walk through the Chinchilla paper,
+
+1439
+01:02:25,650 --> 01:02:27,910
+I'm going to talk about why the Kaplan and Chinchilla
+
+1440
+01:02:27,910 --> 01:02:30,810
+papers disagree and what that means for you.
+
+1441
+01:02:30,810 --> 01:02:34,230
+So the Chinchilla author suggests three different ways
+
+1442
+01:02:34,230 --> 01:02:35,370
+of fitting scaling laws.
+
+1443
+01:02:35,370 --> 01:02:39,110
+I really like this because it's a way of robustifying yourself
+
+1444
+01:02:39,110 --> 01:02:41,750
+to modeling assumptions you may have made.
+
+1445
+01:02:41,750 --> 01:02:44,470
+And each of these actually is quite a different approach
+
+1446
+01:02:44,470 --> 01:02:49,710
+to estimating the trade-off between model size and data.
+
+1447
+01:02:49,710 --> 01:02:53,550
+And minus method 3, which does differ a little bit,
+
+1448
+01:02:53,550 --> 01:02:54,770
+they mostly agree.
+
+1449
+01:02:54,770 --> 01:02:57,990
+All 1 and 2 both agree that the coefficients
+
+1450
+01:02:57,990 --> 01:03:01,310
+for data and for model size are roughly the same.
+
+1451
+01:03:01,310 --> 01:03:04,030
+0.5, 0.5, 0.49, 0.51.
+
+1452
+01:03:04,030 --> 01:03:08,270
+Method 3 does differ, 0.46 and 0.54, but we'll talk about why
+
+1453
+01:03:08,270 --> 01:03:09,130
+later.
+
+1454
+01:03:09,130 --> 01:03:11,550
+Kaplan et al., of course, have a very big difference
+
+1455
+01:03:11,550 --> 01:03:14,350
+between the two, which is why they were training big models
+
+1456
+01:03:14,350 --> 01:03:17,350
+at big, big compute sizes.
+
+1457
+01:03:17,350 --> 01:03:19,940
+Method number 1 from Chinchilla is
+
+1458
+01:03:19,940 --> 01:03:22,200
+what I might call the lower envelope method.
+
+1459
+01:03:22,200 --> 01:03:25,940
+And this is the method that was also being used partially
+
+1460
+01:03:25,940 --> 01:03:29,500
+by Kaplan to try to figure out what the right scaling was.
+
+1461
+01:03:29,500 --> 01:03:32,400
+And so what you do is you take all of your training runs.
+
+1462
+01:03:32,400 --> 01:03:36,042
+So each one of these colored lines is a training curve.
+
+1463
+01:03:36,042 --> 01:03:37,500
+And what you want to do is you want
+
+1464
+01:03:37,500 --> 01:03:40,420
+to actually take the lower envelope of these training curves.
+
+1465
+01:03:40,420 --> 01:03:43,180
+Because a lower envelope point on this training curve,
+
+1466
+01:03:43,180 --> 01:03:45,480
+that means that for a particular FLOP,
+
+1467
+01:03:45,480 --> 01:03:48,900
+this is the best loss that I ever achieved for that FLOP
+
+1468
+01:03:48,900 --> 01:03:50,040
+on any training run.
+
+1469
+01:03:50,040 --> 01:03:52,620
+So I can take all of the lower envelope
+
+1470
+01:03:52,620 --> 01:03:55,640
+points at the very bottom here at the high compute regime,
+
+1471
+01:03:55,640 --> 01:03:57,420
+and then I can plot all those points
+
+1472
+01:03:57,420 --> 01:04:01,020
+to see how big were the models that each of these FLOP points
+
+1473
+01:04:01,020 --> 01:04:01,710
+intersected.
+
+1474
+01:04:01,710 --> 01:04:03,460
+Because each of these points is a training
+
+1475
+01:04:03,460 --> 01:04:05,080
+run with a model size.
+
+1476
+01:04:05,080 --> 01:04:08,160
+And if I scatter plot that, I will get a nice linear trend.
+
+1477
+01:04:08,160 --> 01:04:11,660
+And that will give me one way of estimating the optimal trade-off
+
+1478
+01:04:11,660 --> 01:04:13,840
+between FLOP to parameters.
+
+1479
+01:04:13,840 --> 01:04:16,840
+And that gives one answer, which is for their compute budget,
+
+1480
+01:04:16,840 --> 01:04:19,580
+they should train a 67 billion parameter model.
+
+1481
+01:04:19,580 --> 01:04:23,100
+This is a nice and simple way, but very tricky defining things
+
+1482
+01:04:23,100 --> 01:04:25,500
+like what is the lower envelope, and so on and so forth.
+
+1483
+01:04:25,500 --> 01:04:28,740
+There's definitely some tricky parts.
+
+1484
+01:04:28,740 --> 01:04:30,580
+Method 2 is IsoFLOP.
+
+1485
+01:04:30,580 --> 01:04:32,200
+This is now very popular.
+
+1486
+01:04:32,200 --> 01:04:34,160
+It's also very easy and very robust.
+
+1487
+01:04:34,160 --> 01:04:37,140
+This is probably my personal favorite method.
+
+1488
+01:04:37,140 --> 01:04:39,100
+And what you do is, for this, you
+
+1489
+01:04:39,100 --> 01:04:41,600
+pick a bunch of different FLOPS budgets.
+
+1490
+01:04:41,600 --> 01:04:45,340
+So I have a different range of FLOPS budgets going in factors
+
+1491
+01:04:45,340 --> 01:04:49,300
+of 3 in this case or 1, 3, 6.
+
+1492
+01:04:49,300 --> 01:04:51,140
+And what you do is for each FLOP budget,
+
+1493
+01:04:51,140 --> 01:04:53,220
+you're going to essentially sweep the space.
+
+1494
+01:04:53,220 --> 01:04:54,860
+So here I have one variable, which
+
+1495
+01:04:54,860 --> 01:04:56,600
+is the parameter-to-data trade-off.
+
+1496
+01:04:56,600 --> 01:04:58,500
+So for each FLOP budget, I'm going
+
+1497
+01:04:58,500 --> 01:05:02,240
+to sweep over the parameter to data trade-off, fixing my FLOPS.
+
+1498
+01:05:02,240 --> 01:05:04,580
+So I double my data size, I half my model size,
+
+1499
+01:05:04,580 --> 01:05:05,400
+so on and so forth.
+
+1500
+01:05:05,400 --> 01:05:08,020
+And that will generate a sequence of training runs
+
+1501
+01:05:08,020 --> 01:05:11,040
+whose terminal loss is going to sweep out some of curve.
+
+1502
+01:05:11,040 --> 01:05:13,500
+So each one of these colored sets of points
+
+1503
+01:05:13,500 --> 01:05:15,240
+is a fixed FLOP run.
+
+1504
+01:05:15,240 --> 01:05:18,110
+Each point is sweeping across different parameters,
+
+1505
+01:05:18,110 --> 01:05:20,910
+and of course, it's implicitly sweeping over data as well.
+
+1506
+01:05:20,910 --> 01:05:25,050
+Now, the nice thing now is I can take the minimum over each
+
+1507
+01:05:25,050 --> 01:05:26,770
+of these runs, or even fit a quadratic
+
+1508
+01:05:26,770 --> 01:05:28,810
+and take the minimum over the quadratics,
+
+1509
+01:05:28,810 --> 01:05:30,570
+and then I can draw a line through all
+
+1510
+01:05:30,570 --> 01:05:32,230
+of the bottoms of the quadratics,
+
+1511
+01:05:32,230 --> 01:05:34,490
+or take the bottom of the quadratics
+
+1512
+01:05:34,490 --> 01:05:38,050
+and plot them as a function of FLOPS to parameters.
+
+1513
+01:05:38,050 --> 01:05:39,787
+And that will give me another prediction,
+
+1514
+01:05:39,787 --> 01:05:40,870
+which agrees very closely.
+
+1515
+01:05:40,870 --> 01:05:44,190
+These is $63 billion parameters for my compute budget.
+
+1516
+01:05:47,503 --> 01:05:50,930
+Now, the final approach that we can do
+
+1517
+01:05:50,930 --> 01:05:52,790
+is actually the maybe most natural one,
+
+1518
+01:05:52,790 --> 01:05:56,090
+as suggested by the Rosenfeld paper as well as the Kaplan
+
+1519
+01:05:56,090 --> 01:06:00,050
+paper, because both of them are propose
+
+1520
+01:06:00,050 --> 01:06:03,770
+a hypothesized functional form for how model
+
+1521
+01:06:03,770 --> 01:06:06,050
+size 和数据与 loss 相关。
+
+1522
+01:06:06,050 --> 01:06:09,810
+所以如果你有这样的联合函数形式，你可以做的是
+
+1523
+01:06:09,810 --> 01:06:13,450
+你可以取一大堆你已经做过的训练运行，
+
+1524
+01:06:13,450 --> 01:06:16,600
+然后你可以拟合你的 loss landscape，也就是
+
+1525
+01:06:16,600 --> 01:06:18,180
+你假设的函数形式，
+
+1526
+01:06:18,180 --> 01:06:19,560
+然后你可以直接做曲线拟合
+
+1527
+01:06:19,560 --> 01:06:22,268
+来估计你的缩放定律中的系数。
+
+1528
+01:06:22,268 --> 01:06:23,800
+这是最暴力的方式。
+
+1529
+01:06:23,800 --> 01:06:25,520
+你有一个假设的关系
+
+1530
+01:06:25,520 --> 01:06:28,520
+在 loss、数据量和模型大小之间，
+
+1531
+01:06:28,520 --> 01:06:31,880
+训练一堆模型，做曲线拟合。
+
+1532
+01:06:31,880 --> 01:06:35,380
+希望这相当直接——你如何做到这一点。
+
+1533
+01:06:35,380 --> 01:06:37,800
+当然，如果你在用这种方法，你如何进行
+
+1534
+01:06:37,800 --> 01:06:39,402
+曲线拟合非常重要。
+
+1535
+01:06:39,402 --> 01:06:40,860
+现在，你在拟合这些曲面，
+
+1536
+01:06:40,860 --> 01:06:43,760
+有很多变量，这有点棘手。
+
+1537
+01:06:43,760 --> 01:06:47,820
+这个东西也有一些棘手之处，就像方法 1 一样。
+
+1538
+01:06:47,820 --> 01:06:51,000
+所以这不像
+
+1539
+01:06:51,000 --> 01:06:53,240
+也许 FLOPS 那样直接。
+
+1540
+01:06:53,240 --> 01:06:56,820
+所以现在我们已经讨论了 Chinchilla 做了什么，
+
+1541
+01:06:56,820 --> 01:06:59,360
+它看起来与
+
+1542
+01:06:59,360 --> 01:07:00,220
+Kaplan 所做的没有本质区别。
+
+1543
+01:07:00,220 --> 01:07:03,080
+并不是 Kaplan 做了什么疯狂的事，然后
+
+1544
+01:07:03,080 --> 01:07:05,800
+Chinchilla 的作者做了更聪明的事，而你
+
+1545
+01:07:05,800 --> 01:07:08,400
+说：“哇，为什么我们不从一开始就这么做？”
+
+1546
+01:07:08,400 --> 01:07:10,520
+他们都做了相当合理的事情。
+
+1547
+01:07:10,520 --> 01:07:12,620
+但如果我们看他们的缩放预测，
+
+1548
+01:07:12,620 --> 01:07:14,030
+它们非常不同。
+
+1549
+01:07:14,030 --> 01:07:18,110
+事后看来，我们通常倾向于同意
+
+1550
+01:07:18,110 --> 01:07:21,250
+Chinchilla 的作者有更多正确的缩放。
+
+1551
+01:07:21,250 --> 01:07:24,210
+如果你做你自己的 Chinchilla 风格分析，
+
+1552
+01:07:24,210 --> 01:07:27,750
+你会发现缩放可能更接近 Chinchilla。
+
+1553
+01:07:27,750 --> 01:07:30,910
+那么，为什么会有这么大的差异，当
+
+1554
+01:07:30,910 --> 01:07:34,390
+他们都在拟合这些联合缩放定律时？
+
+1555
+01:07:34,390 --> 01:07:37,350
+好的，所以这是我认为我们
+
+1556
+01:07:37,350 --> 01:07:42,210
+进入缩放定律是如何制定的这些混乱现实的地方。
+
+1557
+01:07:42,210 --> 01:07:45,310
+缩放定律真的会变化，取决于
+
+1558
+01:07:45,310 --> 01:07:48,230
+你实现缩放定律的精确方式，
+
+1559
+01:07:48,230 --> 01:07:50,890
+你使用的超参数设置，
+
+1560
+01:07:50,890 --> 01:07:53,870
+甚至 x 轴是什么。
+
+1561
+01:07:53,870 --> 01:07:55,640
+有一篇非常好的论文。
+
+1562
+01:07:55,640 --> 01:07:56,890
+哦，不，我把作者遮住了。
+
+1563
+01:07:56,890 --> 01:08:02,933
+我之后可以把它粘贴到课程的 Slack 里。
+
+1564
+01:08:02,933 --> 01:08:05,350
+——叫《Resolving Discrepancy to Compute-Optimal Scaling
+
+1565
+01:08:05,350 --> 01:08:06,770
+of Language Models》。
+
+1566
+01:08:06,770 --> 01:08:07,770
+Yair 是最后一位作者。
+
+1567
+01:08:07,770 --> 01:08:09,750
+他曾是这里的学生。
+
+1568
+01:08:09,750 --> 01:08:12,590
+他们展示——基本上，首先他们
+
+1569
+01:08:12,590 --> 01:08:15,110
+用大致 Kaplan 的设置
+
+1570
+01:08:15,110 --> 01:08:16,689
+复现了 Kaplan 的结果。
+
+1571
+01:08:16,689 --> 01:08:18,670
+然后他们说，好吧，让我们
+
+1572
+01:08:18,670 --> 01:08:20,330
+改变参数的计数方式。
+
+1573
+01:08:20,330 --> 01:08:22,013
+这会让曲线稍微移动一点。
+
+1574
+01:08:22,013 --> 01:08:23,430
+然后他们说，好吧，让我们
+
+1575
+01:08:23,430 --> 01:08:25,290
+改变学习率预热的方式。
+
+1576
+01:08:25,290 --> 01:08:26,870
+这会让曲线稍微移动一点。
+
+1577
+01:08:26,870 --> 01:08:29,090
+然后让我们再稍微调一调优化器。
+
+1578
+01:08:29,090 --> 01:08:31,450
+然后他们就得到了和 Chinchilla 完全一致的结果。
+
+1579
+01:08:31,450 --> 01:08:33,350
+所以他们的论点是，这里存在
+
+1580
+01:08:33,350 --> 01:08:38,370
+一系列看起来非常微小的决定，最终
+
+1581
+01:08:38,370 --> 01:08:40,750
+在 Kaplan 缩放定律
+
+1582
+01:08:40,750 --> 01:08:42,850
+和 Chinchilla 缩放定律之间造成了这么大的差距。
+
+1583
+01:08:42,850 --> 01:08:46,069
+我会解释这些步骤各自
+
+1584
+01:08:46,069 --> 01:08:49,229
+是什么，并不是说这是最重要的单一因素，
+
+1585
+01:08:49,229 --> 01:08:53,069
+而是也想向你强调，这里的细节有多么重要。
+
+1586
+01:08:53,069 --> 01:08:55,830
+所以第一个箭头，我们从 Kaplan
+
+1587
+01:08:55,830 --> 01:09:00,010
+到蓝线的这一步，就是参数的计数方式。
+
+1588
+01:09:00,010 --> 01:09:02,375
+所以记住，在 Kaplan 中，我说过，好吧，
+
+1589
+01:09:02,375 --> 01:09:03,750
+如果他们把嵌入参数
+
+1590
+01:09:03,750 --> 01:09:05,270
+也算进去，就会看到这些奇怪的现象。
+
+1591
+01:09:05,270 --> 01:09:07,229
+所以他们排除了嵌入参数。
+
+1592
+01:09:07,229 --> 01:09:09,899
+这通常是可以接受的做法。
+
+1593
+01:09:09,899 --> 01:09:12,740
+但他们还做了一件真正把他们搞砸的事，
+
+1594
+01:09:12,740 --> 01:09:16,380
+就是他们也排除了最后一层的参数
+
+1595
+01:09:16,380 --> 01:09:18,200
+计数，也就是 softmax 那些。
+
+1596
+01:09:18,200 --> 01:09:21,220
+因为在许多模型中，嵌入层和最后一层
+
+1597
+01:09:21,220 --> 01:09:22,580
+线性层是互为对偶的。
+
+1598
+01:09:22,580 --> 01:09:24,380
+它们有相同的形状。
+
+1599
+01:09:24,380 --> 01:09:27,720
+嵌入矩阵是词表大小乘以隐藏维度。
+
+1600
+01:09:27,720 --> 01:09:30,502
+输出矩阵是隐藏维度乘以词表大小。
+
+1601
+01:09:30,502 --> 01:09:31,960
+And because they're the same shape,
+
+1602
+01:09:31,960 --> 01:09:34,043
+they said, well, let's just exclude both of those.
+
+1603
+01:09:34,043 --> 01:09:36,220
+It turns out whether you include or exclude
+
+1604
+01:09:36,220 --> 01:09:40,700
+those has a big material impact on the shape of the scaling law.
+
+1605
+01:09:40,700 --> 01:09:44,399
+They also found-- this is much more of an oversight,
+
+1606
+01:09:44,399 --> 01:09:48,060
+more than a genuine difference in opinion,
+
+1607
+01:09:48,060 --> 01:09:51,420
+that a lot of the models that were being trained in Kaplan
+
+1608
+01:09:51,420 --> 01:09:52,359
+were very small.
+
+1609
+01:09:52,359 --> 01:09:55,100
+And in fact, they were so small that they were not actually
+
+1610
+01:09:55,100 --> 01:09:58,080
+converging by the time that the learning rate warm up was done.
+
+1611
+01:09:58,080 --> 01:10:00,280
+So their learning rates were set very suboptimally.
+
+1612
+01:10:00,280 --> 01:10:03,740
+And because of that, their models weren't fully converged.
+
+1613
+01:10:03,740 --> 01:10:07,300
+And then finally, they found that Kaplan et al. was fixing
+
+1614
+01:10:07,300 --> 01:10:09,650
+one big batch size, and those big batch sizes
+
+1615
+01:10:09,650 --> 01:10:11,670
+were suboptimal for the smaller models.
+
+1616
+01:10:11,670 --> 01:10:14,170
+And therefore, if you tune that correctly
+
+1617
+01:10:14,170 --> 01:10:15,890
+and you use varying batch sizes, you
+
+1618
+01:10:15,890 --> 01:10:20,210
+end up getting this thing that agrees exactly with Chinchilla.
+
+1619
+01:10:20,210 --> 01:10:21,890
+So I think each of these might seem
+
+1620
+01:10:21,890 --> 01:10:25,912
+like a very minor difference, but if you change up
+
+1621
+01:10:25,912 --> 01:10:27,370
+these really minor differences, you
+
+1622
+01:10:27,370 --> 01:10:29,810
+can get big shifts in the scaling law.
+
+1623
+01:10:29,810 --> 01:10:32,050
+And one thing I like to emphasize
+
+1624
+01:10:32,050 --> 01:10:35,530
+is that scaling laws are lower bounds in some sense.
+
+1625
+01:10:35,530 --> 01:10:37,770
+They're kind of saying, if I continue this recipe
+
+1626
+01:10:37,770 --> 01:10:41,210
+and I scale it up, then this is what I will get.
+
+1627
+01:10:41,210 --> 01:10:43,610
+But if you're scaling up a recipe that you don't want
+
+1628
+01:10:43,610 --> 01:10:45,508
+to scale up, your warmup is kind of crazy,
+
+1629
+01:10:45,508 --> 01:10:47,050
+or your batch sizes are crazy, you're
+
+1630
+01:10:47,050 --> 01:10:48,450
+going to get bad scaling laws.
+
+1631
+01:10:48,450 --> 01:10:54,050
+So you want to be as close to the proper full run as possible.
+
+1632
+01:10:54,050 --> 01:10:57,450
+There's another paper that does another very interesting thing
+
+1633
+01:10:57,450 --> 01:11:00,130
+to try to study the difference between Kaplan and Chinchilla
+
+1634
+01:11:00,130 --> 01:11:01,010
+scaling laws.
+
+1635
+01:11:01,010 --> 01:11:03,450
+It's by Pearce and Song.
+
+1636
+01:11:03,450 --> 01:11:06,210
+And what they do, and I think this is very clever,
+
+1637
+01:11:06,210 --> 01:11:07,620
+is they don't train any models.
+
+1638
+01:11:07,620 --> 01:11:09,560
+They just take the Chinchilla training
+
+1639
+01:11:09,560 --> 01:11:12,640
+curves or the implied functional form of the Chinchilla training
+
+1640
+01:11:12,640 --> 01:11:13,140
+curves.
+
+1641
+01:11:13,140 --> 01:11:15,500
+They just plot them out and they say, well,
+
+1642
+01:11:15,500 --> 01:11:17,560
+based on these implied training curves, which
+
+1643
+01:11:17,560 --> 01:11:20,120
+are simulated purely from Chinchilla,
+
+1644
+01:11:20,120 --> 01:11:22,400
+they generate what the implied training curves will
+
+1645
+01:11:22,400 --> 01:11:25,520
+be for Kaplan if you ignore the embedding parameters
+
+1646
+01:11:25,520 --> 01:11:27,920
+and you scale way down, and what happens
+
+1647
+01:11:27,920 --> 01:11:30,300
+if you use the total parameter count instead.
+
+1648
+01:11:30,300 --> 01:11:32,580
+And what they find is really two effects.
+
+1649
+01:11:32,580 --> 01:11:35,900
+One is that Kaplan is operating at a much lower compute scale,
+
+1650
+01:11:35,900 --> 01:11:38,260
+so they're very sensitive to small changes,
+
+1651
+01:11:38,260 --> 01:11:40,600
+and actually ignoring the non-embedding parameter
+
+1652
+01:11:40,600 --> 01:11:43,720
+is a sufficiently big change to mess up the result relative
+
+1653
+01:11:43,720 --> 01:11:44,500
+to Chinchilla.
+
+1654
+01:11:44,500 --> 01:11:48,060
+So their argument is slightly different from Yair and others,
+
+1655
+01:11:48,060 --> 01:11:49,520
+which is that here, actually, it's
+
+1656
+01:11:49,520 --> 01:11:53,160
+the size of the compute scale plus the slight non-linearity
+
+1657
+01:11:53,160 --> 01:11:55,360
+induced by non-embedding parameters that's
+
+1658
+01:11:55,360 --> 01:11:57,700
+causing this disagreement.
+
+1659
+01:11:57,700 --> 01:12:01,580
+So this is really starting to get into the weeds.
+
+1660
+01:12:01,580 --> 01:12:04,520
+But I hope you appreciate the importance
+
+1661
+01:12:04,520 --> 01:12:06,420
+of paying attention to detail.
+
+1662
+01:12:06,420 --> 01:12:09,080
+And I think a lot of the work that goes on
+
+1663
+01:12:09,080 --> 01:12:11,120
+in establishing reliable scaling laws
+
+1664
+01:12:11,120 --> 01:12:13,320
+is about figuring out what the right regime is
+
+1665
+01:12:13,320 --> 01:12:17,880
+so that you can get reliable scaling across compute scales.
+
+1666
+01:12:17,880 --> 01:12:20,680
+The final thing, and this is really just more of something
+
+1667
+01:12:20,680 --> 01:12:23,760
+that I just find amusing more than anything else, which
+
+1668
+01:12:23,760 --> 01:12:26,240
+is that Chinchilla is this paper that takes down
+
+1669
+01:12:26,240 --> 01:12:27,380
+the Kaplan paper in a way.
+
+1670
+01:12:27,380 --> 01:12:29,720
+It's like, oh, you guys were very wrong.
+
+1671
+01:12:29,720 --> 01:12:32,020
+But there was this one remaining mystery,
+
+1672
+01:12:32,020 --> 01:12:34,560
+which is that Chinchilla method three never agreed
+
+1673
+01:12:34,560 --> 01:12:36,140
+with Chinchilla method 1 and 2.
+
+1674
+01:12:36,140 --> 01:12:38,140
+And the numbers look small.
+
+1675
+01:12:38,140 --> 01:12:40,535
+And the authors are very unperturbed about this,
+
+1676
+01:12:40,535 --> 01:12:42,660
+but I think the implications are quite non-trivial.
+
+1677
+01:12:42,660 --> 01:12:45,280
+If you look at this, methods 1 and 2 basically
+
+1678
+01:12:45,280 --> 01:12:48,498
+say the amount of parameters and tokens should scale together.
+
+1679
+01:12:48,498 --> 01:12:50,540
+So there should be a fixed ratio between the two.
+
+1680
+01:12:50,540 --> 01:12:53,200
+This is where the Chinchilla factor of 20 comes from.
+
+1681
+01:12:53,200 --> 01:12:56,660
+If you look at number 3, the exponents are different.
+
+1682
+01:12:56,660 --> 01:12:58,600
+This means if you scale up your compute,
+
+1683
+01:12:58,600 --> 01:13:00,220
+eventually, actually, in this case,
+
+1684
+01:13:00,220 --> 01:13:02,160
+you're going to have way more tokens than you
+
+1685
+01:13:02,160 --> 01:13:03,542
+are going to have parameters.
+
+1686
+01:13:03,542 --> 01:13:05,750
+So it's going to be actually a very different scaling
+
+1687
+01:13:05,750 --> 01:13:09,910
+conclusion asymptotically than the other ones.
+
+1688
+01:13:09,910 --> 01:13:15,282
+And so it turns out that I was certainly not the only one who
+
+1689
+01:13:15,282 --> 01:13:18,310
+was perturbed about this, except some folks at Epoch AI
+
+1690
+01:13:18,310 --> 01:13:20,470
+did something about being perturbed.
+
+1691
+01:13:20,470 --> 01:13:23,210
+They couldn't get either the raw data or the code.
+
+1692
+01:13:23,210 --> 01:13:25,510
+So what they did was they extracted the data from plots
+
+1693
+01:13:25,510 --> 01:13:29,545
+in the paper, and they refitted the method 3 regressions.
+
+1694
+01:13:29,545 --> 01:13:31,170
+They extracted the data from the paper.
+
+1695
+01:13:31,170 --> 01:13:35,990
+And given that data, they fitted that 2D surface or 3D surface
+
+1696
+01:13:35,990 --> 01:13:37,710
+that was proposed.
+
+1697
+01:13:37,710 --> 01:13:39,590
+And then, what they showed is actually
+
+1698
+01:13:39,590 --> 01:13:43,570
+the original paper must have underfitted the original data.
+
+1699
+01:13:43,570 --> 01:13:46,170
+And if they redid the curve fitting,
+
+1700
+01:13:46,170 --> 01:13:48,910
+they could get much lower losses relative to what
+
+1701
+01:13:48,910 --> 01:13:52,250
+the proposed scaling law in the Chinchilla paper.
+
+1702
+01:13:52,250 --> 01:13:55,650
+And in fact, if you follow the refitted model,
+
+1703
+01:13:55,650 --> 01:13:59,870
+you got almost exactly D over 20 is
+
+1704
+01:13:59,870 --> 01:14:02,220
+20 rule of thumb from the Chinchilla paper,
+
+1705
+01:14:02,220 --> 01:14:03,840
+which is really a funny conclusion,
+
+1706
+01:14:03,840 --> 01:14:05,980
+I think, to the Chinchilla paper, where in the end
+
+1707
+01:14:05,980 --> 01:14:09,540
+it turns out that the authors were more right than they knew.
+
+1708
+01:14:09,540 --> 01:14:11,540
+Actually, they had made a mistake,
+
+1709
+01:14:11,540 --> 01:14:13,780
+and that was the only reason why method 3 disagreed
+
+1710
+01:14:13,780 --> 01:14:14,840
+from methods 1 and 2.
+
+1711
+01:14:14,840 --> 01:14:19,220
+So it's a nice conclusion to know that the method was
+
+1712
+01:14:19,220 --> 01:14:21,580
+robust after all.
+
+1713
+01:14:21,580 --> 01:14:25,600
+OK, so that's the end of the Chinchilla saga in some ways.
+
+1714
+01:14:25,600 --> 01:14:29,740
+But I will end this section by saying you probably don't
+
+1715
+01:14:29,740 --> 01:14:31,340
+want the Chinchilla factor.
+
+1716
+01:14:31,340 --> 01:14:35,220
+At this point, I think this is a pretty common knowledge thing.
+
+1717
+01:14:35,220 --> 01:14:37,420
+But if you're training a production model,
+
+1718
+01:14:37,420 --> 01:14:40,260
+you don't really care about saving training compute
+
+1719
+01:14:40,260 --> 01:14:41,540
+for the most part.
+
+1720
+01:14:41,540 --> 01:14:43,460
+You can look at all sorts of external surveys
+
+1721
+01:14:43,460 --> 01:14:45,660
+that people have done of how frontier labs are
+
+1722
+01:14:45,660 --> 01:14:46,960
+spending their compute.
+
+1723
+01:14:46,960 --> 01:14:49,400
+Most of the compute is not going into training runs.
+
+1724
+01:14:49,400 --> 01:14:53,480
+Most of the compute is actually going into R&D and serving.
+
+1725
+01:14:53,480 --> 01:14:56,540
+And given that, especially for serving, what you want to do
+
+1726
+01:14:56,540 --> 01:14:59,100
+is you want small models that are capable.
+
+1727
+01:14:59,100 --> 01:15:02,790
+You do not want big, bloated models that cost a lot to serve,
+
+1728
+01:15:02,790 --> 01:15:05,050
+even if that minimizes training cost.
+
+1729
+01:15:05,050 --> 01:15:08,810
+And so what you really want is something that you would call
+
+1730
+01:15:08,810 --> 01:15:09,730
+"overtrained."
+
+1731
+01:15:09,730 --> 01:15:12,003
+I put that in quotes because, really, overtraining
+
+1732
+01:15:12,003 --> 01:15:12,670
+is what we want.
+
+1733
+01:15:12,670 --> 01:15:14,410
+That's the right amount of training.
+
+1734
+01:15:14,410 --> 01:15:16,970
+And if you look at all the models that were released
+
+1735
+01:15:16,970 --> 01:15:18,790
+in the early days, like GPT-3--
+
+1736
+01:15:18,790 --> 01:15:21,830
+this was under-trained for sure, three tokens per parameter.
+
+1737
+01:15:21,830 --> 01:15:25,030
+Chinchilla gets to the modern ratio of 20 per parameter.
+
+1738
+01:15:25,030 --> 01:15:27,430
+And then for a while, people were at 20 per parameter.
+
+1739
+01:15:27,430 --> 01:15:28,970
+And this is the era, I think, where
+
+1740
+01:15:28,970 --> 01:15:31,070
+there wasn't that much serving of these models.
+
+1741
+01:15:31,070 --> 01:15:34,110
+The models were cool, but it wasn't being served at scale.
+
+1742
+01:15:34,110 --> 01:15:38,170
+And then as you start to move to eras where serving becomes very
+
+1743
+01:15:38,170 --> 01:15:39,970
+real, now you're overtraining these models,
+
+1744
+01:15:39,970 --> 01:15:41,490
+and now you've moved into MoEs, and you're
+
+1745
+01:15:41,490 --> 01:15:43,990
+making all these trade-offs to optimize inference serving.
+
+1746
+01:15:43,990 --> 01:15:47,070
+So I think Chinchilla is important,
+
+1747
+01:15:47,070 --> 01:15:51,310
+not because I think the 20-to-1 ratio is the one golden ratio.
+
+1748
+01:15:51,310 --> 01:15:54,022
+If you're doing stuff for research, it might be.
+
+1749
+01:15:54,022 --> 01:15:55,730
+But I think the reason why it's important
+
+1750
+01:15:55,730 --> 01:15:58,010
+is because it tells us quite a bit about how
+
+1751
+01:15:58,010 --> 01:15:59,770
+we should be fitting scaling laws
+
+1752
+01:15:59,770 --> 01:16:02,090
+and how to think about scaling laws.
+
+1753
+01:16:02,090 --> 01:16:05,770
+OK, one final thing I'll end with Chinchilla-wise
+
+1754
+01:16:05,770 --> 01:16:08,100
+and otherwise for scaling is IsoFLOP
+
+1755
+01:16:08,100 --> 01:16:09,850
+have been one of the things that, I think,
+
+1756
+01:16:09,850 --> 01:16:12,290
+has a research tool have endured.
+
+1757
+01:16:12,290 --> 01:16:14,290
+IsoFLOP are very easy to execute.
+
+1758
+01:16:14,290 --> 01:16:16,010
+You fix a FLOPS budget, and then you
+
+1759
+01:16:16,010 --> 01:16:18,330
+sweep over all of the other degrees of freedom
+
+1760
+01:16:18,330 --> 01:16:20,450
+to see what the surface looks like.
+
+1761
+01:16:20,450 --> 01:16:24,610
+And this gives you, in general, fairly reliable readings
+
+1762
+01:16:24,610 --> 01:16:27,850
+of how different parameters vary as a function
+
+1763
+01:16:27,850 --> 01:16:31,250
+of your free parameters.
+
+1764
+01:16:31,250 --> 01:16:34,050
+People have done this for-- or actually, one of my students
+
+1765
+01:16:34,050 --> 01:16:35,910
+did this for diffusion models.
+
+1766
+01:16:35,910 --> 01:16:39,770
+The MoE study I talked about was an IsoFLOP-style design.
+
+1767
+01:16:39,770 --> 01:16:42,030
+If you're ever in a situation where you're thinking,
+
+1768
+01:16:42,030 --> 01:16:44,830
+how am I going to decide all these trade-offs,
+
+1769
+01:16:44,830 --> 01:16:47,970
+IsoFLOP is always a good default.
+
+1770
+01:16:47,970 --> 01:16:52,810
+OK, so to wrap up everything for today,
+
+1771
+01:16:52,810 --> 01:16:56,490
+there's this idea that we have this log-linear regularity
+
+1772
+01:16:56,490 --> 01:16:58,800
+between the amount of resources we put in
+
+1773
+01:16:58,800 --> 01:17:00,140
+and the performance we get out.
+
+1774
+01:17:00,140 --> 01:17:02,840
+And it extends to a wide variety of things, model parameters,
+
+1775
+01:17:02,840 --> 01:17:05,880
+compute, sparsity level of your MoE.
+
+1776
+01:17:05,880 --> 01:17:07,800
+And that lets you do a lot of the things
+
+1777
+01:17:07,800 --> 01:17:10,740
+that I was talking about earlier, as arbitrary choices,
+
+1778
+01:17:10,740 --> 01:17:14,400
+but do it in a much more evidence-driven way, hopefully.
+
+1779
+01:17:14,400 --> 01:17:17,640
+And so this allows us to have engineering at scale
+
+1780
+01:17:17,640 --> 01:17:22,340
+without explicitly relying on doing big model training runs.
+
+1781
+01:17:22,340 --> 01:17:24,650
+And hopefully, you remember, I think all
+
+1782
+01:17:24,650 --> 01:17:25,900
+the different components here.
+
+1783
+01:17:25,900 --> 01:17:28,100
+Data scaling is this very natural object,
+
+1784
+01:17:28,100 --> 01:17:29,920
+just the exponent is a little bit strange.
+
+1785
+01:17:29,920 --> 01:17:32,440
+Model scaling allows you to do all these cool engineering
+
+1786
+01:17:32,440 --> 01:17:33,020
+things.
+
+1787
+01:17:33,020 --> 01:17:35,680
+And then finally, scaling is this very cool,
+
+1788
+01:17:35,680 --> 01:17:37,960
+robust predictor, let's call it, for how
+
+1789
+01:17:37,960 --> 01:17:41,160
+to try to do engineering at a large scale.
+
+1790
+01:17:41,160 --> 01:17:41,780
+And thanks.
+
+1791
+01:17:41,780 --> 01:17:44,180
+The next lecture, I think, will be Percy on inference.
+
+1792
+01:17:44,180 --> 01:17:47,760
+But after that, we will return to more advanced niche scaling
+
+1793
+01:17:47,760 --> 01:17:50,460
+topics.
+
+1794
+01:17:50,460 --> 01:17:53,510
+[APPLAUSE]

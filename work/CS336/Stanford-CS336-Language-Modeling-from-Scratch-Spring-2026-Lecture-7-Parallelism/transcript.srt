@@ -1,0 +1,5131 @@
+1
+00:00:05,160 --> 00:00:06,560
+OK.
+
+2
+00:00:06,560 --> 00:00:08,280
+Let's get started.
+
+3
+00:00:08,280 --> 00:00:09,840
+So welcome back, everyone.
+
+4
+00:00:09,840 --> 00:00:13,320
+So today we're going to talk about parallelism.
+
+5
+00:00:13,320 --> 00:00:15,320
+And remember in the last week, we
+
+6
+00:00:15,320 --> 00:00:20,200
+introduced how to make a single GPU go fast by writing kernels.
+
+7
+00:00:20,200 --> 00:00:23,200
+And we really looked inside this GPU.
+
+8
+00:00:23,200 --> 00:00:25,000
+And this week, we're going to talk
+
+9
+00:00:25,000 --> 00:00:27,720
+about how to leverage multiple GPUs to make
+
+10
+00:00:27,720 --> 00:00:30,888
+your code go even faster.
+
+11
+00:00:30,888 --> 00:00:32,680
+So the picture you should have in your head
+
+12
+00:00:32,680 --> 00:00:34,400
+is something like this.
+
+13
+00:00:34,400 --> 00:00:37,760
+So for the last week, we focused on one of these boxes,
+
+14
+00:00:37,760 --> 00:00:40,080
+where you have your GPU.
+
+15
+00:00:40,080 --> 00:00:44,100
+Remember, you have your High Bandwidth Memory, HBM, L2 cache,
+
+16
+00:00:44,100 --> 00:00:51,680
+L1 cache, registers, and a bunch of streaming multiprocessors.
+
+17
+00:00:51,680 --> 00:00:53,640
+So now the picture gets extended,
+
+18
+00:00:53,640 --> 00:00:56,860
+because instead of having one GPU, you might have four,
+
+19
+00:00:56,860 --> 00:00:59,260
+you might have 1,000 GPUs.
+
+20
+00:00:59,260 --> 00:01:01,120
+And those are going to be connected.
+
+21
+00:01:01,120 --> 00:01:04,080
+And I'll talk later about how those GPUs are
+
+22
+00:01:04,080 --> 00:01:06,048
+going to get connected.
+
+23
+00:01:06,048 --> 00:01:07,840
+And then you're going to have to figure out
+
+24
+00:01:07,840 --> 00:01:12,840
+how to leverage all of this compute to train models.
+
+25
+00:01:12,840 --> 00:01:16,880
+So in both cases, meaning both in the single GPU case
+
+26
+00:01:16,880 --> 00:01:20,280
+and in the multi-GPU case, as we'll talk about today,
+
+27
+00:01:20,280 --> 00:01:23,260
+the situation is kind of similar if you zoom out,
+
+28
+00:01:23,260 --> 00:01:27,660
+which is that the compute, the arithmetic logic units,
+
+29
+00:01:27,660 --> 00:01:31,080
+the tensor core, and so on, is far away from your data.
+
+30
+00:01:31,080 --> 00:01:33,400
+And far away for a single GPU means all the way
+
+31
+00:01:33,400 --> 00:01:35,760
+over here in HBM.
+
+32
+00:01:35,760 --> 00:01:39,920
+And now if you have multi GPUs, the thing that you need here
+
+33
+00:01:39,920 --> 00:01:42,080
+might be all the way on a different GPU,
+
+34
+00:01:42,080 --> 00:01:45,200
+and you're going to have to shuffle that over somehow.
+
+35
+00:01:45,200 --> 00:01:46,880
+But the same principles are going
+
+36
+00:01:46,880 --> 00:01:49,520
+to be the same, because the game is
+
+37
+00:01:49,520 --> 00:01:54,320
+to orchestrate the computation to try to avoid data transfer
+
+38
+00:01:54,320 --> 00:01:55,280
+bottlenecks.
+
+39
+00:01:55,280 --> 00:01:57,880
+It's very easy to use a ton of GPUs,
+
+40
+00:01:57,880 --> 00:02:01,350
+but it's hard to use them effectively.
+
+41
+00:02:01,350 --> 00:02:04,090
+So taking a little bit of liberty,
+
+42
+00:02:04,090 --> 00:02:06,710
+we can think about the generalized hierarchy
+
+43
+00:02:06,710 --> 00:02:13,750
+where at the local level next to the SMs
+
+44
+00:02:13,750 --> 00:02:18,190
+a single node single GPU where you have an L1 cache
+
+45
+00:02:18,190 --> 00:02:18,970
+shared memory.
+
+46
+00:02:18,970 --> 00:02:20,470
+This was the fastest.
+
+47
+00:02:20,470 --> 00:02:25,910
+And then you had HBM, which we lamented was so slow.
+
+48
+00:02:25,910 --> 00:02:30,590
+But in this lecture, HBM is going to be considered fast.
+
+49
+00:02:30,590 --> 00:02:33,870
+Now we're going to think about the single node multi-GPU
+
+50
+00:02:33,870 --> 00:02:36,390
+setting where the GPUs are going to be connected
+
+51
+00:02:36,390 --> 00:02:38,950
+via NVLink and NVSwitch.
+
+52
+00:02:38,950 --> 00:02:42,370
+And then finally, the multi-node and multi-GPU,
+
+53
+00:02:42,370 --> 00:02:49,370
+where we have to resort to InfiniBand ethernet depending on what network you have.
+
+54
+00:02:49,370 --> 00:02:54,790
+So last week, we talked about various tricks
+
+55
+00:02:54,790 --> 00:03:00,270
+for reducing memory accesses, fusion and tiling.
+
+56
+00:03:00,270 --> 00:03:03,830
+Read into shared memory, do as much as you can,
+
+57
+00:03:03,830 --> 00:03:05,990
+and then write it back out.
+
+58
+00:03:05,990 --> 00:03:07,590
+And this week, we're going to talk
+
+59
+00:03:07,590 --> 00:03:10,830
+about how you can reduce the amount of communication
+
+60
+00:03:10,830 --> 00:03:17,470
+across GPUs by replicating and sharding appropriately.
+
+61
+00:03:17,470 --> 00:03:21,230
+So why do you do multi-GPUs?
+
+62
+00:03:21,230 --> 00:03:23,910
+The obvious answer is, well, you want to scale.
+
+63
+00:03:23,910 --> 00:03:28,670
+But to put a finer point on it, there's really two reasons.
+
+64
+00:03:28,670 --> 00:03:32,990
+One is that your parameters or activations or gradients
+
+65
+00:03:32,990 --> 00:03:37,890
+and optimizer state don't fit on the HBM memory of a single GPU.
+
+66
+00:03:37,890 --> 00:03:40,670
+So B21 has 192 gigabytes.
+
+67
+00:03:40,670 --> 00:03:42,930
+If you're training a 1 trillion parameter model,
+
+68
+00:03:42,930 --> 00:03:46,070
+that's not going to fit on a single GPU.
+
+69
+00:03:46,070 --> 00:03:49,070
+And the other reason is that even if your model could
+
+70
+00:03:49,070 --> 00:03:51,150
+fit on a single GPU, you might want
+
+71
+00:03:51,150 --> 00:03:54,630
+to leverage more GPUs by splitting everything up
+
+72
+00:03:54,630 --> 00:03:56,510
+to train faster.
+
+73
+00:03:56,510 --> 00:03:58,990
+So sometimes there will be some decisions
+
+74
+00:03:58,990 --> 00:04:02,930
+to be made because you could fit everything on GPUs,
+
+75
+00:04:02,930 --> 00:04:06,190
+but you have fewer cores.
+
+76
+00:04:06,190 --> 00:04:08,230
+But if you spread it out, then you're
+
+77
+00:04:08,230 --> 00:04:11,550
+going to have to pay the communication bandwidth.
+
+78
+00:04:11,550 --> 00:04:13,110
+So that's some calculation you're
+
+79
+00:04:13,110 --> 00:04:18,470
+going to have to do to figure out how to parallelize.
+
+80
+00:04:18,470 --> 00:04:24,490
+So just one note here is that so far this lecture is Python.
+
+81
+00:04:24,490 --> 00:04:27,350
+You execute it and you can just show everything.
+
+82
+00:04:27,350 --> 00:04:30,550
+Now, in this lecture, if you run this directly,
+
+83
+00:04:30,550 --> 00:04:33,630
+it uses multiprocessing.
+
+84
+00:04:33,630 --> 00:04:36,070
+But when I trace through it, I'm putting it in some
+
+85
+00:04:36,070 --> 00:04:38,647
+special single process mode.
+
+86
+00:04:38,647 --> 00:04:40,230
+So if you want to see the standard out
+
+87
+00:04:40,230 --> 00:04:45,070
+for this lecture run in the multiprocessing setup,
+
+88
+00:04:45,070 --> 00:04:46,050
+you can click here.
+
+89
+00:04:46,050 --> 00:04:48,750
+And I'll show this as we go through the lecture.
+
+90
+00:04:48,750 --> 00:04:51,090
+But just remember as we step through this lecture,
+
+91
+00:04:51,090 --> 00:04:53,150
+we're not actually doing multiprocessing,
+
+92
+00:04:53,150 --> 00:04:56,990
+because we're just stepping through single lines of code.
+
+93
+00:04:56,990 --> 00:05:01,910
+So this lecture is going to include two parts.
+
+94
+00:05:01,910 --> 00:05:04,430
+One is we're going to learn about the building
+
+95
+00:05:04,430 --> 00:05:08,510
+blocks of distributed communication and computation,
+
+96
+00:05:08,510 --> 00:05:10,930
+starting with the programming model.
+
+97
+00:05:10,930 --> 00:05:13,430
+Talk a little bit about the hardware.
+
+98
+00:05:13,430 --> 00:05:16,070
+Start to implement things in Torch,
+
+99
+00:05:16,070 --> 00:05:20,790
+which you're going to do on your assignment two.
+
+100
+00:05:20,790 --> 00:05:22,750
+And then the second part is we're going
+
+101
+00:05:22,750 --> 00:05:25,470
+to look at actual training.
+
+102
+00:05:25,470 --> 00:05:28,430
+We're going to look at three types of parallelism.
+
+103
+00:05:28,430 --> 00:05:31,470
+Data parallelism, tensor parallelism, pipeline parallelism.
+
+104
+00:05:31,470 --> 00:05:34,530
+Each is going to cut up our model in different ways.
+
+105
+00:05:34,530 --> 00:05:38,230
+We're going to do this for MLPs rather than
+
+106
+00:05:38,230 --> 00:05:39,490
+the full transformer.
+
+107
+00:05:39,490 --> 00:05:42,870
+But it's really the core computation
+
+108
+00:05:42,870 --> 00:05:45,630
+is going to be shown here.
+
+109
+00:05:45,630 --> 00:05:50,390
+So let's dive in.
+
+110
+00:05:50,390 --> 00:05:53,540
+So the first thing to talk about is these things
+
+111
+00:05:53,540 --> 00:05:56,380
+called collective operations.
+
+112
+00:05:56,380 --> 00:05:59,620
+So collective operations are these primitives from
+
+113
+00:05:59,620 --> 00:06:03,200
+distributed programming that go back to the '80s.
+
+114
+00:06:03,200 --> 00:06:07,460
+So the idea of parallel programming is very old.
+
+115
+00:06:07,460 --> 00:06:10,820
+It wasn't invented for LLM training.
+
+116
+00:06:10,820 --> 00:06:14,180
+And it's still the case that these primitives
+
+117
+00:06:14,180 --> 00:06:18,140
+are the ones that we use today.
+
+118
+00:06:18,140 --> 00:06:20,140
+And here, collective just means that you're
+
+119
+00:06:20,140 --> 00:06:22,260
+specifying a general communication
+
+120
+00:06:22,260 --> 00:06:25,560
+pattern or a template across multiple devices,
+
+121
+00:06:25,560 --> 00:06:28,660
+rather than managing point-to-point how
+
+122
+00:06:28,660 --> 00:06:32,020
+this GPU is going to communicate with another GPU.
+
+123
+00:06:32,020 --> 00:06:34,360
+And this is going to be much easier,
+
+124
+00:06:34,360 --> 00:06:36,720
+and the system can do a lot more work for you.
+
+125
+00:06:36,720 --> 00:06:40,740
+So this is a very tried and true interface
+
+126
+00:06:40,740 --> 00:06:44,140
+for doing parallel programming.
+
+127
+00:06:44,140 --> 00:06:47,580
+So the general setup is as follows.
+
+128
+00:06:47,580 --> 00:06:49,540
+The terminology here is a little bit--
+
+129
+00:06:49,540 --> 00:06:51,860
+I find it a little bit strange, but this is standard
+
+130
+00:06:51,860 --> 00:06:55,100
+in parallel programming.
+
+131
+00:06:55,100 --> 00:06:58,740
+The idea is that you have a bunch of ranks
+
+132
+00:06:58,740 --> 00:07:02,020
+where rank corresponds to a particular device, in our case
+
+133
+00:07:02,020 --> 00:07:02,640
+a GPU.
+
+134
+00:07:02,640 --> 00:07:03,980
+It could be a TPU.
+
+135
+00:07:03,980 --> 00:07:06,780
+But the point is that you have, let's say, four ranks here.
+
+136
+00:07:06,780 --> 00:07:09,960
+The world size corresponds to the number of devices,
+
+137
+00:07:09,960 --> 00:07:13,060
+so the world size here is four.
+
+138
+00:07:13,060 --> 00:07:17,620
+So there are a few operations we're going to go through.
+
+139
+00:07:17,620 --> 00:07:19,940
+Broadcast, scatter, gather, reduce,
+
+140
+00:07:19,940 --> 00:07:23,940
+all gather, reduce scatter, all reduce, and all to all.
+
+141
+00:07:23,940 --> 00:07:25,820
+And each of these operations is going
+
+142
+00:07:25,820 --> 00:07:29,780
+to specify how this set of ranks or devices
+
+143
+00:07:29,780 --> 00:07:33,020
+is going to transfer some amount of data
+
+144
+00:07:33,020 --> 00:07:37,220
+slash compute with it to some other set of devices.
+
+145
+00:07:37,220 --> 00:07:40,660
+So the first four, broadcast, scatter, gather, reduce,
+
+146
+00:07:40,660 --> 00:07:44,380
+are really just warm-ups, I would say.
+
+147
+00:07:44,380 --> 00:07:51,540
+They allow you to get a sense of how these collective operations
+
+148
+00:07:51,540 --> 00:07:53,020
+work, but they're not really going
+
+149
+00:07:53,020 --> 00:07:56,100
+to be the ones that are driving most of training.
+
+150
+00:07:56,100 --> 00:07:57,700
+All gather, reduce scatter, and all
+
+151
+00:07:57,700 --> 00:07:59,620
+reduce are the ones that are going
+
+152
+00:07:59,620 --> 00:08:04,180
+to show up again and again for distributed training of language
+
+153
+00:08:04,180 --> 00:08:05,080
+models.
+
+154
+00:08:05,080 --> 00:08:06,460
+And finally, all to all I'll just
+
+155
+00:08:06,460 --> 00:08:11,280
+mention here, which is important for MoEs,
+
+156
+00:08:11,280 --> 00:08:13,700
+but we're not going to actually spend too much time
+
+157
+00:08:13,700 --> 00:08:16,060
+on this in this lecture.
+
+158
+00:08:16,060 --> 00:08:21,780
+OK, so let's dive in with the simplest operation, which
+
+159
+00:08:21,780 --> 00:08:23,340
+is broadcast.
+
+160
+00:08:23,340 --> 00:08:26,920
+So in broadcasting, you have a rank 0.
+
+161
+00:08:26,920 --> 00:08:30,660
+It could be any rank, but let's just say, for the sake of picking
+
+162
+00:08:30,660 --> 00:08:36,380
+one, rank 0, has some tensor 0123.
+
+163
+00:08:36,380 --> 00:08:39,179
+And it broadcasts it to all the ranks.
+
+164
+00:08:39,179 --> 00:08:44,420
+So at the end of this operation, we have that each of the ranks
+
+165
+00:08:44,420 --> 00:08:48,100
+has the same tensor on it.
+
+166
+00:08:48,100 --> 00:08:51,580
+That should be pretty straightforward.
+
+167
+00:08:51,580 --> 00:08:54,300
+And this, again, doesn't really show up
+
+168
+00:08:54,300 --> 00:08:57,100
+in the core path of training.
+
+169
+00:08:57,100 --> 00:09:01,200
+Generally, broadcasts are used for initialization,
+
+170
+00:09:01,200 --> 00:09:04,540
+where, let's say, you initialize a load, initial checkpoint
+
+171
+00:09:04,540 --> 00:09:07,140
+and then you broadcast it to all the ranks.
+
+172
+00:09:07,140 --> 00:09:10,260
+So something that's done like once.
+
+173
+00:09:10,260 --> 00:09:15,380
+So the second operation is a scatter.
+
+174
+00:09:15,380 --> 00:09:23,340
+And a scatter basically says, I have a tensor at rank 0
+
+175
+00:09:23,340 --> 00:09:27,260
+who is split up into the world size.
+
+176
+00:09:27,260 --> 00:09:29,900
+And I'm going to basically scatter
+
+177
+00:09:29,900 --> 00:09:32,860
+my tensor onto the other ranks.
+
+178
+00:09:32,860 --> 00:09:36,780
+So rank 0 gets 0, the zeroth component.
+
+179
+00:09:36,780 --> 00:09:41,740
+Rank 1 gets this, rank 2 gets this, and rank 3 gets that.
+
+180
+00:09:41,740 --> 00:09:45,740
+So again, this is not directly used,
+
+181
+00:09:45,740 --> 00:09:48,610
+but scatter is an important stepping stone
+
+182
+00:09:48,610 --> 00:09:50,190
+to understand reduce-scatter.
+
+183
+00:09:50,190 --> 00:09:54,690
+So, as the name implies, scatter just takes a big tensor
+
+184
+00:09:54,690 --> 00:09:59,610
+at one place and spreads it out onto multiple places.
+
+185
+00:09:59,610 --> 00:10:01,810
+And you can see how this might be helpful,
+
+186
+00:10:01,810 --> 00:10:05,930
+because you want all the GPUs you're
+
+187
+00:10:05,930 --> 00:10:10,790
+scattering to do some local computation on the different parts.
+
+188
+00:10:13,690 --> 00:10:17,170
+So the inverse of scatter is gather.
+
+189
+00:10:17,170 --> 00:10:20,010
+So this should be very predictable.
+
+190
+00:10:20,010 --> 00:10:24,170
+The input is you have a bunch of pieces, each of which
+
+191
+00:10:24,170 --> 00:10:26,690
+reside on a particular rank.
+
+192
+00:10:26,690 --> 00:10:29,770
+And then when you do a gather, that's
+
+193
+00:10:29,770 --> 00:10:32,810
+with respect to a particular rank, rank 0,
+
+194
+00:10:32,810 --> 00:10:35,430
+it's going to just concatenate all the pieces together.
+
+195
+00:10:38,170 --> 00:10:40,510
+Again, gather isn't directly used,
+
+196
+00:10:40,510 --> 00:10:45,530
+but it's going to be a stepping stone to understand all-gather.
+
+197
+00:10:45,530 --> 00:10:47,470
+So next is reduce.
+
+198
+00:10:47,470 --> 00:10:50,970
+So those of you who do functional programming are
+
+199
+00:10:50,970 --> 00:10:52,770
+probably familiar with what reduce is.
+
+200
+00:10:52,770 --> 00:10:54,930
+It's exactly the same.
+
+201
+00:10:54,930 --> 00:10:58,450
+The idea is that you start in the same starting point
+
+202
+00:10:58,450 --> 00:11:02,330
+as a gather.
+
+203
+00:11:02,330 --> 00:11:07,490
+And where the tensor is split up across multiple-- well,
+
+204
+00:11:07,490 --> 00:11:10,930
+you have some piece of data on each of the different ranks.
+
+205
+00:11:10,930 --> 00:11:13,250
+And then you're going to apply your reduction
+
+206
+00:11:13,250 --> 00:11:20,010
+operation to all of these and get that in, put that on rank 0.
+
+207
+00:11:20,010 --> 00:11:23,250
+So in this case, if you do a reduction with sum,
+
+208
+00:11:23,250 --> 00:11:26,810
+then you add these all up, you get six.
+
+209
+00:11:26,810 --> 00:11:29,530
+So you can think about gather as a reduction
+
+210
+00:11:29,530 --> 00:11:34,390
+where the operation is concatenation, if you will.
+
+211
+00:11:37,170 --> 00:11:39,850
+And of course, reduce is important to understanding
+
+212
+00:11:39,850 --> 00:11:41,650
+all reduce.
+
+213
+00:11:41,650 --> 00:11:43,810
+So let me pause there.
+
+214
+00:11:43,810 --> 00:11:46,290
+Those were just the warm ups. Just in case people
+
+215
+00:11:46,290 --> 00:11:50,850
+have any questions about what a collective operation is,
+
+216
+00:11:50,850 --> 00:11:54,510
+broadcast, scatter, gather, reduce.
+
+217
+00:11:59,850 --> 00:12:01,450
+Yeah?
+
+218
+00:12:01,450 --> 00:12:06,250
+[INAUDIBLE] NumPy, where is it?
+
+219
+00:12:06,250 --> 00:12:08,290
+So the question is, is this related
+
+220
+00:12:08,290 --> 00:12:12,410
+to broadcasting and NumPy?
+
+221
+00:12:12,410 --> 00:12:17,090
+I mean, I think it's conceptually the same idea,
+
+222
+00:12:17,090 --> 00:12:19,650
+where you have one thing that goes to many things.
+
+223
+00:12:19,650 --> 00:12:21,190
+Like in NumPy, if you have a scalar,
+
+224
+00:12:21,190 --> 00:12:22,770
+get broadcast to a tensor.
+
+225
+00:12:22,770 --> 00:12:27,670
+But the instantiation, this is for collective communication.
+
+226
+00:12:27,670 --> 00:12:29,030
+So it's a bit different.
+
+227
+00:12:32,650 --> 00:12:35,950
+So let's move on to something more interesting.
+
+228
+00:12:35,950 --> 00:12:41,090
+So all gather is what you do to-- basically,
+
+229
+00:12:41,090 --> 00:12:45,160
+you perform gather to all ranks, not just rank 0.
+
+230
+00:12:45,160 --> 00:12:47,040
+So remember what gather does.
+
+231
+00:12:47,040 --> 00:12:51,280
+It basically takes all the different pieces
+
+232
+00:12:51,280 --> 00:12:55,480
+and it just puts it on one rank, rank 0.
+
+233
+00:12:55,480 --> 00:13:00,320
+And now all gather just does it for every single rank.
+
+234
+00:13:00,320 --> 00:13:01,900
+That's what the all is for.
+
+235
+00:13:01,900 --> 00:13:06,040
+All means do it for all the output to all the ranks,
+
+236
+00:13:06,040 --> 00:13:08,540
+and gather is what you're doing to all the ranks.
+
+237
+00:13:12,560 --> 00:13:16,160
+So this is going to come up a bunch.
+
+238
+00:13:16,160 --> 00:13:18,440
+It's not important that you understand this statement
+
+239
+00:13:18,440 --> 00:13:23,160
+precisely, but later we'll see that each rank holds
+
+240
+00:13:23,160 --> 00:13:25,040
+part of the parameters.
+
+241
+00:13:25,040 --> 00:13:27,720
+And then what you need to do is all
+
+242
+00:13:27,720 --> 00:13:30,160
+gather the parameters to get the full parameters
+
+243
+00:13:30,160 --> 00:13:32,160
+for the full forward pass.
+
+244
+00:13:32,160 --> 00:13:34,380
+So in general, as we're doing training,
+
+245
+00:13:34,380 --> 00:13:38,160
+we're going to see a lot of this gather to do something
+
+246
+00:13:38,160 --> 00:13:43,040
+and then scatter and then gather and scatter again.
+
+247
+00:13:43,040 --> 00:13:49,720
+So reduce scatter is performing reduce on each dimension
+
+248
+00:13:49,720 --> 00:13:52,800
+and then scattering the results.
+
+249
+00:13:52,800 --> 00:14:02,320
+So let's say you have four devices and each of them
+
+250
+00:14:02,320 --> 00:14:05,400
+has some vector.
+
+251
+00:14:05,400 --> 00:14:12,260
+And so when we did a reduce before, we just had 0123,
+
+252
+00:14:12,260 --> 00:14:14,520
+and that got reduced to 6.
+
+253
+00:14:14,520 --> 00:14:17,720
+But now reduce scatter says that for each component
+
+254
+00:14:17,720 --> 00:14:20,720
+of this tensor, I'm going to do a reduction,
+
+255
+00:14:20,720 --> 00:14:24,620
+and then I'm going to put it on a different rank.
+
+256
+00:14:27,840 --> 00:14:33,625
+So the first dimension, I'm going to add these up, I get 6.
+
+257
+00:14:33,625 --> 00:14:36,000
+Now, for the second dimension, I'm going to add these up.
+
+258
+00:14:36,000 --> 00:14:37,000
+I get 10.
+
+259
+00:14:37,000 --> 00:14:39,012
+For third dimension, I'm going to process these.
+
+260
+00:14:39,012 --> 00:14:41,220
+For the fourth dimension, I'm going to process those.
+
+261
+00:14:47,740 --> 00:14:52,440
+So where this is going to show up, just to foreshadow things,
+
+262
+00:14:52,440 --> 00:14:57,440
+after the backward pass, when you sum what you're going to do
+
+263
+00:14:57,440 --> 00:15:02,640
+is each GPU will be dealing with different data.
+
+264
+00:15:02,640 --> 00:15:07,760
+And what you're doing is you need to sum all of the gradients
+
+265
+00:15:07,760 --> 00:15:10,160
+from the different shards.
+
+266
+00:15:10,160 --> 00:15:14,820
+And then you're going to redistribute this storage.
+
+267
+00:15:18,360 --> 00:15:21,080
+And then finally, all reduce.
+
+268
+00:15:21,080 --> 00:15:25,280
+If you understand all reduce, gather and all gather,
+
+269
+00:15:25,280 --> 00:15:28,740
+it's basically you do one and then you do the other.
+
+270
+00:15:28,740 --> 00:15:35,280
+So what this does is reduce scatter, the same input as we
+
+271
+00:15:35,280 --> 00:15:37,640
+had before.
+
+272
+00:15:37,640 --> 00:15:41,520
+And remember, in reduce scatter, we
+
+273
+00:15:41,520 --> 00:15:46,120
+had 6, 10, 14, and 18 sit on different ranks.
+
+274
+00:15:46,120 --> 00:15:49,280
+And the all gather part of all reduce just
+
+275
+00:15:49,280 --> 00:15:53,700
+puts them all on the same node.
+
+276
+00:15:56,500 --> 00:15:59,620
+So all reduce is in some sense the easiest to understand.
+
+277
+00:15:59,620 --> 00:16:01,460
+You have a bunch of tensors.
+
+278
+00:16:01,460 --> 00:16:03,680
+You reduce, in this case, sum.
+
+279
+00:16:03,680 --> 00:16:05,940
+And then you replicate them on all the nodes.
+
+280
+00:16:09,400 --> 00:16:12,520
+So we're going to see this one actually first
+
+281
+00:16:12,520 --> 00:16:16,240
+当我们进行数据并行并对梯度求和时
+
+282
+00:16:16,240 --> 00:16:20,560
+然后复制完整的参数。
+
+283
+00:16:20,560 --> 00:16:22,660
+所以这就是我们真正要开始的地方。
+
+284
+00:16:22,660 --> 00:16:25,040
+所以也许只需把注意力集中在 all reduce 上。
+
+285
+00:16:25,040 --> 00:16:30,800
+稍后，我们将看到如何实现更复杂的东西，比如 0
+
+286
+00:16:30,800 --> 00:16:32,280
+或 FSDP。
+
+287
+00:16:32,280 --> 00:16:36,440
+我们需要把 all reduce 拆分为 reduce scatter 和 all
+
+288
+00:16:36,440 --> 00:16:39,190
+gather，因为这样你才能介入
+
+289
+00:16:39,190 --> 00:16:41,410
+并且可以更好地管理这些事情。
+
+290
+00:16:41,410 --> 00:16:45,530
+但对于基本版本，all reduce 就够了。
+
+291
+00:16:48,390 --> 00:16:51,710
+最后，all to all。
+
+292
+00:16:51,710 --> 00:16:54,370
+这个在某种程度上是最通用的。
+
+293
+00:16:54,370 --> 00:17:00,190
+你基本上指定每个 rank 如何发送特定消息
+
+294
+00:17:00,190 --> 00:17:03,230
+到另一个 rank。
+
+295
+00:17:03,230 --> 00:17:06,710
+所以这里有一个简单的例子，其中你
+
+296
+00:17:06,710 --> 00:17:09,310
+拥有和之前相同的输入。
+
+297
+00:17:09,310 --> 00:17:11,550
+它表达的意思是，我
+
+298
+00:17:11,550 --> 00:17:17,790
+想把 0 发送到这个元素到 rank 0，
+
+299
+00:17:17,790 --> 00:17:19,550
+也就是保留在我自己这里。
+
+300
+00:17:19,550 --> 00:17:22,829
+我要把一个发送到 rank 1，两个
+
+301
+00:17:22,829 --> 00:17:25,829
+发送到 rank 2，三个发送到 rank 3。
+
+302
+00:17:25,829 --> 00:17:31,150
+然后如果我是 rank 1，我想把四个发送到 rank 0，五个
+
+303
+00:17:31,150 --> 00:17:36,110
+发送到 rank 1，六个发送到 rank 2，七个发送到 rank 3。
+
+304
+00:17:36,110 --> 00:17:39,230
+所以基本上，这里的位置
+
+305
+00:17:39,230 --> 00:17:42,230
+将表示哪个 rank
+
+306
+00:17:42,230 --> 00:17:44,670
+会成为最终目的地。
+
+307
+00:17:44,670 --> 00:17:49,230
+所以如果你看输出，会发生的是
+
+308
+00:17:49,230 --> 00:17:54,950
+第一个 rank 将接收所有
+
+309
+00:17:54,950 --> 00:18:00,390
+在列 0 中发送内容的人，因为所有这些 rank 都
+
+310
+00:18:00,390 --> 00:18:03,510
+把这些东西发送到 rank 0。
+
+311
+00:18:03,510 --> 00:18:08,670
+同样，对于 rank 1，所有的 rank
+
+312
+00:18:08,670 --> 00:18:12,370
+都发送这一列到 rank 1，依此类推。
+
+313
+00:18:16,870 --> 00:18:22,710
+所以这在训练 MOE 时会很有用。
+
+314
+00:18:22,710 --> 00:18:26,350
+这里的直觉是，每个 rank
+
+315
+00:18:26,350 --> 00:18:29,990
+既有数据的一个分片，也有一组专家子集。
+
+316
+00:18:29,990 --> 00:18:34,070
+基本上，MOE 的关键思想
+
+317
+00:18:34,070 --> 00:18:36,170
+是它是动态路由。
+
+318
+00:18:36,170 --> 00:18:38,390
+你必须查看你的数据，以确定
+
+319
+00:18:38,390 --> 00:18:44,630
+你需要把这些激活值路由到哪些专家。
+
+320
+00:18:44,630 --> 00:18:49,950
+所以它最终是一种 all to all 通信。
+
+321
+00:18:49,950 --> 00:18:56,190
+So if everything were balanced, meaning that every rank sent
+
+322
+00:18:56,190 --> 00:19:00,805
+the same number of bytes to every other rank,
+
+323
+00:19:00,805 --> 00:19:02,430
+then all-to-all, you can think about it
+
+324
+00:19:02,430 --> 00:19:03,942
+as essentially a transpose.
+
+325
+00:19:03,942 --> 00:19:06,150
+If you think about this as a matrix, all you're doing
+
+326
+00:19:06,150 --> 00:19:08,950
+is transposing that matrix.
+
+327
+00:19:08,950 --> 00:19:13,710
+But in general, all-to-all also handles unbalanced splits.
+
+328
+00:19:13,710 --> 00:19:16,030
+And I'm not showing this here, but you
+
+329
+00:19:16,030 --> 00:19:19,390
+can configure it to send any number of bytes
+
+330
+00:19:19,390 --> 00:19:23,230
+to any other rank.
+
+331
+00:19:23,230 --> 00:19:24,990
+But in general, you want the splits
+
+332
+00:19:24,990 --> 00:19:27,290
+to be as balanced as possible.
+
+333
+00:19:27,290 --> 00:19:29,550
+So remember the MoE lecture
+
+334
+00:19:29,550 --> 00:19:32,980
+where we had load balancing to make sure that things were as
+
+335
+00:19:32,980 --> 00:19:34,340
+balanced as possible.
+
+336
+00:19:34,340 --> 00:19:38,820
+So morally, the ideal goal is to have all-to-all
+
+337
+00:19:38,820 --> 00:19:40,280
+look kind of like this.
+
+338
+00:19:44,320 --> 00:19:48,700
+So just to summarize, maybe a few helpful tips to remember
+
+339
+00:19:48,700 --> 00:19:52,700
+the terminology, because I just went through quite
+
+340
+00:19:52,700 --> 00:19:56,660
+a few different operations.
+
+341
+00:19:56,660 --> 00:20:00,040
+So reduce is, well, it's reduced.
+
+342
+00:20:00,040 --> 00:20:04,400
+It performs some associative commutative operation.
+
+343
+00:20:04,400 --> 00:20:07,580
+Could be sum, could be max, could be min.
+
+344
+00:20:07,580 --> 00:20:09,660
+Scatter is the inverse of gather.
+
+345
+00:20:09,660 --> 00:20:12,780
+Scatter distributes, gather centralizes.
+
+346
+00:20:12,780 --> 00:20:17,120
+And all just means that the destination is all devices.
+
+347
+00:20:17,120 --> 00:20:23,440
+So that explains all-reduce and all-gather.
+
+348
+00:20:23,440 --> 00:20:26,300
+Let me pause there to take any questions
+
+349
+00:20:26,300 --> 00:20:28,320
+about collective communications.
+
+350
+00:20:31,780 --> 00:20:32,420
+Yeah?
+
+351
+00:20:32,420 --> 00:20:37,980
+For operations such as gathering where we basically
+
+352
+00:20:37,980 --> 00:20:42,300
+to rank 0, does that rank 0?
+
+353
+00:20:42,300 --> 00:20:47,680
+Is it a particular GPU every time or can that rank 0 change?
+
+354
+00:20:47,680 --> 00:20:48,180
+Yeah.
+
+355
+00:20:48,180 --> 00:20:52,540
+So the question is when you do a gather or a reduce,
+
+356
+00:20:52,540 --> 00:21:00,580
+the target where you write the output, right now I said rank 0.
+
+357
+00:21:00,580 --> 00:21:02,660
+You'll see later in the code, you basically
+
+358
+00:21:02,660 --> 00:21:10,180
+specify the GPU ID or the rank and it goes there.
+
+359
+00:21:10,180 --> 00:21:13,220
+So it doesn't have to be determined way in advance,
+
+360
+00:21:13,220 --> 00:21:15,940
+but it has to be determined basically
+
+361
+00:21:15,940 --> 00:21:18,240
+when you execute the call.
+
+362
+00:21:23,340 --> 00:21:24,760
+Cool.
+
+363
+00:21:24,760 --> 00:21:27,060
+Anything else?
+
+364
+00:21:27,060 --> 00:21:27,980
+Yeah.
+
+365
+00:21:27,980 --> 00:21:30,580
+These are just conceptual building blocks, right?
+
+366
+00:21:30,580 --> 00:21:34,940
+They're not actually [INAUDIBLE].
+
+367
+00:21:34,940 --> 00:21:40,060
+Are these the actual [INAUDIBLE]?
+
+368
+00:21:40,060 --> 00:21:42,820
+Yeah, so the question is, are these just conceptual building
+
+369
+00:21:42,820 --> 00:21:44,040
+blocks or are they code?
+
+370
+00:21:44,040 --> 00:21:46,740
+So I'm showing these right now as just conceptual building
+
+371
+00:21:46,740 --> 00:21:48,740
+blocks, but we'll very quickly see how
+
+372
+00:21:48,740 --> 00:21:50,320
+these are implemented in code.
+
+373
+00:21:53,460 --> 00:21:56,100
+So before getting into the code, I
+
+374
+00:21:56,100 --> 00:21:58,940
+want to talk a bit about the hardware,
+
+375
+00:21:58,940 --> 00:22:01,140
+in particular how GPUs are connected,
+
+376
+00:22:01,140 --> 00:22:04,940
+because we already what's inside a GPU.
+
+377
+00:22:04,940 --> 00:22:10,100
+So let's talk about networking in general.
+
+378
+00:22:10,100 --> 00:22:12,360
+So this is a very classic picture.
+
+379
+00:22:12,360 --> 00:22:17,340
+You can tell from this very old looking image
+
+380
+00:22:17,340 --> 00:22:22,580
+that this is how computers, I mean, generally work.
+
+381
+00:22:22,580 --> 00:22:26,840
+So you have this server and then you have a bunch of CPUs.
+
+382
+00:22:26,840 --> 00:22:31,660
+There's a PCIe bus, which you connect things like your--
+
+383
+00:22:31,660 --> 00:22:35,700
+or used to connect things like your mouse and keyboard.
+
+384
+00:22:35,700 --> 00:22:39,180
+And then you have a bunch of GPUs sitting off of them
+
+385
+00:22:39,180 --> 00:22:40,820
+and you have some RAM.
+
+386
+00:22:40,820 --> 00:22:43,060
+And then this computer is connected
+
+387
+00:22:43,060 --> 00:22:47,020
+to ethernet to another computer, and so on and so forth.
+
+388
+00:22:47,020 --> 00:22:50,440
+So this is a particular setup.
+
+389
+00:22:50,440 --> 00:22:52,940
+It's a particular topology.
+
+390
+00:22:52,940 --> 00:23:00,060
+And GPUs on the same node, you use PCIe to communicate and GPUs
+
+391
+00:23:00,060 --> 00:23:04,340
+on different nodes, you have to go all the way through ethernet.
+
+392
+00:23:04,340 --> 00:23:07,620
+So this is like if you bought your gaming GPU
+
+393
+00:23:07,620 --> 00:23:10,240
+and you had hooked it up with your friend and was like,
+
+394
+00:23:10,240 --> 00:23:12,500
+I'm going to train some big model.
+
+395
+00:23:12,500 --> 00:23:14,160
+That's what you would have to do.
+
+396
+00:23:14,160 --> 00:23:17,540
+But if you're really serious about training,
+
+397
+00:23:17,540 --> 00:23:21,600
+then things look more like this.
+
+398
+00:23:21,600 --> 00:23:25,180
+This is the picture I showed in the very beginning
+
+399
+00:23:25,180 --> 00:23:27,210
+where you have the GPU and there's
+
+400
+00:23:27,210 --> 00:23:31,330
+something called NVLink and NVSwitch and InfiniBand.
+
+401
+00:23:31,330 --> 00:23:35,930
+So the typical setup is this.
+
+402
+00:23:35,930 --> 00:23:38,030
+And these numbers, eight is typical,
+
+403
+00:23:38,030 --> 00:23:40,930
+but this 256 is kind of made up.
+
+404
+00:23:40,930 --> 00:23:44,850
+So typically, you have eight GPUs per node.
+
+405
+00:23:44,850 --> 00:23:52,330
+And these are connected via NVIDIA's NVLink to a switch.
+
+406
+00:23:52,330 --> 00:23:56,850
+And just for calibration, if you use NVLink 5,
+
+407
+00:23:56,850 --> 00:24:00,330
+then you're getting 1.8 terabytes
+
+408
+00:24:00,330 --> 00:24:03,250
+per second of total bandwidth.
+
+409
+00:24:03,250 --> 00:24:08,790
+And remember, HBM for B200 was 8 terabytes per second.
+
+410
+00:24:08,790 --> 00:24:13,970
+So it's about 4x slower.
+
+411
+00:24:13,970 --> 00:24:15,970
+So I mean, this is still pretty fast
+
+412
+00:24:15,970 --> 00:24:19,650
+if you think about going between devices, but obviously,
+
+413
+00:24:19,650 --> 00:24:22,590
+not as fast as high bandwidth memory,
+
+414
+00:24:22,590 --> 00:24:28,450
+which is much slower than shared memory or L1 cache.
+
+415
+00:24:28,450 --> 00:24:33,290
+So basically, NVLink connects to the switch,
+
+416
+00:24:33,290 --> 00:24:36,730
+which means that from a programming perspective,
+
+417
+00:24:36,730 --> 00:24:40,830
+you can think about GPUs as connected to any other GPU.
+
+418
+00:24:40,830 --> 00:24:44,250
+You go GPU to any other GPU, and the hardware
+
+419
+00:24:44,250 --> 00:24:47,550
+takes care of transmitting that to the switch,
+
+420
+00:24:47,550 --> 00:24:51,530
+and the switch routes it.
+
+421
+00:24:51,530 --> 00:24:56,050
+So typically, what you will also have is that at some point,
+
+422
+00:24:56,050 --> 00:25:02,330
+you can't have NVSwitch and NVLink.
+
+423
+00:25:02,330 --> 00:25:06,010
+Because as your number of GPUs grows,
+
+424
+00:25:06,010 --> 00:25:11,650
+then you're going to have to put these nodes into pods, which
+
+425
+00:25:11,650 --> 00:25:14,490
+are connected by InfiniBand.
+
+426
+00:25:14,490 --> 00:25:18,530
+And the way InfiniBand works is that now there's
+
+427
+00:25:18,530 --> 00:25:24,010
+a bit more the-- so now the GPU doesn't connect directly
+
+428
+00:25:24,010 --> 00:25:25,390
+to another GPU.
+
+429
+00:25:25,390 --> 00:25:30,890
+It has to go through PCIe and goes through this kind
+
+430
+00:25:30,890 --> 00:25:32,750
+of special InfiniBand cable.
+
+431
+00:25:32,750 --> 00:25:39,370
+And you see that the speeds are much, much lower.
+
+432
+00:25:39,370 --> 00:25:45,770
+And then finally, if you run out of InfiniBand you have these huge pods, then
+
+433
+00:25:45,770 --> 00:25:49,690
+you need to connect them via ethernet.
+
+434
+00:25:49,690 --> 00:25:55,050
+And in ethernet, you have to go through PCIe
+
+435
+00:25:55,050 --> 00:25:58,690
+and that actually goes through the CPU, which as we'll see,
+
+436
+00:25:58,690 --> 00:26:02,810
+is even slower.
+
+437
+00:26:02,810 --> 00:26:06,590
+So it's kind of analogous to the kind of memory situation.
+
+438
+00:26:06,590 --> 00:26:11,070
+The more nodes you have, then the slower it's going to be.
+
+439
+00:26:11,070 --> 00:26:18,850
+You can't have an NVSwitch handling 100,000 GPUs.
+
+440
+00:26:18,850 --> 00:26:23,450
+So one note is that I alluded to this bypassing
+
+441
+00:26:23,450 --> 00:26:29,050
+the CPU, which is going to be an important thing from a hardware
+
+442
+00:26:29,050 --> 00:26:31,730
+perspective.
+
+443
+00:26:31,730 --> 00:26:35,330
+So if you have traditional ethernet, what happens
+
+444
+00:26:35,330 --> 00:26:40,950
+is that the GPU has to talk to the CPU to get its data copied.
+
+445
+00:26:40,950 --> 00:26:45,370
+So it basically has to copy the data to this.
+
+446
+00:26:45,370 --> 00:26:47,910
+The CPU has a kernel socket buffer.
+
+447
+00:26:47,910 --> 00:26:50,750
+Here kernel means not the GPU kernel,
+
+448
+00:26:50,750 --> 00:26:54,250
+but the CPU, traditional notion of a kernel.
+
+449
+00:26:54,250 --> 00:26:57,430
+And then it has to build some network packets,
+
+450
+00:26:57,430 --> 00:27:00,450
+copy to the network interface, and then ship it over.
+
+451
+00:27:00,450 --> 00:27:05,010
+So this generally introduces a lot of latency.
+
+452
+00:27:05,010 --> 00:27:08,010
+And so there's this technology called Remote Direct Memory
+
+453
+00:27:08,010 --> 00:27:13,570
+Access, RDMA, which allows a GPU to directly write or read
+
+454
+00:27:13,570 --> 00:27:19,450
+from another GPU's memory without using the CPU at all.
+
+455
+00:27:19,450 --> 00:27:23,720
+So obviously, if you're in NVLink land and NVSwitch land,
+
+456
+00:27:23,720 --> 00:27:26,000
+then you have RDMA.
+
+457
+00:27:26,000 --> 00:27:28,840
+InfiniBand also supports RDMA.
+
+458
+00:27:28,840 --> 00:27:30,760
+So if you're connected via InfiniBand,
+
+459
+00:27:30,760 --> 00:27:34,440
+then you can directly have GPUs connect to each other
+
+460
+00:27:34,440 --> 00:27:37,880
+without involving the CPU.
+
+461
+00:27:37,880 --> 00:27:42,360
+But standard ethernet does not.
+
+462
+00:27:42,360 --> 00:27:45,960
+There's two notable advancements I will mention.
+
+463
+00:27:48,960 --> 00:27:51,280
+So NVIDIA has been really pushing
+
+464
+00:27:51,280 --> 00:27:54,940
+the limits on what you can do with larger and larger pods.
+
+465
+00:27:54,940 --> 00:27:59,880
+So they have four of basically the B200's and the B300's.
+
+466
+00:27:59,880 --> 00:28:02,360
+They have something called NVL72,
+
+467
+00:28:02,360 --> 00:28:06,960
+which means that they have these trays of eight GPUs
+
+468
+00:28:06,960 --> 00:28:08,340
+but have nine of them.
+
+469
+00:28:08,340 --> 00:28:10,020
+And so basically, at the end of the day,
+
+470
+00:28:10,020 --> 00:28:13,720
+you have 72 GPUs that are all kind of NV switched
+
+471
+00:28:13,720 --> 00:28:15,220
+into one NVLink domain.
+
+472
+00:28:15,220 --> 00:28:22,080
+And if you remember, the NVLink speeds are very fast.
+
+473
+00:28:22,080 --> 00:28:26,320
+So normally, if you're mortal, you
+
+474
+00:28:26,320 --> 00:28:29,320
+think, well OK, I have eight GPUs that
+
+475
+00:28:29,320 --> 00:28:31,060
+are interlinked really fast.
+
+476
+00:28:31,060 --> 00:28:35,182
+And then outside of that, then things get slowed down a lot.
+
+477
+00:28:35,182 --> 00:28:36,640
+But if you have a lot of money, you
+
+478
+00:28:36,640 --> 00:28:39,040
+can buy this really fancy hardware
+
+479
+00:28:39,040 --> 00:28:46,182
+and you can get really fast interconnects up to 72 GPUs.
+
+480
+00:28:46,182 --> 00:28:47,640
+And the other thing I'll mention is
+
+481
+00:28:47,640 --> 00:28:51,680
+我说过标准以太网不支持 RDMA，
+
+482
+00:28:51,680 --> 00:28:55,100
+但以太网这方面也有了进展。
+
+483
+00:28:55,100 --> 00:28:59,240
+所以有一种东西叫 RoCE，即 RDMA
+
+484
+00:28:59,240 --> 00:29:02,840
+over converged ethernet，其中以太网实际上
+
+485
+00:29:02,840 --> 00:29:05,840
+绕过了 CPU。
+
+486
+00:29:05,840 --> 00:29:10,660
+这算是他们对 InfiniBand 的回应。
+
+487
+00:29:10,660 --> 00:29:13,600
+InfiniBand 通常非常昂贵，
+
+488
+00:29:13,600 --> 00:29:17,040
+很多 NVIDIA 产品也是如此。
+
+489
+00:29:17,040 --> 00:29:21,880
+但你可以获得相当不错的性能
+
+490
+00:29:21,880 --> 00:29:29,680
+通过使用 RDMA over converged ethernet。
+
+491
+00:29:29,680 --> 00:29:35,020
+Meta 有一些论文表明他们正在探索这个方向。
+
+492
+00:29:35,020 --> 00:29:38,480
+所以 [INAUDIBLE] 可能是也可能不是
+
+493
+00:29:38,480 --> 00:29:40,780
+通过 converged ethernet 训练的。
+
+494
+00:29:43,380 --> 00:29:47,540
+这只是对硬件外观的简要概述。
+
+495
+00:29:47,540 --> 00:29:48,620
+你有 GPU。
+
+496
+00:29:48,620 --> 00:29:53,800
+它们通过 NVLink 连接到 NVSwitch，在一个域内，
+
+497
+00:29:53,800 --> 00:29:55,440
+可能是 8 个，也可能是 72 个。
+
+498
+00:29:55,440 --> 00:29:58,920
+然后从那里开始用 InfiniBand。
+
+499
+00:29:58,920 --> 00:30:03,120
+现在我们来谈谈如何对这个进行编程。
+
+500
+00:30:03,120 --> 00:30:05,840
+所以在最低层，有一种东西叫
+
+501
+00:30:05,840 --> 00:30:09,000
+NVIDIA Collective Communications Library，
+
+502
+00:30:09,000 --> 00:30:12,560
+NCCL 或叫 "nickel"，它把集体
+
+503
+00:30:12,560 --> 00:30:17,030
+操作，比如 all reduce、reduce broadcast，
+
+504
+00:30:17,030 --> 00:30:22,230
+转换成 GPU 之间发送的实际底层数据包。
+
+505
+00:30:22,230 --> 00:30:27,650
+NCCL 的作用是，当你使用 NCCL 时，
+
+506
+00:30:27,650 --> 00:30:31,070
+基本上就像在说，我想要 all reduce。
+
+507
+00:30:31,070 --> 00:30:33,910
+然后 NCCL 会去弄清楚硬件
+
+508
+00:30:33,910 --> 00:30:36,670
+的拓扑结构，找出
+
+509
+00:30:36,670 --> 00:30:39,470
+不同 GPU 之间的路径，然后
+
+510
+00:30:39,470 --> 00:30:42,430
+它实际上会启动 GPU kernel 来发送和接收
+
+511
+00:30:42,430 --> 00:30:43,483
+数据。
+
+512
+00:30:43,483 --> 00:30:45,150
+因为归根结底，记住，
+
+513
+00:30:45,150 --> 00:30:47,910
+在 GPU 上运行的一切都是 kernel。
+
+514
+00:30:47,910 --> 00:30:50,870
+所以也有通信 kernel，
+
+515
+00:30:50,870 --> 00:30:56,070
+它们实际上与其他 GPU 进行通信。
+
+516
+00:30:56,070 --> 00:30:59,610
+所以我们不会深入研究 NCCL，
+
+517
+00:30:59,610 --> 00:31:01,890
+只需要知道它存在。
+
+518
+00:31:04,710 --> 00:31:07,330
+然后我们实际上会转到 PyTorch。
+
+519
+00:31:07,330 --> 00:31:13,230
+所以也许在那之前，关于硬件有什么问题吗？
+
+520
+00:31:13,230 --> 00:31:14,190
+是的。
+
+521
+00:31:14,190 --> 00:31:18,710
+Can you describe—there's a rack and a tray.
+
+522
+00:31:21,830 --> 00:31:25,230
+Can I describe physically a rack and a tray, like what a rack is
+
+523
+00:31:25,230 --> 00:31:28,110
+and what a tray is?
+
+524
+00:31:28,110 --> 00:31:32,910
+So for the NVL72, so I'm not a hardware expert,
+
+525
+00:31:32,910 --> 00:31:37,990
+but a rack, I mean, is literally, I mean,
+
+526
+00:31:37,990 --> 00:31:41,450
+you've seen data centers, literally a rack.
+
+527
+00:31:41,450 --> 00:31:45,230
+And each tray is something that has—
+
+528
+00:31:45,230 --> 00:31:50,430
+so the G stands for a [? great. ?] So there's two CPUs.
+
+529
+00:31:50,430 --> 00:31:53,090
+And each CPU is connected to four GPUs.
+
+530
+00:31:53,090 --> 00:31:57,490
+So each tray has eight GPUs on it.
+
+531
+00:31:57,490 --> 00:32:00,110
+And they're stacked and everything
+
+532
+00:32:00,110 --> 00:32:03,090
+is connected to this NVSwitch.
+
+533
+00:32:07,070 --> 00:32:07,910
+Yeah.
+
+534
+00:32:15,337 --> 00:32:17,670
+Yeah, so the question is, what is the difference between
+
+535
+00:32:19,000 --> 00:32:22,410
+Yeah.
+
+536
+00:32:22,410 --> 00:32:27,610
+So RDMA, you can think about it as more of a desideratum.
+
+537
+00:32:27,610 --> 00:32:30,630
+RDMA means that one GPU can read and write
+
+538
+00:32:30,630 --> 00:32:32,710
+from another GPU's memory.
+
+539
+00:32:32,710 --> 00:32:35,790
+And there's multiple ways to do RDMA.
+
+540
+00:32:35,790 --> 00:32:39,350
+One is to use NVLink and NVSwitch
+
+541
+00:32:39,350 --> 00:32:42,050
+and another way is to use InfiniBand.
+
+542
+00:32:44,910 --> 00:32:48,710
+So InfiniBand and NVSwitch and NVLink
+
+543
+00:32:48,710 --> 00:32:55,550
+are more the hardware, what pieces, what cables and switches
+
+544
+00:32:55,550 --> 00:32:56,630
+are there.
+
+545
+00:32:56,630 --> 00:33:02,590
+And RDMA is more operation, what happens
+
+546
+00:33:02,590 --> 00:33:04,030
+when you're communicating.
+
+547
+00:33:15,210 --> 00:33:15,710
+Yeah.
+
+548
+00:33:15,710 --> 00:33:18,830
+For example, this [? advancement ?] RDMA
+
+549
+00:33:18,830 --> 00:33:21,850
+over converged ethernet is another way to do RDMA.
+
+550
+00:33:32,610 --> 00:33:33,350
+Yeah?
+
+551
+00:33:33,350 --> 00:33:39,470
+Is NCCL optimized for multi-node clusters?
+
+552
+00:33:39,470 --> 00:33:43,350
+Because obviously, it seems intuitive [INAUDIBLE].
+
+553
+00:33:43,350 --> 00:33:50,950
+But for RDMA based processes, would NCCL be optimal for that?
+
+554
+00:33:50,950 --> 00:33:53,510
+So the question is, is NCCL optimized
+
+555
+00:33:53,510 --> 00:33:56,770
+for multi-node clusters?
+
+556
+00:33:59,710 --> 00:34:05,750
+So I don't know the details of how they have or have not
+
+557
+00:34:05,750 --> 00:34:06,770
+optimized it.
+
+558
+00:34:06,770 --> 00:34:12,380
+All I can say is that NVIDIA has been basically optimizing
+
+559
+00:34:12,380 --> 00:34:16,179
+their entire stack for inference and training
+
+560
+00:34:16,179 --> 00:34:19,500
+of these large models, because their main customers are
+
+561
+00:34:19,500 --> 00:34:23,360
+the major providers of language models.
+
+562
+00:34:23,360 --> 00:34:27,300
+So I would be surprised if they haven't thought of optimizing
+
+563
+00:34:27,300 --> 00:34:29,080
+for those type of workloads.
+
+564
+00:34:31,940 --> 00:34:32,820
+Yeah?
+
+565
+00:34:44,260 --> 00:34:47,760
+So the question is, what happens if you have nine GPUs?
+
+566
+00:34:47,760 --> 00:34:51,760
+How do you distribute the workload across those?
+
+567
+00:34:55,980 --> 00:34:57,740
+I guess it kind of depends on how
+
+568
+00:34:57,740 --> 00:35:00,740
+the nine lands in your setup.
+
+569
+00:35:00,740 --> 00:35:03,180
+For example, a lot of times you'll have--
+
+570
+00:35:03,180 --> 00:35:06,980
+let's say you have eight GPUs per node.
+
+571
+00:35:06,980 --> 00:35:09,340
+So then the ninth one would be on a different node.
+
+572
+00:35:09,340 --> 00:35:14,480
+And if you don't have NVLink connecting them,
+
+573
+00:35:14,480 --> 00:35:16,980
+then that's going to be really bad, because that's
+
+574
+00:35:16,980 --> 00:35:18,900
+going to be one node which is not providing
+
+575
+00:35:18,900 --> 00:35:23,860
+that much compute and also very expensive to communicate with.
+
+576
+00:35:23,860 --> 00:35:27,300
+But if you, let's say, had everything
+
+577
+00:35:27,300 --> 00:35:29,860
+were connected by NVSwitch, then it
+
+578
+00:35:29,860 --> 00:35:33,980
+would be much more reasonable.
+
+579
+00:35:33,980 --> 00:35:36,340
+One more question and I'm going to move on.
+
+580
+00:35:39,060 --> 00:35:43,020
+So how is this different from TPUs?
+
+581
+00:35:43,020 --> 00:35:47,420
+So [INAUDIBLE] described TPUs a bit more.
+
+582
+00:35:47,420 --> 00:35:53,220
+So I mean, let's see.
+
+583
+00:35:53,220 --> 00:35:56,940
+What can I say quickly about this?
+
+584
+00:35:56,940 --> 00:36:03,180
+So TPUs are generally much simpler objects.
+
+585
+00:36:03,180 --> 00:36:07,460
+I'm not too familiar with the details of what
+
+586
+00:36:07,460 --> 00:36:09,440
+each of these components corresponds to,
+
+587
+00:36:09,440 --> 00:36:11,320
+but maybe we can talk about it offline.
+
+588
+00:36:13,900 --> 00:36:16,460
+So let's actually get down to some code
+
+589
+00:36:16,460 --> 00:36:20,320
+to take advantage of this hardware.
+
+590
+00:36:20,320 --> 00:36:23,500
+So PyTorch conveniently has a torch
+
+591
+00:36:23,500 --> 00:36:25,740
+distributed library that provides
+
+592
+00:36:25,740 --> 00:36:29,540
+a clean interface into these collective operations.
+
+593
+00:36:29,540 --> 00:36:34,140
+So you don't have to explicitly think about NCCL.
+
+594
+00:36:34,140 --> 00:36:38,100
+And in fact, this library also supports different backends
+
+595
+00:36:38,100 --> 00:36:39,660
+for different hardware.
+
+596
+00:36:39,660 --> 00:36:43,180
+So if you are on GPUs, then you would use the NCCL backend.
+
+597
+00:36:43,180 --> 00:36:45,260
+And if you were on CPUs, then there's
+
+598
+00:36:45,260 --> 00:36:48,720
+something called gloo which still allows you to--
+
+599
+00:36:48,720 --> 00:36:51,300
+Like I said, parallel processing has been around
+
+600
+00:36:51,300 --> 00:36:54,900
+for a long time before GPUs.
+
+601
+00:36:54,900 --> 00:37:01,380
+And you can do these collective operations on CPUs as well.
+
+602
+00:37:01,380 --> 00:37:04,140
+This library also supports higher level models
+
+603
+00:37:04,140 --> 00:37:08,050
+and algorithms such as SFTP, but we're not
+
+604
+00:37:08,050 --> 00:37:10,770
+going to use those in the course because we're building things
+
+605
+00:37:10,770 --> 00:37:12,770
+from scratch.
+
+606
+00:37:12,770 --> 00:37:13,310
+All right.
+
+607
+00:37:13,310 --> 00:37:16,770
+So let's walk through some basic examples
+
+608
+00:37:16,770 --> 00:37:19,570
+of collective operations.
+
+609
+00:37:19,570 --> 00:37:22,210
+So there's this function called spawn,
+
+610
+00:37:22,210 --> 00:37:25,130
+which takes another function I'm going to call,
+
+611
+00:37:25,130 --> 00:37:30,210
+and it says I'm going to run this replicated four times where
+
+612
+00:37:30,210 --> 00:37:32,090
+four is the world size.
+
+613
+00:37:32,090 --> 00:37:34,770
+So let's see what this does.
+
+614
+00:37:34,770 --> 00:37:38,970
+This is actually a wrapper I wrote just
+
+615
+00:37:38,970 --> 00:37:43,130
+to hack around the fact that I can't do multiprocessing
+
+616
+00:37:43,130 --> 00:37:44,770
+in this lecture.
+
+617
+00:37:44,770 --> 00:37:47,370
+So normally what you would do is you
+
+618
+00:37:47,370 --> 00:37:56,010
+call Torch's multiprocessing.spawn and you call the function.
+
+619
+00:37:56,010 --> 00:38:00,710
+But I'm going to do this branch which disables distributed.
+
+620
+00:38:00,710 --> 00:38:02,650
+So let's just go through that.
+
+621
+00:38:02,650 --> 00:38:06,930
+So now I'm in this function that it's
+
+622
+00:38:06,930 --> 00:38:11,850
+supposed to be running asynchronously for each process.
+
+623
+00:38:11,850 --> 00:38:15,010
+So remember, world size is the number of processes
+
+624
+00:38:15,010 --> 00:38:20,210
+and the rank is either 0 or 1 or 2 all the way up to world
+
+625
+00:38:20,210 --> 00:38:21,690
+size minus 1.
+
+626
+00:38:21,690 --> 00:38:23,450
+And so there are world size number
+
+627
+00:38:23,450 --> 00:38:25,410
+of these functions that are each running
+
+628
+00:38:25,410 --> 00:38:28,170
+on a process at the same time.
+
+629
+00:38:28,170 --> 00:38:31,110
+So I'm on rank 0 right now.
+
+630
+00:38:31,110 --> 00:38:33,090
+So what do I do?
+
+631
+00:38:33,090 --> 00:38:35,010
+There's a setup.
+
+632
+00:38:35,010 --> 00:38:41,450
+You basically configure the master address and port.
+
+633
+00:38:41,450 --> 00:38:45,115
+Notice that this is not actually how the GPUs are
+
+634
+00:38:45,115 --> 00:38:45,990
+going to communicate.
+
+635
+00:38:45,990 --> 00:38:49,750
+This is more for general metadata and coordination.
+
+636
+00:38:49,750 --> 00:38:51,630
+实际数据会经过 NCCL。
+
+637
+00:38:51,630 --> 00:38:54,970
+否则会非常非常慢。
+
+638
+00:38:54,970 --> 00:38:57,530
+如果你有 CUDA 可用，那么你
+
+639
+00:38:57,530 --> 00:38:59,610
+可以使用 NCCL 后端。
+
+640
+00:38:59,610 --> 00:39:04,250
+我在自己的笔记本上，所以我会使用 gloo 后端。
+
+641
+00:39:04,250 --> 00:39:08,690
+好，现在我来这里。
+
+642
+00:39:08,690 --> 00:39:13,050
+假设我有四个这样的进程在运行。
+
+643
+00:39:13,050 --> 00:39:19,050
+所以有一个 barrier 函数，它的用处是——
+
+644
+00:39:19,050 --> 00:39:20,510
+它是一个同步屏障。
+
+645
+00:39:20,510 --> 00:39:24,410
+所以基本上，如果我看到这个，那么它
+
+646
+00:39:24,410 --> 00:39:27,450
+会等待所有进程到达这个点。
+
+647
+00:39:30,410 --> 00:39:33,570
+所以基本上，你可以认为所有进程
+
+648
+00:39:33,570 --> 00:39:35,687
+都在异步运行。
+
+649
+00:39:35,687 --> 00:39:36,770
+所以我并不真正控制。
+
+650
+00:39:36,770 --> 00:39:39,070
+一个进程可能完全在另一个之前完成。
+
+651
+00:39:39,070 --> 00:39:42,330
+它们可能以任意方式交错完成。
+
+652
+00:39:42,330 --> 00:39:45,130
+所以如果我想确保
+
+653
+00:39:45,130 --> 00:39:48,890
+有些代码在其他代码之前执行，
+
+654
+00:39:48,890 --> 00:39:52,490
+我就会加入这些同步屏障。
+
+655
+00:39:52,490 --> 00:39:54,850
+所以现在加入更多屏障的缺点是
+
+656
+00:39:54,850 --> 00:39:58,490
+嗯，你最终可能会不必要地
+
+657
+00:39:58,490 --> 00:40:01,790
+等待。
+
+658
+00:40:01,790 --> 00:40:04,610
+那么让我们试一下 all reduce。
+
+659
+00:40:04,610 --> 00:40:11,090
+所以我要创建这个张量，0、1、2、3。
+
+660
+00:40:11,090 --> 00:40:13,795
+然后我有我的 rank。
+
+661
+00:40:13,795 --> 00:40:15,170
+为了让它更有意思，
+
+662
+00:40:15,170 --> 00:40:20,530
+每个 rank 会有一个不同的张量。
+
+663
+00:40:20,530 --> 00:40:23,710
+我要打印出我在 all reduce 之前有什么。
+
+664
+00:40:23,710 --> 00:40:27,410
+所以现在我要跳过这里，看看
+
+665
+00:40:27,410 --> 00:40:30,490
+会打印出什么。
+
+666
+00:40:30,490 --> 00:40:36,050
+所以 rank 0 在 all reduce 之前有 0、1、2、3。
+
+667
+00:40:36,050 --> 00:40:38,310
+Rank 1 有 1、2、3、4，依此类推。
+
+668
+00:40:38,310 --> 00:40:40,770
+这和我之前展示的例子一样。
+
+669
+00:40:40,770 --> 00:40:44,130
+注意，print 语句以任意顺序出现，
+
+670
+00:40:44,130 --> 00:40:47,250
+硬件想怎样就怎样，因为它是异步运行的。
+
+671
+00:40:47,250 --> 00:40:48,630
+但所有数据都在那里。
+
+672
+00:40:51,170 --> 00:40:57,410
+所以现在如果我做 all reduce，你传入——
+
+673
+00:40:57,410 --> 00:40:58,630
+这是一个 PyTorch 函数。
+
+674
+00:40:58,630 --> 00:41:01,600
+它传入这个张量。
+
+675
+00:41:01,600 --> 00:41:04,920
+你传入归约操作，也就是求和。
+
+676
+00:41:04,920 --> 00:41:08,480
+And I'm going to say don't do async.
+
+677
+00:41:08,480 --> 00:41:12,520
+And what this does is it calls, in this case, it would be gloo,
+
+678
+00:41:12,520 --> 00:41:15,560
+but it could be NCCL, in which case, it
+
+679
+00:41:15,560 --> 00:41:18,020
+would spin up the CUDA kernels.
+
+680
+00:41:18,020 --> 00:41:19,380
+It would do the communication.
+
+681
+00:41:19,380 --> 00:41:21,880
+It takes care of everything for you.
+
+682
+00:41:21,880 --> 00:41:26,000
+And then it basically writes in place to the data.
+
+683
+00:41:26,000 --> 00:41:31,380
+So after the all reduce, I have the all reduce operation,
+
+684
+00:41:31,380 --> 00:41:34,360
+remember, which is the sum of each of these columns
+
+685
+00:41:34,360 --> 00:41:36,500
+but replicated across all the ranks.
+
+686
+00:41:40,920 --> 00:41:44,800
+So that's all reduce.
+
+687
+00:41:44,800 --> 00:41:48,920
+And if you wanted to be fancier and do async,
+
+688
+00:41:48,920 --> 00:41:51,160
+then you could say async equals true.
+
+689
+00:41:51,160 --> 00:41:53,420
+But then it would screw up all these print statements.
+
+690
+00:41:53,420 --> 00:41:56,560
+So I'm trying to put more barriers than I would normally
+
+691
+00:41:56,560 --> 00:41:59,000
+would.
+
+692
+00:41:59,000 --> 00:42:01,040
+Yeah, question?
+
+693
+00:42:08,560 --> 00:42:11,600
+So the question is the rank the GPU.
+
+694
+00:42:11,600 --> 00:42:15,180
+For this class, the rank is the GPU.
+
+695
+00:42:19,340 --> 00:42:22,840
+So let's try another example here.
+
+696
+00:42:22,840 --> 00:42:26,160
+So I'm going to do a reduce scatter.
+
+697
+00:42:26,160 --> 00:42:30,920
+So here, I'm going to create an input, which
+
+698
+00:42:30,920 --> 00:42:36,080
+is 0 through the world size.
+
+699
+00:42:36,080 --> 00:42:44,400
+And I'm going to have the output.
+
+700
+00:42:44,400 --> 00:42:46,440
+I'm going to allocate the output.
+
+701
+00:42:46,440 --> 00:42:49,880
+And so what does this look like before I do the reduce scatter?
+
+702
+00:42:49,880 --> 00:42:59,400
+It looks like, let's see, this, where it's the same input
+
+703
+00:42:59,400 --> 00:43:01,380
+and the output happens to be zeros,
+
+704
+00:43:01,380 --> 00:43:04,640
+but it could be just anything.
+
+705
+00:43:04,640 --> 00:43:08,680
+And then I do the reduce scatter tensor.
+
+706
+00:43:08,680 --> 00:43:10,080
+Here instead of writing in place,
+
+707
+00:43:10,080 --> 00:43:13,200
+I have an output tensor and an input tensor.
+
+708
+00:43:13,200 --> 00:43:16,520
+I say I want to do the sum and then
+
+709
+00:43:16,520 --> 00:43:21,700
+afterwards, I get basically the input is not touched,
+
+710
+00:43:21,700 --> 00:43:25,640
+but the output I get the reduction
+
+711
+00:43:25,640 --> 00:43:28,900
+of each component written into the respective ranks.
+
+712
+00:43:36,880 --> 00:43:41,040
+So yeah, question?
+
+713
+00:43:51,040 --> 00:43:52,800
+So the question is, how does it work
+
+714
+00:43:52,800 --> 00:43:55,700
+to do the all reduce asynchronously?
+
+715
+00:43:55,700 --> 00:44:01,340
+So what this means is that this is like a monolithic operation.
+
+716
+00:44:01,340 --> 00:44:03,320
+You say go do the all reduce.
+
+717
+00:44:03,320 --> 00:44:06,020
+And it's spinning up CUDA kernels.
+
+718
+00:44:06,020 --> 00:44:09,400
+It's going to do the communication.
+
+719
+00:44:09,400 --> 00:44:13,840
+And remember, CUDA is already kind of async with respect
+
+720
+00:44:13,840 --> 00:44:16,400
+to the processes, and now we have
+
+721
+00:44:16,400 --> 00:44:18,360
+all the processes being async.
+
+722
+00:44:18,360 --> 00:44:24,800
+And the point is that this code just would return.
+
+723
+00:44:24,800 --> 00:44:29,440
+And then you could do other things.
+
+724
+00:44:29,440 --> 00:44:32,440
+So a typical thing, which I'm not
+
+725
+00:44:32,440 --> 00:44:36,440
+going to talk about this class, is overlapping computation
+
+726
+00:44:36,440 --> 00:44:38,360
+and communication.
+
+727
+00:44:38,360 --> 00:44:43,060
+So for example, you can do this operation,
+
+728
+00:44:43,060 --> 00:44:45,560
+and then you can go ahead and load some other data
+
+729
+00:44:45,560 --> 00:44:50,280
+for the next step, which is independent of this operation.
+
+730
+00:44:50,280 --> 00:44:56,130
+And then when you want to make sure that you actually are done,
+
+731
+00:44:56,130 --> 00:44:58,610
+then you can call a wait or a barrier.
+
+732
+00:45:03,990 --> 00:45:08,250
+So let's do the final one, which is all gather.
+
+733
+00:45:08,250 --> 00:45:10,870
+So by now, I think you get the idea.
+
+734
+00:45:10,870 --> 00:45:13,430
+Here I'm going to set as the input
+
+735
+00:45:13,430 --> 00:45:17,230
+the output of the reduce scatter.
+
+736
+00:45:17,230 --> 00:45:20,110
+I'm going to allocate an output.
+
+737
+00:45:20,110 --> 00:45:24,050
+So before the all gather, it looks like this.
+
+738
+00:45:24,050 --> 00:45:28,630
+I have my results from the reduce scatter here.
+
+739
+00:45:28,630 --> 00:45:32,250
+The output is just allocated.
+
+740
+00:45:32,250 --> 00:45:37,790
+It happens to have some values in it, but don't worry about it.
+
+741
+00:45:37,790 --> 00:45:44,630
+And then after I do the all gather into tensor,
+
+742
+00:45:44,630 --> 00:45:55,190
+and then I will have all the different inputs gathered
+
+743
+00:45:55,190 --> 00:45:59,110
+onto all the different ranks.
+
+744
+00:45:59,110 --> 00:46:02,910
+And you can see here that, indeed,
+
+745
+00:46:02,910 --> 00:46:05,190
+proof via example that all reduce
+
+746
+00:46:05,190 --> 00:46:07,970
+is equal to reduce scatter plus all gather.
+
+747
+00:46:13,270 --> 00:46:20,550
+And then just to wrap things up, just as I started by setup, then
+
+748
+00:46:20,550 --> 00:46:27,210
+I clean up, which it's good practice to clean up.
+
+749
+00:46:29,990 --> 00:46:38,070
+So that was your first example of a Torch distributed program.
+
+750
+00:46:38,070 --> 00:46:44,190
+So let's do some benchmarking.
+
+751
+00:46:44,190 --> 00:46:49,830
+This will be quick, since I want to actually move on to part two.
+
+752
+00:46:49,830 --> 00:46:52,910
+So how fast does communication happen?
+
+753
+00:46:52,910 --> 00:46:55,510
+So let's do an all reduce.
+
+754
+00:46:55,510 --> 00:47:04,550
+所以这里，我要对1亿个元素做all reduce。
+
+755
+00:47:04,550 --> 00:47:05,090
+哎呀。
+
+756
+00:47:09,910 --> 00:47:11,130
+抱歉，我把这里弄错了。
+
+757
+00:47:14,750 --> 00:47:17,110
+所以是all reduce。
+
+758
+00:47:17,110 --> 00:47:21,150
+所以我要创建这个张量
+
+759
+00:47:21,150 --> 00:47:23,790
+包含这么多元素。
+
+760
+00:47:23,790 --> 00:47:26,350
+记住，就像之前做基准测试时一样，
+
+761
+00:47:26,350 --> 00:47:28,830
+我们首先要预热。
+
+762
+00:47:28,830 --> 00:47:32,830
+这里我要调用Cuda synchronize，还要调用
+
+763
+00:47:32,830 --> 00:47:36,750
+barrier，只是为了确保，因为这里有
+
+764
+00:47:36,750 --> 00:47:39,190
+两种异步形式，Cuda kernel
+
+765
+00:47:39,190 --> 00:47:40,408
+和不同的进程。
+
+766
+00:47:40,408 --> 00:47:41,950
+我只是想确保一切
+
+767
+00:47:41,950 --> 00:47:49,430
+在开始计时之前都不再运行并且已经完成。
+
+768
+00:47:49,430 --> 00:47:53,140
+然后我要执行all reduce。
+
+769
+00:47:53,140 --> 00:47:59,620
+然后再用synchronize和barrier等待
+
+770
+00:47:59,620 --> 00:48:01,540
+并停止计时。
+
+771
+00:48:01,540 --> 00:48:08,940
+记住，这在每个rank上都会运行。
+
+772
+00:48:08,940 --> 00:48:14,200
+所以如果我看输出，这里rank 0、2、1、3，
+
+773
+00:48:14,200 --> 00:48:16,460
+我可能会得到不同的时间，
+
+774
+00:48:16,460 --> 00:48:19,100
+因为它们都是不同的进程。
+
+775
+00:48:19,100 --> 00:48:23,398
+每个进程都会报告某个测量值。
+
+776
+00:48:23,398 --> 00:48:24,940
+如果你想报告一个数字，
+
+777
+00:48:24,940 --> 00:48:27,240
+你可以取平均值，比如。
+
+778
+00:48:30,300 --> 00:48:35,240
+现在有一件有用的事情可以做，
+
+779
+00:48:35,240 --> 00:48:38,060
+这类似于我们之前计算MFU时做的事情，
+
+780
+00:48:38,060 --> 00:48:41,900
+就是测量有效带宽。
+
+781
+00:48:41,900 --> 00:48:47,820
+这里的想法是，好吧，这花了1.6毫秒。
+
+782
+00:48:47,820 --> 00:48:52,700
+这算好还是坏？
+
+783
+00:48:52,700 --> 00:48:55,580
+所以要计算有效带宽，我们
+
+784
+00:48:55,580 --> 00:48:58,220
+要做的是计算本质上
+
+785
+00:48:58,220 --> 00:49:02,340
+在这次计算中发送了多少字节，以及应该
+
+786
+00:49:02,340 --> 00:49:05,900
+发送多少字节。
+
+787
+00:49:05,900 --> 00:49:08,200
+然后如果你除以总时间，
+
+788
+00:49:08,200 --> 00:49:10,460
+就得到有效带宽。
+
+789
+00:49:10,460 --> 00:49:14,580
+所以我发送的数据大小，
+
+790
+00:49:14,580 --> 00:49:18,720
+是每个元素的大小乘以元素数量。
+
+791
+00:49:18,720 --> 00:49:24,580
+所以基本上就是这个数据张量的字节数。
+
+792
+00:49:24,580 --> 00:49:26,520
+实际发送了多少字节？
+
+793
+00:49:26,520 --> 00:49:29,620
+所以这需要一些拆解。
+
+794
+00:49:29,620 --> 00:49:34,900
+So for all reduce, if you think about,
+
+795
+00:49:34,900 --> 00:49:39,460
+let's just say for simplicity, you do a rank 0 plus rank 1
+
+796
+00:49:39,460 --> 00:49:41,820
+plus rank 2 plus rank 3.
+
+797
+00:49:41,820 --> 00:49:45,420
+You need to iterate this world size minus 1 steps,
+
+798
+00:49:45,420 --> 00:49:49,820
+because there's a world size minus 1 addition operations.
+
+799
+00:49:49,820 --> 00:49:51,660
+So that's this factor.
+
+800
+00:49:51,660 --> 00:49:55,780
+There's a 2, because you need to both send and reduce.
+
+801
+00:49:55,780 --> 00:49:59,780
+And then you multiply by the size of the payload.
+
+802
+00:49:59,780 --> 00:50:03,020
+So that's the total number of sent bytes.
+
+803
+00:50:03,020 --> 00:50:11,780
+And the total duration is the wall clock time that it took.
+
+804
+00:50:11,780 --> 00:50:15,940
+And then you multiply by the world size,
+
+805
+00:50:15,940 --> 00:50:21,340
+because it's the total amount that all the ranks have waited.
+
+806
+00:50:21,340 --> 00:50:26,620
+And the bandwidth is the bytes sent
+
+807
+00:50:26,620 --> 00:50:30,340
+divided by the total duration.
+
+808
+00:50:30,340 --> 00:50:33,460
+So in this case, you get something
+
+809
+00:50:33,460 --> 00:50:37,520
+like about 400 gigabytes per second.
+
+810
+00:50:40,620 --> 00:50:45,020
+So a few notes here.
+
+811
+00:50:45,020 --> 00:50:47,720
+One is that the effective bandwidth,
+
+812
+00:50:47,720 --> 00:50:50,700
+if you look at this expression, size times 2 times
+
+813
+00:50:50,700 --> 00:50:53,800
+world size minus 1 divided by world size times duration.
+
+814
+00:50:53,800 --> 00:50:57,100
+So as world size increases, this world size
+
+815
+00:50:57,100 --> 00:51:00,320
+minus 1 divided by world size essentially converges to 1.
+
+816
+00:51:00,320 --> 00:51:03,300
+So you're effectively left with 2 times the size
+
+817
+00:51:03,300 --> 00:51:05,740
+bytes over the duration.
+
+818
+00:51:05,740 --> 00:51:08,920
+So this is essentially the bandwidth.
+
+819
+00:51:08,920 --> 00:51:12,457
+Notice that this is independent of the world size,
+
+820
+00:51:12,457 --> 00:51:13,040
+which is good.
+
+821
+00:51:13,040 --> 00:51:16,940
+So if you grow the number of GPUs you have,
+
+822
+00:51:16,940 --> 00:51:19,140
+the bandwidth doesn't change.
+
+823
+00:51:19,140 --> 00:51:21,940
+It is also independent of the topology, which
+
+824
+00:51:21,940 --> 00:51:26,260
+is something that kind of NCCL figures out whether you're
+
+825
+00:51:26,260 --> 00:51:30,500
+going to pass the messages in a kind of a ring or a tree
+
+826
+00:51:30,500 --> 00:51:31,360
+topology.
+
+827
+00:51:34,060 --> 00:51:37,300
+So yeah.
+
+828
+00:51:37,300 --> 00:51:40,580
+So that is all reduce.
+
+829
+00:51:40,580 --> 00:51:46,130
+And for reduce scatter, this is very similar.
+
+830
+00:51:46,130 --> 00:51:48,930
+So I'm going to create the inputs and the outputs,
+
+831
+00:51:48,930 --> 00:51:54,170
+warm up, perform the operation, and time it.
+
+832
+00:51:54,170 --> 00:52:02,690
+So notice that the reduce scatter has these timings.
+
+833
+00:52:02,690 --> 00:52:08,090
+And you can also measure the effective bandwidth here,
+
+834
+00:52:08,090 --> 00:52:13,330
+the number of bytes that were in the input.
+
+835
+00:52:13,330 --> 00:52:16,490
+You have the number of bytes that were sent.
+
+836
+00:52:16,490 --> 00:52:20,850
+Here there is no 2x here.
+
+837
+00:52:20,850 --> 00:52:23,050
+And then the total duration, you divide by that,
+
+838
+00:52:23,050 --> 00:52:24,150
+you get the bandwidth.
+
+839
+00:52:24,150 --> 00:52:29,930
+So here, the bandwidth is--it should be very similar.
+
+840
+00:52:29,930 --> 00:52:32,090
+I guess sometimes there's some stochasticity,
+
+841
+00:52:32,090 --> 00:52:36,930
+but it's in the kind of 400s.
+
+842
+00:52:36,930 --> 00:52:40,090
+So a few notes here.
+
+843
+00:52:40,090 --> 00:52:44,530
+All reduce is, remember, as we stated, reduce
+
+844
+00:52:44,530 --> 00:52:47,170
+scatter plus an all gather.
+
+845
+00:52:47,170 --> 00:52:54,170
+And so all reduce, naturally, is moving twice the amount of data,
+
+846
+00:52:54,170 --> 00:52:58,890
+because reduce scatter has some cost, all gather has some cost,
+
+847
+00:52:58,890 --> 00:53:02,970
+and all reduce is doing twice as much work.
+
+848
+00:53:02,970 --> 00:53:06,810
+And it takes twice the amount of time.
+
+849
+00:53:06,810 --> 00:53:11,790
+But the two cancel out, so you get the same kind of bandwidth.
+
+850
+00:53:20,150 --> 00:53:22,690
+So that is the end of part one.
+
+851
+00:53:22,690 --> 00:53:26,550
+Maybe any questions before I move to part two?
+
+852
+00:53:30,310 --> 00:53:30,810
+Yeah.
+
+853
+00:53:30,810 --> 00:53:34,821
+Why did you do that synchronize for [INAUDIBLE]?
+
+854
+00:53:40,455 --> 00:53:44,050
+So why do we have to do the synchronize for the CUDA kernel?
+
+855
+00:53:44,050 --> 00:53:49,450
+So at the end of the day, we are still doing CUDA operations.
+
+856
+00:53:49,450 --> 00:53:53,970
+We have just multiple processes, each with a GPU,
+
+857
+00:53:53,970 --> 00:53:57,610
+doing some CUDA operations.
+
+858
+00:53:57,610 --> 00:54:01,150
+So if you're doing a CUDA operation, remember, by default,
+
+859
+00:54:01,150 --> 00:54:02,730
+it's async.
+
+860
+00:54:02,730 --> 00:54:05,410
+So when you reach the next line in Python,
+
+861
+00:54:05,410 --> 00:54:07,690
+that CUDA operation might not be done.
+
+862
+00:54:07,690 --> 00:54:11,250
+So we need to wait always to make sure it's
+
+863
+00:54:11,250 --> 00:54:13,650
+done by synchronizing.
+
+864
+00:54:13,650 --> 00:54:14,850
+[INAUDIBLE]
+
+865
+00:54:18,210 --> 00:54:25,100
+So do you have to do barrier first and then synchronize?
+
+866
+00:54:25,100 --> 00:54:27,090
+I'm not sure.
+
+867
+00:54:27,090 --> 00:54:27,970
+Yeah.
+
+868
+00:54:27,970 --> 00:54:30,210
+[INAUDIBLE]
+
+869
+00:54:38,570 --> 00:54:39,070
+Yeah.
+
+870
+00:54:39,070 --> 00:54:42,200
+I think one problem is if you barrier first
+
+871
+00:54:42,200 --> 00:54:46,880
+and then the CUDA might not be done running,
+
+872
+00:54:46,880 --> 00:54:49,440
+and you just immediately go to the barrier.
+
+873
+00:54:49,440 --> 00:54:54,240
+And then you are still each independently synchronizing
+
+874
+00:54:54,240 --> 00:54:57,560
+the different CUDA kernels, which means that you're not
+
+875
+00:54:57,560 --> 00:55:00,580
+really synchronized.
+
+876
+00:55:00,580 --> 00:55:02,820
+If all those operations just return,
+
+877
+00:55:02,820 --> 00:55:07,080
+the barrier doesn't really do anything.
+
+878
+00:55:07,080 --> 00:55:08,560
+OK, let me move on.
+
+879
+00:55:08,560 --> 00:55:10,880
+So now let's actually start thinking
+
+880
+00:55:10,880 --> 00:55:12,960
+about how you train models.
+
+881
+00:55:12,960 --> 00:55:15,280
+So we're just going to walk through a very bare bones
+
+882
+00:55:15,280 --> 00:55:19,920
+implementation of training MLPs, multilayer MLPs.
+
+883
+00:55:19,920 --> 00:55:21,140
+I guess that's redundant.
+
+884
+00:55:21,140 --> 00:55:24,880
+It's multilayer perceptrons already.
+
+885
+00:55:24,880 --> 00:55:27,680
+And remember that MLPs are the ones that
+
+886
+00:55:27,680 --> 00:55:29,900
+are the actual compute bottleneck in the transformer.
+
+887
+00:55:29,900 --> 00:55:33,760
+So this is actually pretty representative of what you'll see.
+
+888
+00:55:33,760 --> 00:55:37,920
+So data parallelism, tensor parallelism,
+
+889
+00:55:37,920 --> 00:55:39,640
+and pipeline parallelism.
+
+890
+00:55:39,640 --> 00:55:44,360
+And the picture I want you to have in your head
+
+891
+00:55:44,360 --> 00:55:45,780
+is this picture.
+
+892
+00:55:45,780 --> 00:55:49,260
+So this is a little bit of a schematic,
+
+893
+00:55:49,260 --> 00:55:51,420
+so don't think too deeply about this,
+
+894
+00:55:51,420 --> 00:55:55,640
+but it's more of a way to conceptualize how you're cutting
+
+895
+00:55:55,640 --> 00:55:58,080
+your data and parameters.
+
+896
+00:55:58,080 --> 00:56:01,560
+So data parallelism says, I'm going
+
+897
+00:56:01,560 --> 00:56:04,760
+to split the data into pieces.
+
+898
+00:56:04,760 --> 00:56:08,520
+And then each of the GPUs is going
+
+899
+00:56:08,520 --> 00:56:10,700
+to be responsible for part of the data,
+
+900
+00:56:10,700 --> 00:56:14,200
+and I'm going to just do normal—
+
+901
+00:56:14,200 --> 00:56:16,360
+I'm going to keep track of all the parameters
+
+902
+00:56:16,360 --> 00:56:20,640
+and do normal model training.
+
+903
+00:56:20,640 --> 00:56:22,280
+And then I need to synchronize.
+
+904
+00:56:22,280 --> 00:56:24,900
+So let me explain how this works.
+
+905
+00:56:24,900 --> 00:56:27,300
+So I'm going to generate some sample data.
+
+906
+00:56:27,300 --> 00:56:29,740
+So there's a batch size of 128.
+
+907
+00:56:29,740 --> 00:56:32,480
+Number of dimensions, 1,024.
+
+908
+00:56:32,480 --> 00:56:38,400
+So this is a batch size by num dim matrix, data matrix.
+
+909
+00:56:38,400 --> 00:56:44,480
+And let's jump into this data parallelism.
+
+910
+00:56:44,480 --> 00:56:48,600
+So the way that it's going to work
+
+911
+00:56:48,600 --> 00:56:51,160
+is that you have this data matrix.
+
+912
+00:56:51,160 --> 00:57:00,680
+And I'm going to break up the rows into world size pieces.
+
+913
+00:57:00,680 --> 00:57:02,240
+And in this case, four.
+
+914
+00:57:02,240 --> 00:57:06,760
+And each rank is going to get a piece.
+
+915
+00:57:06,760 --> 00:57:09,380
+So the number of dimensions, the batch size.
+
+916
+00:57:12,120 --> 00:57:18,600
+So I'm going to call the local batch size, basically the batch
+
+917
+00:57:18,600 --> 00:57:20,360
+size divided by the world size, which
+
+918
+00:57:20,360 --> 00:57:29,240
+is every row that GPU sees, it's going to have 32 data points.
+
+919
+00:57:29,240 --> 00:57:30,640
+And this is just indexing.
+
+920
+00:57:30,640 --> 00:57:37,840
+Start index, data start to end gets you the slice of that data.
+
+921
+00:57:37,840 --> 00:57:42,720
+And I'm going to just put it on that rank.
+
+922
+00:57:42,720 --> 00:57:46,720
+So at this point, each GPU has now
+
+923
+00:57:46,720 --> 00:57:49,840
+a distinct data tensor, which is the part
+
+924
+00:57:49,840 --> 00:57:52,920
+that they're responsible for.
+
+925
+00:57:52,920 --> 00:57:55,200
+Now, in practice, each rank should probably
+
+926
+00:57:55,200 --> 00:57:58,700
+load its own data rather than have this bottleneck,
+
+927
+00:57:58,700 --> 00:58:01,420
+but this is just for illustrative purposes.
+
+928
+00:58:04,600 --> 00:58:08,480
+So let's instantiate the MLP.
+
+929
+00:58:08,480 --> 00:58:15,960
+So here, I assume we have layers.
+
+930
+00:58:15,960 --> 00:58:19,560
+And num layers.
+
+931
+00:58:19,560 --> 00:58:23,200
+And for each of the layers, I'm going to have just a num
+
+932
+00:58:23,200 --> 00:58:27,760
+dim by num dim matrix.
+
+933
+00:58:27,760 --> 00:58:32,360
+So I'm just going to initialize a random set of parameters.
+
+934
+00:58:32,360 --> 00:58:36,910
+And then I'm going to feed that into optimizer.
+
+935
+00:58:36,910 --> 00:58:39,590
+So here's the training loop.
+
+936
+00:58:39,590 --> 00:58:42,270
+So in the forward pass, I take the data.
+
+937
+00:58:42,270 --> 00:58:45,810
+So remember, data is not all the data.
+
+938
+00:58:45,810 --> 00:58:50,990
+It's just if I'm rank 2, then I only get B2 part of the data.
+
+939
+00:58:50,990 --> 00:58:54,550
+I'm going to just go through the number of layers
+
+940
+00:58:54,550 --> 00:58:57,430
+and do a forward pass.
+
+941
+00:58:57,430 --> 00:59:00,470
+And then I'm going to do a backward pass.
+
+942
+00:59:00,470 --> 00:59:03,590
+And then normally, this would be it.
+
+943
+00:59:03,590 --> 00:59:09,390
+But now, remember, every rank has different data.
+
+944
+00:59:09,390 --> 00:59:15,310
+Therefore, the gradients are going to be different as well.
+
+945
+00:59:15,310 --> 00:59:19,443
+So this is the key step that makes data parallelism work.
+
+946
+00:59:19,443 --> 00:59:21,110
+We're going to synchronize the gradients
+
+947
+00:59:21,110 --> 00:59:22,068
+across all the workers.
+
+948
+00:59:22,068 --> 00:59:24,277
+This is the only difference between standard training
+
+949
+00:59:24,277 --> 00:59:25,070
+and DDP.
+
+950
+00:59:25,070 --> 00:59:27,170
+It's actually pretty nice and elegant.
+
+951
+00:59:27,170 --> 00:59:29,470
+So basically, for all the parameters,
+
+952
+00:59:29,470 --> 00:59:34,630
+I'm going to do an all reduce of param.grad.
+
+953
+00:59:37,190 --> 00:59:40,110
+And I'm going to average.
+
+954
+00:59:40,110 --> 00:59:47,610
+然后，all reduce 完成之后，现在在这个阶段，
+
+955
+00:59:47,610 --> 00:59:53,030
+每个 rank 都有完全相同的梯度。
+
+956
+00:59:53,030 --> 00:59:59,350
+然后我就直接更新参数。
+
+957
+00:59:59,350 --> 01:00:03,990
+所以我觉得这真的很优雅，
+
+958
+01:00:03,990 --> 01:00:07,590
+因为它基本上就是标准训练，你把它应用到
+
+959
+01:00:07,590 --> 01:00:11,390
+你的本地 batch 上，但只需插入这个
+
+960
+01:00:11,390 --> 01:00:12,850
+在反向传播之后。
+
+961
+01:00:12,850 --> 01:00:16,370
+让我们通过这个 all reduce 来平均所有梯度。
+
+962
+01:00:16,370 --> 01:00:22,370
+只需改一行代码，然后参数就被更新了。
+
+963
+01:00:22,370 --> 01:00:27,550
+所以在你训练时，每个 rank 基本上
+
+964
+01:00:27,550 --> 01:00:32,130
+都在进行参数更新，就好像它拥有全部数据一样，
+
+965
+01:00:32,130 --> 01:00:36,110
+但实际上它只处理了一部分数据。
+
+966
+01:00:36,110 --> 01:00:43,750
+所以这基本上就是 DDP，或者说第一种数据并行。
+
+967
+01:00:43,750 --> 01:00:47,110
+关于这个有什么问题吗？
+
+968
+01:00:47,110 --> 01:00:48,483
+是的。
+
+969
+01:00:48,483 --> 01:00:53,670
+[INAUDIBLE] 所以问题是，你只能
+
+970
+01:00:53,670 --> 01:00:57,450
+在 batch size 大于 1 的时候这样做吗？
+
+971
+01:00:57,450 --> 01:00:57,950
+是的。
+
+972
+01:00:57,950 --> 01:01:02,310
+所以你的 batch size 至少要等于 world size
+
+973
+01:01:02,310 --> 01:01:03,890
+才能真正合理。
+
+974
+01:01:03,890 --> 01:01:08,670
+而且通常，它应该要大得多。
+
+975
+01:01:08,670 --> 01:01:09,610
+是吗？
+
+976
+01:01:09,610 --> 01:01:13,350
+[INAUDIBLE] 是的。
+
+977
+01:01:13,350 --> 01:01:16,430
+所以问题是，batch size 应该是
+
+978
+01:01:16,430 --> 01:01:17,850
+world size 的倍数吗？
+
+979
+01:01:17,850 --> 01:01:20,510
+那也会很好。
+
+980
+01:01:20,510 --> 01:01:22,070
+是的。
+
+981
+01:01:22,070 --> 01:01:23,830
+我的意思是，如果不是，那你可以用零来填充
+
+982
+01:01:23,830 --> 01:01:25,690
+或者类似的方法。
+
+983
+01:01:25,690 --> 01:01:31,590
+所以有办法，但如果它是的话，对每个人来说都更简单。
+
+984
+01:01:31,590 --> 01:01:32,710
+[INAUDIBLE]？
+
+985
+01:01:39,870 --> 01:01:44,710
+对于基于 transformer 的 [INAUDIBLE] 会是什么样子？
+
+986
+01:01:44,710 --> 01:01:46,670
+是的，所以问题是，这会是什么样子
+
+987
+01:01:46,670 --> 01:01:47,890
+对于 transformer 来说？
+
+988
+01:01:47,890 --> 01:01:50,990
+实际上基本是一样的。
+
+989
+01:01:50,990 --> 01:01:53,910
+DDP 有一个很好的特点，就是非常模块化。
+
+990
+01:01:53,910 --> 01:01:55,910
+你做前向传播。
+
+991
+01:01:55,910 --> 01:01:59,250
+我的意思是，DDP 只是在这里平均参数。
+
+992
+01:01:59,250 --> 01:02:01,810
+它不关心你的前向传播是什么样子。
+
+993
+01:02:04,470 --> 01:02:08,130
+好的，让我继续。
+
+994
+01:02:08,130 --> 01:02:11,470
+So that's DDP.
+
+995
+01:02:11,470 --> 01:02:18,510
+So just to summarize, the losses are different across the ranks.
+
+996
+01:02:18,510 --> 01:02:22,870
+The gradients are also initially different.
+
+997
+01:02:22,870 --> 01:02:26,150
+But they are all reduced to be the same across the ranks.
+
+998
+01:02:26,150 --> 01:02:27,830
+And therefore, the parameters all
+
+999
+01:02:27,830 --> 01:02:32,500
+remain the same across ranks.
+
+1000
+01:02:32,500 --> 01:02:34,660
+So next lecture, Tatsu is going
+
+1001
+01:02:34,660 --> 01:02:39,580
+to talk about fancier data parallelism, FSDP and ZeRO.
+
+1002
+01:02:39,580 --> 01:02:42,940
+And the idea there is, as I've alluded to,
+
+1003
+01:02:42,940 --> 01:02:44,560
+here we use all reduce.
+
+1004
+01:02:44,560 --> 01:02:47,100
+It's a very simple monolithic operation,
+
+1005
+01:02:47,100 --> 01:02:50,140
+but it does require holding all the models, parameters
+
+1006
+01:02:50,140 --> 01:02:51,380
+in memory.
+
+1007
+01:02:51,380 --> 01:02:54,140
+But what if the model parameters don't fit in memory?
+
+1008
+01:02:54,140 --> 01:02:56,000
+Then you're going to have to be more clever,
+
+1009
+01:02:56,000 --> 01:02:59,140
+and that's the topic for the next class.
+
+1010
+01:02:59,140 --> 01:03:03,980
+So let me talk about tensor parallelism.
+
+1011
+01:03:03,980 --> 01:03:07,700
+So here, the idea is we're going to cut this way
+
+1012
+01:03:07,700 --> 01:03:09,200
+and we're not going to cut the data.
+
+1013
+01:03:09,200 --> 01:03:16,140
+We're going to cut essentially each layer.
+
+1014
+01:03:16,140 --> 01:03:22,660
+And so each rank is going to get part of each layer.
+
+1015
+01:03:22,660 --> 01:03:26,260
+And generally, this means that we're
+
+1016
+01:03:26,260 --> 01:03:29,080
+going to have to transfer a lot more data.
+
+1017
+01:03:29,080 --> 01:03:30,840
+We'll discuss this a bit later.
+
+1018
+01:03:33,820 --> 01:03:37,740
+So what does tensor parallel look like?
+
+1019
+01:03:37,740 --> 01:03:42,840
+So we're just going to assume we have this data.
+
+1020
+01:03:42,840 --> 01:03:47,980
+Every rank has all the data just for simplicity.
+
+1021
+01:03:47,980 --> 01:03:54,300
+And here, remember, the data is batch size times num dim.
+
+1022
+01:03:54,300 --> 01:04:00,660
+And I'm going to define a local num dim to be-- for this rank, I only
+
+1023
+01:04:00,660 --> 01:04:07,140
+am responsible for a subset of the dimensions.
+
+1024
+01:04:07,140 --> 01:04:15,180
+So the picture here is that each model still has all the layers
+
+1025
+01:04:15,180 --> 01:04:18,500
+here for all the layers, but the parameters now
+
+1026
+01:04:18,500 --> 01:04:24,200
+are num dim times local num dim.
+
+1027
+01:04:24,200 --> 01:04:26,460
+So if this were one of the parameter
+
+1028
+01:04:26,460 --> 01:04:35,020
+matrices for one layer, I would be splitting down the columns.
+
+1029
+01:04:35,020 --> 01:04:38,940
+So this is also known as column tensor parallel.
+
+1030
+01:04:38,940 --> 01:04:40,900
+You can also do it by rows, but we're not going
+
+1031
+01:04:40,900 --> 01:04:43,860
+to talk about that right now.
+
+1032
+01:04:43,860 --> 01:04:48,300
+So now what does the forward pass look like?
+
+1033
+01:04:48,300 --> 01:04:50,340
+So I'll go through all the layers
+
+1034
+01:04:50,340 --> 01:04:53,340
+And I'm going to compute activations.
+
+1035
+01:04:53,340 --> 01:05:00,700
+So I start with x, the data.
+
+1036
+01:05:00,700 --> 01:05:07,580
+And I'm going to access the parameters at layer.
+
+1037
+01:05:07,580 --> 01:05:11,040
+And notice that this is only a slice of the parameters.
+
+1038
+01:05:11,040 --> 01:05:16,580
+So if I'm on rank 1, I only get this part of the matrix.
+
+1039
+01:05:16,580 --> 01:05:18,200
+But I can still proceed.
+
+1040
+01:05:18,200 --> 01:05:23,700
+I can apply this non-linearity, because this is element-wise anyway.
+
+1041
+01:05:23,700 --> 01:05:27,770
+But now what I'm going to do is I'm going
+
+1042
+01:05:27,770 --> 01:05:32,290
+to communicate activations.
+
+1043
+01:05:32,290 --> 01:05:35,250
+So if I have a data matrix, rank 1
+
+1044
+01:05:35,250 --> 01:05:38,570
+has activations for part of the activations
+
+1045
+01:05:38,570 --> 01:05:41,210
+for this part of the matrix.
+
+1046
+01:05:41,210 --> 01:05:43,930
+Rank 1 has part of the activations for this matrix
+
+1047
+01:05:43,930 --> 01:05:45,290
+and so on and so forth.
+
+1048
+01:05:45,290 --> 01:05:49,330
+And I need to basically put all the activations
+
+1049
+01:05:49,330 --> 01:05:52,650
+on all the ranks.
+
+1050
+01:05:52,650 --> 01:05:54,470
+But we know how to do that.
+
+1051
+01:05:54,470 --> 01:05:58,990
+We introduced all gather as a collective primitive.
+
+1052
+01:05:58,990 --> 01:06:05,050
+So this is all the activations.
+
+1053
+01:06:05,050 --> 01:06:10,970
+So this is the batch size times local num dim, which is
+
+1054
+01:06:10,970 --> 01:06:15,290
+the shape of the activations.
+
+1055
+01:06:15,290 --> 01:06:20,890
+And then I'm doing an all gather.
+
+1056
+01:06:20,890 --> 01:06:23,930
+Sorry, so this is the allocating memory for the activations.
+
+1057
+01:06:23,930 --> 01:06:27,870
+So x is the actual part of the activation.
+
+1058
+01:06:27,870 --> 01:06:31,050
+So this is batch size times local num dim.
+
+1059
+01:06:31,050 --> 01:06:37,530
+And all gather says each rank has x and each rank
+
+1060
+01:06:37,530 --> 01:06:41,810
+is going to allocate activations,
+
+1061
+01:06:41,810 --> 01:06:44,410
+which is a list, one for each world size.
+
+1062
+01:06:44,410 --> 01:06:46,610
+And then after the all gather, x is
+
+1063
+01:06:46,610 --> 01:06:50,930
+going to be copied into each of the respective location
+
+1064
+01:06:50,930 --> 01:06:54,150
+activations.
+
+1065
+01:06:54,150 --> 01:06:57,310
+So then once I gather all the activations,
+
+1066
+01:06:57,310 --> 01:07:00,890
+I concatenate them to form the full dimensional x, which
+
+1067
+01:07:00,890 --> 01:07:02,590
+is batch size times num dim.
+
+1068
+01:07:08,530 --> 01:07:14,310
+Any questions about column tensor parallel?
+
+1069
+01:07:18,130 --> 01:07:21,530
+So this is done for every layer.
+
+1070
+01:07:21,530 --> 01:07:26,450
+We now notice one difference between data parallel
+
+1071
+01:07:26,450 --> 01:07:29,450
+is now we have to muck around with the model.
+
+1072
+01:07:29,450 --> 01:07:32,230
+Data parallel is very elegant, because it's splitting by data.
+
+1073
+01:07:32,230 --> 01:07:35,490
+The model is treated as a module.
+
+1074
+01:07:35,490 --> 01:07:38,890
+But now we have to muck around with the model.
+
+1075
+01:07:38,890 --> 01:07:42,290
+And this is strongly leveraging the fact
+
+1076
+01:07:42,290 --> 01:07:45,730
+that if you want to do a matrix multiplication,
+
+1077
+01:07:45,730 --> 01:07:50,050
+you can split it up into a set of smaller matrix
+
+1078
+01:07:50,050 --> 01:07:51,150
+multiplications.
+
+1079
+01:07:51,150 --> 01:07:52,770
+We can do those on different ranks,
+
+1080
+01:07:52,770 --> 01:07:55,310
+and then we can gather the results.
+
+1081
+01:07:58,290 --> 01:08:00,050
+When it comes to the backpropagation,
+
+1082
+01:08:00,050 --> 01:08:08,010
+gradients are still [INAUDIBLE].
+
+1083
+01:08:08,650 --> 01:08:12,850
+So now the question is, what happens in backprop?
+
+1084
+01:08:12,850 --> 01:08:16,490
+Now, in the backprop, you have your activations
+
+1085
+01:08:16,490 --> 01:08:22,870
+and you have to reduce scatter to all the different gradients.
+
+1086
+01:08:22,870 --> 01:08:25,670
+So in some ways, all gather and reduce scatter
+
+1087
+01:08:25,670 --> 01:08:28,290
+have this kind of duality, where in forward, you're
+
+1088
+01:08:28,290 --> 01:08:33,490
+all gathering, in the backward, you're reduce scattering.
+
+1089
+01:08:33,490 --> 01:08:34,430
+Yeah?
+
+1090
+01:08:34,430 --> 01:08:36,850
+[INAUDIBLE]
+
+1091
+01:08:36,850 --> 01:08:39,950
+So the question is, is that done automatically by autograd?
+
+1092
+01:08:39,950 --> 01:08:43,490
+So none of this--well, OK.
+
+1093
+01:08:43,490 --> 01:08:46,689
+So if you just call .backward, it's not going to do it,
+
+1094
+01:08:46,689 --> 01:08:49,630
+because there's no parallelism in that.
+
+1095
+01:08:49,630 --> 01:08:53,130
+But PyTorch has all these things that
+
+1096
+01:08:53,130 --> 01:08:54,990
+are done automatically for you.
+
+1097
+01:08:58,490 --> 01:09:05,850
+[INAUDIBLE] To what extent do I need to change
+
+1098
+01:09:05,850 --> 01:09:09,290
+my code and [INAUDIBLE]?
+
+1099
+01:09:09,290 --> 01:09:14,729
+So what is done for you versus automatically?
+
+1100
+01:09:14,729 --> 01:09:18,880
+Here we're managing things fairly explicitly,
+
+1101
+01:09:18,880 --> 01:09:21,740
+which means I'm not doing the backward pass,
+
+1102
+01:09:21,740 --> 01:09:25,200
+but you would have to manage and call the reduce scatter
+
+1103
+01:09:25,200 --> 01:09:25,939
+yourself.
+
+1104
+01:09:30,439 --> 01:09:33,997
+And that's by design, because this is 336,
+
+1105
+01:09:33,997 --> 01:09:35,580
+building language models from scratch.
+
+1106
+01:09:35,580 --> 01:09:38,840
+In practice, you probably wouldn't have to do that.
+
+1107
+01:09:38,840 --> 01:09:42,359
+OK, so let's do pipeline parallelism quickly.
+
+1108
+01:09:42,359 --> 01:09:44,920
+So the idea behind pipeline parallelism
+
+1109
+01:09:44,920 --> 01:09:47,760
+is we're going to split the network this way.
+
+1110
+01:09:47,760 --> 01:09:52,800
+So each rank is going to get a subset of the layers now.
+
+1111
+01:09:52,800 --> 01:09:56,360
+Within each layer, it's going to get all the dimensions,
+
+1112
+01:09:56,360 --> 01:09:59,200
+and it's also going to get all the--
+
+1113
+01:09:59,200 --> 01:10:04,080
+Well, one of the ranks is going to get all the data.
+
+1114
+01:10:04,080 --> 01:10:08,640
+Every rank is going to see all the data in some form.
+
+1115
+01:10:08,640 --> 01:10:14,180
+So this is the way it's going to work.
+
+1116
+01:10:14,180 --> 01:10:20,100
+So we have all the data, which is, again,
+
+1117
+01:10:20,100 --> 01:10:23,320
+the batch size times num dim.
+
+1118
+01:10:23,320 --> 01:10:26,360
+And I'm going to split up the layers.
+
+1119
+01:10:26,360 --> 01:10:29,040
+So local num layers is going to be the number of layers
+
+1120
+01:10:29,040 --> 01:10:32,920
+that a particular rank is going to handle.
+
+1121
+01:10:32,920 --> 01:10:37,520
+And so now I'm going to have local params, which
+
+1122
+01:10:37,520 --> 01:10:40,920
+is basically only-- there's local number of layers
+
+1123
+01:10:40,920 --> 01:10:42,320
+number of them.
+
+1124
+01:10:42,320 --> 01:10:48,040
+But within each layer, I'm going to do the num dim by num dim.
+
+1125
+01:10:48,040 --> 01:10:53,760
+So one thing, maybe [INAUDIBLE] will talk more
+
+1126
+01:10:53,760 --> 01:10:59,520
+about this on Wednesday, is this idea of micro-batches.
+
+1127
+01:10:59,520 --> 01:11:02,680
+So maybe I'll just present this and explain
+
+1128
+01:11:02,680 --> 01:11:04,960
+why I'm doing things this way.
+
+1129
+01:11:04,960 --> 01:11:07,780
+So in addition to splitting up the layers,
+
+1130
+01:11:07,780 --> 01:11:10,280
+I'm also going to split up the batch
+
+1131
+01:11:10,280 --> 01:11:14,400
+into a bunch of micro-batches.
+
+1132
+01:11:14,400 --> 01:11:20,640
+So if I'm rank 0, then I get the data,
+
+1133
+01:11:20,640 --> 01:11:24,680
+and I'm going to chunk it up into a number of micro-batches.
+
+1134
+01:11:24,680 --> 01:11:32,240
+And for each micro-batch, what I'm going to do
+
+1135
+01:11:32,240 --> 01:11:39,440
+is receive it from the previous rank,
+
+1136
+01:11:39,440 --> 01:11:43,840
+and then do the feed forward pass only on the layers that
+
+1137
+01:11:43,840 --> 01:11:45,480
+are assigned to this rank.
+
+1138
+01:11:45,480 --> 01:11:51,760
+And then I'm going to send to the next rank.
+
+1139
+01:11:51,760 --> 01:11:55,240
+So here I'm actually using these receive and send,
+
+1140
+01:11:55,240 --> 01:11:57,240
+which are pointwise operations.
+
+1141
+01:11:57,240 --> 01:12:02,220
+So I didn't cover those before, but they're fairly explanatory.
+
+1142
+01:12:02,220 --> 01:12:06,200
+This basically says I'm rank and I'm going
+
+1143
+01:12:06,200 --> 01:12:09,280
+to send this tensor over to--
+
+1144
+01:12:09,280 --> 01:12:14,230
+sorry, I'm going to receive this tensor from rank minus 1.
+
+1145
+01:12:14,230 --> 01:12:17,770
+And this says I'm going to send tensor x to rank plus 1.
+
+1146
+01:12:28,750 --> 01:12:35,710
+So basically, the reason why I'm talking about micro-batches is--
+
+1147
+01:12:35,710 --> 01:12:38,510
+and [? Tatsu ?] will talk more about this on Wednesday--
+
+1148
+01:12:38,510 --> 01:12:41,990
+is that in pipeline parallelism, so you have
+
+1149
+01:12:41,990 --> 01:12:46,030
+one rank that gets the data.
+
+1150
+01:12:46,030 --> 01:12:48,670
+It processes some of the layers, and then
+
+1151
+01:12:48,670 --> 01:12:53,930
+it sends it to the next GPU, and it processes some of the layers.
+
+1152
+01:12:53,930 --> 01:12:56,710
+And it then sends it to the next GPU.
+
+1153
+01:12:56,710 --> 01:13:00,770
+So this is a very natural way of dividing a deep network.
+
+1154
+01:13:00,770 --> 01:13:03,070
+But the problem is that you get these
+
+1155
+01:13:03,070 --> 01:13:09,430
+what are called pipeline bubbles, where while you're not
+
+1156
+01:13:09,430 --> 01:13:13,190
+processing, you're kind of waiting around for other tensors
+
+1157
+01:13:13,190 --> 01:13:14,630
+to process.
+
+1158
+01:13:14,630 --> 01:13:18,310
+And this ends up being quite inefficient.
+
+1159
+01:13:18,310 --> 01:13:22,710
+So the idea behind micro-batches is that you break it up
+
+1160
+01:13:22,710 --> 01:13:25,430
+into smaller batches, so you can process it quickly,
+
+1161
+01:13:25,430 --> 01:13:26,850
+send it on to the next one.
+
+1162
+01:13:26,850 --> 01:13:32,470
+So this can reduce the number of pipeline bubbles.
+
+1163
+01:13:32,470 --> 01:13:34,390
+So the other thing I will mention
+
+1164
+01:13:34,390 --> 01:13:37,630
+that is not handled in this very kind of naive version
+
+1165
+01:13:37,630 --> 01:13:41,410
+is the idea of overlapping communication and computation,
+
+1166
+01:13:41,410 --> 01:13:45,210
+which is actually very important to pipeline parallelism.
+
+1167
+01:13:45,210 --> 01:13:47,390
+This basically gives you the right structure.
+
+1168
+01:13:47,390 --> 01:13:53,550
+If you put an I before these, then it becomes kind of async.
+
+1169
+01:13:53,550 --> 01:13:58,510
+You have to add more things to manage the code.
+
+1170
+01:13:58,510 --> 01:14:02,750
+And the idea here is that you want to be--
+
+1171
+01:14:02,750 --> 01:14:07,510
+while you're computing here, you can be
+
+1172
+01:14:07,510 --> 01:14:11,270
+receiving data or sending data.
+
+1173
+01:14:11,270 --> 01:14:14,490
+So computation and communication should overlap.
+
+1174
+01:14:14,490 --> 01:14:19,210
+So that reduces the amount of time you actually spend waiting.
+
+1175
+01:14:23,190 --> 01:14:30,110
+So a few things that are kind of missing here, which we'll
+
+1176
+01:14:30,110 --> 01:14:32,110
+hopefully fill in next time.
+
+1177
+01:14:32,110 --> 01:14:36,190
+So the communication versus computation overlap,
+
+1178
+01:14:36,190 --> 01:14:41,950
+which is especially crucial in pipeline parallelism.
+
+1179
+01:14:41,950 --> 01:14:44,370
+I didn't mention in data parallelism,
+
+1180
+01:14:44,370 --> 01:14:48,810
+this also happens, because I just did a forward pass
+
+1181
+01:14:48,810 --> 01:14:51,650
+and then at the end, I'm just doing all these all reduces.
+
+1182
+01:14:51,650 --> 01:14:55,110
+But if you're clever, then on the backward pass,
+
+1183
+01:14:55,110 --> 01:14:57,090
+as soon as the gradients are done,
+
+1184
+01:14:57,090 --> 01:14:58,775
+you can start sending that.
+
+1185
+01:14:58,775 --> 01:15:00,150
+And that's something that will be
+
+1186
+01:15:00,150 --> 01:15:02,510
+explored in the assignment two.
+
+1187
+01:15:02,510 --> 01:15:06,910
+And this, again, allows you to just overlap communication
+
+1188
+01:15:06,910 --> 01:15:10,630
+and computation more.
+
+1189
+01:15:10,630 --> 01:15:14,410
+We had some questions about what about general models.
+
+1190
+01:15:14,410 --> 01:15:19,270
+Again, I think this MLP gives you
+
+1191
+01:15:19,270 --> 01:15:24,310
+essentially most of what you need
+
+1192
+01:15:24,310 --> 01:15:27,750
+for understanding the basics.
+
+1193
+01:15:27,750 --> 01:15:30,970
+有些更大的模型需要更多的簿记工作，
+
+1194
+01:15:30,970 --> 01:15:36,750
+所以更难看到核心算法。
+
+1195
+01:15:36,750 --> 01:15:39,950
+还有一些我们没有讲到的其他类型的并行计算。
+
+1196
+01:15:39,950 --> 01:15:43,230
+序列并行把一整个序列
+
+1197
+01:15:43,230 --> 01:15:44,990
+切成若干块。
+
+1198
+01:15:44,990 --> 01:15:47,110
+这样就可以并行化注意力
+
+1199
+01:15:47,110 --> 01:15:52,670
+计算，专家并行则可以并行化
+
+1200
+01:15:52,670 --> 01:15:54,250
+MoE 中的专家。
+
+1201
+01:15:54,250 --> 01:15:57,590
+这就是我提到的 all-to-all 发挥作用的地方。
+
+1202
+01:15:57,590 --> 01:16:02,350
+然后还有不同的组合
+
+1203
+01:16:02,350 --> 01:16:06,070
+不同的并行化技术，这也会
+
+1204
+01:16:06,070 --> 01:16:10,140
+出现在作业里。
+
+1205
+01:16:10,140 --> 01:16:14,460
+需要注意的一点是，
+
+1206
+01:16:14,460 --> 01:16:17,580
+你选择哪种并行技术
+
+1207
+01:16:17,580 --> 01:16:21,500
+很大程度上取决于硬件。
+
+1208
+01:16:21,500 --> 01:16:23,660
+例如，张量并行。
+
+1209
+01:16:23,660 --> 01:16:27,460
+通信量很大，因为每一层
+
+1210
+01:16:27,460 --> 01:16:31,860
+都需要发送所有这些激活值，而它们相当大。
+
+1211
+01:16:31,860 --> 01:16:36,220
+所以通常张量并行发生在节点内，通过 NVLink
+
+1212
+01:16:36,220 --> 01:16:40,740
+或者在高带宽的情况下。
+
+1213
+01:16:40,740 --> 01:16:42,740
+而你不会跨 NVLink 域
+
+1214
+01:16:42,740 --> 01:16:46,820
+做张量并行。
+
+1215
+01:16:46,820 --> 01:16:50,800
+而流水线并行，你会看到有人在用。
+
+1216
+01:16:50,800 --> 01:16:58,300
+通常它可以容忍慢得多的互连。
+
+1217
+01:16:58,300 --> 01:17:02,020
+所以一些去中心化训练的工作
+
+1218
+01:17:02,020 --> 01:17:05,580
+使用流水线并行，因为你的节点——
+
+1219
+01:17:05,580 --> 01:17:09,340
+GPU 分布在世界各地。
+
+1220
+01:17:09,340 --> 01:17:14,220
+但在那种情况下你不想做张量并行。
+
+1221
+01:17:14,220 --> 01:17:18,220
+所以有时候你看这些组合，
+
+1222
+01:17:18,220 --> 01:17:21,100
+会是节点内张量并行，
+
+1223
+01:17:21,100 --> 01:17:28,880
+然后是流水线数据并行或 FSDP，
+
+1224
+01:17:28,880 --> 01:17:35,420
+然后如果需要的话再用流水线并行。
+
+1225
+01:17:35,420 --> 01:17:39,460
+还有其他影响，比如如果你做数据并行，
+
+1226
+01:17:39,460 --> 01:17:42,600
+你可能可以把数据并行做得比较大。
+
+1227
+01:17:42,600 --> 01:17:45,060
+但随后你会遇到一个
+
+1228
+01:17:45,060 --> 01:17:47,340
+叫做临界批量大小的东西，这时
+
+1229
+01:17:47,340 --> 01:17:49,960
+如果你把批量大小增加得太多，
+
+1230
+01:17:49,960 --> 01:17:52,100
+它实际上并不会帮到你，这种情况下
+
+1231
+01:17:52,100 --> 01:17:53,740
+你就是在浪费你的算力，
+
+1232
+01:17:53,740 --> 01:17:56,160
+那你不如使用张量并行。
+
+1233
+01:17:56,160 --> 01:17:58,020
+有很多这样的考虑因素，
+
+1234
+01:17:58,020 --> 01:18:03,340
+随着课程的推进，我们会进一步讨论这些。
+
+1235
+01:18:03,340 --> 01:18:04,700
+最后再说明一点。
+
+1236
+01:18:04,700 --> 01:18:08,060
+刚才简单提到了TPU。
+
+1237
+01:18:08,060 --> 01:18:14,700
+需要注意的是，我们有意使用PyTorch，
+
+1238
+01:18:14,700 --> 01:18:17,220
+而且不只是使用PyTorch，而是真正以
+
+1239
+01:18:17,220 --> 01:18:21,780
+非常基础的方式使用集体操作，
+
+1240
+01:18:21,780 --> 01:18:25,660
+这样你就能从机制上看到发生了什么。
+
+1241
+01:18:25,660 --> 01:18:29,700
+另一种方法，尤其是如果你在TPU领域，
+
+1242
+01:18:29,700 --> 01:18:34,540
+就是你可以直接定义模型和起始
+
+1243
+01:18:34,540 --> 01:18:35,740
+策略。
+
+1244
+01:18:35,740 --> 01:18:38,380
+编译器实际上会处理很多
+
+1245
+01:18:38,380 --> 01:18:44,060
+关于如何——
+
+1246
+01:18:44,060 --> 01:18:48,400
+基本上，你需要什么样的通信操作。
+
+1247
+01:18:48,400 --> 01:18:51,180
+你基本上是说，这块数据
+
+1248
+01:18:51,180 --> 01:18:53,760
+需要在这里、这里和这里。
+
+1249
+01:18:53,760 --> 01:18:58,940
+然后编译器会做一些神奇的事情来弄清楚。
+
+1250
+01:18:58,940 --> 01:19:00,120
+所以这很有吸引力。
+
+1251
+01:19:00,120 --> 01:19:04,460
+但显然，这会剥夺很多
+
+1252
+01:19:04,460 --> 01:19:09,020
+从零开始构建东西的乐趣。
+
+1253
+01:19:09,020 --> 01:19:14,660
+总结一下，有很多并行化的方式。
+
+1254
+01:19:14,660 --> 01:19:19,860
+你可以按数据切分，按张量或专家切分，
+
+1255
+01:19:19,860 --> 01:19:23,700
+按流水线或序列切分。
+
+1256
+01:19:23,700 --> 01:19:26,460
+我们看了数据并行。
+
+1257
+01:19:26,460 --> 01:19:28,180
+我们只做了DDP。
+
+1258
+01:19:28,180 --> 01:19:32,140
+下次我们会讲FSDP和0。
+
+1259
+01:19:32,140 --> 01:19:34,460
+张量并行，正如我提到的，
+
+1260
+01:19:34,460 --> 01:19:36,820
+需要非常快的互连。
+
+1261
+01:19:36,820 --> 01:19:38,980
+流水线并行则不那么需要。
+
+1262
+01:19:38,980 --> 01:19:42,140
+但你需要非常努力地减少这些流水线
+
+1263
+01:19:42,140 --> 01:19:44,300
+气泡。
+
+1264
+01:19:44,300 --> 01:19:47,060
+然后也许在高层面上，我们
+
+1265
+01:19:47,060 --> 01:19:50,900
+看到这个模式经常出现。
+
+1266
+01:19:50,900 --> 01:19:56,485
+所以你可以选择重新计算或存储在内存中，
+
+1267
+01:19:56,485 --> 01:19:57,860
+当我们讨论像
+
+1268
+01:19:57,860 --> 01:20:04,370
+激活检查点或使用GPU时。
+
+1269
+01:20:04,370 --> 01:20:07,410
+或者在这种情况下，你可以把这看作一种扩展，
+
+1270
+01:20:07,410 --> 01:20:12,130
+即你可以存储在不同的GPU上。
+
+1271
+01:20:12,130 --> 01:20:15,290
+从这个角度来看，你看数据并行。
+
+1272
+01:20:15,290 --> 01:20:17,810
+在某种意义上，你在做冗余工作，
+
+1273
+01:20:17,810 --> 01:20:23,010
+because every rank is actually updating its parameters
+
+1274
+01:20:23,010 --> 01:20:25,130
+and keeping track of all the parameters.
+
+1275
+01:20:25,130 --> 01:20:26,890
+But the reason you're doing that is
+
+1276
+01:20:26,890 --> 01:20:33,090
+that you don't have to move the optimizer state across.
+
+1277
+01:20:33,090 --> 01:20:37,230
+So one thing is that hardware is getting faster.
+
+1278
+01:20:37,230 --> 01:20:40,910
+But in some sense, we'll always want bigger models.
+
+1279
+01:20:40,910 --> 01:20:44,250
+So this idea of having a hierarchical structure
+
+1280
+01:20:44,250 --> 01:20:47,210
+will always be there.
+
+1281
+01:20:47,210 --> 01:20:49,910
+So that's it for today.
+
+1282
+01:20:49,910 --> 01:20:54,370
+So next Wednesday, Tatsu will do more of a deep dive
+
+1283
+01:20:54,370 --> 01:20:57,680
+on more parallelism techniques.

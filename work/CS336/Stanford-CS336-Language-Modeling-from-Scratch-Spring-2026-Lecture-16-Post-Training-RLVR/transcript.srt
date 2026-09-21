@@ -1,0 +1,6663 @@
+1
+00:00:05,000 --> 00:00:05,900
+OK.
+
+2
+00:00:05,900 --> 00:00:08,400
+Maybe we should get started.
+
+3
+00:00:08,400 --> 00:00:11,820
+This is the second of the post-training lectures,
+
+4
+00:00:11,820 --> 00:00:15,680
+so we're going to talk about the exciting developments in RLVR
+
+5
+00:00:15,680 --> 00:00:19,840
+or reinforcement learning from verifiable rewards.
+
+6
+00:00:19,840 --> 00:00:23,400
+And I think this is in some ways very timely.
+
+7
+00:00:23,400 --> 00:00:25,100
+I didn't get to update the slide,
+
+8
+00:00:25,100 --> 00:00:28,360
+but there was just an announcement by OpenAI folks
+
+9
+00:00:28,360 --> 00:00:32,800
+that they had solved one of the major problems.
+
+10
+00:00:32,800 --> 00:00:35,400
+So that's a MyOpenMath problem using
+
+11
+00:00:35,400 --> 00:00:37,618
+one of their thinking models.
+
+12
+00:00:37,618 --> 00:00:38,660
+How does that thing work?
+
+13
+00:00:38,660 --> 00:00:43,160
+That's exactly this thinking model stuff or RLVR stuff.
+
+14
+00:00:43,160 --> 00:00:48,760
+And so thus far, where we're at is we are at the left side here.
+
+15
+00:00:48,760 --> 00:00:52,580
+After we finished last lecture, we've got instruction tuning,
+
+16
+00:00:52,580 --> 00:00:56,480
+we've got RLHF, we've got some good stuff that's ChatGPT.
+
+17
+00:00:56,480 --> 00:01:00,970
+And what remains is the modern developments in thinking models.
+
+18
+00:01:00,970 --> 00:01:04,790
+The model's ability to do very long COT
+
+19
+00:01:04,790 --> 00:01:07,150
+and solve these hard, verifiable problems
+
+20
+00:01:07,150 --> 00:01:11,790
+like mathematics and coding in some cases as well.
+
+21
+00:01:11,790 --> 00:01:15,950
+And remember that I ended last lecture with this a little bit
+
+22
+00:01:15,950 --> 00:01:17,710
+of a downer note.
+
+23
+00:01:17,710 --> 00:01:19,343
+The RLHF wasn't really going to get us
+
+24
+00:01:19,343 --> 00:01:21,510
+where we wanted to go because of this problem called
+
+25
+00:01:21,510 --> 00:01:22,710
+overoptimization.
+
+26
+00:01:22,710 --> 00:01:25,570
+So we're going to go and collect a bunch of preference data.
+
+27
+00:01:25,570 --> 00:01:27,390
+Preference data is very useful.
+
+28
+00:01:27,390 --> 00:01:29,150
+We will build some reward model and then
+
+29
+00:01:29,150 --> 00:01:31,990
+we will RL against that reward model.
+
+30
+00:01:31,990 --> 00:01:35,970
+But this thing is fundamentally an annotation bottleneck
+
+31
+00:01:35,970 --> 00:01:37,710
+because we have a reward model and you
+
+32
+00:01:37,710 --> 00:01:40,330
+can't keep putting compute into the same reward model,
+
+33
+00:01:40,330 --> 00:01:43,030
+eventually you're going to overfit your reward model.
+
+34
+00:01:43,030 --> 00:01:45,950
+And no matter how good of a job you do at regularizing,
+
+35
+00:01:45,950 --> 00:01:47,950
+eventually you're going to run into this problem
+
+36
+00:01:47,950 --> 00:01:49,990
+with overfitting.
+
+37
+00:01:49,990 --> 00:01:52,490
+And so really, this is very depressing.
+
+38
+00:01:52,490 --> 00:01:55,390
+And it's not really the potential of reinforcement learning.
+
+39
+00:01:55,390 --> 00:01:57,390
+If you're a big reinforcement learning believer,
+
+40
+00:01:57,390 --> 00:02:00,220
+you're going to look at all things like AlphaGo
+
+41
+00:02:00,220 --> 00:02:03,660
+and so on, where you say, well, in these domains,
+
+42
+00:02:03,660 --> 00:02:06,260
+RL really did an amazing job.
+
+43
+00:02:06,260 --> 00:02:08,820
+What is the difference between what we're doing in RLHF
+
+44
+00:02:08,820 --> 00:02:12,540
+and what has been achieved in these more RL
+
+45
+00:02:12,540 --> 00:02:15,380
+native or RL natural domains?
+
+46
+00:02:15,380 --> 00:02:17,600
+And really the difference, I would say,
+
+47
+00:02:17,600 --> 00:02:20,300
+or one major difference between something like AlphaGo
+
+48
+00:02:20,300 --> 00:02:23,820
+and something like RLHF is that in AlphaGo, we are optimizing
+
+49
+00:02:23,820 --> 00:02:25,500
+exactly what we want.
+
+50
+00:02:25,500 --> 00:02:28,260
+You get the win-loss conditions of the game of Go.
+
+51
+00:02:28,260 --> 00:02:31,120
+You don't have any sloppiness to that definition.
+
+52
+00:02:31,120 --> 00:02:33,560
+And so you can just put in as much compute as you want.
+
+53
+00:02:33,560 --> 00:02:37,580
+And as long as the objective improves, you're doing well.
+
+54
+00:02:37,580 --> 00:02:40,000
+In some sense, these are search problems.
+
+55
+00:02:40,000 --> 00:02:42,860
+Whereas the top one is much more of a learning problem.
+
+56
+00:02:42,860 --> 00:02:45,060
+Not quite a precise distinction, but that's
+
+57
+00:02:45,060 --> 00:02:46,580
+one way of thinking about it.
+
+58
+00:02:46,580 --> 00:02:49,220
+So now there might be other domains like formal mathematics
+
+59
+00:02:49,220 --> 00:02:51,220
+or even natural language mathematics,
+
+60
+00:02:51,220 --> 00:02:54,940
+that have this flavor of being more verifiable and therefore
+
+61
+00:02:54,940 --> 00:02:57,230
+much more amenable to reinforcement learning.
+
+62
+00:02:57,230 --> 00:02:59,770
+So that's going to be the motivation for why we're
+
+63
+00:02:59,770 --> 00:03:01,110
+going to study some of these.
+
+64
+00:03:01,110 --> 00:03:03,890
+And the algorithms aren't going to be that different
+
+65
+00:03:03,890 --> 00:03:06,490
+fundamentally, but where we will end up
+
+66
+00:03:06,490 --> 00:03:09,890
+will actually be surprisingly different.
+
+67
+00:03:09,890 --> 00:03:12,750
+And so the lecture is going to be in two parts today.
+
+68
+00:03:12,750 --> 00:03:14,610
+This mirrors a lot of how we've structured
+
+69
+00:03:14,610 --> 00:03:16,690
+the course in other parts.
+
+70
+00:03:16,690 --> 00:03:18,197
+So in the first part of the lecture,
+
+71
+00:03:18,197 --> 00:03:20,030
+I'm going to talk about the core algorithms.
+
+72
+00:03:20,030 --> 00:03:22,370
+This is like basic knowledge for you all.
+
+73
+00:03:22,370 --> 00:03:25,020
+You will use some of this for your assignments.
+
+74
+00:03:25,020 --> 00:03:26,770
+And so I'm going to talk about things, what
+
+75
+00:03:26,770 --> 00:03:29,130
+is GRPO, how does PPO work.
+
+76
+00:03:29,130 --> 00:03:30,570
+And then after I've done that, I'm
+
+77
+00:03:30,570 --> 00:03:34,090
+going to dig through a bunch of open source releases
+
+78
+00:03:34,090 --> 00:03:35,850
+and show you how what I've taught you
+
+79
+00:03:35,850 --> 00:03:40,690
+in the first part reflects in the technical reports of many
+
+80
+00:03:40,690 --> 00:03:46,000
+of these major open source model releases.
+
+81
+00:03:46,000 --> 00:03:50,410
+So we're going to dive into the methods and basic section.
+
+82
+00:03:50,410 --> 00:03:53,190
+And the first thing that I'm going to start with is PPO.
+
+83
+00:03:53,190 --> 00:03:56,560
+We can't really discuss RL for language models
+
+84
+00:03:56,560 --> 00:03:58,642
+without discussing PPO.
+
+85
+00:03:58,642 --> 00:04:00,100
+And even though we've done it once,
+
+86
+00:04:00,100 --> 00:04:02,120
+PPO is confusing enough that I think you will
+
+87
+00:04:02,120 --> 00:04:04,960
+benefit from doing it twice.
+
+88
+00:04:04,960 --> 00:04:07,220
+The most important thing to identify,
+
+89
+00:04:07,220 --> 00:04:10,880
+let's say to remember in RL for language modeling, is
+
+90
+00:04:10,880 --> 00:04:11,860
+policy gradients.
+
+91
+00:04:11,860 --> 00:04:15,180
+And in particular this REINFORCE gradient trick.
+
+92
+00:04:15,180 --> 00:04:19,560
+Well, what we are always going to be doing is gradient descent
+
+93
+00:04:19,560 --> 00:04:21,220
+on our rewards.
+
+94
+00:04:21,220 --> 00:04:25,800
+And we are going to do so by taking essentially weighted SFT
+
+95
+00:04:25,800 --> 00:04:26,390
+updates.
+
+96
+00:04:26,390 --> 00:04:28,140
+The weights might be positive or negative.
+
+97
+00:04:28,140 --> 00:04:29,640
+We will define what R is.
+
+98
+00:04:29,640 --> 00:04:32,880
+But this equation is important because it will reappear
+
+99
+00:04:32,880 --> 00:04:34,252
+throughout this lecture.
+
+100
+00:04:34,252 --> 00:04:35,960
+This is in some sense the core from which
+
+101
+00:04:35,960 --> 00:04:38,120
+everything else is derived.
+
+102
+00:04:38,120 --> 00:04:40,360
+Now, building upon that, remember
+
+103
+00:04:40,360 --> 00:04:41,880
+that the intuition from last lecture
+
+104
+00:04:41,880 --> 00:04:44,380
+was we want to take more than one step at a time.
+
+105
+00:04:44,380 --> 00:04:47,320
+A policy gradient requires us to sample from our policy
+
+106
+00:04:47,320 --> 00:04:49,440
+every time we want to take a gradient step.
+
+107
+00:04:49,440 --> 00:04:51,020
+Can we reuse our rollouts?
+
+108
+00:04:51,020 --> 00:04:52,630
+Well, you can do TRPO.
+
+109
+00:04:52,630 --> 00:04:54,850
+You can do PPO and so on and so forth.
+
+110
+00:04:54,850 --> 00:04:56,690
+I'll talk about PPO in a minute.
+
+111
+00:04:56,690 --> 00:04:58,490
+And I've already talked about TRPO.
+
+112
+00:04:58,490 --> 00:05:01,070
+I won't really get too much into this.
+
+113
+00:05:01,070 --> 00:05:04,190
+If you've taken an RL course, PPO is, of course,
+
+114
+00:05:04,190 --> 00:05:07,990
+well understood to you, like you understand this algorithm,
+
+115
+00:05:07,990 --> 00:05:11,110
+but I don't assume that all of you have taken an RL class
+
+116
+00:05:11,110 --> 00:05:13,870
+and/or understand RL.
+
+117
+00:05:13,870 --> 00:05:16,430
+And so PPO, in case you're not familiar,
+
+118
+00:05:16,430 --> 00:05:20,450
+is a real workhorse of RL.
+
+119
+00:05:20,450 --> 00:05:24,390
+It's been used in a variety of very difficult RL settings.
+
+120
+00:05:24,390 --> 00:05:28,230
+OpenAI has done quite a few of these in their early days.
+
+121
+00:05:28,230 --> 00:05:31,350
+of being very RL pilled.
+
+122
+00:05:31,350 --> 00:05:33,710
+They had, this was I think, OpenAI
+
+123
+00:05:33,710 --> 00:05:37,015
+gym where they were talking about the PPO algorithm
+
+124
+00:05:37,015 --> 00:05:38,390
+and they're like, hey, we can get
+
+125
+00:05:38,390 --> 00:05:42,050
+these people to walk around using reinforcement learning.
+
+126
+00:05:42,050 --> 00:05:43,990
+In a much more dramatic demonstration of this
+
+127
+00:05:43,990 --> 00:05:47,430
+was their OpenAI bot, which they trained using PPO.
+
+128
+00:05:47,430 --> 00:05:50,390
+And so this can excel with deep RL
+
+129
+00:05:50,390 --> 00:05:53,720
+in high-dimensional action and state spaces,
+
+130
+00:05:53,720 --> 00:05:58,740
+where it's much more complicated to do RL than it is usually.
+
+131
+00:05:58,740 --> 00:05:59,520
+Oh, yeah.
+
+132
+00:05:59,520 --> 00:06:02,280
+And there's the OpenAI man running around.
+
+133
+00:06:02,280 --> 00:06:04,380
+All right.
+
+134
+00:06:04,380 --> 00:06:08,300
+So at a conceptual level, PPO is actually very simple.
+
+135
+00:06:08,300 --> 00:06:14,400
+Remember that I told you, an important part of all of this is getting rid of PPO.
+
+136
+00:06:14,400 --> 00:06:16,640
+That's been a motivating factor for a lot of people.
+
+137
+00:06:16,640 --> 00:06:18,900
+But if you look at the pseudocode of PPO,
+
+138
+00:06:18,900 --> 00:06:23,555
+this is from OpenAI's Spinning Up in RL documentation.
+
+139
+00:06:23,555 --> 00:06:25,680
+You look at this and you say, this is not that bad.
+
+140
+00:06:25,680 --> 00:06:26,880
+This is actually pretty easy.
+
+141
+00:06:26,880 --> 00:06:28,255
+I could implement this in one go.
+
+142
+00:06:28,255 --> 00:06:30,120
+You sample some trajectories.
+
+143
+00:06:30,120 --> 00:06:32,860
+I compute something called an advantage using any method
+
+144
+00:06:32,860 --> 00:06:34,480
+of advantage estimation.
+
+145
+00:06:34,480 --> 00:06:38,780
+I clip the advantage in this slightly strange but OK way.
+
+146
+00:06:38,780 --> 00:06:42,200
+And then I update the policy under this clipped advantage.
+
+147
+00:06:42,200 --> 00:06:42,867
+And that's fine.
+
+148
+00:06:42,867 --> 00:06:45,408
+And then I can fit something called a value function as well.
+
+149
+00:06:45,408 --> 00:06:46,040
+OK, fine.
+
+150
+00:06:46,040 --> 00:06:50,010
+This is all relatively easy looking in practice.
+
+151
+00:06:50,010 --> 00:06:54,110
+And so I think because of this, people are like, oh, it's OK.
+
+152
+00:06:54,110 --> 00:06:55,550
+PPO is totally fine.
+
+153
+00:06:55,550 --> 00:06:57,550
+But then you see blog posts that look like this,
+
+154
+00:06:57,550 --> 00:06:59,690
+and this should strike fear into your heart.
+
+155
+00:06:59,690 --> 00:07:03,250
+Because if you see a blog post that says the 37 implementation
+
+156
+00:07:03,250 --> 00:07:08,730
+details of PPO, you know that this is an algorithm that is very sensitive to your implementation
+
+157
+00:07:08,730 --> 00:07:10,730
+decisions.
+
+158
+00:07:10,730 --> 00:07:13,735
+And there's all sorts of things that you can do
+
+159
+00:07:13,735 --> 00:07:16,110
+and all sorts of different libraries and implementations,
+
+160
+00:07:16,110 --> 00:07:18,210
+and they give totally different numbers
+
+161
+00:07:18,210 --> 00:07:20,730
+based on which ones you use.
+
+162
+00:07:20,730 --> 00:07:23,090
+And it turns out that many people
+
+163
+00:07:23,090 --> 00:07:24,270
+have implemented this wrong.
+
+164
+00:07:24,270 --> 00:07:26,020
+And so there's a paper saying, like, actually
+
+165
+00:07:26,020 --> 00:07:28,222
+the baselines that some people use in PPO
+
+166
+00:07:28,222 --> 00:07:29,430
+aren't even baselines at all.
+
+167
+00:07:29,430 --> 00:07:32,810
+They fundamentally change the optimization problem.
+
+168
+00:07:32,810 --> 00:07:36,130
+And so basically because of this, I
+
+169
+00:07:36,130 --> 00:07:39,610
+think I would not be able to get through the rest of the lecture
+
+170
+00:07:39,610 --> 00:07:41,410
+without telling you, well, we actually
+
+171
+00:07:41,410 --> 00:07:44,730
+maybe need to start looking at some implementations of PPO.
+
+172
+00:07:44,730 --> 00:07:47,940
+And the implementations of PPO, let me tell you,
+
+173
+00:07:47,940 --> 00:07:51,120
+for language models are not particularly pleasant.
+
+174
+00:07:51,120 --> 00:07:54,100
+This is, I mean, a very good representative slide.
+
+175
+00:07:54,100 --> 00:07:56,080
+If anything, this is a very good description
+
+176
+00:07:56,080 --> 00:07:57,840
+of what PPO looks like.
+
+177
+00:07:57,840 --> 00:08:00,163
+You've got advantage estimation.
+
+178
+00:08:00,163 --> 00:08:02,580
+This big block in the middle, that's this advantage thing.
+
+179
+00:08:02,580 --> 00:08:04,400
+You've got an experience buffer because you're going
+
+180
+00:08:04,400 --> 00:08:05,828
+to keep some of the old stuff.
+
+181
+00:08:05,828 --> 00:08:07,620
+It's going to be training this value model.
+
+182
+00:08:07,620 --> 00:08:10,640
+And the value models are being used in the advantage estimation
+
+183
+00:08:10,640 --> 00:08:11,300
+calculation.
+
+184
+00:08:11,300 --> 00:08:14,480
+Notice how the green box appears twice.
+
+185
+00:08:14,480 --> 00:08:18,360
+And importantly, some parts of my objective, the KL term,
+
+186
+00:08:18,360 --> 00:08:20,500
+actually operate token by token.
+
+187
+00:08:20,500 --> 00:08:22,420
+So it's not actually just a bandit problem.
+
+188
+00:08:22,420 --> 00:08:24,940
+It's like a whole multi-step RL problem.
+
+189
+00:08:24,940 --> 00:08:28,960
+And this is all very difficult and complicated.
+
+190
+00:08:28,960 --> 00:08:33,280
+And so this has led to a variety of really tricky implementation
+
+191
+00:08:33,280 --> 00:08:34,780
+things that you have to do.
+
+192
+00:08:34,780 --> 00:08:37,799
+And if you look at a variety of implementations,
+
+193
+00:08:37,799 --> 00:08:40,320
+you find often that there are things
+
+194
+00:08:40,320 --> 00:08:44,840
+that people do for PPO that are a little bit strange and tricky
+
+195
+00:08:44,840 --> 00:08:45,710
+at times.
+
+196
+00:08:45,710 --> 00:08:48,710
+Let me see if I can find.
+
+197
+00:08:48,710 --> 00:08:50,430
+So one of my students implemented
+
+198
+00:08:50,430 --> 00:08:53,550
+a PPO for a project a while back doing RLHF.
+
+199
+00:08:53,550 --> 00:08:56,070
+So PPO, if you remember, was used in RLHF.
+
+200
+00:08:56,070 --> 00:09:00,225
+And so we had this nice robust reference implementation of PPO
+
+201
+00:09:00,225 --> 00:09:01,850
+and it took a long time to get working.
+
+202
+00:09:01,850 --> 00:09:03,910
+So I looked into the details, like what did we actually
+
+203
+00:09:03,910 --> 00:09:05,290
+do to get this thing to work.
+
+204
+00:09:05,290 --> 00:09:06,248
+The outer loop is fine.
+
+205
+00:09:06,248 --> 00:09:08,790
+The outer loop is something like you go through your rollouts
+
+206
+00:09:08,790 --> 00:09:10,570
+and you're going to take some PPO steps,
+
+207
+00:09:10,570 --> 00:09:12,430
+you're going to compute some loss and clip some gradients
+
+208
+00:09:12,430 --> 00:09:13,290
+and take some steps.
+
+209
+00:09:13,290 --> 00:09:15,590
+Totally reasonable outer loop.
+
+210
+00:09:15,590 --> 00:09:18,830
+But then you start looking into it.
+
+211
+00:09:18,830 --> 00:09:22,030
+For now, the actual inner compute loss part
+
+212
+00:09:22,030 --> 00:09:24,890
+follows almost exactly the PPO update.
+
+213
+00:09:24,890 --> 00:09:26,770
+So this also looks mostly good.
+
+214
+00:09:26,770 --> 00:09:29,510
+We're computing things like the advantages
+
+215
+00:09:29,510 --> 00:09:32,170
+and we're computing the clipping ratios.
+
+216
+00:09:32,170 --> 00:09:34,410
+And then we're updating the model based on that.
+
+217
+00:09:34,410 --> 00:09:36,590
+So this is all good.
+
+218
+00:09:36,590 --> 00:09:40,390
+But then you get to some of the messier parts.
+
+219
+00:09:40,390 --> 00:09:42,590
+Actually, I'll skip the rollouts,
+
+220
+00:09:42,590 --> 00:09:44,410
+where you have things like, well, maybe we
+
+221
+00:09:44,410 --> 00:09:49,050
+need KL penalties to keep the original model
+
+222
+00:09:49,050 --> 00:09:51,130
+close to the reference, but actually this
+
+223
+00:09:51,130 --> 00:09:53,950
+only works if you clip the KL off at 0, which of course,
+
+224
+00:09:53,950 --> 00:09:56,730
+if you know anything about KL divergences, that totally ruins
+
+225
+00:09:56,730 --> 00:09:58,090
+the point of a KL divergence.
+
+226
+00:09:58,090 --> 00:10:00,850
+You have both positive and negative values being summed.
+
+227
+00:10:00,850 --> 00:10:03,330
+If you remove this, it blows up immediately.
+
+228
+00:10:03,330 --> 00:10:04,863
+All things like this can happen.
+
+229
+00:10:04,863 --> 00:10:07,530
+This is not to say that this is the way you should implement PPO
+
+230
+00:10:07,530 --> 00:10:08,670
+if you were doing it.
+
+231
+00:10:08,670 --> 00:10:10,490
+I think the reason why I'm bringing this up
+
+232
+00:10:10,490 --> 00:10:13,530
+is to say implementations for RL algorithms can
+
+233
+00:10:13,530 --> 00:10:16,210
+be somewhat tricky and somewhat sensitive because of all
+
+234
+00:10:16,210 --> 00:10:18,010
+the moving pieces in PPO, and because
+
+235
+00:10:18,010 --> 00:10:20,610
+of the high variance in the gradient estimates.
+
+236
+00:10:20,610 --> 00:10:25,290
+These are all very, very tricky things that are happening.
+
+237
+00:10:25,290 --> 00:10:27,710
+And another thing that you often see,
+
+238
+00:10:27,710 --> 00:10:29,550
+this one is not just RL implementation.
+
+239
+00:10:29,550 --> 00:10:31,053
+It's very common.
+
+240
+00:10:31,053 --> 00:10:32,970
+In the original PPO paper, you have this thing
+
+241
+00:10:32,970 --> 00:10:35,930
+called a generalized advantage estimator that's basically
+
+242
+00:10:35,930 --> 00:10:39,770
+looking at this gamma discounted reward, where you have
+
+243
+00:10:39,770 --> 00:10:41,690
+this value function that's estimating
+
+244
+00:10:41,690 --> 00:10:44,800
+the reward at every token generation step.
+
+245
+00:10:44,800 --> 00:10:48,040
+But it turns out that people often just
+
+246
+00:10:48,040 --> 00:10:50,240
+use gamma equals lambda equals 1, which is just
+
+247
+00:10:50,240 --> 00:10:53,300
+a degenerate setting that turns this back into a bandit problem.
+
+248
+00:10:53,300 --> 00:10:55,480
+So you've thrown away a lot of the structure
+
+249
+00:10:55,480 --> 00:10:58,140
+that you get from PPO.
+
+250
+00:10:58,140 --> 00:11:01,740
+And so if you run this algorithm after a bunch of engineering,
+
+251
+00:11:01,740 --> 00:11:03,300
+you will get what you expect.
+
+252
+00:11:03,300 --> 00:11:06,780
+And when you run your RL algorithms for the assignment,
+
+253
+00:11:06,780 --> 00:11:09,860
+you should expect to see similar things, like the rewards go up.
+
+254
+00:11:09,860 --> 00:11:12,880
+The reward model rewards go up if you're doing RLHF,
+
+255
+00:11:12,880 --> 00:11:15,980
+and then the negative KL regularizers go down.
+
+256
+00:11:15,980 --> 00:11:19,080
+This is a reasonable thing to expect to see.
+
+257
+00:11:19,080 --> 00:11:24,960
+But anyway, the point of all of this is to say implementation of PPO can be quite painful.
+
+258
+00:11:24,960 --> 00:11:28,660
+Depending on the environment, it can require hacks to stabilize.
+
+259
+00:11:28,660 --> 00:11:31,083
+All of this is painful.
+
+260
+00:11:31,083 --> 00:11:32,500
+Not to say that it's not possible.
+
+261
+00:11:32,500 --> 00:11:36,640
+Lots of people have trained very good models on PPO.
+
+262
+00:11:36,640 --> 00:11:39,840
+Many of the labs have very turnkey solutions
+
+263
+00:11:39,840 --> 00:11:42,710
+for getting PPO to work at scale.
+
+264
+00:11:42,710 --> 00:11:44,790
+So this is not impossible.
+
+265
+00:11:44,790 --> 00:11:47,790
+But for people like researchers who are implementing this
+
+266
+00:11:47,790 --> 00:11:51,870
+from scratch, PPO can just be really finicky and complicated.
+
+267
+00:11:51,870 --> 00:11:55,310
+Another reason why PPO is disfavored in many cases
+
+268
+00:11:55,310 --> 00:11:58,710
+is that it requires a value model to estimate the value
+
+269
+00:11:58,710 --> 00:12:00,590
+at each token as you go.
+
+270
+00:12:00,590 --> 00:12:02,170
+And how big is the value model?
+
+271
+00:12:02,170 --> 00:12:04,410
+Well, it's as big as the original model,
+
+272
+00:12:04,410 --> 00:12:06,710
+so this consumes some memory that you would rather
+
+273
+00:12:06,710 --> 00:12:11,990
+be using for other stuff like models or inference servers.
+
+274
+00:12:11,990 --> 00:12:14,590
+So now you might say, well, in last lecture,
+
+275
+00:12:14,590 --> 00:12:18,630
+you told us about this DPO thing, and DPO seems pretty good.
+
+276
+00:12:18,630 --> 00:12:20,410
+Why don't we just use DPO for everything?
+
+277
+00:12:20,410 --> 00:12:23,590
+Well, the problem is DPO is a very specific solution
+
+278
+00:12:23,590 --> 00:12:25,130
+to a very specific problem.
+
+279
+00:12:25,130 --> 00:12:28,030
+DPO is good for pairwise feedback in the form
+
+280
+00:12:28,030 --> 00:12:29,610
+of Bradley-Terry comparisons.
+
+281
+00:12:29,610 --> 00:12:31,230
+That is very specific.
+
+282
+00:12:31,230 --> 00:12:33,590
+And if I want to solve math problems,
+
+283
+00:12:33,590 --> 00:12:36,470
+my math problems don't come in the form of inherently pairwise
+
+284
+00:12:36,470 --> 00:12:37,210
+comparisons.
+
+285
+00:12:37,210 --> 00:12:39,140
+There are other DPO variants that
+
+286
+00:12:39,140 --> 00:12:41,640
+are designed to break that pairwise structure,
+
+287
+00:12:41,640 --> 00:12:44,900
+but really you're just using the wrong hammer for the job.
+
+288
+00:12:44,900 --> 00:12:47,460
+You do not want to use DPO necessarily
+
+289
+00:12:47,460 --> 00:12:49,660
+for what you would normally use PPO for.
+
+290
+00:12:49,660 --> 00:12:52,460
+PPO is the more general hammer that you can hit everything
+
+291
+00:12:52,460 --> 00:12:53,660
+with.
+
+292
+00:12:53,660 --> 00:12:55,080
+DPO is generally offline.
+
+293
+00:12:55,080 --> 00:12:57,100
+Although I think this distinction
+
+294
+00:12:57,100 --> 00:12:59,020
+is very overstated because it can
+
+295
+00:12:59,020 --> 00:13:01,520
+be made online by just iterating DPO repeatedly.
+
+296
+00:13:01,520 --> 00:13:04,980
+So I don't think this is necessarily a big difference.
+
+297
+00:13:04,980 --> 00:13:09,980
+So that's the context for all of this.
+
+298
+00:13:09,980 --> 00:13:13,080
+And then so that similarly to DPO,
+
+299
+00:13:13,080 --> 00:13:16,060
+there's just an enormous desire by the research community
+
+300
+00:13:16,060 --> 00:13:18,500
+to not have to use PPO.
+
+301
+00:13:18,500 --> 00:13:22,300
+Hopefully, the fact that DPO and GRPO have gotten adoption
+
+302
+00:13:22,300 --> 00:13:26,220
+tells you how painful it was to get this to work in many cases.
+
+303
+00:13:26,220 --> 00:13:29,240
+And so GRPO much like DPO, is the alternative,
+
+304
+00:13:29,240 --> 00:13:33,320
+it is the simpler way to do RL for verifiable task.
+
+305
+00:13:33,320 --> 00:13:35,820
+It has taken over for the most part
+
+306
+00:13:35,820 --> 00:13:39,470
+RLVR in the open source, open knowledge,
+
+307
+00:13:39,470 --> 00:13:41,450
+let's call it community.
+
+308
+00:13:41,450 --> 00:13:44,110
+And it is very, very similar to PPO in spirit.
+
+309
+00:13:44,110 --> 00:13:47,270
+It just strips out a couple of the most complicated parts,
+
+310
+00:13:47,270 --> 00:13:51,130
+and by doing so, allows us to have a much simpler algorithm.
+
+311
+00:13:51,130 --> 00:13:55,410
+So GRPO is by DeepSeek paper.
+
+312
+00:13:55,410 --> 00:13:57,970
+I think it was there like DeepSeek math paper,
+
+313
+00:13:57,970 --> 00:13:59,690
+where you start with PPO.
+
+314
+00:13:59,690 --> 00:14:02,270
+It conceptually it says PPO is a good idea,
+
+315
+00:14:02,270 --> 00:14:04,110
+but we want to change just a few things.
+
+316
+00:14:04,110 --> 00:14:05,110
+And what does it change?
+
+317
+00:14:05,110 --> 00:14:08,290
+It changes arguably the most complicated and annoying part
+
+318
+00:14:08,290 --> 00:14:10,170
+of PPO, which is the value function.
+
+319
+00:14:10,170 --> 00:14:11,890
+So the value function is the thing
+
+320
+00:14:11,890 --> 00:14:14,930
+that you subtract as a baseline to reduce variance
+
+321
+00:14:14,930 --> 00:14:17,035
+of your gradient updates.
+
+322
+00:14:17,035 --> 00:14:18,910
+The value function is a whole neural network.
+
+323
+00:14:18,910 --> 00:14:20,110
+It destabilizes training.
+
+324
+00:14:20,110 --> 00:14:21,930
+We don't want the value network.
+
+325
+00:14:21,930 --> 00:14:23,167
+So what do we do?
+
+326
+00:14:23,167 --> 00:14:24,750
+Well, we get rid of the value network,
+
+327
+00:14:24,750 --> 00:14:26,230
+but we still need an advantage.
+
+328
+00:14:26,230 --> 00:14:28,133
+I don't want to do REINFORCE—
+
+329
+00:14:28,133 --> 00:14:30,050
+vanilla REINFORCE because the variance of that
+
+330
+00:14:30,050 --> 00:14:32,050
+is going to be really, really high.
+
+331
+00:14:32,050 --> 00:14:33,930
+So instead, what we're going to do
+
+332
+00:14:33,930 --> 00:14:36,000
+is I'm going to compute your advantage
+
+333
+00:14:36,000 --> 00:14:38,840
+as a z-score within a group, and I'll explain
+
+334
+00:14:38,840 --> 00:14:40,640
+what that means in a moment.
+
+335
+00:14:40,640 --> 00:14:43,080
+But basically, the idea is the following.
+
+336
+00:14:43,080 --> 00:14:45,392
+Normally, you look at a reward that you get
+
+337
+00:14:45,392 --> 00:14:47,600
+and if you had a value function, you would compare it
+
+338
+00:14:47,600 --> 00:14:49,197
+to your predicted value.
+
+339
+00:14:49,197 --> 00:14:50,780
+You would say, my neural network says,
+
+340
+00:14:50,780 --> 00:14:52,460
+I should have gotten a score of 5.
+
+341
+00:14:52,460 --> 00:14:53,500
+I got a score of 6.
+
+342
+00:14:53,500 --> 00:14:54,760
+So this is a good rollout.
+
+343
+00:14:54,760 --> 00:14:56,360
+That's usually what you do.
+
+344
+00:14:56,360 --> 00:14:58,720
+Instead, what you would do is you
+
+345
+00:14:58,720 --> 00:15:01,420
+would, let's say, your rollout with a score of 5.
+
+346
+00:15:01,420 --> 00:15:03,120
+You would now sample 10 other rollouts
+
+347
+00:15:03,120 --> 00:15:04,960
+and you would say, how good was I compared
+
+348
+00:15:04,960 --> 00:15:06,140
+to my 10 other rollouts.
+
+349
+00:15:06,140 --> 00:15:08,240
+If I'm doing better than my mean,
+
+350
+00:15:08,240 --> 00:15:10,440
+then I have a high advantage.
+
+351
+00:15:10,440 --> 00:15:14,400
+In some ways, a very natural way of computing advantage
+
+352
+00:15:14,400 --> 00:15:16,520
+in contexts where you can multiple sample
+
+353
+00:15:16,520 --> 00:15:19,080
+from the same prompt or something like that.
+
+354
+00:15:19,080 --> 00:15:21,140
+So GRPO is exactly this idea.
+
+355
+00:15:21,140 --> 00:15:24,680
+If you look at the initial definition of GRPO that
+
+356
+00:15:24,680 --> 00:15:27,420
+appeared in the DeepSeek paper, you see,
+
+357
+00:15:27,420 --> 00:15:30,860
+this is the objective that's being optimized.
+
+358
+00:15:30,860 --> 00:15:34,590
+They're going to do exactly the PPO update, where they have
+
+359
+00:15:34,590 --> 00:15:37,550
+this min clipped advantage, plus a KL term
+
+360
+00:15:37,550 --> 00:15:40,590
+to keep yourself close to the reference.
+
+361
+00:15:40,590 --> 00:15:42,650
+And then KL is computed in a particular way.
+
+362
+00:15:42,650 --> 00:15:44,610
+That detail is not particularly important.
+
+363
+00:15:44,610 --> 00:15:46,630
+And importantly, this advantage is
+
+364
+00:15:46,630 --> 00:15:49,910
+computed as a z-score over samples of a group of outputs,
+
+365
+00:15:49,910 --> 00:15:51,710
+o of 1 through o of G.
+
+366
+00:15:51,710 --> 00:15:54,437
+So that's-- or within each group, you have-- oh, sorry.
+
+367
+00:15:54,437 --> 00:15:56,270
+This advantage of i, this is the place where
+
+368
+00:15:56,270 --> 00:15:57,353
+you compute the advantage.
+
+369
+00:15:57,353 --> 00:16:00,150
+What you do is you take the reward over your rollouts
+
+370
+00:16:00,150 --> 00:16:04,710
+within each group, you subtract the mean and you divide by the standard deviation.
+
+371
+00:16:04,710 --> 00:16:08,230
+So you get a z-score for each group.
+
+372
+00:16:08,230 --> 00:16:11,045
+So in the online case and this is an important distinction
+
+373
+00:16:11,045 --> 00:16:12,670
+because in many cases, you may actually
+
+374
+00:16:12,670 --> 00:16:15,790
+end up running this online rather than offline.
+
+375
+00:16:15,790 --> 00:16:18,030
+In the online case, the clipping just
+
+376
+00:16:18,030 --> 00:16:22,190
+disappears because the ratio between pi theta old and pi
+
+377
+00:16:22,190 --> 00:16:25,710
+theta is 1, this clipping operator never does anything
+
+378
+00:16:25,710 --> 00:16:28,270
+and you just get min A of i, A of i.
+
+379
+00:16:28,270 --> 00:16:31,050
+So this is just advantage minus a KL penalty.
+
+380
+00:16:31,050 --> 00:16:32,940
+So I'm going to do RL on my advantage, which
+
+381
+00:16:32,940 --> 00:16:33,920
+is defined by this.
+
+382
+00:16:33,920 --> 00:16:35,580
+So in the online rollout case, it
+
+383
+00:16:35,580 --> 00:16:41,840
+is a very, very simple object that makes sense as RL target.
+
+384
+00:16:41,840 --> 00:16:43,860
+So I can pause here for a moment in case
+
+385
+00:16:43,860 --> 00:16:46,280
+any of the conceptual bits of GRPO are not clear.
+
+386
+00:16:46,280 --> 00:16:48,447
+I mean, in some sense, this is the foundation of all
+
+387
+00:16:48,447 --> 00:16:50,280
+of the exciting math stuff.
+
+388
+00:16:50,280 --> 00:16:54,132
+Or you can replicate all of the exciting math stuff using GRPO.
+
+389
+00:16:54,132 --> 00:16:56,340
+So it's worth understanding in a little bit of detail
+
+390
+00:16:56,340 --> 00:16:59,640
+before we move on to some of the nitty-gritty details.
+
+391
+00:17:05,940 --> 00:17:06,540
+OK.
+
+392
+00:17:06,540 --> 00:17:07,200
+Good.
+
+393
+00:17:07,200 --> 00:17:09,359
+Simple enough that everyone understands in one go.
+
+394
+00:17:09,359 --> 00:17:11,540
+I will take it.
+
+395
+00:17:11,540 --> 00:17:16,140
+And GRPO is very, very simple because of the lack of value
+
+396
+00:17:16,140 --> 00:17:19,780
+function, you can basically write down all of GRPO
+
+397
+00:17:19,780 --> 00:17:22,839
+in a very simple block of code, where you just say,
+
+398
+00:17:22,839 --> 00:17:25,260
+I'm going to roll out k times, I'm
+
+399
+00:17:25,260 --> 00:17:29,760
+going to compare my observed rollout to those k references,
+
+400
+00:17:29,760 --> 00:17:32,210
+z-score it and then just take a reinforced gradient
+
+401
+00:17:32,210 --> 00:17:33,390
+against those weights.
+
+402
+00:17:33,390 --> 00:17:37,890
+So you will write this in your assignment.
+
+403
+00:17:37,890 --> 00:17:40,410
+And it's going to involve a very simple set of steps.
+
+404
+00:17:40,410 --> 00:17:43,570
+Compute a reward for each of your k rollouts.
+
+405
+00:17:43,570 --> 00:17:47,232
+Normalize your rollouts, compute the KL term.
+
+406
+00:17:47,232 --> 00:17:48,690
+And then just take gradient updates
+
+407
+00:17:48,690 --> 00:17:51,832
+on the combination of your KL term and these rollouts.
+
+408
+00:17:51,832 --> 00:17:54,290
+You'll have to do a little bit of thinking because in order
+
+409
+00:17:54,290 --> 00:17:56,810
+to do this using autodiff, you will have
+
+410
+00:17:56,810 --> 00:17:58,590
+to do a stop grad somewhere.
+
+411
+00:17:58,590 --> 00:18:00,350
+But it's actually not that complicated.
+
+412
+00:18:00,350 --> 00:18:03,610
+And you can see that you can do a one-page implementation
+
+413
+00:18:03,610 --> 00:18:07,090
+of this basic idea.
+
+414
+00:18:07,090 --> 00:18:09,450
+And this is a reference implementation of GRPO
+
+415
+00:18:09,450 --> 00:18:12,990
+that I took from some folks at McGill,
+
+416
+00:18:12,990 --> 00:18:17,250
+which has a really nice little toy version of this whole thing.
+
+417
+00:18:17,250 --> 00:18:20,270
+And the computation of the group indices,
+
+418
+00:18:20,270 --> 00:18:22,570
+and the standard deviation calculation and all of that
+
+419
+00:18:22,570 --> 00:18:24,985
+just fits in one half of a slide.
+
+420
+00:18:24,985 --> 00:18:26,610
+The only thing that they do differently
+
+421
+00:18:26,610 --> 00:18:29,000
+than the literal paper write up of GRPO
+
+422
+00:18:29,000 --> 00:18:31,880
+here is they add a little tiny weeny negative 4
+
+423
+00:18:31,880 --> 00:18:33,560
+to the standard deviation calculation
+
+424
+00:18:33,560 --> 00:18:35,480
+to prevent it from blowing up when you only
+
+425
+00:18:35,480 --> 00:18:37,640
+have a single sample, or if your samples happen
+
+426
+00:18:37,640 --> 00:18:41,040
+to have the exact same rewards, which does happen if you're
+
+427
+00:18:41,040 --> 00:18:43,920
+in a domain where you can get exactly numerically 0 rewards,
+
+428
+00:18:43,920 --> 00:18:47,360
+like you failed to solve a math problem.
+
+429
+00:18:47,360 --> 00:18:49,800
+But hopefully, this emphasizes to you
+
+430
+00:18:49,800 --> 00:18:54,880
+how straightforward GRPO is, and why almost all open source
+
+431
+00:18:54,880 --> 00:18:56,780
+work has been built on this algorithm.
+
+432
+00:18:56,780 --> 00:18:59,200
+It's easy to implement, easy to understand.
+
+433
+00:18:59,200 --> 00:19:01,540
+And if you, as we'll see in the results,
+
+434
+00:19:01,540 --> 00:19:03,600
+it provides fairly compelling results
+
+435
+00:19:03,600 --> 00:19:08,360
+in terms of emulating a lot of what the closed source labs have
+
+436
+00:19:08,360 --> 00:19:12,240
+done using potentially PPO.
+
+437
+00:19:12,240 --> 00:19:14,440
+So how well does it work?
+
+438
+00:19:14,440 --> 00:19:16,940
+In the original DeepSeek math paper,
+
+439
+00:19:16,940 --> 00:19:19,300
+which if you're into math AI stuff,
+
+440
+00:19:19,300 --> 00:19:20,800
+I would encourage you to read, it's
+
+441
+00:19:20,800 --> 00:19:24,200
+a nice and really interesting set of results.
+
+442
+00:19:24,200 --> 00:19:28,270
+They show that GRPO, the yellow and the blue lines,
+
+443
+00:19:28,270 --> 00:19:31,097
+does much better than RFT, like rejection fine-tuning.
+
+444
+00:19:31,097 --> 00:19:32,930
+You'll implement this as a baseline as well.
+
+445
+00:19:32,930 --> 00:19:34,990
+That's just taking the correct answers
+
+446
+00:19:34,990 --> 00:19:36,950
+that your model generates and training on them
+
+447
+00:19:36,950 --> 00:19:38,530
+and throwing away everything else.
+
+448
+00:19:38,530 --> 00:19:42,830
+And they seem to show process supervision, which
+
+449
+00:19:42,830 --> 00:19:44,730
+is grading not just the final answer,
+
+450
+00:19:44,730 --> 00:19:47,290
+but grading the intermediates gives you some gains.
+
+451
+00:19:47,290 --> 00:19:48,690
+I'll talk more about that later.
+
+452
+00:19:48,690 --> 00:19:51,630
+That is an important thing to discuss and cover
+
+453
+00:19:51,630 --> 00:19:55,190
+because that's one of the big design decisions
+
+454
+00:19:55,190 --> 00:19:56,810
+for these kinds of RL problems.
+
+455
+00:19:56,810 --> 00:19:59,550
+But for now, you can just internalize the fact
+
+456
+00:19:59,550 --> 00:20:00,650
+that GRPO works.
+
+457
+00:20:00,650 --> 00:20:05,070
+The blue and yellow lines are above the others.
+
+458
+00:20:05,070 --> 00:20:06,510
+OK.
+
+459
+00:20:06,510 --> 00:20:10,050
+So now let's think a little bit more about the GRPO objective.
+
+460
+00:20:10,050 --> 00:20:11,930
+What is happening in this objective?
+
+461
+00:20:11,930 --> 00:20:14,050
+Are we actually taking policy gradients?
+
+462
+00:20:14,050 --> 00:20:17,470
+There are important conceptual questions that we should really
+
+463
+00:20:17,470 --> 00:20:19,230
+think through.
+
+464
+00:20:19,230 --> 00:20:23,210
+And so if we think about the difference between GRPO and PPO,
+
+465
+00:20:23,210 --> 00:20:26,220
+remember that PPO had this value function thing which
+
+466
+00:20:26,220 --> 00:20:27,580
+feeds into the advantage.
+
+467
+00:20:27,580 --> 00:20:29,900
+And in GRPO, we strip that out and we replace
+
+468
+00:20:29,900 --> 00:20:31,280
+that with the z-score guy.
+
+469
+00:20:31,280 --> 00:20:33,940
+This A of i, ratio of r minus mean
+
+470
+00:20:33,940 --> 00:20:36,180
+divided by standard deviation.
+
+471
+00:20:36,180 --> 00:20:38,900
+So is this a good advantage?
+
+472
+00:20:38,900 --> 00:20:41,640
+I think for those of you that have been in an RL class,
+
+473
+00:20:41,640 --> 00:20:43,840
+you already know the answer to this question.
+
+474
+00:20:43,840 --> 00:20:45,720
+Is this a good advantage function?
+
+475
+00:20:48,153 --> 00:20:49,320
+What makes a good advantage?
+
+476
+00:20:49,320 --> 00:20:51,300
+What makes a valid advantage function?
+
+477
+00:20:51,300 --> 00:20:55,980
+Well, if you look at Sutton and Barto, the big classic book
+
+478
+00:20:55,980 --> 00:20:58,400
+for reinforcement learning they will say,
+
+479
+00:20:58,400 --> 00:21:01,320
+well, there's this algorithm called REINFORCE with baseline.
+
+480
+00:21:01,320 --> 00:21:03,020
+And the things you're allowed to do
+
+481
+00:21:03,020 --> 00:21:06,140
+is that if you're doing policy gradients, which
+
+482
+00:21:06,140 --> 00:21:08,760
+is this line over here, this very first equation.
+
+483
+00:21:08,760 --> 00:21:13,600
+I want to take my gradient step in the direction of my rewards.
+
+484
+00:21:13,600 --> 00:21:15,940
+And the thing you can do is you can take your rewards
+
+485
+00:21:15,940 --> 00:21:17,700
+and I can subtract any—what they
+
+486
+00:21:17,700 --> 00:21:20,800
+call state-dependent baseline, in this case, our state.
+
+487
+00:21:20,800 --> 00:21:23,140
+If we're in the bandit world, it's just the prompt.
+
+488
+00:21:23,140 --> 00:21:25,730
+So you can have a prompt-dependent baseline
+
+489
+00:21:25,730 --> 00:21:26,910
+that you can subtract.
+
+490
+00:21:26,910 --> 00:21:30,770
+And anything that does just this is a valid form
+
+491
+00:21:30,770 --> 00:21:31,760
+of a policy gradient.
+
+492
+00:21:31,760 --> 00:21:34,010
+So you're still going to descend in the same direction
+
+493
+00:21:34,010 --> 00:21:35,030
+as long as you do this.
+
+494
+00:21:35,030 --> 00:21:36,930
+And depending on your choice of b,
+
+495
+00:21:36,930 --> 00:21:40,490
+you will either have lower or higher variance
+
+496
+00:21:40,490 --> 00:21:43,570
+in doing this gradient descent process.
+
+497
+00:21:43,570 --> 00:21:47,490
+Now, you should probably notice that what we're doing
+
+498
+00:21:47,490 --> 00:21:48,790
+is not this.
+
+499
+00:21:48,790 --> 00:21:51,430
+We are not just subtracting a constant value,
+
+500
+00:21:51,430 --> 00:21:55,490
+we are also dividing by the standard deviation.
+
+501
+00:21:55,490 --> 00:21:58,150
+And so that is a problem.
+
+502
+00:21:58,150 --> 00:22:01,670
+It turns out well, it's in some ways a problem.
+
+503
+00:22:01,670 --> 00:22:02,910
+In other ways, it's not.
+
+504
+00:22:02,910 --> 00:22:06,090
+If you really want a conceptually clear algorithm
+
+505
+00:22:06,090 --> 00:22:08,450
+that really does what's written on the tin,
+
+506
+00:22:08,450 --> 00:22:10,070
+it actually descends the reward.
+
+507
+00:22:10,070 --> 00:22:11,390
+GRPO does not do that.
+
+508
+00:22:11,390 --> 00:22:14,290
+Because as I've highlighted in red here,
+
+509
+00:22:14,290 --> 00:22:17,250
+GRPO divides by the standard deviation, which
+
+510
+00:22:17,250 --> 00:22:20,630
+breaks this baseline contract.
+
+511
+00:22:20,630 --> 00:22:23,540
+We're not just dividing or subtracting a baseline.
+
+512
+00:22:23,540 --> 00:22:27,000
+We're also normalizing by the standard deviation
+
+513
+00:22:27,000 --> 00:22:29,740
+of my rewards.
+
+514
+00:22:29,740 --> 00:22:33,420
+Of course, there's another thing that GRPO does,
+
+515
+00:22:33,420 --> 00:22:36,120
+which I didn't mention earlier.
+
+516
+00:22:36,120 --> 00:22:39,920
+As an implementation detail that is tricky, which is GRPO
+
+517
+00:22:39,920 --> 00:22:41,900
+does this almost per token.
+
+518
+00:22:41,900 --> 00:22:46,320
+So they'll divide by the total length of the sequence
+
+519
+00:22:46,320 --> 00:22:48,300
+as a normalization factor.
+
+520
+00:22:48,300 --> 00:22:51,940
+But if you try to derive GRPO from first principles,
+
+521
+00:22:51,940 --> 00:22:54,355
+following the policy gradient and baseline theorems,
+
+522
+00:22:54,355 --> 00:22:55,980
+you'll end up with something different.
+
+523
+00:22:55,980 --> 00:22:57,640
+You won't have a length normalizer
+
+524
+00:22:57,640 --> 00:23:00,780
+and you won't have the standard deviation normalization.
+
+525
+00:23:00,780 --> 00:23:05,560
+And some folks soon after GRPO came out noticed this,
+
+526
+00:23:05,560 --> 00:23:07,800
+and they wrote a paper basically saying, well,
+
+527
+00:23:07,800 --> 00:23:11,580
+if you don't do these two things that are different,
+
+528
+00:23:11,580 --> 00:23:13,560
+then you get very different potentially very
+
+529
+00:23:13,560 --> 00:23:14,700
+positive behavior.
+
+530
+00:23:14,700 --> 00:23:15,660
+I will talk about that.
+
+531
+00:23:15,660 --> 00:23:18,480
+Also, when we get to the--
+
+532
+00:23:18,480 --> 00:23:22,890
+not OpenAI, sorry DeepSeek R1 paper.
+
+533
+00:23:22,890 --> 00:23:24,870
+But the main thing here is to say
+
+534
+00:23:24,870 --> 00:23:28,730
+GRPO is not the first principles derivation of this idea.
+
+535
+00:23:28,730 --> 00:23:30,830
+It is actually doing something slightly different
+
+536
+00:23:30,830 --> 00:23:34,150
+with both pros and cons.
+
+537
+00:23:34,150 --> 00:23:36,650
+So what are these two terms doing?
+
+538
+00:23:36,650 --> 00:23:40,590
+We know that GRPO is not actually directly descending
+
+539
+00:23:40,590 --> 00:23:41,990
+on the reward objective.
+
+540
+00:23:41,990 --> 00:23:45,450
+We know that it has these two correction factors.
+
+541
+00:23:45,450 --> 00:23:46,430
+What do they do?
+
+542
+00:23:46,430 --> 00:23:49,290
+Well, the length normalization is easier to see.
+
+543
+00:23:49,290 --> 00:23:50,410
+So what are we doing?
+
+544
+00:23:50,410 --> 00:23:55,110
+We are dividing longer sequences with a bigger number.
+
+545
+00:23:55,110 --> 00:23:57,670
+And so what this will do is that it's
+
+546
+00:23:57,670 --> 00:24:00,630
+going to encourage the model to generate
+
+547
+00:24:00,630 --> 00:24:03,590
+long outputs because-- or sorry when you're wrong
+
+548
+00:24:03,590 --> 00:24:06,002
+it will encourage you to generate wrong outputs.
+
+549
+00:24:06,002 --> 00:24:07,710
+Because let's say-- I know that I'm going
+
+550
+00:24:07,710 --> 00:24:08,793
+to get a math proof wrong.
+
+551
+00:24:08,793 --> 00:24:11,750
+I'm going to incur my negative reward of let's say, negative 1.
+
+552
+00:24:11,750 --> 00:24:14,370
+I'm just going to generate an infinitely long string.
+
+553
+00:24:14,370 --> 00:24:17,070
+If I do that, I'll get to divide by infinity,
+
+554
+00:24:17,070 --> 00:24:19,900
+and I'll get to totally get rid of my negative penalty.
+
+555
+00:24:19,900 --> 00:24:21,240
+That's an extreme case.
+
+556
+00:24:21,240 --> 00:24:24,000
+But you understand that if you divide by the output,
+
+557
+00:24:24,000 --> 00:24:27,700
+you encourage the model to blab on once it realizes that it
+
+558
+00:24:27,700 --> 00:24:29,160
+cannot actually solve the problem.
+
+559
+00:24:29,160 --> 00:24:33,540
+So this is a length problem that you end up getting.
+
+560
+00:24:33,540 --> 00:24:37,140
+If you fix that, you'll find that often
+
+561
+00:24:37,140 --> 00:24:41,400
+what people have observed in GRPO COT, like chain of thought,
+
+562
+00:24:41,400 --> 00:24:43,800
+thinking length growing and growing and growing,
+
+563
+00:24:43,800 --> 00:24:46,820
+that actually turns out to just cap off at a constant
+
+564
+00:24:46,820 --> 00:24:49,040
+rather than just continually and forever grow.
+
+565
+00:24:49,040 --> 00:24:51,940
+So this seems like a potentially good thing.
+
+566
+00:24:51,940 --> 00:24:53,905
+And especially on the incorrect cases,
+
+567
+00:24:53,905 --> 00:24:55,780
+you really don't want to be generating longer
+
+568
+00:24:55,780 --> 00:24:59,020
+and longer and longer outputs.
+
+569
+00:24:59,020 --> 00:25:01,160
+So the standard deviation normalization,
+
+570
+00:25:01,160 --> 00:25:03,280
+this one's a little bit more complicated.
+
+571
+00:25:03,280 --> 00:25:05,420
+But if you think about it, what I'm doing
+
+572
+00:25:05,420 --> 00:25:08,480
+is I'm dividing by the standard deviation.
+
+573
+00:25:08,480 --> 00:25:11,260
+And so this can be thought of as emphasizing
+
+574
+00:25:11,260 --> 00:25:15,320
+problems where the standard deviation is small.
+
+575
+00:25:15,320 --> 00:25:17,330
+And when is my standard deviation
+
+576
+00:25:17,330 --> 00:25:19,610
+small for a binary reward problem?
+
+577
+00:25:19,610 --> 00:25:22,810
+Well, that's when the problems are too easy or too hard.
+
+578
+00:25:22,810 --> 00:25:26,850
+If my problem is really easy and I get 100% all the time,
+
+579
+00:25:26,850 --> 00:25:30,890
+I'm going to divide by 1 over or the number--
+
+580
+00:25:30,890 --> 00:25:32,770
+I'm going to divide by basically 0
+
+581
+00:25:32,770 --> 00:25:36,550
+because there's 0 variation if I always get a question correct.
+
+582
+00:25:36,550 --> 00:25:38,870
+Similarly, if I always get a question wrong,
+
+583
+00:25:38,870 --> 00:25:41,170
+I have 0 variation in my rewards.
+
+584
+00:25:41,170 --> 00:25:43,210
+I'm going to upweight that significantly.
+
+585
+00:25:43,210 --> 00:25:46,190
+So the standard deviation term is upweighting the two sides,
+
+586
+00:25:46,190 --> 00:25:48,010
+both easy and hard questions.
+
+587
+00:25:48,010 --> 00:25:50,090
+That seems like clearly a thing that maybe we
+
+588
+00:25:50,090 --> 00:25:52,530
+don't want because we want our models to potentially learn
+
+589
+00:25:52,530 --> 00:25:56,930
+on things that are within its solvability range.
+
+590
+00:25:56,930 --> 00:26:01,850
+So that's the algorithmic components of RLVR.
+
+591
+00:26:01,850 --> 00:26:03,970
+And I'm going to go through several
+
+592
+00:26:03,970 --> 00:26:06,410
+of the different recent model releases
+
+593
+00:26:06,410 --> 00:26:10,250
+and talk through all the algorithmic components
+
+594
+00:26:10,250 --> 00:26:13,535
+that I think are quite important, including some
+
+595
+00:26:13,535 --> 00:26:16,160
+of the stuff that I added this year that's new, which is really
+
+596
+00:26:16,160 --> 00:26:18,680
+the agentic stuff that I think has been catching on
+
+597
+00:26:18,680 --> 00:26:22,640
+and is increasingly important for using and deploying
+
+598
+00:26:22,640 --> 00:26:23,182
+these models.
+
+599
+00:26:23,182 --> 00:26:24,765
+But before I do that, I can pause here
+
+600
+00:26:24,765 --> 00:26:26,460
+and if anyone has algorithmic questions,
+
+601
+00:26:26,460 --> 00:26:28,220
+I'll take them before I move on.
+
+602
+00:26:32,500 --> 00:26:33,000
+OK.
+
+603
+00:26:33,000 --> 00:26:34,440
+Good.
+
+604
+00:26:34,440 --> 00:26:35,840
+All right.
+
+605
+00:26:35,840 --> 00:26:37,800
+So we're going to start with DeepSeek R1
+
+606
+00:26:37,800 --> 00:26:41,340
+because I think this is a bit of a social phenomenon.
+
+607
+00:26:41,340 --> 00:26:44,660
+I think everyone should know a bunch about DeepSeek R1.
+
+608
+00:26:44,660 --> 00:26:46,840
+I think it's a lovely paper kicked off
+
+609
+00:26:46,840 --> 00:26:50,880
+the wave of open source RLVR models.
+
+610
+00:26:50,880 --> 00:26:52,400
+And what's remarkable about it, I
+
+611
+00:26:52,400 --> 00:26:55,120
+think it was really the first thing
+
+612
+00:26:55,120 --> 00:26:58,660
+to have matched OpenAI O1's behavior.
+
+613
+00:26:58,660 --> 00:27:01,560
+So the key things about OpenAI O1
+
+614
+00:27:01,560 --> 00:27:03,780
+was you have very long chains of thought.
+
+615
+00:27:03,780 --> 00:27:08,080
+It's clearly RL, and you have really good performance
+
+616
+00:27:08,080 --> 00:27:09,740
+on hard math problems.
+
+617
+00:27:09,740 --> 00:27:14,570
+And they also provided RL recipe that anyone could do.
+
+618
+00:27:14,570 --> 00:27:17,990
+And I think from the perspective of R&D, this is very important.
+
+619
+00:27:17,990 --> 00:27:20,270
+If your solution was like you have this horrible PPO
+
+620
+00:27:20,270 --> 00:27:23,070
+thing that no one but DeepSeek can run,
+
+621
+00:27:23,070 --> 00:27:25,950
+then that is much less of an impact, at least for us
+
+622
+00:27:25,950 --> 00:27:29,010
+researchers than this kind of GRPO thing,
+
+623
+00:27:29,010 --> 00:27:31,550
+which anyone can really play with, even you
+
+624
+00:27:31,550 --> 00:27:32,612
+in your assignments.
+
+625
+00:27:32,612 --> 00:27:35,070
+And finally, they have some really interesting distillation
+
+626
+00:27:35,070 --> 00:27:40,750
+insights that I think have held up even now.
+
+627
+00:27:40,750 --> 00:27:43,510
+So the starting point of DeepSeek R1, and I
+
+628
+00:27:43,510 --> 00:27:46,710
+think you can see how a lot of DeepSeek's expertise
+
+629
+00:27:46,710 --> 00:27:47,690
+build on each other.
+
+630
+00:27:47,690 --> 00:27:49,870
+So they had this DeepSeek math paper,
+
+631
+00:27:49,870 --> 00:27:51,230
+where they were doing GRPO.
+
+632
+00:27:51,230 --> 00:27:54,630
+They had already understood a lot of the nuances of RL
+
+633
+00:27:54,630 --> 00:27:56,430
+on math problems.
+
+634
+00:27:56,430 --> 00:27:59,470
+And so because of this, they started off
+
+635
+00:27:59,470 --> 00:28:02,470
+with a lot of the components of DeepSeek math.
+
+636
+00:28:02,470 --> 00:28:05,230
+But one of the really important differences, and I'll
+
+637
+00:28:05,230 --> 00:28:07,150
+highlight an expert just because I
+
+638
+00:28:07,150 --> 00:28:09,722
+think it's particularly important is they abandon
+
+639
+00:28:09,722 --> 00:28:12,180
+process supervision, which was the thing that worked really
+
+640
+00:28:12,180 --> 00:28:14,420
+well in DeepSeekMath, and they go only
+
+641
+00:28:14,420 --> 00:28:15,680
+with outcome supervision.
+
+642
+00:28:15,680 --> 00:28:17,440
+And just to be clear, outcome supervision
+
+643
+00:28:17,440 --> 00:28:19,940
+is when you have reward only for whether the final answer is
+
+644
+00:28:19,940 --> 00:28:21,260
+correct or incorrect.
+
+645
+00:28:21,260 --> 00:28:25,500
+And process supervision is when you have a grading rubric, let's
+
+646
+00:28:25,500 --> 00:28:31,180
+say, to check the validity of intermediate steps in a proof.
+
+647
+00:28:31,180 --> 00:28:33,760
+A lot of people thought process supervision was important.
+
+648
+00:28:33,760 --> 00:28:36,500
+Turned out it wasn't critical for a lot of things.
+
+649
+00:28:36,500 --> 00:28:40,340
+So R1 was interesting in that it has
+
+650
+00:28:40,340 --> 00:28:41,800
+a lot of different components.
+
+651
+00:28:41,800 --> 00:28:44,180
+But one of the very interesting components
+
+652
+00:28:44,180 --> 00:28:47,020
+is R1 zero, where they don't really
+
+653
+00:28:47,020 --> 00:28:50,020
+do that much post-training, so they have a base model.
+
+654
+00:28:50,020 --> 00:28:52,260
+Of course, the base model, as we all now
+
+655
+00:28:52,260 --> 00:28:53,880
+is also [? MIT ?] trained.
+
+656
+00:28:53,880 --> 00:28:57,380
+And so this guy can do some amount of instruction following.
+
+657
+00:28:57,380 --> 00:28:59,560
+And then on top of this base model,
+
+658
+00:28:59,560 --> 00:29:04,220
+they do basically RLVR, where the rewards for their GRPO
+
+659
+00:29:04,220 --> 00:29:07,780
+algorithm is accuracy, rewards for whether they correctly
+
+660
+00:29:07,780 --> 00:29:11,540
+solve a collection of math problems and format rewards.
+
+661
+00:29:11,540 --> 00:29:14,000
+And this one is important because the format rewards
+
+662
+00:29:14,000 --> 00:29:16,980
+basically allow them to strip out the chain of thought later.
+
+663
+00:29:16,980 --> 00:29:18,840
+They want the model to properly use
+
+664
+00:29:18,840 --> 00:29:21,920
+thinking tags to enclose their COT.
+
+665
+00:29:21,920 --> 00:29:24,020
+But this is a very simple recipe.
+
+666
+00:29:24,020 --> 00:29:25,340
+GRPO is very simple.
+
+667
+00:29:25,340 --> 00:29:27,400
+Accuracy rewards are very simple.
+
+668
+00:29:27,400 --> 00:29:29,400
+In fact, you will implement and replicate
+
+669
+00:29:29,400 --> 00:29:32,360
+essentially the set of results in some ways,
+
+670
+00:29:32,360 --> 00:29:34,220
+and you do just this very simple recipe.
+
+671
+00:29:34,220 --> 00:29:35,220
+And where do you end up?
+
+672
+00:29:35,220 --> 00:29:38,520
+Well, you end up something that is only a little bit worse
+
+673
+00:29:38,520 --> 00:29:40,100
+than OpenAI O1.
+
+674
+00:29:40,100 --> 00:29:43,105
+So this is really, really, really clean.
+
+675
+00:29:43,105 --> 00:29:44,480
+And I like this result because it
+
+676
+00:29:44,480 --> 00:29:49,320
+has none of the messes of a real production post-training
+
+677
+00:29:49,320 --> 00:29:50,180
+pipeline thrown in.
+
+678
+00:29:50,180 --> 00:29:52,580
+You don't really question whether oh,
+
+679
+00:29:52,580 --> 00:29:55,100
+was it because of the RLHF helping or this or that.
+
+680
+00:29:55,100 --> 00:29:57,840
+It's a very simple base model plus GRPO.
+
+681
+00:29:57,840 --> 00:30:00,880
+Your math abilities are quite good.
+
+682
+00:30:00,880 --> 00:30:04,080
+And I think R1 also took off, partially
+
+683
+00:30:04,080 --> 00:30:06,040
+because of the interesting phenomena
+
+684
+00:30:06,040 --> 00:30:07,780
+they claim to have observed in the paper.
+
+685
+00:30:07,780 --> 00:30:09,780
+So one of the things they claim to have observed
+
+686
+00:30:09,780 --> 00:30:12,110
+is as we go longer and longer and longer
+
+687
+00:30:12,110 --> 00:30:14,653
+during training, the model is able to think for longer
+
+688
+00:30:14,653 --> 00:30:15,570
+and longer and longer.
+
+689
+00:30:15,570 --> 00:30:17,950
+Their COT get longer and longer and longer.
+
+690
+00:30:17,950 --> 00:30:20,590
+And they also highlighted this thing that I believe
+
+691
+00:30:20,590 --> 00:30:24,110
+went viral on social media, which is like the aha moment,
+
+692
+00:30:24,110 --> 00:30:26,850
+where the model is if you train it for enough,
+
+693
+00:30:26,850 --> 00:30:28,810
+its COT is able to do things like,
+
+694
+00:30:28,810 --> 00:30:31,990
+oh, there's an aha moment that I can flag here.
+
+695
+00:30:31,990 --> 00:30:34,430
+And they thought this was really interesting.
+
+696
+00:30:34,430 --> 00:30:37,350
+It is unclear to me whether either of these phenomena
+
+697
+00:30:37,350 --> 00:30:41,330
+are really particularly impressive in many ways.
+
+698
+00:30:41,330 --> 00:30:45,630
+We now know that longer CoTs is arguably a natural side
+
+699
+00:30:45,630 --> 00:30:49,630
+effect of the length normalization of the GRPO algorithm.
+
+700
+00:30:49,630 --> 00:30:54,110
+And the aha moment others have showed
+
+701
+00:30:54,110 --> 00:30:58,810
+is actually appears in even the base model.
+
+702
+00:30:58,810 --> 00:31:03,170
+And so clearly, it can't just be a result of the RL algorithm.
+
+703
+00:31:03,170 --> 00:31:06,860
+Lots of people say aha, I can use this
+
+704
+00:31:06,860 --> 00:31:08,720
+as part of solving the math problem.
+
+705
+00:31:08,720 --> 00:31:10,900
+The model has learned it during pre-training.
+
+706
+00:31:10,900 --> 00:31:13,380
+It's not surprising at all that somehow during RL
+
+707
+00:31:13,380 --> 00:31:16,100
+just happens to get extracted because it's
+
+708
+00:31:16,100 --> 00:31:18,980
+emitting a lot of math tokens.
+
+709
+00:31:18,980 --> 00:31:21,260
+So I think the phenomena that was highlighted
+
+710
+00:31:21,260 --> 00:31:24,720
+is not particularly salient or exciting,
+
+711
+00:31:24,720 --> 00:31:29,140
+but I do think R1 was a really important milestone in that it
+
+712
+00:31:29,140 --> 00:31:32,500
+highlighted just how simple RLVR could be.
+
+713
+00:31:32,500 --> 00:31:35,540
+This is very, in some sense clean as an algorithm
+
+714
+00:31:35,540 --> 00:31:38,900
+and as a way of solving these really difficult problems.
+
+715
+00:31:38,900 --> 00:31:42,720
+And so R1 zero was this very nice, clean controlled setting.
+
+716
+00:31:42,720 --> 00:31:47,040
+And then R1 was their attempt to productionize this system.
+
+717
+00:31:47,040 --> 00:31:48,860
+And I think one thing that's nice about R1
+
+718
+00:31:48,860 --> 00:31:50,860
+and I'll show you the Qwen equivalent
+
+719
+00:31:50,860 --> 00:31:55,700
+later, is you can see how you stack all the pieces together.
+
+720
+00:31:55,700 --> 00:31:57,893
+I think we've studied all the pieces in isolation.
+
+721
+00:31:57,893 --> 00:31:59,620
+We know where pre-training is.
+
+722
+00:31:59,620 --> 00:32:02,420
+We know that there's RLHF, we know SFT,
+
+723
+00:32:02,420 --> 00:32:04,180
+but how do we compose all of the pieces
+
+724
+00:32:04,180 --> 00:32:06,730
+to actually get a system at the end?
+
+725
+00:32:06,730 --> 00:32:09,270
+Well, usually the thing that you do is something like,
+
+726
+00:32:09,270 --> 00:32:10,920
+well, we have our mid-trained model,
+
+727
+00:32:10,920 --> 00:32:13,170
+we're going to do a bunch of reasoning training, maybe
+
+728
+00:32:13,170 --> 00:32:15,390
+some long context extension somewhere too.
+
+729
+00:32:15,390 --> 00:32:17,230
+And then we're going to do RLHF at the end,
+
+730
+00:32:17,230 --> 00:32:19,870
+because that's in some sense, the most user-facing object.
+
+731
+00:32:19,870 --> 00:32:23,270
+We want to make sure that the formatting and all of this is nice.
+
+732
+00:32:23,270 --> 00:32:27,410
+RLHF can very much help with that process.
+
+733
+00:32:27,410 --> 00:32:30,770
+One of the other things that they did was they
+
+734
+00:32:30,770 --> 00:32:33,490
+added a language consistency reward for the chain of thought
+
+735
+00:32:33,490 --> 00:32:35,330
+for their production model.
+
+736
+00:32:35,330 --> 00:32:37,110
+I think if I remember the report right,
+
+737
+00:32:37,110 --> 00:32:40,090
+this was because the R1 zero style
+
+738
+00:32:40,090 --> 00:32:41,890
+training without a consistency reward
+
+739
+00:32:41,890 --> 00:32:44,970
+would language switch in COT, and they
+
+740
+00:32:44,970 --> 00:32:47,170
+thought this was very uninterpretable and slightly
+
+741
+00:32:47,170 --> 00:32:48,050
+disturbing.
+
+742
+00:32:48,050 --> 00:32:49,850
+And so they wanted to just have it output
+
+743
+00:32:49,850 --> 00:32:51,590
+a single consistent language.
+
+744
+00:32:51,590 --> 00:32:56,930
+And so they do this just for interpretability reasons.
+
+745
+00:32:56,930 --> 00:32:59,290
+And then they have some of the non-verifiable rewards
+
+746
+00:32:59,290 --> 00:33:02,570
+as well, thrown in to GRPO, almost
+
+747
+00:33:02,570 --> 00:33:05,020
+as blending into the RLHF process,
+
+748
+00:33:05,020 --> 00:33:07,580
+but otherwise it's a very, very similar thing.
+
+749
+00:33:07,580 --> 00:33:12,840
+And the whole pipeline, I think, is very straightforward.
+
+750
+00:33:12,840 --> 00:33:17,420
+So for SFT, what they do is pretty simple.
+
+751
+00:33:17,420 --> 00:33:21,180
+So in R1 zero, they don't want to do any SFT at all.
+
+752
+00:33:21,180 --> 00:33:24,220
+But in R1, they're willing to do long COT data.
+
+753
+00:33:24,220 --> 00:33:26,580
+And when you're reading these open source tech reports,
+
+754
+00:33:26,580 --> 00:33:28,690
+it's fun to try to read between the lines.
+
+755
+00:33:28,690 --> 00:33:30,440
+When they say something like, we construct
+
+756
+00:33:30,440 --> 00:33:32,810
+and collect a small amount of long COT data,
+
+757
+00:33:32,810 --> 00:33:33,560
+you might wonder--
+
+758
+00:33:33,560 --> 00:33:36,660
+I wonder if that was distilled from some other models.
+
+759
+00:33:36,660 --> 00:33:40,440
+That is a particularly, like, negative thing
+
+760
+00:33:40,440 --> 00:33:42,320
+for open source models.
+
+761
+00:33:42,320 --> 00:33:45,240
+Everyone is nowadays doing this, but I just find it funny
+
+762
+00:33:45,240 --> 00:33:48,360
+that it's very carefully written to collect a small amount
+
+763
+00:33:48,360 --> 00:33:50,120
+of long COT data.
+
+764
+00:33:50,120 --> 00:33:52,460
+And so this is used to fine-tune the model.
+
+765
+00:33:52,460 --> 00:33:56,400
+We know that for a very good base model, just SFT on long COT
+
+766
+00:33:56,400 --> 00:34:00,120
+can unlock a lot of O1-style capabilities.
+
+767
+00:34:00,120 --> 00:34:02,850
+And that's a great starting point for RL.
+
+768
+00:34:02,850 --> 00:34:05,870
+So they start there and then they add some verification
+
+769
+00:34:05,870 --> 00:34:08,030
+to filter out the CoTs.
+
+770
+00:34:08,030 --> 00:34:13,030
+And then they continue on with processing.
+
+771
+00:34:13,030 --> 00:34:16,030
+And I think many papers since then,
+
+772
+00:34:16,030 --> 00:34:18,150
+some including some from my students
+
+773
+00:34:18,150 --> 00:34:20,110
+have shown things that if you have
+
+774
+00:34:20,110 --> 00:34:21,830
+the right kind of distillation procedure
+
+775
+00:34:21,830 --> 00:34:23,770
+and you have the right kinds of base model,
+
+776
+00:34:23,770 --> 00:34:28,030
+you can basically get a lot of the long COT reasoning juice
+
+777
+00:34:28,030 --> 00:34:29,350
+just from SFT.
+
+778
+00:34:29,350 --> 00:34:31,350
+And I think this is maybe interesting
+
+779
+00:34:31,350 --> 00:34:33,030
+because one of the things that I think
+
+780
+00:34:33,030 --> 00:34:35,830
+is still an open question is, do you really
+
+781
+00:34:35,830 --> 00:34:37,770
+need RL for some of this?
+
+782
+00:34:37,770 --> 00:34:40,350
+And I think maybe one way of thinking about the role of RL
+
+783
+00:34:40,350 --> 00:34:42,350
+in language modeling is that RL is
+
+784
+00:34:42,350 --> 00:34:43,830
+a great source of supervision.
+
+785
+00:34:43,830 --> 00:34:45,852
+If you're solving frontier math problems,
+
+786
+00:34:45,852 --> 00:34:47,310
+you just don't have the supervision
+
+787
+00:34:47,310 --> 00:34:49,630
+to get detailed long CoTs, and RL allows
+
+788
+00:34:49,630 --> 00:34:51,050
+you to self-generate that.
+
+789
+00:34:51,050 --> 00:34:53,530
+But once someone has generated these long CoTs,
+
+790
+00:34:53,530 --> 00:34:56,449
+you could potentially also learn from imitation.
+
+791
+00:34:56,449 --> 00:34:59,980
+And that seems to be what a lot of these distillation results
+
+792
+00:34:59,980 --> 00:35:03,180
+partially show.
+
+793
+00:35:03,180 --> 00:35:07,340
+So the RL part for R1 is basically the same as R1 zero.
+
+794
+00:35:07,340 --> 00:35:10,120
+Minus the language consistency loss that I mentioned,
+
+795
+00:35:10,120 --> 00:35:14,140
+it's basically just we run the RL training using GRPO.
+
+796
+00:35:14,140 --> 00:35:18,380
+And that leads to essentially the final phase,
+
+797
+00:35:18,380 --> 00:35:21,000
+which is what we learned about last lecture.
+
+798
+00:35:21,000 --> 00:35:25,820
+So we do some basic instruction tuning style SFT and then RLHF.
+
+799
+00:35:25,820 --> 00:35:29,380
+For non-verifiable tasks, they basically use the same thing
+
+800
+00:35:29,380 --> 00:35:30,840
+as DeepSeek V3.
+
+801
+00:35:30,840 --> 00:35:34,300
+So there's really no surprises at all here.
+
+802
+00:35:34,300 --> 00:35:35,460
+How well does it work?
+
+803
+00:35:35,460 --> 00:35:37,940
+It's really, really good.
+
+804
+00:35:37,940 --> 00:35:40,180
+And I think this is the reason why there was all
+
+805
+00:35:40,180 --> 00:35:45,460
+that panic or big noticing of DeepSeek
+
+806
+00:35:45,460 --> 00:35:48,380
+because R1 was genuinely a very good model.
+
+807
+00:35:48,380 --> 00:35:52,297
+It beat O1 on many of the categories.
+
+808
+00:35:52,297 --> 00:35:54,380
+It matched a lot of the test time scaling behavior
+
+809
+00:35:54,380 --> 00:35:55,900
+that people expected.
+
+810
+00:35:55,900 --> 00:35:58,090
+And it came from a very simple recipe.
+
+811
+00:35:58,090 --> 00:36:00,290
+So it was very easy to understand where
+
+812
+00:36:00,290 --> 00:36:04,160
+the gains were coming from.
+
+813
+00:36:04,160 --> 00:36:06,410
+And the last thing related to some of the distillation
+
+814
+00:36:06,410 --> 00:36:11,650
+discussions that I was saying is you can then take R1's CoTs
+
+815
+00:36:11,650 --> 00:36:14,210
+and you could put it into Qwen 2.5,
+
+816
+00:36:14,210 --> 00:36:17,530
+and if you did so, you could really significantly boost
+
+817
+00:36:17,530 --> 00:36:19,030
+the performance of these models.
+
+818
+00:36:19,030 --> 00:36:22,850
+In some cases, matching a lot of these specialized thinking
+
+819
+00:36:22,850 --> 00:36:23,790
+models.
+
+820
+00:36:23,790 --> 00:36:26,050
+And so in other words, really, if you
+
+821
+00:36:26,050 --> 00:36:28,650
+can get the right kinds of long CoTs
+
+822
+00:36:28,650 --> 00:36:30,890
+that are legible to these models,
+
+823
+00:36:30,890 --> 00:36:33,490
+often it is possible to get them to reason
+
+824
+00:36:33,490 --> 00:36:36,810
+for long periods of time, like the base models are already
+
+825
+00:36:36,810 --> 00:36:40,090
+surprisingly good, and this works even for Llama models
+
+826
+00:36:40,090 --> 00:36:45,070
+as well, which I think is quite fascinating.
+
+827
+00:36:45,070 --> 00:36:50,890
+So to close out the DeepSeek saga,
+
+828
+00:36:50,890 --> 00:36:53,510
+I quite liked a lot of the DeepSeek tech reports,
+
+829
+00:36:53,510 --> 00:36:56,330
+because they often do both ablations
+
+830
+00:36:56,330 --> 00:36:59,680
+and they also tell you failed things that didn't work.
+
+831
+00:36:59,680 --> 00:37:02,360
+And if you've been following what they've been doing,
+
+832
+00:37:02,360 --> 00:37:05,380
+DeepSeekMath has all of this process reward model stuff.
+
+833
+00:37:05,380 --> 00:37:07,280
+It's like we got to verify all the steps
+
+834
+00:37:07,280 --> 00:37:10,000
+and then you read R1 and you say where did the process reward
+
+835
+00:37:10,000 --> 00:37:10,540
+models go.
+
+836
+00:37:10,540 --> 00:37:13,220
+Well, they tell you where the process reward models go,
+
+837
+00:37:13,220 --> 00:37:16,900
+which is we tried to get process reward models to work.
+
+838
+00:37:16,900 --> 00:37:19,380
+They just didn't do very much for us.
+
+839
+00:37:19,380 --> 00:37:23,040
+It turns out that outcome reward models are great
+
+840
+00:37:23,040 --> 00:37:24,260
+and they're good enough.
+
+841
+00:37:24,260 --> 00:37:26,960
+And you can scale the data for those a lot better.
+
+842
+00:37:26,960 --> 00:37:29,380
+I think a big debate for PRMs was,
+
+843
+00:37:29,380 --> 00:37:32,200
+where are you going to get these step-by-step rubrics.
+
+844
+00:37:32,200 --> 00:37:34,400
+And it's very hard to scale that up.
+
+845
+00:37:34,400 --> 00:37:36,240
+I think at this point, it's quite clear now
+
+846
+00:37:36,240 --> 00:37:38,940
+that outcome reward models are very, very good.
+
+847
+00:37:38,940 --> 00:37:42,240
+And that's the bulk of where the action is happening.
+
+848
+00:37:42,240 --> 00:37:47,420
+Similarly, if you were around for the initial O1 release,
+
+849
+00:37:47,420 --> 00:37:50,440
+a lot of people speculated about what was going on
+
+850
+00:37:50,440 --> 00:37:52,420
+inside OpenAI's O1.
+
+851
+00:37:52,420 --> 00:37:54,400
+They were like, oh, are they doing PRMs?
+
+852
+00:37:54,400 --> 00:37:57,550
+Are they doing tree search like AlphaGo?
+
+853
+00:37:57,550 --> 00:38:00,670
+They tried a lot of MCTS and they
+
+854
+00:38:00,670 --> 00:38:04,270
+describe we couldn't get it to work very well.
+
+855
+00:38:04,270 --> 00:38:06,070
+I just very much want to highlight
+
+856
+00:38:06,070 --> 00:38:08,990
+the fact that they're very open about all
+
+857
+00:38:08,990 --> 00:38:11,110
+these explorations and the things that they tried
+
+858
+00:38:11,110 --> 00:38:15,670
+and didn't work, rather than to say they didn't try it at all.
+
+859
+00:38:15,670 --> 00:38:17,550
+Cool.
+
+860
+00:38:17,550 --> 00:38:18,910
+All right.
+
+861
+00:38:18,910 --> 00:38:21,478
+And if I talk about--
+
+862
+00:38:21,478 --> 00:38:23,270
+or actually, I'll pause here in case anyone
+
+863
+00:38:23,270 --> 00:38:25,370
+has questions, although I don't know if-- yeah.
+
+864
+00:38:25,370 --> 00:38:30,510
+you should explain the positive reward basis
+
+865
+00:38:30,510 --> 00:38:36,830
+by Because I thought you said for negative,
+
+866
+00:38:36,830 --> 00:38:40,510
+like we encourage to divide by infinity and 0
+
+867
+00:38:40,510 --> 00:38:41,370
+for positive.
+
+868
+00:38:41,370 --> 00:38:41,870
+Yeah.
+
+869
+00:38:41,870 --> 00:38:43,750
+So the question was like for positive cases
+
+870
+00:38:43,750 --> 00:38:45,463
+what the length normalizer do.
+
+871
+00:38:45,463 --> 00:38:47,630
+And of course, in those cases, the length normalizer
+
+872
+00:38:47,630 --> 00:38:50,525
+encourages you to shorten the COT, which is good
+
+873
+00:38:50,525 --> 00:38:52,150
+if you want to save on inference costs,
+
+874
+00:38:52,150 --> 00:38:55,140
+bad if that degrades your accuracy.
+
+875
+00:38:55,140 --> 00:38:58,420
+But I think the main issue is that for the long--
+
+876
+00:38:58,420 --> 00:39:01,950
+for the negative ones, you get some really long responses
+
+877
+00:39:01,950 --> 00:39:03,700
+and the positive cases, it can't shrink it
+
+878
+00:39:03,700 --> 00:39:05,867
+that much because there's a lower bound to how small
+
+879
+00:39:05,867 --> 00:39:09,820
+your COT can go to solve a particular problem.
+
+880
+00:39:09,820 --> 00:39:13,660
+I guess I'm trying to understand that explanation
+
+881
+00:39:13,660 --> 00:39:16,480
+for the diagram.
+
+882
+00:39:16,480 --> 00:39:21,160
+Is that--I think Doctor GRPO has a cleaner diagram of this.
+
+883
+00:39:21,160 --> 00:39:24,600
+So in the R1 diagram, this is all aggregated.
+
+884
+00:39:24,600 --> 00:39:28,400
+This is all of the responses across their evals.
+
+885
+00:39:28,400 --> 00:39:30,660
+It's not just the positive ones.
+
+886
+00:39:30,660 --> 00:39:36,940
+But if we look at the Doctor GRPO plot over here.
+
+887
+00:39:36,940 --> 00:39:41,720
+So this is like the average output length and this is the incorrect output length.
+
+888
+00:39:41,720 --> 00:39:45,000
+And so you see that the correct output length is here.
+
+889
+00:39:45,000 --> 00:39:49,100
+So you see somewhat that this is really
+
+890
+00:39:49,100 --> 00:39:50,660
+being driven by the incorrect ones
+
+891
+00:39:50,660 --> 00:39:52,910
+as we would expect from the explanation.
+
+892
+00:39:52,910 --> 00:39:56,470
+So the story, at least in these sets of controlled comparisons,
+
+893
+00:39:56,470 --> 00:39:58,250
+is quite clean and clear.
+
+894
+00:39:58,250 --> 00:40:00,250
+Yeah.
+
+895
+00:40:00,250 --> 00:40:02,650
+Cool.
+
+896
+00:40:02,650 --> 00:40:06,610
+So now, I'm also going to talk about an alternative method,
+
+897
+00:40:06,610 --> 00:40:11,210
+Kimi K1.5 or alternative paper and approach.
+
+898
+00:40:11,210 --> 00:40:14,450
+And I always feel like when I talk about R1,
+
+899
+00:40:14,450 --> 00:40:18,810
+I'm obligated to talk about Kimi K1.5 because they came out
+
+900
+00:40:18,810 --> 00:40:20,570
+at the same time as R1.
+
+901
+00:40:20,570 --> 00:40:24,910
+They also beat R1, and yet everyone is all about DeepSeek,
+
+902
+00:40:24,910 --> 00:40:29,030
+and Kimi is not quite as often brought up in the conversation,
+
+903
+00:40:29,030 --> 00:40:31,490
+even though their models are extremely good.
+
+904
+00:40:31,490 --> 00:40:36,210
+And I'm not just talking about them out of pity, per se.
+
+905
+00:40:36,210 --> 00:40:39,070
+I think Kimi has this nice thing that they do something--
+
+906
+00:40:39,070 --> 00:40:42,530
+some sets of things, quite differently than DeepSeek,
+
+907
+00:40:42,530 --> 00:40:45,530
+and we can learn quite a bit from the fact that both
+
+908
+00:40:45,530 --> 00:40:46,270
+of these work.
+
+909
+00:40:46,270 --> 00:40:48,730
+I think this is part of the theme of this class, which
+
+910
+00:40:48,730 --> 00:40:51,040
+is by reading all of these technical reports
+
+911
+00:40:51,040 --> 00:40:52,500
+and by looking at broader patterns,
+
+912
+00:40:52,500 --> 00:40:54,280
+we can roughly start to understand
+
+913
+00:40:54,280 --> 00:40:58,480
+what are the valid or easy spaces to get
+
+914
+00:40:58,480 --> 00:41:00,000
+these algorithms to work.
+
+915
+00:41:00,000 --> 00:41:02,320
+So they do actually quite a bit more
+
+916
+00:41:02,320 --> 00:41:05,480
+detail in talking about the dataset construction and curriculum
+
+917
+00:41:05,480 --> 00:41:08,440
+generation for the RL process, which many have said
+
+918
+00:41:08,440 --> 00:41:10,120
+is quite important.
+
+919
+00:41:10,120 --> 00:41:12,260
+And they also have a different RL algorithm,
+
+920
+00:41:12,260 --> 00:41:15,080
+which in some ways, has similar intuitions
+
+921
+00:41:15,080 --> 00:41:16,980
+but is not exactly GRPO.
+
+922
+00:41:16,980 --> 00:41:20,320
+And so this is another nice validation that technically
+
+923
+00:41:20,320 --> 00:41:23,000
+speaking, I don't think you necessarily
+
+924
+00:41:23,000 --> 00:41:29,600
+need something like GRPO to get these guys to work.
+
+925
+00:41:29,600 --> 00:41:33,560
+So the first part I want to talk about is the data.
+
+926
+00:41:33,560 --> 00:41:37,680
+The data remains very important for all of these processes.
+
+927
+00:41:37,680 --> 00:41:40,000
+And for RL, there's an additional wrinkle
+
+928
+00:41:40,000 --> 00:41:43,440
+of curriculum, what difficulties of problems
+
+929
+00:41:43,440 --> 00:41:44,680
+do you want to throw in?
+
+930
+00:41:44,680 --> 00:41:47,280
+In SFT, you don't really think about difficulty
+
+931
+00:41:47,280 --> 00:41:49,790
+very much because you just jam the data in there.
+
+932
+00:41:49,790 --> 00:41:51,710
+For whatever data that you want, you just
+
+933
+00:41:51,710 --> 00:41:53,310
+do pre-training losses and the model
+
+934
+00:41:53,310 --> 00:41:54,730
+is forced to learn from these.
+
+935
+00:41:54,730 --> 00:41:56,730
+In SFT, there's a little bit more of a subtlety.
+
+936
+00:41:56,730 --> 00:41:59,173
+We talked quite a bit about the hallucination issues,
+
+937
+00:41:59,173 --> 00:42:00,590
+and maybe sometimes you don't want
+
+938
+00:42:00,590 --> 00:42:02,830
+to train on some of this data.
+
+939
+00:42:02,830 --> 00:42:05,910
+But for RL, there's this additional wrinkle
+
+940
+00:42:05,910 --> 00:42:08,853
+that if your problems are too hard, you get no rewards.
+
+941
+00:42:08,853 --> 00:42:10,770
+And if you get no rewards, you have no signal.
+
+942
+00:42:10,770 --> 00:42:12,710
+And if you have no signal, you can't learn.
+
+943
+00:42:12,710 --> 00:42:15,950
+So it's very important to have broad coverage
+
+944
+00:42:15,950 --> 00:42:19,510
+of the right kinds of examples.
+
+945
+00:42:19,510 --> 00:42:23,130
+And so what the Kimi folks do is first of all,
+
+946
+00:42:23,130 --> 00:42:26,490
+they try to get a whole big, broad range of coverage of data.
+
+947
+00:42:26,490 --> 00:42:29,230
+Unsurprising, they exclude multiple choice
+
+948
+00:42:29,230 --> 00:42:31,690
+because that's covered in lots of different domains.
+
+949
+00:42:31,690 --> 00:42:33,838
+They want things that require long, deep thought.
+
+950
+00:42:33,838 --> 00:42:35,630
+And their argument is maybe multiple choice
+
+951
+00:42:35,630 --> 00:42:36,730
+doesn't have that.
+
+952
+00:42:36,730 --> 00:42:38,870
+But maybe this last one I think is maybe
+
+953
+00:42:38,870 --> 00:42:40,090
+the most important idea.
+
+954
+00:42:40,090 --> 00:42:43,870
+This appears in a lot of different RL papers.
+
+955
+00:42:43,870 --> 00:42:46,860
+You basically filter all the examples for things
+
+956
+00:42:46,860 --> 00:42:50,780
+that either pass, or sorry, you filter them
+
+957
+00:42:50,780 --> 00:42:52,800
+based on a best of k filter.
+
+958
+00:42:52,800 --> 00:42:55,740
+So here you take examples.
+
+959
+00:42:55,740 --> 00:42:58,560
+And if they succeed on best of 8,
+
+960
+00:42:58,560 --> 00:43:00,700
+if you sample eight times and the model
+
+961
+00:43:00,700 --> 00:43:04,600
+可以在至少一次的情况下做到，那这并不是一个好的RL示例，
+
+962
+00:43:04,600 --> 00:43:07,600
+因为它已经处于模型能力的边缘。
+
+963
+00:43:07,600 --> 00:43:10,220
+你不会教给它任何特别新的东西。
+
+964
+00:43:10,220 --> 00:43:16,020
+所以你只看那些基本无法通过这个测试的示例，
+
+965
+00:43:16,020 --> 00:43:19,980
+因为这让我们能够基本上挑选
+
+966
+00:43:19,980 --> 00:43:22,400
+合适类型的问题。
+
+967
+00:43:22,400 --> 00:43:24,340
+这样就能节省计算资源。
+
+968
+00:43:24,340 --> 00:43:26,740
+它让你可以完全跳过某些问题。
+
+969
+00:43:26,740 --> 00:43:29,100
+你也可以在两边都进行过滤
+
+970
+00:43:29,100 --> 00:43:31,820
+以获得既不太难也不太容易的问题。
+
+971
+00:43:31,820 --> 00:43:34,260
+我认为研究界的普遍共识是
+
+972
+00:43:34,260 --> 00:43:37,900
+进行这种中等难度范围的过滤
+
+973
+00:43:37,900 --> 00:43:39,940
+是非常好的，如果你真正想要的是
+
+974
+00:43:39,940 --> 00:43:44,500
+让RL以稳定的步伐进步。
+
+975
+00:43:44,500 --> 00:43:47,190
+和DeepSeek一样，没有关于SFT的描述。
+
+976
+00:43:47,190 --> 00:43:49,170
+我们可以推测那是什么，
+
+977
+00:43:49,170 --> 00:43:53,098
+但我们没有具体的信息。
+
+978
+00:43:53,098 --> 00:43:54,890
+所以我认为Kimi有趣的地方在于
+
+979
+00:43:54,890 --> 00:43:58,660
+他们有一个受DPO启发的论点，
+
+980
+00:43:58,660 --> 00:44:00,410
+但他们最终实际上到达了一个
+
+981
+00:44:00,410 --> 00:44:03,010
+与GRPO非常相似的地方。
+
+982
+00:44:03,010 --> 00:44:05,690
+而且我认为，他们最终到达相似的地方这一事实
+
+983
+00:44:05,690 --> 00:44:08,250
+暗示了在这些组件中哪些
+
+984
+00:44:08,250 --> 00:44:12,470
+在你设计新的RL算法时可能是有用的，
+
+985
+00:44:12,470 --> 00:44:13,170
+比如说。
+
+986
+00:44:13,170 --> 00:44:15,970
+所以他们和所有人从完全相同的地方开始。
+
+987
+00:44:15,970 --> 00:44:19,190
+所以这现在对你们所有人来说应该看起来很熟悉。
+
+988
+00:44:19,190 --> 00:44:22,790
+它只是在我的策略下最大化期望奖励。
+
+989
+00:44:22,790 --> 00:44:25,330
+并且我在右边有这个KL正则化项，它
+
+990
+00:44:25,330 --> 00:44:29,250
+让我靠近我的基础策略，或者也许
+
+991
+00:44:29,250 --> 00:44:30,910
+甚至是之前迭代的策略，
+
+992
+00:44:30,910 --> 00:44:34,450
+取决于你打算如何做这个——做这个RL。
+
+993
+00:44:34,450 --> 00:44:38,170
+所以他们将遵循相同的DPO风格推导，其中
+
+994
+00:44:38,170 --> 00:44:42,010
+他们说假设我可以解析地最大化
+
+995
+00:44:42,010 --> 00:44:43,920
+然后我求解出奖励模型，它
+
+996
+00:44:43,920 --> 00:44:47,300
+做到了那个最大化，或者对应于那个最大化。
+
+997
+00:44:47,300 --> 00:44:51,360
+那将给我这个策略的比率。
+
+998
+00:44:51,360 --> 00:44:54,800
+然后我将把它代回上面的目标函数中
+
+999
+00:44:54,800 --> 00:44:58,520
+并尝试求解正在发生什么。
+
+1000
+00:44:58,520 --> 00:45:00,920
+好吧，他们现在说的是他们
+
+1001
+00:45:00,920 --> 00:45:04,320
+want to try to match the reward model.
+
+1002
+00:45:04,320 --> 00:45:05,800
+And for this equality to be— they
+
+1003
+00:45:05,800 --> 00:45:09,220
+want this equality to be true, which is true at the minimizer.
+
+1004
+00:45:09,220 --> 00:45:11,680
+And therefore, this is a big heuristic.
+
+1005
+00:45:11,680 --> 00:45:13,700
+If something's equal at the minimizer,
+
+1006
+00:45:13,700 --> 00:45:15,960
+why don't we just put a squared loss on that thing
+
+1007
+00:45:15,960 --> 00:45:18,240
+and minimize the squared loss?
+
+1008
+00:45:18,240 --> 00:45:20,120
+I think optimization people looking at this
+
+1009
+00:45:20,120 --> 00:45:22,127
+would be horrified at this, but I
+
+1010
+00:45:22,127 --> 00:45:24,502
+think this is a totally reasonable intuition in some ways.
+
+1011
+00:45:24,502 --> 00:45:26,640
+We know that these two things should be close
+
+1012
+00:45:26,640 --> 00:45:28,020
+when the model is good.
+
+1013
+00:45:28,020 --> 00:45:30,760
+So it is also maybe OK to treat making those two
+
+1014
+00:45:30,760 --> 00:45:34,800
+things explicitly close as a surrogate.
+
+1015
+00:45:34,800 --> 00:45:38,520
+This derivation, as you can see, is very, very different
+
+1016
+00:45:38,520 --> 00:45:39,700
+from GRPO.
+
+1017
+00:45:39,700 --> 00:45:45,030
+We're not going through the PPO path to derive this update.
+
+1018
+00:45:45,030 --> 00:45:46,810
+But now, actually, lo and behold,
+
+1019
+00:45:46,810 --> 00:45:48,870
+you take a gradient of this L, you
+
+1020
+00:45:48,870 --> 00:45:53,410
+end up with something that looks surprisingly like GRPO
+
+1021
+00:45:53,410 --> 00:45:55,830
+with an added regularizer term.
+
+1022
+00:45:55,830 --> 00:45:58,590
+What you end up with is this thing
+
+1023
+00:45:58,590 --> 00:46:02,870
+that is a policy gradient with a baseline R bar.
+
+1024
+00:46:02,870 --> 00:46:07,450
+And that R bar is actually the mean of each condition,
+
+1025
+00:46:07,450 --> 00:46:08,830
+these x's.
+
+1026
+00:46:08,830 --> 00:46:11,810
+And you have this additional regularizer term,
+
+1027
+00:46:11,810 --> 00:46:15,650
+which is essentially the KL term that would appear in GRPO.
+
+1028
+00:46:15,650 --> 00:46:18,270
+So in some sense, we've reinvented
+
+1029
+00:46:18,270 --> 00:46:21,070
+the group mean normalized baseline
+
+1030
+00:46:21,070 --> 00:46:23,250
+through quite different means.
+
+1031
+00:46:25,870 --> 00:46:31,590
+And so the Kimi folks I think in some ways
+
+1032
+00:46:31,590 --> 00:46:36,130
+had a nicer or better view of the length problem.
+
+1033
+00:46:36,130 --> 00:46:37,770
+I think the GRPO folks were like,
+
+1034
+00:46:37,770 --> 00:46:41,080
+isn't it great that the length is growing uncontrollably.
+
+1035
+00:46:41,080 --> 00:46:42,647
+I'm sure our model is being smarter.
+
+1036
+00:46:42,647 --> 00:46:44,480
+That's a little bit of an uncharitable take,
+
+1037
+00:46:44,480 --> 00:46:47,232
+but when you present this plot as a positive thing,
+
+1038
+00:46:47,232 --> 00:46:48,940
+the implied statement is like, it's great
+
+1039
+00:46:48,940 --> 00:46:51,540
+that our model is thinking for longer.
+
+1040
+00:46:51,540 --> 00:46:55,660
+But the Kimi folks look at this long COT problem
+
+1041
+00:46:55,660 --> 00:47:00,840
+and they say, well, if we're making long CoTs potentially,
+
+1042
+00:47:00,840 --> 00:47:02,060
+that's very wasteful.
+
+1043
+00:47:02,060 --> 00:47:06,100
+We don't really want long CoTs because CoTs cost inference.
+
+1044
+00:47:06,100 --> 00:47:10,217
+So not only do they not have a length problem,
+
+1045
+00:47:10,217 --> 00:47:11,800
+because if you look at this objective,
+
+1046
+00:47:11,800 --> 00:47:14,140
+they don't normalize by sequence length,
+
+1047
+00:47:14,140 --> 00:47:16,660
+but they actually want to go even further
+
+1048
+00:47:16,660 --> 00:47:19,160
+and they want to compress the length of the response.
+
+1049
+00:47:19,160 --> 00:47:21,940
+And this is another important feature
+
+1050
+00:47:21,940 --> 00:47:26,120
+that we see generally occurring in language model development.
+
+1051
+00:47:26,120 --> 00:47:28,560
+We want the CoTs to be as short as possible.
+
+1052
+00:47:28,560 --> 00:47:30,040
+We want to solve hard problems.
+
+1053
+00:47:30,040 --> 00:47:31,900
+We don't want to think for very long,
+
+1054
+00:47:31,900 --> 00:47:33,400
+because when we think for very long,
+
+1055
+00:47:33,400 --> 00:47:36,400
+we have to essentially subsidize the user.
+
+1056
+00:47:36,400 --> 00:47:41,173
+If you're OpenAI and your users have the $200 Pro Plan,
+
+1057
+00:47:41,173 --> 00:47:42,840
+and your models are thinking for an hour
+
+1058
+00:47:42,840 --> 00:47:45,102
+at a time, that's not a very good place to be in.
+
+1059
+00:47:45,102 --> 00:47:46,560
+Whereas if your models are thinking
+
+1060
+00:47:46,560 --> 00:47:49,880
+for five minutes at a time, that is a great place to be in.
+
+1061
+00:47:49,880 --> 00:47:52,400
+And so for all of these reasons, Kimi
+
+1062
+00:47:52,400 --> 00:47:54,600
+wants to go and compress the CoTs.
+
+1063
+00:47:54,600 --> 00:47:55,820
+How do you do that?
+
+1064
+00:47:55,820 --> 00:47:58,360
+Well, the simplest thing to do
+
+1065
+00:47:58,360 --> 00:48:02,320
+is you come up with a heuristic length reward
+
+1066
+00:48:02,320 --> 00:48:07,200
+and you just tack it on to the RL process.
+
+1067
+00:48:07,200 --> 00:48:11,720
+This reward is surprisingly complicated.
+
+1068
+00:48:11,720 --> 00:48:14,480
+And the thing that they're doing is
+
+1069
+00:48:14,480 --> 00:48:18,480
+you're trying to make longer sequences shorter and shorter.
+
+1070
+00:48:18,480 --> 00:48:22,120
+Correct answers also should be short.
+
+1071
+00:48:22,120 --> 00:48:24,160
+The interesting balance here is if you
+
+1072
+00:48:24,160 --> 00:48:26,260
+make the incorrect answers too short,
+
+1073
+00:48:26,260 --> 00:48:28,230
+they no longer have a way to recover.
+
+1074
+00:48:28,230 --> 00:48:29,480
+So let me give you an example.
+
+1075
+00:48:29,480 --> 00:48:32,800
+Imagine I'm bad at geometry.
+
+1076
+00:48:32,800 --> 00:48:36,810
+AI bad at geometry, I get lots of incorrect answers,
+
+1077
+00:48:36,810 --> 00:48:39,890
+and the penalty makes my geometry CoTs really short.
+
+1078
+00:48:39,890 --> 00:48:42,210
+Now, my geometry CoTs are 0.
+
+1079
+00:48:42,210 --> 00:48:43,770
+I'm really bad at geometry.
+
+1080
+00:48:43,770 --> 00:48:45,070
+I will never recover from this.
+
+1081
+00:48:45,070 --> 00:48:47,850
+I will never get a positive geometry reward ever again.
+
+1082
+00:48:47,850 --> 00:48:48,790
+And I'm stuck.
+
+1083
+00:48:48,790 --> 00:48:52,070
+And so what you do is you don't force the incorrect answers
+
+1084
+00:48:52,070 --> 00:48:53,870
+to be super short.
+
+1085
+00:48:53,870 --> 00:48:56,310
+You incentivize them to be just a little bit shorter
+
+1086
+00:48:56,310 --> 00:48:58,910
+than the average, so that the incorrect stuff
+
+1087
+00:48:58,910 --> 00:49:02,190
+doesn't grow unboundedly.
+
+1088
+00:49:02,190 --> 00:49:07,270
+And so this has, in the end, a surprisingly reasonable set
+
+1089
+00:49:07,270 --> 00:49:10,190
+of outcomes.
+
+1090
+00:49:10,190 --> 00:49:15,150
+And so as I said before, they have a really nice RL set
+
+1091
+00:49:15,150 --> 00:49:18,290
+of views on how they do their data set curation.
+
+1092
+00:49:18,290 --> 00:49:21,010
+So not only do they have this data set that they filter,
+
+1093
+00:49:21,010 --> 00:49:22,990
+they also look at the success rates
+
+1094
+00:49:22,990 --> 00:49:25,930
+of how often they're able to solve particular problems.
+
+1095
+00:49:25,930 --> 00:49:28,090
+And once the model masters a particular problem,
+
+1096
+00:49:28,090 --> 00:49:30,010
+it gets taken out of the problem set.
+
+1097
+00:49:30,010 --> 00:49:31,770
+So you save some compute doing that.
+
+1098
+00:49:31,770 --> 00:49:35,940
+I think basically everyone doing RL does these success rate
+
+1099
+00:49:35,940 --> 00:49:38,180
+filtering to avoid both wasting compute
+
+1100
+00:49:38,180 --> 00:49:43,380
+or working on problems that are way too hard for the model.
+
+1101
+00:49:43,380 --> 00:49:47,722
+And they basically have rewards that, for code, they
+
+1102
+00:49:47,722 --> 00:49:50,180
+take ground truth solutions and they generate some new test
+
+1103
+00:49:50,180 --> 00:49:51,000
+cases.
+
+1104
+00:49:51,000 --> 00:49:53,740
+And for math, they actually have a reward model
+
+1105
+00:49:53,740 --> 00:49:55,900
+to check for answer equivalence checks.
+
+1106
+00:49:55,900 --> 00:49:58,400
+And this is a really funny thing in some ways,
+
+1107
+00:49:58,400 --> 00:50:00,180
+because we started out this lecture
+
+1108
+00:50:00,180 --> 00:50:04,160
+by saying we want to work on formal math or something,
+
+1109
+00:50:04,160 --> 00:50:07,180
+something truly verifiable, where you can--
+
+1110
+00:50:07,180 --> 00:50:09,460
+a compiler can check the correctness of your math.
+
+1111
+00:50:09,460 --> 00:50:12,160
+And then we've gone through most of the lecture.
+
+1112
+00:50:12,160 --> 00:50:14,320
+And then in the end, where did we end up?
+
+1113
+00:50:14,320 --> 00:50:16,480
+Well, we ended up with a reward model,
+
+1114
+00:50:16,480 --> 00:50:20,580
+a reward model that checks the correctness of math answers.
+
+1115
+00:50:20,580 --> 00:50:24,600
+Once again, you'll see why in the assignment
+
+1116
+00:50:24,600 --> 00:50:27,540
+or maybe if you play with the assignment, you'll see why.
+
+1117
+00:50:27,540 --> 00:50:30,820
+You'll quickly find out that answer equivalence checking
+
+1118
+00:50:30,820 --> 00:50:32,700
+is a very difficult problem.
+
+1119
+00:50:32,700 --> 00:50:36,910
+Because in math, you can write equivalent things in many ways.
+
+1120
+00:50:36,910 --> 00:50:38,370
+And not only that, a language model
+
+1121
+00:50:38,370 --> 00:50:40,550
+can give the answer back in many ways.
+
+1122
+00:50:40,550 --> 00:50:43,130
+Even if you prompt it to say give the answer back
+
+1123
+00:50:43,130 --> 00:50:46,750
+in LaTeX boxed, maybe sometimes it skips the boxed,
+
+1124
+00:50:46,750 --> 00:50:49,010
+maybe add some extra stuff to the box.
+
+1125
+00:50:49,010 --> 00:50:51,530
+There are lots of ways that the model can just
+
+1126
+00:50:51,530 --> 00:50:55,350
+fail to get the right answer by a strict correctness checker,
+
+1127
+00:50:55,350 --> 00:50:57,090
+even though it has the right idea.
+
+1128
+00:50:57,090 --> 00:51:03,090
+And so for these reasons, basically, most RL projects
+
+1129
+00:51:03,090 --> 00:51:06,810
+have a very complicated answer checker, either a regex
+
+1130
+00:51:06,810 --> 00:51:08,850
+or a model, or who knows what in order
+
+1131
+00:51:08,850 --> 00:51:10,470
+to avoid these kinds of problems.
+
+1132
+00:51:10,470 --> 00:51:18,570
+It's a real rabbit hole getting the verified part of RLVR.
+
+1133
+00:51:18,570 --> 00:51:20,570
+Cool.
+
+1134
+00:51:20,570 --> 00:51:25,010
+The last thing which connects to some of the systems bits
+
+1135
+00:51:25,010 --> 00:51:27,650
+that we had talked about earlier and the inference bits
+
+1136
+00:51:27,650 --> 00:51:30,190
+is RL optimization.
+
+1137
+00:51:30,190 --> 00:51:33,680
+And RL infra is really quite hard.
+
+1138
+00:51:33,680 --> 00:51:36,260
+Training is hard and inference is hard.
+
+1139
+00:51:36,260 --> 00:51:37,860
+And RL puts the two together.
+
+1140
+00:51:37,860 --> 00:51:42,400
+So in some ways, no wonder it is really horrible and difficult.
+
+1141
+00:51:42,400 --> 00:51:45,360
+Even worse, I think one of the things that you don't initially
+
+1142
+00:51:45,360 --> 00:51:49,320
+appreciate about how hard it is to make RL efficient
+
+1143
+00:51:49,320 --> 00:51:52,080
+is think of the following scenario.
+
+1144
+00:51:52,080 --> 00:51:54,660
+Now, imagine you've got your rollouts,
+
+1145
+00:51:54,660 --> 00:51:56,640
+but you've got one really hard math problem,
+
+1146
+00:51:56,640 --> 00:51:59,340
+let's say one of them is like the Riemann hypothesis.
+
+1147
+00:51:59,340 --> 00:52:01,120
+And your model is really chugging along
+
+1148
+00:52:01,120 --> 00:52:02,260
+on the Riemann hypothesis.
+
+1149
+00:52:02,260 --> 00:52:04,480
+It's got this gigantic COT.
+
+1150
+00:52:04,480 --> 00:52:05,498
+Now, what's happening?
+
+1151
+00:52:05,498 --> 00:52:07,540
+In the meantime, if you're doing naive inference,
+
+1152
+00:52:07,540 --> 00:52:09,373
+everyone else is waiting on this one rollout
+
+1153
+00:52:09,373 --> 00:52:12,340
+to complete in order to move on to the next phase.
+
+1154
+00:52:12,340 --> 00:52:14,440
+So if you're doing these batch things,
+
+1155
+00:52:14,440 --> 00:52:17,360
+long rollouts can really hurt you.
+
+1156
+00:52:17,360 --> 00:52:22,280
+And so RL really needs to deal with all of these really
+
+1157
+00:52:22,280 --> 00:52:24,065
+tricky low-level details.
+
+1158
+00:52:24,065 --> 00:52:25,440
+So you need to deal with the fact
+
+1159
+00:52:25,440 --> 00:52:27,820
+that some CoTs can get really long.
+
+1160
+00:52:27,820 --> 00:52:30,390
+Do you need to truncate them, do you somehow
+
+1161
+00:52:30,390 --> 00:52:32,430
+set them into a different machine, who knows?
+
+1162
+00:52:32,430 --> 00:52:34,950
+These are all decisions that you can make.
+
+1163
+00:52:34,950 --> 00:52:37,710
+If you switch from training to rollouts, you roll out once
+
+1164
+00:52:37,710 --> 00:52:39,930
+and then you train and you roll out and you train,
+
+1165
+00:52:39,930 --> 00:52:42,090
+you have to somehow deal with this.
+
+1166
+00:52:42,090 --> 00:52:44,410
+Either some of your machines are pure rollout machines,
+
+1167
+00:52:44,410 --> 00:52:47,210
+and some of them are training machines,
+
+1168
+00:52:47,210 --> 00:52:49,370
+or you're switching out frameworks all the time.
+
+1169
+00:52:49,370 --> 00:52:51,630
+Both of them are very costly.
+
+1170
+00:52:51,630 --> 00:52:54,710
+And then finally, you have this really difficult and horrible
+
+1171
+00:52:54,710 --> 00:52:58,350
+trade off, which is on-policy stuff is mathematically
+
+1172
+00:52:58,350 --> 00:53:00,710
+and training dynamics wise very nice.
+
+1173
+00:53:00,710 --> 00:53:05,490
+So GRPO in its simple on-policy form behaves very nicely.
+
+1174
+00:53:05,490 --> 00:53:07,790
+You will experience this in your assignments
+
+1175
+00:53:07,790 --> 00:53:09,770
+and then you will get greedy.
+
+1176
+00:53:09,770 --> 00:53:13,490
+You will say but my systems utilization is so low.
+
+1177
+00:53:13,490 --> 00:53:17,130
+I could do so much better if only I could reuse my rollouts,
+
+1178
+00:53:17,130 --> 00:53:19,590
+then I can overlap my inference and computation
+
+1179
+00:53:19,590 --> 00:53:21,330
+and do all clever things.
+
+1180
+00:53:21,330 --> 00:53:23,910
+And so you will attempt to reuse these rollouts.
+
+1181
+00:53:23,910 --> 00:53:26,270
+And that will lead to off-policy problems which
+
+1182
+00:53:26,270 --> 00:53:28,900
+then lead to destabilizing your training
+
+1183
+00:53:28,900 --> 00:53:31,260
+and all sorts of things that are very difficult.
+
+1184
+00:53:31,260 --> 00:53:34,180
+So these are all sorts of things that end up
+
+1185
+00:53:34,180 --> 00:53:37,700
+getting very, very tricky.
+
+1186
+00:53:37,700 --> 00:53:41,380
+And so I think most open source technical reports will
+
+1187
+00:53:41,380 --> 00:53:46,100
+have these days a section talking about their RL infra,
+
+1188
+00:53:46,100 --> 00:53:50,360
+and their RL infra is going to have both a training part.
+
+1189
+00:53:50,360 --> 00:53:53,260
+That's the blue boxes over here and an inference part, which
+
+1190
+00:53:53,260 --> 00:53:55,340
+is the green part on the right.
+
+1191
+00:53:55,340 --> 00:53:58,260
+And you're going to have to move weights from the training part
+
+1192
+00:53:58,260 --> 00:53:59,200
+to the inference part.
+
+1193
+00:53:59,200 --> 00:54:02,540
+So you need some sort of story for how to move those around.
+
+1194
+00:54:02,540 --> 00:54:05,100
+And you need to coordinate them closely.
+
+1195
+00:54:05,100 --> 00:54:06,980
+And in some cases, maybe they even
+
+1196
+00:54:06,980 --> 00:54:09,980
+share the same machines because as inference is running,
+
+1197
+00:54:09,980 --> 00:54:11,660
+the training one might be idle.
+
+1198
+00:54:11,660 --> 00:54:13,400
+So all of these are complexities.
+
+1199
+00:54:13,400 --> 00:54:19,620
+And you have lots of very complicated systems things to do.
+
+1200
+00:54:19,620 --> 00:54:25,060
+So we already know that Kimi beats OpenAI O1,
+
+1201
+00:54:25,060 --> 00:54:27,790
+but we also see some really nice things
+
+1202
+00:54:27,790 --> 00:54:31,290
+showing that as RL proceeds, you're able to think longer
+
+1203
+00:54:31,290 --> 00:54:32,830
+and performance goes up.
+
+1204
+00:54:32,830 --> 00:54:34,890
+But in some cases, it's not that we're just
+
+1205
+00:54:34,890 --> 00:54:36,930
+unboundedly increasing tokens.
+
+1206
+00:54:36,930 --> 00:54:38,570
+We end up getting cases where I think
+
+1207
+00:54:38,570 --> 00:54:40,150
+OmniMath is a good example.
+
+1208
+00:54:40,150 --> 00:54:41,950
+You're not thinking for that much longer,
+
+1209
+00:54:41,950 --> 00:54:43,630
+but your performance continues to go up.
+
+1210
+00:54:43,630 --> 00:54:47,890
+So maybe this is a good example of this length control kicking
+
+1211
+00:54:47,890 --> 00:54:51,410
+in and doing good things.
+
+1212
+00:54:51,410 --> 00:54:55,130
+The final thing I want to talk about is you might wonder,
+
+1213
+00:54:55,130 --> 00:54:57,570
+is this actual RL stuff much better
+
+1214
+00:54:57,570 --> 00:55:00,450
+than just training on correct answers.
+
+1215
+00:55:00,450 --> 00:55:02,270
+This is called expert iteration.
+
+1216
+00:55:02,270 --> 00:55:05,450
+It worked very well in a number of past papers.
+
+1217
+00:55:05,450 --> 00:55:07,750
+In cases where you're dealing with very unstable stuff,
+
+1218
+00:55:07,750 --> 00:55:10,930
+you may actually want to do expert iteration instead.
+
+1219
+00:55:10,930 --> 00:55:13,650
+Kimi K1 has very large scale ablations
+
+1220
+00:55:13,650 --> 00:55:17,650
+showing that these kinds of RL methods
+
+1221
+00:55:17,650 --> 00:55:20,110
+work consistently better than expert iteration.
+
+1222
+00:55:20,110 --> 00:55:22,910
+So that's the orange beating the blue over here.
+
+1223
+00:55:22,910 --> 00:55:26,600
+So you can't really avoid RL if you want to squeeze out
+
+1224
+00:55:26,600 --> 00:55:29,380
+all of your performance.
+
+1225
+00:55:29,380 --> 00:55:31,440
+I can pause here in case anyone has
+
+1226
+00:55:31,440 --> 00:55:32,820
+questions about the Kimi stuff.
+
+1227
+00:55:32,820 --> 00:55:35,880
+And then I'll move on to the last of the three
+
+1228
+00:55:35,880 --> 00:55:37,140
+which is Qwen 3.
+
+1229
+00:55:40,140 --> 00:55:40,640
+Great.
+
+1230
+00:55:40,640 --> 00:55:42,480
+OK.
+
+1231
+00:55:42,480 --> 00:55:46,360
+So the last one that I want to talk about is Qwen 3 and also
+
+1232
+00:55:46,360 --> 00:55:48,940
+Qwen 3.5-Next-Coder.
+
+1233
+00:55:48,940 --> 00:55:51,680
+The names are getting complicated.
+
+1234
+00:55:51,680 --> 00:55:53,300
+And Qwen 3 is later.
+
+1235
+00:55:53,300 --> 00:55:56,000
+But they have actually really interesting scaling and data
+
+1236
+00:55:56,000 --> 00:55:56,740
+results.
+
+1237
+00:55:56,740 --> 00:55:58,440
+So I want to talk about those.
+
+1238
+00:55:58,440 --> 00:56:02,520
+And the successor to this, which is Qwen 3.5-Next-Coder is
+
+1239
+00:56:02,520 --> 00:56:06,400
+interesting because I think has the most details of I would say
+
+1240
+00:56:06,400 --> 00:56:12,320
+agentic RLVR training out of the major technical reports and they do
+
+1241
+00:56:12,320 --> 00:56:14,760
+lots of cool things.
+
+1242
+00:56:14,760 --> 00:56:18,600
+So once again, as with DeepSeek, one
+
+1243
+00:56:18,600 --> 00:56:21,200
+of the nice things that we see with the Qwen report
+
+1244
+00:56:21,200 --> 00:56:24,250
+is the full way that all of these are organized.
+
+1245
+00:56:24,250 --> 00:56:27,630
+And this is very similar to the DeepSeek structure.
+
+1246
+00:56:27,630 --> 00:56:32,990
+We do base model to basically SFT, then reasoning RL.
+
+1247
+00:56:32,990 --> 00:56:35,410
+And then they have this thinking mode fusion.
+
+1248
+00:56:35,410 --> 00:56:37,290
+I'll talk about that later.
+
+1249
+00:56:37,290 --> 00:56:38,870
+And then they do RLHF and then they
+
+1250
+00:56:38,870 --> 00:56:40,240
+have a model that gets shipped.
+
+1251
+00:56:40,240 --> 00:56:42,490
+But of course, they don't want to serve that directly.
+
+1252
+00:56:42,490 --> 00:56:45,890
+So they do distillation to get their smaller models.
+
+1253
+00:56:45,890 --> 00:56:50,450
+I mean, Qwen 3 is quite a respectable open source model.
+
+1254
+00:56:50,450 --> 00:56:53,950
+You can basically have this be your mental picture of how
+
+1255
+00:56:53,950 --> 00:56:58,590
+frontier-ish language models are built, putting
+
+1256
+00:56:58,590 --> 00:56:59,850
+all the components together.
+
+1257
+00:56:59,850 --> 00:57:02,100
+And I think you would have a pretty reasonable picture
+
+1258
+00:57:02,100 --> 00:57:03,050
+of what is happening.
+
+1259
+00:57:05,840 --> 00:57:09,230
+And Qwen uses basically, at this point, tried and tested
+
+1260
+00:57:09,230 --> 00:57:11,590
+playbook for RLVR.
+
+1261
+00:57:11,590 --> 00:57:14,890
+I think they take lots of the best parts of Kimi and DeepSeek,
+
+1262
+00:57:14,890 --> 00:57:16,289
+and they get it right.
+
+1263
+00:57:16,289 --> 00:57:18,456
+They do a lot of filtering for difficulty because we
+
+1264
+00:57:18,456 --> 00:57:19,770
+know that saves compute.
+
+1265
+00:57:19,770 --> 00:57:22,540
+That's a good way to get good data.
+
+1266
+00:57:22,540 --> 00:57:26,060
+They also do other things, like they remove things
+
+1267
+00:57:26,060 --> 00:57:27,860
+that the model can get right without COT
+
+1268
+00:57:27,860 --> 00:57:30,340
+because we know that's not a thinking problem.
+
+1269
+00:57:30,340 --> 00:57:33,100
+They remove things that are too similar to validation data
+
+1270
+00:57:33,100 --> 00:57:35,580
+to try to decontaminate things.
+
+1271
+00:57:35,580 --> 00:57:38,980
+And then they do a little bit of manual filtering
+
+1272
+00:57:38,980 --> 00:57:41,820
+on reference CoTs.
+
+1273
+00:57:41,820 --> 00:57:46,180
+Maybe most remarkably about Qwen 3 is they actually do their RL
+
+1274
+00:57:46,180 --> 00:57:50,180
+on very few examples, just 4,000 examples.
+
+1275
+00:57:50,180 --> 00:57:53,440
+But once again, if you have the rest of the pipeline right,
+
+1276
+00:57:53,440 --> 00:57:57,780
+you can actually get surprisingly far.
+
+1277
+00:57:57,780 --> 00:58:00,300
+So the core of the RLVR components
+
+1278
+00:58:00,300 --> 00:58:04,100
+are maybe not super surprising because they are really
+
+1279
+00:58:04,100 --> 00:58:08,580
+building off of DeepSeek R1 and also Kimi.
+
+1280
+00:58:08,580 --> 00:58:12,860
+There are some interesting Qwen 3 specific things, some of which
+
+1281
+00:58:12,860 --> 00:58:15,500
+they've ended up getting rid of, but I think some of the ideas
+
+1282
+00:58:15,500 --> 00:58:17,780
+are actually quite interesting.
+
+1283
+00:58:17,780 --> 00:58:20,250
+So one of the things that they do
+
+1284
+00:58:20,250 --> 00:58:24,330
+is they mix thinking and non-thinking things with tags.
+
+1285
+00:58:24,330 --> 00:58:28,130
+And that's how they end up having a thinking mode, where
+
+1286
+00:58:28,130 --> 00:58:30,530
+the model has a long COT and they can mix
+
+1287
+00:58:30,530 --> 00:58:31,950
+that with a non-thinking mode.
+
+1288
+00:58:31,950 --> 00:58:35,315
+So both the instant response model and the long COT model
+
+1289
+00:58:35,315 --> 00:58:36,690
+basically live in the same model.
+
+1290
+00:58:36,690 --> 00:58:39,410
+This was not true in many cases.
+
+1291
+00:58:39,410 --> 00:58:42,610
+There was often a thinking mode and a non-thinking model,
+
+1292
+00:58:42,610 --> 00:58:44,370
+even at OpenAI.
+
+1293
+00:58:44,370 --> 00:58:48,810
+They also have--I thought this was quite interesting,
+
+1294
+00:58:48,810 --> 00:58:52,210
+which is they have this way of early exiting thinking where
+
+1295
+00:58:52,210 --> 00:58:56,250
+if they append a special string, they'll immediately stop the COT
+
+1296
+00:58:56,250 --> 00:58:59,650
+and the model is forced to give an answer to whatever prompt
+
+1297
+00:58:59,650 --> 00:59:00,890
+is given.
+
+1298
+00:59:00,890 --> 00:59:05,130
+We see this even in-- we see this affordance in interfaces
+
+1299
+00:59:05,130 --> 00:59:08,570
+like ChatGPT, where you're able to terminate the thinking early
+
+1300
+00:59:08,570 --> 00:59:11,650
+and try to get an immediate answer, for example.
+
+1301
+00:59:11,650 --> 00:59:15,570
+But what we see with this and I've always
+
+1302
+00:59:15,570 --> 00:59:19,200
+thought this was a surprising and interesting thing, which
+
+1303
+00:59:19,200 --> 00:59:22,320
+is that as you vary the thinking budget, doing
+
+1304
+00:59:22,320 --> 00:59:25,000
+this early termination trick, you end up
+
+1305
+00:59:25,000 --> 00:59:28,920
+finding that the performance of the model
+
+1306
+00:59:28,920 --> 00:59:32,800
+degrades gracefully, even though at the lower-thinking budgets,
+
+1307
+00:59:32,800 --> 00:59:35,140
+these models are kind of getting truncated mid-thought,
+
+1308
+00:59:35,140 --> 00:59:37,960
+they're able to give surprisingly reasonable
+
+1309
+00:59:37,960 --> 00:59:40,620
+responses even at that point.
+
+1310
+00:59:40,620 --> 00:59:42,120
+And we see that consistently, even
+
+1311
+00:59:42,120 --> 00:59:44,240
+with very small-thinking budgets, the thinking
+
+1312
+00:59:44,240 --> 00:59:46,120
+mode models are much better on all
+
+1313
+00:59:46,120 --> 00:59:49,200
+of these mathematical or coding tasks
+
+1314
+00:59:49,200 --> 00:59:52,280
+compared to the instant response mode, which
+
+1315
+00:59:52,280 --> 00:59:57,280
+is much more of the classic instruction following plus RLHF
+
+1316
+00:59:57,280 --> 00:59:58,020
+models.
+
+1317
+01:00:00,840 --> 01:00:04,680
+And so you can-- one of the nice things they do for us is look
+
+1318
+01:00:04,680 --> 01:00:07,760
+at the contribution of all of the different components
+
+1319
+01:00:07,760 --> 01:00:09,040
+to performance.
+
+1320
+01:00:09,040 --> 01:00:11,240
+And in many ways, this is not something that
+
+1321
+01:00:11,240 --> 01:00:13,600
+shouldn't surprise you too much.
+
+1322
+01:00:13,600 --> 01:00:19,070
+If you do this reasoning RL and then general RL,
+
+1323
+01:00:19,070 --> 01:00:21,790
+you're able to slowly get improvements
+
+1324
+01:00:21,790 --> 01:00:25,070
+in all of the different tasks, things like Arena-Hard
+
+1325
+01:00:25,070 --> 01:00:26,050
+or CounterFactQA.
+
+1326
+01:00:26,050 --> 01:00:30,050
+These are general tasks for which you want more normal RL,
+
+1327
+01:00:30,050 --> 01:00:32,510
+and we see significant boosts to that performance
+
+1328
+01:00:32,510 --> 01:00:34,350
+across the board.
+
+1329
+01:00:34,350 --> 01:00:37,270
+There are some degradations that we see in math and coding
+
+1330
+01:00:37,270 --> 01:00:40,570
+because we fuse together non-thinking components,
+
+1331
+01:00:40,570 --> 01:00:43,670
+but the degradation is not so bad.
+
+1332
+01:00:43,670 --> 01:00:46,430
+I think, actually, even though these numbers
+
+1333
+01:00:46,430 --> 01:00:50,010
+in an absolute sense are small in later releases,
+
+1334
+01:00:50,010 --> 01:00:52,670
+I think in some of the Qwen 3.5, they've
+
+1335
+01:00:52,670 --> 01:00:54,430
+gone back on fusing both thinking
+
+1336
+01:00:54,430 --> 01:00:56,750
+and non-thinking into a single model.
+
+1337
+01:00:56,750 --> 01:00:59,870
+I think what-- they used to call these hybrid models because they
+
+1338
+01:00:59,870 --> 01:01:02,483
+found this drop unacceptable.
+
+1339
+01:01:02,483 --> 01:01:04,150
+They wanted to squeeze out all the juice
+
+1340
+01:01:04,150 --> 01:01:05,690
+possible on thinking modes.
+
+1341
+01:01:05,690 --> 01:01:07,950
+And so they've now, I think, separated
+
+1342
+01:01:07,950 --> 01:01:10,870
+these models from each other.
+
+1343
+01:01:10,870 --> 01:01:19,500
+The very last topic and paper that I want to cover is Qwen 3--
+
+1344
+01:01:19,500 --> 01:01:20,760
+or sorry, I flipped the two.
+
+1345
+01:01:20,760 --> 01:01:25,780
+It's Coder-Next not Next-Coder, which is one of the newer models
+
+1346
+01:01:25,780 --> 01:01:26,680
+to come out.
+
+1347
+01:01:26,680 --> 01:01:29,425
+And I think if you're interested in general agent
+
+1348
+01:01:29,425 --> 01:01:31,300
+stuff, of course, there's other agent things
+
+1349
+01:01:31,300 --> 01:01:32,655
+to think about, harnesses.
+
+1350
+01:01:32,655 --> 01:01:35,280
+But if you're interested in how do you actually build an agent,
+
+1351
+01:01:35,280 --> 01:01:37,500
+This is probably a good report to go read.
+
+1352
+01:01:37,500 --> 01:01:43,780
+Qwen3-Coder-Next great agent post-training paper.
+
+1353
+01:01:43,780 --> 01:01:46,020
+But in some ways, post-training for an agent
+
+1354
+01:01:46,020 --> 01:01:48,640
+is not very different from everything that we've described.
+
+1355
+01:01:48,640 --> 01:01:52,100
+It's not like there's a new agent training algorithm.
+
+1356
+01:01:52,100 --> 01:01:54,980
+Really, you should internalize this lesson
+
+1357
+01:01:54,980 --> 01:01:56,200
+throughout the entire class.
+
+1358
+01:01:56,200 --> 01:01:58,020
+Data is the important thing.
+
+1359
+01:01:58,020 --> 01:02:00,760
+So if you're going to train an agent or post-training an agent,
+
+1360
+01:02:00,760 --> 01:02:01,820
+what are you going to do?
+
+1361
+01:02:01,820 --> 01:02:03,820
+You're going to get the data together.
+
+1362
+01:02:03,820 --> 01:02:06,100
+So there's two parts to the data.
+
+1363
+01:02:06,100 --> 01:02:08,400
+To get a lot of the capabilities,
+
+1364
+01:02:08,400 --> 01:02:10,700
+you can't just inject them at the end.
+
+1365
+01:02:10,700 --> 01:02:13,050
+You have to probably start a little bit earlier.
+
+1366
+01:02:13,050 --> 01:02:15,290
+And so there's an extensive mid-training phase
+
+1367
+01:02:15,290 --> 01:02:17,890
+that happens to try to get as much coding
+
+1368
+01:02:17,890 --> 01:02:21,595
+and agent-like capabilities into the model as possible.
+
+1369
+01:02:21,595 --> 01:02:22,970
+So they'll do things like they'll
+
+1370
+01:02:22,970 --> 01:02:25,890
+take repositories and concatenate the files
+
+1371
+01:02:25,890 --> 01:02:28,970
+in the repository to generate these very long context data
+
+1372
+01:02:28,970 --> 01:02:30,170
+and put it into the model.
+
+1373
+01:02:30,170 --> 01:02:31,810
+We know that the model is eventually
+
+1374
+01:02:31,810 --> 01:02:34,410
+going to see these very long COT traces, where
+
+1375
+01:02:34,410 --> 01:02:37,050
+maybe the agent has opened a bunch of files, very
+
+1376
+01:02:37,050 --> 01:02:40,170
+useful pre-training style data.
+
+1377
+01:02:40,170 --> 01:02:42,570
+They take pull requests and then they
+
+1378
+01:02:42,570 --> 01:02:45,070
+try to construct synthetic context for it,
+
+1379
+01:02:45,070 --> 01:02:48,210
+using RAG that is potentially helpful for understanding
+
+1380
+01:02:48,210 --> 01:02:49,310
+the pull request.
+
+1381
+01:02:49,310 --> 01:02:51,770
+That all goes in the mid-training.
+
+1382
+01:02:51,770 --> 01:02:55,970
+They will take documents that they detect using an automated
+
+1383
+01:02:55,970 --> 01:02:58,130
+method to have text and code, and then they'll
+
+1384
+01:02:58,130 --> 01:03:01,790
+use an LLM to transform this to a nice markdown format.
+
+1385
+01:03:01,790 --> 01:03:03,810
+Throw that all in as well.
+
+1386
+01:03:03,810 --> 01:03:08,530
+And then finally, they're going to have a language model talk
+
+1387
+01:03:08,530 --> 01:03:11,720
+about coding on web documents that are coding-related
+
+1388
+01:03:11,720 --> 01:03:14,440
+to generate coding-ish synthetic data,
+
+1389
+01:03:14,440 --> 01:03:16,960
+and then they'll take publicly-available coding
+
+1390
+01:03:16,960 --> 01:03:19,180
+agents, run them on various environments,
+
+1391
+01:03:19,180 --> 01:03:20,420
+which I'll describe later.
+
+1392
+01:03:20,420 --> 01:03:24,023
+And the traces of those runs all go into mid-training.
+
+1393
+01:03:24,023 --> 01:03:25,940
+They'll do some fairly standard stuff as well,
+
+1394
+01:03:25,940 --> 01:03:27,565
+like instruction following, and they'll
+
+1395
+01:03:27,565 --> 01:03:29,280
+have an additional task, which I think
+
+1396
+01:03:29,280 --> 01:03:33,100
+is not super relevant for us for filling in the middle.
+
+1397
+01:03:33,100 --> 01:03:35,765
+If you're coding and you want to fill in the middle of a span,
+
+1398
+01:03:35,765 --> 01:03:37,140
+it's useful to have that ability.
+
+1399
+01:03:37,140 --> 01:03:40,160
+So they throw some of that data into mid-training.
+
+1400
+01:03:40,160 --> 01:03:45,320
+But otherwise, this is a very standard but in-depth data
+
+1401
+01:03:45,320 --> 01:03:46,880
+collection procedure to try to get
+
+1402
+01:03:46,880 --> 01:03:50,360
+some of these agentic abilities into mid-training.
+
+1403
+01:03:50,360 --> 01:03:52,640
+And then the Qwen folks do something
+
+1404
+01:03:52,640 --> 01:03:55,220
+that I don't know if I've seen before.
+
+1405
+01:03:55,220 --> 01:03:57,640
+It's actually quite interesting.
+
+1406
+01:03:57,640 --> 01:04:01,332
+They'll take the mid-trained Qwen3 next model,
+
+1407
+01:04:01,332 --> 01:04:03,040
+and they are actually just going to train
+
+1408
+01:04:03,040 --> 01:04:04,720
+a whole bunch of different expert models
+
+1409
+01:04:04,720 --> 01:04:08,400
+for different kinds of coding-adjacent tasks.
+
+1410
+01:04:08,400 --> 01:04:12,878
+And they will end up with four different agent experts,
+
+1411
+01:04:12,878 --> 01:04:14,670
+and then they're just going to distill them
+
+1412
+01:04:14,670 --> 01:04:17,030
+all back into the same model.
+
+1413
+01:04:17,030 --> 01:04:19,770
+I can only speculate as to why they do this.
+
+1414
+01:04:19,770 --> 01:04:22,090
+I don't think I've seen it in other works.
+
+1415
+01:04:22,090 --> 01:04:27,070
+The closest one I know of is DeepSeek V3, or was it V3?
+
+1416
+01:04:27,070 --> 01:04:31,730
+V3.5, sorry, DeepSeek V3.5 or 3.2.
+
+1417
+01:04:31,730 --> 01:04:32,370
+Maybe 3.2.
+
+1418
+01:04:32,370 --> 01:04:34,350
+Sorry, 3.2, I think, did this thing
+
+1419
+01:04:34,350 --> 01:04:37,150
+where they have different experts whose only job it
+
+1420
+01:04:37,150 --> 01:04:39,630
+is to format and process data, so they
+
+1421
+01:04:39,630 --> 01:04:41,990
+have data processing experts which generate
+
+1422
+01:04:41,990 --> 01:04:43,890
+the data for the full training.
+
+1423
+01:04:43,890 --> 01:04:46,190
+But I don't think I've seen this thing
+
+1424
+01:04:46,190 --> 01:04:48,240
+of generating different model experts
+
+1425
+01:04:48,240 --> 01:04:49,490
+and then distilling them back.
+
+1426
+01:04:49,490 --> 01:04:52,230
+That's actually closer to some academic work like branch train
+
+1427
+01:04:52,230 --> 01:04:53,547
+merge and so on.
+
+1428
+01:04:53,547 --> 01:04:55,130
+Those are definitely things people do.
+
+1429
+01:04:55,130 --> 01:04:58,390
+I haven't seen it much in frontier model training.
+
+1430
+01:04:58,390 --> 01:05:01,653
+That said, each of these experts is actually interesting,
+
+1431
+01:05:01,653 --> 01:05:03,070
+and what they do is they basically
+
+1432
+01:05:03,070 --> 01:05:07,540
+do full-on RL and/or SFT training
+
+1433
+01:05:07,540 --> 01:05:10,800
+on a whole bunch of different subtasks that they've defined.
+
+1434
+01:05:10,800 --> 01:05:13,460
+So they have a web dev expert, where
+
+1435
+01:05:13,460 --> 01:05:18,080
+they SFT on valid web code based on different kinds of checks.
+
+1436
+01:05:18,080 --> 01:05:21,180
+They'll do things build UX experts
+
+1437
+01:05:21,180 --> 01:05:25,520
+trained on many different tool formats, and they'll have QA.
+
+1438
+01:05:25,520 --> 01:05:31,860
+So the QA agent is just trained on more synthetic data for code.
+
+1439
+01:05:31,860 --> 01:05:34,700
+But then maybe the most interesting for us
+
+1440
+01:05:34,700 --> 01:05:40,100
+and the most involved is their software engineering agent.
+
+1441
+01:05:40,100 --> 01:05:43,460
+And what they do is they construct agent environments
+
+1442
+01:05:43,460 --> 01:05:44,780
+at scale.
+
+1443
+01:05:44,780 --> 01:05:47,940
+So SWE-bench is the gold standard
+
+1444
+01:05:47,940 --> 01:05:49,160
+of these kinds of things.
+
+1445
+01:05:49,160 --> 01:05:52,060
+And so what they want to do is they want SWE-bench but more.
+
+1446
+01:05:52,060 --> 01:05:54,900
+They go out and they have various automated ways
+
+1447
+01:05:54,900 --> 01:05:59,360
+based on GitHub to generate a ton of different issues.
+
+1448
+01:05:59,360 --> 01:06:02,500
+And given this, they want to basically do
+
+1449
+01:06:02,500 --> 01:06:07,450
+RL on these environments in some ways very unsurprising.
+
+1450
+01:06:07,450 --> 01:06:08,670
+And what do they get?
+
+1451
+01:06:08,670 --> 01:06:11,810
+They can get RL performance to go up.
+
+1452
+01:06:11,810 --> 01:06:17,010
+One thing I will say here, and this is very important through the broader context of what we're
+
+1453
+01:06:17,010 --> 01:06:20,530
+talking about, the reason why we can put more and more compute
+
+1454
+01:06:20,530 --> 01:06:23,210
+into RL is because we believe that our reward
+
+1455
+01:06:23,210 --> 01:06:26,530
+models are unhackable or difficult to hack.
+
+1456
+01:06:26,530 --> 01:06:29,530
+If that assumption breaks down, your RL method
+
+1457
+01:06:29,530 --> 01:06:33,730
+will find increasingly obscure ways of cheating you out
+
+1458
+01:06:33,730 --> 01:06:35,450
+of your performance.
+
+1459
+01:06:35,450 --> 01:06:40,990
+And so they have this great plot of basically, in Git,
+
+1460
+01:06:40,990 --> 01:06:44,370
+you can look at future commits or different commits.
+
+1461
+01:06:44,370 --> 01:06:46,990
+And if you have an issue and there's future commits,
+
+1462
+01:06:46,990 --> 01:06:49,450
+you can just look up what the fix was.
+
+1463
+01:06:49,450 --> 01:06:53,370
+And this is a very easy hack for models to learn.
+
+1464
+01:06:53,370 --> 01:06:56,050
+And so they basically have a whole reward
+
+1465
+01:06:56,050 --> 01:06:59,890
+whose entire purpose it is to prevent the agent from messing
+
+1466
+01:06:59,890 --> 01:07:01,250
+with the Git history.
+
+1467
+01:07:01,250 --> 01:07:03,050
+And if you don't do this, you end up
+
+1468
+01:07:03,050 --> 01:07:05,710
+with a plot that looks like the right,
+
+1469
+01:07:05,710 --> 01:07:08,210
+where it's learning, learning, learning, learning, learning.
+
+1470
+01:07:08,210 --> 01:07:11,190
+And suddenly, you get this emergent jump, where
+
+1471
+01:07:11,190 --> 01:07:12,990
+the emergent jump was actually, it
+
+1472
+01:07:12,990 --> 01:07:17,270
+learned how to manipulate the Git calls to get the history.
+
+1473
+01:07:17,270 --> 01:07:21,470
+And in some cases, it can even hack around certain constraints
+
+1474
+01:07:21,470 --> 01:07:21,970
+you give it.
+
+1475
+01:07:21,970 --> 01:07:24,470
+If you tell it, you can't use Git log,
+
+1476
+01:07:24,470 --> 01:07:27,430
+it might add an origin like a remote and then query
+
+1477
+01:07:27,430 --> 01:07:30,478
+the remote for what happened in certain commits.
+
+1478
+01:07:30,478 --> 01:07:32,270
+So there's all sorts of hacking you can do.
+
+1479
+01:07:32,270 --> 01:07:36,750
+RLVR is only as robust as your reward,
+
+1480
+01:07:36,750 --> 01:07:41,750
+and your rewards can sometimes be not very robust at all.
+
+1481
+01:07:41,750 --> 01:07:44,910
+As a side comment, one of my students and I
+
+1482
+01:07:44,910 --> 01:07:48,690
+were working on a project that was like RL on Lean.
+
+1483
+01:07:48,690 --> 01:07:51,950
+Lean is this formal math, verifiable language.
+
+1484
+01:07:51,950 --> 01:07:54,050
+And we naively thought at the time,
+
+1485
+01:07:54,050 --> 01:07:55,750
+there's no way this can go wrong.
+
+1486
+01:07:55,750 --> 01:07:57,330
+Lots of people have worked on Lean.
+
+1487
+01:07:57,330 --> 01:07:59,390
+The Lean compiler is bulletproof.
+
+1488
+01:07:59,390 --> 01:08:02,490
+Turns out the Lean compiler is not adversarially robust.
+
+1489
+01:08:02,490 --> 01:08:03,980
+There are strings that you can put
+
+1490
+01:08:03,980 --> 01:08:05,743
+in it that will allow you to verify
+
+1491
+01:08:05,743 --> 01:08:08,160
+proofs that are not meant to be verified in certain modes.
+
+1492
+01:08:08,160 --> 01:08:11,420
+So I think the notion of verifiable rewards
+
+1493
+01:08:11,420 --> 01:08:13,660
+is actually much trickier than many of you
+
+1494
+01:08:13,660 --> 01:08:15,580
+might initially think.
+
+1495
+01:08:15,580 --> 01:08:18,979
+Regardless, you do this process of constructing these GitHub
+
+1496
+01:08:18,979 --> 01:08:20,300
+repos at scale.
+
+1497
+01:08:20,300 --> 01:08:22,899
+You go through this process of doing RL,
+
+1498
+01:08:22,899 --> 01:08:27,880
+you see your scores go up slow but steady, and in the end,
+
+1499
+01:08:27,880 --> 01:08:31,380
+you will actually end up getting a system that is surprisingly
+
+1500
+01:08:31,380 --> 01:08:34,740
+good, a model that achieves something
+
+1501
+01:08:34,740 --> 01:08:38,899
+like 70.6% on SWE-bench, even though you have
+
+1502
+01:08:38,899 --> 01:08:42,300
+what is basically a really tiny model, a three billion
+
+1503
+01:08:42,300 --> 01:08:45,460
+active parameter model, you're able to do surprisingly
+
+1504
+01:08:45,460 --> 01:08:47,460
+well on these tasks.
+
+1505
+01:08:47,460 --> 01:08:49,300
+In some ways, though, I don't know
+
+1506
+01:08:49,300 --> 01:08:51,120
+if this is super surprising.
+
+1507
+01:08:51,120 --> 01:08:52,580
+RL, of course, you're going to be
+
+1508
+01:08:52,580 --> 01:08:55,885
+able to do well on the environments for which you've trained.
+
+1509
+01:08:55,885 --> 01:08:57,260
+You might even get generalization
+
+1510
+01:08:57,260 --> 01:08:59,973
+to your validation set as you do here.
+
+1511
+01:08:59,973 --> 01:09:01,890
+But you always want to be a little bit careful
+
+1512
+01:09:01,890 --> 01:09:03,689
+about comparing performances.
+
+1513
+01:09:03,689 --> 01:09:06,090
+Task-specific performance doesn't necessarily
+
+1514
+01:09:06,090 --> 01:09:11,090
+mean it'll generalize to broader domains.
+
+1515
+01:09:11,090 --> 01:09:12,529
+OK.
+
+1516
+01:09:12,529 --> 01:09:16,609
+So that's basically all I've got for the RLVR lecture.
+
+1517
+01:09:16,609 --> 01:09:19,970
+Remember the core takeaways of this lecture
+
+1518
+01:09:19,970 --> 01:09:22,990
+is it's really all about the reward for RL.
+
+1519
+01:09:22,990 --> 01:09:27,569
+RLHF and RLVR arguably they're very similar problems.
+
+1520
+01:09:27,569 --> 01:09:31,130
+But with the difference being really just
+
+1521
+01:09:31,130 --> 01:09:35,330
+we want more unhackable rewards so that we can actually
+
+1522
+01:09:35,330 --> 01:09:39,330
+put in much more compute and get these systems to be much better.
+
+1523
+01:09:39,330 --> 01:09:42,029
+GRPO, at least for the research community,
+
+1524
+01:09:42,029 --> 01:09:44,790
+is something that really enabled a lot of this.
+
+1525
+01:09:44,790 --> 01:09:46,729
+And you should all know GRPO very well.
+
+1526
+01:09:46,729 --> 01:09:48,810
+You should know what the functional form is
+
+1527
+01:09:48,810 --> 01:09:50,130
+and how the updates are.
+
+1528
+01:09:50,130 --> 01:09:51,713
+This is something that you should know
+
+1529
+01:09:51,713 --> 01:09:55,410
+as well just pre-training losses.
+
+1530
+01:09:55,410 --> 01:09:58,270
+And then finally, at this point, I think lots of people
+
+1531
+01:09:58,270 --> 01:10:00,760
+know how to do RLVR.
+
+1532
+01:10:00,760 --> 01:10:02,880
+As you will find out, unfortunately, RL
+
+1533
+01:10:02,880 --> 01:10:06,320
+remains very finicky and noisy and it's painful to work with.
+
+1534
+01:10:06,320 --> 01:10:07,740
+But it's not that hard.
+
+1535
+01:10:07,740 --> 01:10:12,440
+It's not like the old days of doing PPO on various really
+
+1536
+01:10:12,440 --> 01:10:13,660
+tricky environments.
+
+1537
+01:10:13,660 --> 01:10:18,820
+It's actually a lot smoother than you might think.
+
+1538
+01:10:18,820 --> 01:10:21,160
+I'll stop here for a moment and take any final questions
+
+1539
+01:10:21,160 --> 01:10:24,600
+before I let you all go, in case anyone has questions.
+
+1540
+01:10:24,600 --> 01:10:26,520
+A really quick question-- when you
+
+1541
+01:10:26,520 --> 01:10:30,100
+mention about the models being in thinking mode on and off,
+
+1542
+01:10:30,100 --> 01:10:33,140
+is the wait on the model or [INAUDIBLE] the same?
+
+1543
+01:10:33,140 --> 01:10:36,440
+Or do they play prompting or do they have different underlying
+
+1544
+01:10:36,440 --> 01:10:38,900
+models that they call back?
+
+1545
+01:10:38,900 --> 01:10:39,400
+Yeah.
+
+1546
+01:10:39,400 --> 01:10:41,025
+So the question was about thinking mode
+
+1547
+01:10:41,025 --> 01:10:42,520
+and what's happening on the back.
+
+1548
+01:10:42,520 --> 01:10:45,240
+So the interesting thing about thinking mode really
+
+1549
+01:10:45,240 --> 01:10:46,740
+is that it's actually one model.
+
+1550
+01:10:46,740 --> 01:10:48,320
+And there's just a little prompt tag
+
+1551
+01:10:48,320 --> 01:10:51,160
+that switches them between long and short, like long COT
+
+1552
+01:10:51,160 --> 01:10:53,360
+and no coat almost mode.
+
+1553
+01:10:53,360 --> 01:10:56,920
+Whereas if you just had an API flag or something, that's
+
+1554
+01:10:56,920 --> 01:10:58,720
+not very difficult. The fact that
+
+1555
+01:10:58,720 --> 01:11:00,470
+they were putting both of them in together
+
+1556
+01:11:00,470 --> 01:11:02,030
+is the interesting bit there.
+
+1557
+01:11:02,030 --> 01:11:03,990
+So you can actually choose, [INAUDIBLE]
+
+1558
+01:11:03,990 --> 01:11:07,190
+but then you add extra prompt yourself to do COT?
+
+1559
+01:11:07,190 --> 01:11:10,270
+Yeah, or the control mechanism in this case is in the prompt
+
+1560
+01:11:10,270 --> 01:11:12,630
+rather than at the API or serving layer or something
+
+1561
+01:11:12,630 --> 01:11:13,270
+like that.
+
+1562
+01:11:13,270 --> 01:11:13,830
+Yeah.
+
+1563
+01:11:13,830 --> 01:11:15,030
+Great.
+
+1564
+01:11:15,030 --> 01:11:16,710
+Oh, yeah.
+
+1565
+01:11:16,710 --> 01:11:18,730
+So you mentioned the phase of mid-training.
+
+1566
+01:11:18,730 --> 01:11:21,750
+I was wondering how much of the formatting that
+
+1567
+01:11:21,750 --> 01:11:23,910
+goes into the mid-training process,
+
+1568
+01:11:23,910 --> 01:11:27,270
+informs what is able to be learned during the RLVR post-
+
+1569
+01:11:27,270 --> 01:11:31,230
+training, and then as a secondary to that question of if you don't
+
+1570
+01:11:31,230 --> 01:11:33,810
+have the correct data in mid-training,
+
+1571
+01:11:33,810 --> 01:11:37,310
+then is it safe to assume that the reinforcement learning can't
+
+1572
+01:11:37,310 --> 01:11:39,950
+sample a correct solution and therefore you can't learn it?
+
+1573
+01:11:39,950 --> 01:11:40,450
+Yeah.
+
+1574
+01:11:40,450 --> 01:11:43,990
+So the question was about the role of mid-training in RL.
+
+1575
+01:11:43,990 --> 01:11:48,450
+I think there are a lot of empirical subtleties here.
+
+1576
+01:11:48,450 --> 01:11:50,530
+I don't have a one-size-fits-all
+
+1577
+01:11:50,530 --> 01:11:52,290
+answer. It will definitely not work as an answer,
+
+1578
+01:11:52,290 --> 01:11:54,070
+but to give a little bit of the nuance,
+
+1579
+01:11:54,070 --> 01:11:56,820
+I think pre-training and SFT are doing
+
+1580
+01:11:56,820 --> 01:11:58,000
+a lot of the heavy lifting.
+
+1581
+01:11:58,000 --> 01:11:59,740
+As long as you have coverage, if pre-training just
+
+1582
+01:11:59,740 --> 01:12:01,865
+doesn't have any code data, then you're in trouble.
+
+1583
+01:12:01,865 --> 01:12:02,825
+You need training.
+
+1584
+01:12:02,825 --> 01:12:05,200
+But if your pre-training was very diverse and it covered,
+
+1585
+01:12:05,200 --> 01:12:07,620
+let's go back to the mid-training slide.
+
+1586
+01:12:07,620 --> 01:12:10,700
+If it covered a lot of stuff like text, code data
+
+1587
+01:12:10,700 --> 01:12:13,780
+and it covered a bunch of GitHub data,
+
+1588
+01:12:13,780 --> 01:12:17,820
+then this is very nice to have, but maybe not critical
+
+1589
+01:12:17,820 --> 01:12:19,820
+because you're going to SFT anyway,
+
+1590
+01:12:19,820 --> 01:12:22,620
+and the SFT will allow you to get close enough to start
+
+1591
+01:12:22,620 --> 01:12:24,120
+getting some rewards for RL.
+
+1592
+01:12:24,120 --> 01:12:26,880
+If you didn't have SFT, then you're in DeepSeek trouble.
+
+1593
+01:12:26,880 --> 01:12:28,380
+But the fact that we're always going
+
+1594
+01:12:28,380 --> 01:12:31,620
+to be doing some amount of SFT pre-RL really helps you,
+
+1595
+01:12:31,620 --> 01:12:33,280
+and pre-training has enough coverage,
+
+1596
+01:12:33,280 --> 01:12:34,940
+hopefully, that you're able to get
+
+1597
+01:12:34,940 --> 01:12:36,560
+some reasonable generalization.
+
+1598
+01:12:36,560 --> 01:12:38,420
+So mid-training is very nice to have.
+
+1599
+01:12:38,420 --> 01:12:42,540
+Very important in order to get slightly better generalization,
+
+1600
+01:12:42,540 --> 01:12:44,840
+but not necessarily make or break, I think.
+
+1601
+01:12:48,540 --> 01:12:49,500
+Yeah.
+
+1602
+01:12:49,500 --> 01:12:53,520
+[INAUDIBLE] there is a step after training your reward model.
+
+1603
+01:12:53,520 --> 01:12:57,370
+We're going to still end up with a single model at the end.
+
+1604
+01:12:57,370 --> 01:13:00,950
+So how does this kind of distillation work?
+
+1605
+01:13:00,950 --> 01:13:06,530
+Do you have to design a mixed procedure?
+
+1606
+01:13:06,530 --> 01:13:07,250
+Yeah.
+
+1607
+01:13:07,250 --> 01:13:08,050
+So that's right.
+
+1608
+01:13:08,050 --> 01:13:09,650
+So the distillation procedure is going
+
+1609
+01:13:09,650 --> 01:13:12,170
+to require you to write down a sequence of prompts
+
+1610
+01:13:12,170 --> 01:13:15,110
+on which the experts will be distilled into the final model.
+
+1611
+01:13:15,110 --> 01:13:16,370
+Yeah.
+
+1612
+01:13:16,370 --> 01:13:18,170
+I can definitely see the advantages
+
+1613
+01:13:18,170 --> 01:13:19,990
+of this approach, which is that you
+
+1614
+01:13:19,990 --> 01:13:21,990
+can have a separate team working on each expert.
+
+1615
+01:13:21,990 --> 01:13:25,370
+It's much easier to have teams work on this.
+
+1616
+01:13:25,370 --> 01:13:27,870
+And then the aggregation could potentially be simple as well
+
+1617
+01:13:27,870 --> 01:13:29,690
+if you have enough compute.
+
+1618
+01:13:29,690 --> 01:13:33,012
+It's just that this— if you have all the objectives,
+
+1619
+01:13:33,012 --> 01:13:35,470
+you might as well just throw it into the big training loop.
+
+1620
+01:13:35,470 --> 01:13:37,430
+Usually, I think that's how you would prefer to do things.
+
+1621
+01:13:37,430 --> 01:13:39,530
+That way, you don't have to deal with this distillation
+
+1622
+01:13:39,530 --> 01:13:40,110
+complication.
+
+1623
+01:13:40,110 --> 01:13:42,610
+You could just have one big training objective that you then
+
+1624
+01:13:42,610 --> 01:13:46,330
+do one training loop.
+
+1625
+01:13:46,330 --> 01:13:47,230
+Yeah.
+
+1626
+01:13:47,230 --> 01:13:49,376
+Is the long reasoning training also part
+
+1627
+01:13:49,376 --> 01:13:52,195
+of the training, that mid-training?
+
+1628
+01:13:52,195 --> 01:13:54,320
+So the question was, is the long reasoning training
+
+1629
+01:13:54,320 --> 01:13:56,120
+part of mid-training.
+
+1630
+01:13:56,120 --> 01:14:05,440
+So I think there's long COT SFT in both R1 and Kimi K5.1.
+
+1631
+01:14:05,440 --> 01:14:09,100
+Long COT is not traditionally part of mid-training, per se,
+
+1632
+01:14:09,100 --> 01:14:10,560
+but it is often—
+
+1633
+01:14:10,560 --> 01:14:13,605
+long COT-like data is used in long context extension.
+
+1634
+01:14:13,605 --> 01:14:14,980
+So it's a little bit more subtle.
+
+1635
+01:14:14,980 --> 01:14:17,640
+I didn't talk about long context extension at all
+
+1636
+01:14:17,640 --> 01:14:19,680
+and I regret that.
+
+1637
+01:14:19,680 --> 01:14:22,080
+But usually, that's an additional phase right
+
+1638
+01:14:22,080 --> 01:14:25,220
+before RLHF or other things, in this case,
+
+1639
+01:14:25,220 --> 01:14:28,600
+also long COT, where you extend the context using
+
+1640
+01:14:28,600 --> 01:14:30,140
+any long context data you have.
+
+1641
+01:14:30,140 --> 01:14:33,358
+Usually, it's a combination of books, code, synthetic data,
+
+1642
+01:14:33,358 --> 01:14:35,400
+because those are the things that are long enough
+
+1643
+01:14:35,400 --> 01:14:38,520
+to do extension on.
+
+1644
+01:14:40,280 --> 01:14:43,640
+So like I guess related to this diagram that's currently up,
+
+1645
+01:14:43,640 --> 01:14:45,500
+when you're doing this [INAUDIBLE] process,
+
+1646
+01:14:45,500 --> 01:14:48,880
+let's say how much math, chemistry, many other domains.
+
+1647
+01:14:48,880 --> 01:14:52,630
+Is it common to do it in parallel, with one,
+
+1648
+01:14:52,630 --> 01:14:58,390
+I guess, like reinforcement learning training run?
+
+1649
+01:14:58,390 --> 01:15:00,650
+Or you do it sequentially?
+
+1650
+01:15:00,650 --> 01:15:02,390
+And if you do it sequentially, how
+
+1651
+01:15:02,390 --> 01:15:05,828
+do you avoid forgetting earlier parts of the learning?
+
+1652
+01:15:05,828 --> 01:15:07,870
+Yeah, I think the closest answer to this question
+
+1653
+01:15:07,870 --> 01:15:10,390
+do you do things sequentially or in parallel
+
+1654
+01:15:10,390 --> 01:15:14,830
+is these diagrams, where the two splits that you
+
+1655
+01:15:14,830 --> 01:15:16,910
+do is you split amongst like reasoning
+
+1656
+01:15:16,910 --> 01:15:18,912
+problems and non-reasoning problems,
+
+1657
+01:15:18,912 --> 01:15:20,870
+and the reasoning problems all go in one bucket
+
+1658
+01:15:20,870 --> 01:15:23,310
+and they get executed at stage II.
+
+1659
+01:15:23,310 --> 01:15:25,830
+And then the non-reasoning problems
+
+1660
+01:15:25,830 --> 01:15:28,125
+happen at the final RLHF phase.
+
+1661
+01:15:28,125 --> 01:15:29,750
+And this includes stuff like chattiness
+
+1662
+01:15:29,750 --> 01:15:30,708
+and so on and so forth.
+
+1663
+01:15:30,708 --> 01:15:32,850
+And those all go into the one later bit,
+
+1664
+01:15:32,850 --> 01:15:34,130
+which is the stage IV.
+
+1665
+01:15:41,550 --> 01:15:42,330
+See you next week.
+
+1666
+01:15:42,330 --> 01:15:45,080
+[APPLAUSE]

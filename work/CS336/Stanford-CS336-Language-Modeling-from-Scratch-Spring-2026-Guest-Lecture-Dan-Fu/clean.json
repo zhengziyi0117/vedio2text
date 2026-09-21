@@ -1,0 +1,7537 @@
+[
+ {
+  "start": 5.2,
+  "end": 5.94,
+  "text": "Cool."
+ },
+ {
+  "start": 5.94,
+  "end": 9.16,
+  "text": "So thanks so much, everyone, for coming."
+ },
+ {
+  "start": 9.16,
+  "end": 11.84,
+  "text": "I think you have a pretty cool course here."
+ },
+ {
+  "start": 11.84,
+  "end": 15.68,
+  "text": "And thanks, of course, Percy, for inviting me to give a talk."
+ },
+ {
+  "start": 15.68,
+  "end": 19.56,
+  "text": "So I think in this class, you're mostly talking about training"
+ },
+ {
+  "start": 19.56,
+  "end": 24.96,
+  "text": "and how to train these language models, and get to this place"
+ },
+ {
+  "start": 24.96,
+  "end": 29.24,
+  "text": "where we can have these things that can talk back to."
+ },
+ {
+  "start": 29.24,
+  "end": 31.36,
+  "text": "And today, I'm going to talk a little bit"
+ },
+ {
+  "start": 31.36,
+  "end": 34.36,
+  "text": "about once you have one of those models, what it looks"
+ },
+ {
+  "start": 34.36,
+  "end": 37.44,
+  "text": "like from the other side, what it looks like to actually serve"
+ },
+ {
+  "start": 37.44,
+  "end": 43.18,
+  "text": "these models, do inference, turn these things from say,"
+ },
+ {
+  "start": 43.18,
+  "end": 46.58,
+  "text": "electricity, into tokens, into intelligence."
+ },
+ {
+  "start": 46.58,
+  "end": 49.64,
+  "text": "And also what are some of the fun research problems"
+ },
+ {
+  "start": 49.64,
+  "end": 52.2,
+  "text": "and research things that you can do when you look"
+ },
+ {
+  "start": 52.2,
+  "end": 55.48,
+  "text": "at it from that standpoint."
+ },
+ {
+  "start": 55.48,
+  "end": 59.49,
+  "text": "I'll start with some high level motivation."
+ },
+ {
+  "start": 59.49,
+  "end": 62.17,
+  "text": "I think one thing that's become abundantly clear to all of us"
+ },
+ {
+  "start": 62.17,
+  "end": 64.89,
+  "text": "is that we are really going through almost"
+ },
+ {
+  "start": 64.89,
+  "end": 66.57,
+  "text": "a new industrial revolution in terms"
+ },
+ {
+  "start": 66.57,
+  "end": 69.09,
+  "text": "of these models and their capabilities."
+ },
+ {
+  "start": 69.09,
+  "end": 72.15,
+  "text": "These slides I made during my job talks two years ago."
+ },
+ {
+  "start": 72.15,
+  "end": 75.05,
+  "text": "So the exact examples are going to be pretty old,"
+ },
+ {
+  "start": 75.05,
+  "end": 79.25,
+  "text": "but you can do human-level text generation, code generation,"
+ },
+ {
+  "start": 79.25,
+  "end": 86.17,
+  "text": "Cursor, Claude Code, GPT 5.5, not just 4."
+ },
+ {
+  "start": 86.17,
+  "end": 88.21000000000001,
+  "text": "You can generate images and videos"
+ },
+ {
+  "start": 88.21000000000001,
+  "end": 91.93,
+  "text": "or understand images and videos and process them."
+ },
+ {
+  "start": 91.93,
+  "end": 93.83,
+  "text": "You can start to understand new modalities."
+ },
+ {
+  "start": 93.83,
+  "end": 96.09,
+  "text": "So we're starting to see some of the applications"
+ },
+ {
+  "start": 96.09,
+  "end": 100.39,
+  "text": "and the sciences in bio and health, DNA models,"
+ },
+ {
+  "start": 100.39,
+  "end": 102.275,
+  "text": "all these sorts of things."
+ },
+ {
+  "start": 102.275,
+  "end": 103.65,
+  "text": "One of the things that has really"
+ },
+ {
+  "start": 103.65,
+  "end": 105.33,
+  "text": "been driving my research for a while"
+ },
+ {
+  "start": 105.33,
+  "end": 108.43,
+  "text": "is the question of what has made these advances possible,"
+ },
+ {
+  "start": 108.43,
+  "end": 112.65,
+  "text": "and how can we improve on them in the next generations?"
+ },
+ {
+  "start": 112.65,
+  "end": 116.47,
+  "text": "And one abundant driver of these capabilities is really scale."
+ },
+ {
+  "start": 116.47,
+  "end": 118.89,
+  "text": "So again, this is at this point, a"
+ },
+ {
+  "start": 118.89,
+  "end": 124.61,
+  "text": "pretty old figure but these models have really scaled up"
+ },
+ {
+  "start": 124.61,
+  "end": 125.87,
+  "text": "in massive ways."
+ },
+ {
+  "start": 125.87,
+  "end": 129.72899999999998,
+  "text": "So in 2018, at the beginning of my PhD in antiquity,"
+ },
+ {
+  "start": 129.72899999999998,
+  "end": 132.01,
+  "text": "these were hundreds million parameter models"
+ },
+ {
+  "start": 132.01,
+  "end": 132.83,
+  "text": "at their largest."
+ },
+ {
+  "start": 132.83,
+  "end": 135.67,
+  "text": "And we were like, oh my God, these things are pretty crazy."
+ },
+ {
+  "start": 135.67,
+  "end": 138.82999999999998,
+  "text": "By 2019, we thought that they were too dangerous to release,"
+ },
+ {
+  "start": 138.82999999999998,
+  "end": 139.97,
+  "text": "that's GPT-2."
+ },
+ {
+  "start": 139.97,
+  "end": 143.57,
+  "text": "I think in this class, you can train a GPT-2 quality model."
+ },
+ {
+  "start": 143.57,
+  "end": 144.82999999999998,
+  "text": "I'm not sure if you did."
+ },
+ {
+  "start": 144.82999999999998,
+  "end": 146.39,
+  "text": "If you tried hard enough, you could."
+ },
+ {
+  "start": 149.55,
+  "end": 151.89,
+  "text": "And today, of course, you have open source models"
+ },
+ {
+  "start": 151.89,
+  "end": 154.57,
+  "text": "that are a trillion parameters and more."
+ },
+ {
+  "start": 154.57,
+  "end": 158.17000000000002,
+  "text": "Frontier is probably at 5 to 10 trillion parameters."
+ },
+ {
+  "start": 158.17000000000002,
+  "end": 159.73,
+  "text": "It's pretty exciting."
+ },
+ {
+  "start": 159.73,
+  "end": 163.21,
+  "text": "With these, you have a bunch of new capabilities like chat,"
+ },
+ {
+  "start": 163.21,
+  "end": 167.17000000000002,
+  "text": "writing code, analyzing complex text, doing your homework"
+ },
+ {
+  "start": 167.17000000000002,
+  "end": 170.41,
+  "text": "for you, et cetera."
+ },
+ {
+  "start": 170.41,
+  "end": 175.68,
+  "text": "What's really remarkable about this is that this transition is happening faster than we think."
+ },
+ {
+  "start": 175.68,
+  "end": 179.38,
+  "text": "So certainly, faster than I thought at the beginning"
+ },
+ {
+  "start": 179.38,
+  "end": 180.76,
+  "text": "of my PhD a few years ago."
+ },
+ {
+  "start": 180.76,
+  "end": 183.9,
+  "text": "So I think one really apt analogy, and the dates"
+ },
+ {
+  "start": 183.9,
+  "end": 186.96,
+  "text": "actually match up in an interesting way."
+ },
+ {
+  "start": 186.96,
+  "end": 190.915,
+  "text": "So in 1902, there are 130,000 working horses in Manhattan."
+ },
+ {
+  "start": 190.915,
+  "end": 192.54,
+  "text": "So these are horses that you don't just"
+ },
+ {
+  "start": 192.54,
+  "end": 195.02,
+  "text": "have around for giggles, but you actually"
+ },
+ {
+  "start": 195.02,
+  "end": 199.57999999999998,
+  "text": "have them because they play some key role."
+ },
+ {
+  "start": 199.57999999999998,
+  "end": 202.7,
+  "text": "And they would-- these horses would produce--"
+ },
+ {
+  "start": 202.7,
+  "end": 204.82,
+  "text": "each would produce pounds of manure a day,"
+ },
+ {
+  "start": 204.82,
+  "end": 207.84,
+  "text": "times 130,000 horses, you have a real manure problem."
+ },
+ {
+  "start": 207.84,
+  "end": 210.3,
+  "text": "So in fact, there were entire conferences"
+ },
+ {
+  "start": 210.3,
+  "end": 212.66,
+  "text": "that were just gathered around the question"
+ },
+ {
+  "start": 212.66,
+  "end": 214.94,
+  "text": "of-- entire academic conferences around,"
+ },
+ {
+  "start": 214.94,
+  "end": 217.8,
+  "text": "what do we do about all the poop that these horses produce?"
+ },
+ {
+  "start": 217.8,
+  "end": 220.712,
+  "text": "So in 1898, they actually had one of these in New York."
+ },
+ {
+  "start": 220.712,
+  "end": 222.42000000000002,
+  "text": "And their conclusion from that conference"
+ },
+ {
+  "start": 222.42000000000002,
+  "end": 224.67000000000002,
+  "text": "was, there's nothing we can do about the horse manure."
+ },
+ {
+  "start": 224.67000000000002,
+  "end": 227.57999999999998,
+  "text": "You just have to hold your nose and deal with it."
+ },
+ {
+  "start": 227.57999999999998,
+  "end": 232.66,
+  "text": "10 years later, by 1912, cars had already outnumbered horses"
+ },
+ {
+  "start": 232.66,
+  "end": 233.53,
+  "text": "in Manhattan."
+ },
+ {
+  "start": 233.53,
+  "end": 236.07,
+  "text": "So that 10 year transition, you saw"
+ },
+ {
+  "start": 236.07,
+  "end": 241.79,
+  "text": "these things that have been around for centuries"
+ },
+ {
+  "start": 241.79,
+  "end": 245.75,
+  "text": "start to be replaced by cars."
+ },
+ {
+  "start": 245.75,
+  "end": 247.77,
+  "text": "And I think for us, for language models,"
+ },
+ {
+  "start": 247.77,
+  "end": 249.99,
+  "text": "For a lot of the stuff that we do,"
+ },
+ {
+  "start": 249.99,
+  "end": 252.69,
+  "text": "that 1912 moment was probably last year."
+ },
+ {
+  "start": 252.69,
+  "end": 255.43,
+  "text": "So at least for me, last year, I started"
+ },
+ {
+  "start": 255.43,
+  "end": 258.81,
+  "text": "writing the majority of my code using these language models."
+ },
+ {
+  "start": 258.81,
+  "end": 260.589,
+  "text": "Most people in my team do it."
+ },
+ {
+  "start": 260.589,
+  "end": 263.27,
+  "text": "I tell all my students to do it, except when"
+ },
+ {
+  "start": 263.27,
+  "end": 265.23,
+  "text": "they're doing their homework."
+ },
+ {
+  "start": 265.23,
+  "end": 268.35,
+  "text": "But this is a really exciting transition"
+ },
+ {
+  "start": 268.35,
+  "end": 271.75,
+  "text": "that we're living through."
+ },
+ {
+  "start": 271.75,
+  "end": 278.37,
+  "text": "One of these things that is really driving this, a lot of the scale is driven by GPUs."
+ },
+ {
+  "start": 278.37,
+  "end": 282.99,
+  "text": "So in a very real sense, you could say GPUs are the new oil."
+ },
+ {
+  "start": 282.99,
+  "end": 285.25,
+  "text": "This is again an older announcement,"
+ },
+ {
+  "start": 285.25,
+  "end": 287.47,
+  "text": "but you're seeing hundreds of billions of dollars"
+ },
+ {
+  "start": 287.47,
+  "end": 290.95,
+  "text": "and more of investment into GPUs."
+ },
+ {
+  "start": 290.95,
+  "end": 295.7,
+  "text": "History rhymes in interesting ways with similar things,"
+ },
+ {
+  "start": 295.7,
+  "end": 298.92,
+  "text": "but there are entire countries-- entire sovereign wealth funds"
+ },
+ {
+  "start": 298.92,
+  "end": 307.12,
+  "text": "that are making these things a major part of their piece."
+ },
+ {
+  "start": 307.12,
+  "end": 309.72,
+  "text": "And one thing that is really abundantly clear"
+ },
+ {
+  "start": 309.72,
+  "end": 312.66,
+  "text": "is that inference is really the piece."
+ },
+ {
+  "start": 312.66,
+  "end": 315.76,
+  "text": "So you can think of inference as the engine that turns"
+ },
+ {
+  "start": 315.76,
+  "end": 317.14,
+  "text": "electricity into intelligence."
+ },
+ {
+  "start": 317.14,
+  "end": 323.04,
+  "text": "So the same way that oil is only useful in a car, if you can have"
+ },
+ {
+  "start": 323.04,
+  "end": 327.84,
+  "text": "an engine that turns that oil into useful kinetic motion,"
+ },
+ {
+  "start": 327.84,
+  "end": 330.04,
+  "text": "inference engines, GPU kernels, these"
+ },
+ {
+  "start": 330.04,
+  "end": 332.84000000000003,
+  "text": "are the things that really turn--"
+ },
+ {
+  "start": 332.84000000000003,
+  "end": 335.26,
+  "text": "that really turn these GPUs from sand,"
+ },
+ {
+  "start": 335.26,
+  "end": 338.56,
+  "text": "like Percy said, into something that we can use today."
+ },
+ {
+  "start": 338.56,
+  "end": 339.86,
+  "text": "And I think that's clear."
+ },
+ {
+  "start": 339.86,
+  "end": 342.36,
+  "text": "So if you think about it, these machine learning models,"
+ },
+ {
+  "start": 342.36,
+  "end": 344.1,
+  "text": "they're really just DAGs of operations."
+ },
+ {
+  "start": 344.1,
+  "end": 347.36,
+  "text": "There are some mathematical object that exists in the ether."
+ },
+ {
+  "start": 347.36,
+  "end": 350.88,
+  "text": "The inference engines, the GPU kernels, all these pieces, these"
+ },
+ {
+  "start": 350.88,
+  "end": 352.88,
+  "text": "are the things that you actually have to program"
+ },
+ {
+  "start": 352.88,
+  "end": 354.62,
+  "text": "and map them down to ML operations."
+ },
+ {
+  "start": 354.62,
+  "end": 356.56,
+  "text": "I think you do some of that in this class."
+ },
+ {
+  "start": 356.56,
+  "end": 358.62,
+  "text": "I think you implement some flash attention."
+ },
+ {
+  "start": 358.62,
+  "end": 359.96,
+  "text": "So some training side."
+ },
+ {
+  "start": 359.96,
+  "end": 361.68,
+  "text": "But there's a whole world of complexity"
+ },
+ {
+  "start": 361.68,
+  "end": 366.6,
+  "text": "when it comes to inference and the inference side of things."
+ },
+ {
+  "start": 366.6,
+  "end": 370.08,
+  "text": "So if you take away nothing from today's talk,"
+ },
+ {
+  "start": 370.08,
+  "end": 373.678,
+  "text": "I hope there's one thing which is, if you understand inference"
+ },
+ {
+  "start": 373.678,
+  "end": 375.22,
+  "text": "and understand the inference engines,"
+ },
+ {
+  "start": 375.22,
+  "end": 377.08,
+  "text": "if you understand the GPU kernels"
+ },
+ {
+  "start": 377.08,
+  "end": 380.52,
+  "text": "that underlie a lot of the core technology,"
+ },
+ {
+  "start": 380.52,
+  "end": 383.96,
+  "text": "you can enable full stack innovation in machine learning"
+ },
+ {
+  "start": 383.96,
+  "end": 384.58,
+  "text": "algorithms."
+ },
+ {
+  "start": 384.58,
+  "end": 387.42,
+  "text": "So I'm going to start with, in today's talk,"
+ },
+ {
+  "start": 387.42,
+  "end": 390.9,
+  "text": "a high level overview of the lifetime of a token."
+ },
+ {
+  "start": 390.9,
+  "end": 394.4,
+  "text": "So when you make a request to one of these models, what"
+ },
+ {
+  "start": 394.4,
+  "end": 396.52,
+  "text": "happens to that request, how it goes"
+ },
+ {
+  "start": 396.52,
+  "end": 398.3,
+  "text": "through the entire inference service,"
+ },
+ {
+  "start": 398.3,
+  "end": 401.2,
+  "text": "what are some of the interesting choices you have to make."
+ },
+ {
+  "start": 401.2,
+  "end": 405.04,
+  "text": "And then I'll dive deeper into two more research projects"
+ },
+ {
+  "start": 405.04,
+  "end": 410.098,
+  "text": "around, if you take certain pieces of this system, what"
+ },
+ {
+  "start": 410.098,
+  "end": 411.89,
+  "text": "are questions that you can ask and what are"
+ },
+ {
+  "start": 411.89,
+  "end": 414.97,
+  "text": "some things that you can do?"
+ },
+ {
+  "start": 414.97,
+  "end": 417.31,
+  "text": "Before I get into all the technical details,"
+ },
+ {
+  "start": 417.31,
+  "end": 418.678,
+  "text": "I'll quickly make a plug."
+ },
+ {
+  "start": 418.678,
+  "end": 420.47,
+  "text": "So I'm here representing two organizations."
+ },
+ {
+  "start": 420.47,
+  "end": 423.93,
+  "text": "So one is UCSD, where I have a small lab,"
+ },
+ {
+  "start": 423.93,
+  "end": 427.15,
+  "text": "and some of their work is represented in this talk."
+ },
+ {
+  "start": 427.15,
+  "end": 429.21,
+  "text": "Then I'm also representing Together"
+ },
+ {
+  "start": 429.21,
+  "end": 433.41,
+  "text": "who did a bunch of the work that's represented in this talk"
+ },
+ {
+  "start": 433.41,
+  "end": 434.95,
+  "text": "together as an AI cloud."
+ },
+ {
+  "start": 434.95,
+  "end": 440.45,
+  "text": "So there's GPUs, inference, fine-tuning, and all the rest."
+ },
+ {
+  "start": 440.45,
+  "end": 441.91,
+  "text": "Heavy research background."
+ },
+ {
+  "start": 441.91,
+  "end": 444.43,
+  "text": "So including Percy, I don't think you can see my mouse,"
+ },
+ {
+  "start": 444.43,
+  "end": 446.31,
+  "text": "but he's on the screen."
+ },
+ {
+  "start": 446.31,
+  "end": 449.54,
+  "text": "And then we've got a big research presence behind that,"
+ },
+ {
+  "start": 449.54,
+  "end": 451.29,
+  "text": "and behind a lot of the things that you're"
+ },
+ {
+  "start": 451.29,
+  "end": 454.13,
+  "text": "going to see in this talk."
+ },
+ {
+  "start": 454.13,
+  "end": 454.79,
+  "text": "All right."
+ },
+ {
+  "start": 454.79,
+  "end": 457.93,
+  "text": "I'll start by giving a high level overview"
+ },
+ {
+  "start": 457.93,
+  "end": 459.75,
+  "text": "of a lifetime of a token."
+ },
+ {
+  "start": 459.75,
+  "end": 463.55,
+  "text": "So when you make a request to an inference system,"
+ },
+ {
+  "start": 463.55,
+  "end": 466.9,
+  "text": "what are the different pieces that are going to go through?"
+ },
+ {
+  "start": 466.9,
+  "end": 469.46,
+  "text": "And these slides are cribbed from a presentation"
+ },
+ {
+  "start": 469.46,
+  "end": 475.34000000000003,
+  "text": "that my student, Austin, made from his experiences together."
+ },
+ {
+  "start": 475.34000000000003,
+  "end": 477.02,
+  "text": "I'll make a note that all of the slides"
+ },
+ {
+  "start": 477.02,
+  "end": 480.58,
+  "text": "are completely AI generated from Nano Banana Pro,"
+ },
+ {
+  "start": 480.58,
+  "end": 482.46,
+  "text": "but they're pretty good as long as you don't"
+ },
+ {
+  "start": 482.46,
+  "end": 484.16,
+  "text": "look too closely at the tech."
+ },
+ {
+  "start": 484.16,
+  "end": 487.16,
+  "text": "So I'd say, at a high level everything is correct."
+ },
+ {
+  "start": 487.16,
+  "end": 490.82,
+  "text": "If you look very closely, you'll see things that are very wrong."
+ },
+ {
+  "start": 490.82,
+  "end": 496.76,
+  "text": "This is an overview of all the pieces of an inference engine."
+ },
+ {
+  "start": 496.76,
+  "end": 500.84,
+  "text": "So I'll give a high level description of how it works."
+ },
+ {
+  "start": 500.84,
+  "end": 502.157,
+  "text": "So you get a request in."
+ },
+ {
+  "start": 502.157,
+  "end": 503.74,
+  "text": "The first thing that's going to happen"
+ },
+ {
+  "start": 503.74,
+  "end": 506.84,
+  "text": "is that the request gets scheduled to various different GPUs."
+ },
+ {
+  "start": 506.84,
+  "end": 509.62,
+  "text": "You might have disaggregated prefill and decode"
+ },
+ {
+  "start": 509.62,
+  "end": 512.539,
+  "text": "on different machines."
+ },
+ {
+  "start": 512.539,
+  "end": 515.48,
+  "text": "You'll run that request against a KV Cache to see,"
+ },
+ {
+  "start": 515.48,
+  "end": 519.02,
+  "text": "have I seen this request or versions of this request before?"
+ },
+ {
+  "start": 519.02,
+  "end": 524.86,
+  "text": "Is there some compute that I can actually save?"
+ },
+ {
+  "start": 524.86,
+  "end": 529.38,
+  "text": "Then you'll start executing the core machine learning code."
+ },
+ {
+  "start": 529.38,
+  "end": 530.56,
+  "text": "So here are new tokens."
+ },
+ {
+  "start": 530.56,
+  "end": 533.74,
+  "text": "Here are new operations that we need to compute."
+ },
+ {
+  "start": 533.74,
+  "end": 535.96,
+  "text": "There are various optimizations that you can make."
+ },
+ {
+  "start": 535.96,
+  "end": 539.08,
+  "text": "So you can split that computation across different machines."
+ },
+ {
+  "start": 539.08,
+  "end": 540.96,
+  "text": "You can parallelize across different nodes."
+ },
+ {
+  "start": 540.96,
+  "end": 544.22,
+  "text": "You can parallelize it within a node across different GPUs"
+ },
+ {
+  "start": 544.22,
+  "end": 545.84,
+  "text": "depending on the size of your model,"
+ },
+ {
+  "start": 545.84,
+  "end": 549.06,
+  "text": "depending on how you can split up, split that up."
+ },
+ {
+  "start": 549.06,
+  "end": 553.74,
+  "text": "And I think one of the exciting things is that, as we are--"
+ },
+ {
+  "start": 553.74,
+  "end": 556.7,
+  "text": "as the hardware is developing, we're"
+ },
+ {
+  "start": 556.7,
+  "end": 559.34,
+  "text": "actually going to start to see more different choices that you"
+ },
+ {
+  "start": 559.34,
+  "end": 561.38,
+  "text": "can make there."
+ },
+ {
+  "start": 561.38,
+  "end": 563.698,
+  "text": "But once you make all those choices, once you execute"
+ },
+ {
+  "start": 563.698,
+  "end": 566.24,
+  "text": "all the code at the end, you get the tokens that you can say,"
+ },
+ {
+  "start": 566.24,
+  "end": 567.7,
+  "text": "hey, Chad, what did Percy mean when"
+ },
+ {
+  "start": 567.7,
+  "end": 570.62,
+  "text": "he said linear regression because I"
+ },
+ {
+  "start": 570.62,
+  "end": 573.1,
+  "text": "skipped that day in my class?"
+ },
+ {
+  "start": 573.1,
+  "end": 578.14,
+  "text": "And you get this whole end to end experience."
+ },
+ {
+  "start": 578.14,
+  "end": 580.14,
+  "text": "One of the things that I think is"
+ },
+ {
+  "start": 580.14,
+  "end": 583.35,
+  "text": "useful to start thinking about is,"
+ },
+ {
+  "start": 583.35,
+  "end": 586.55,
+  "text": "what do these different workloads look like?"
+ },
+ {
+  "start": 586.55,
+  "end": 589.69,
+  "text": "And there's quite a bit of different things."
+ },
+ {
+  "start": 589.69,
+  "end": 592.19,
+  "text": "So this is one of the sites where if you look too closely,"
+ },
+ {
+  "start": 592.19,
+  "end": 595.35,
+  "text": "I think some of the fives turned into S's."
+ },
+ {
+  "start": 595.35,
+  "end": 597.75,
+  "text": "But one of the things that you want to think about"
+ },
+ {
+  "start": 597.75,
+  "end": 600.39,
+  "text": "is, when you're actually serving production traffic,"
+ },
+ {
+  "start": 600.39,
+  "end": 602.39,
+  "text": "it doesn't necessarily look like-- certainly,"
+ },
+ {
+  "start": 602.39,
+  "end": 604.63,
+  "text": "doesn't look what the type of tokens"
+ },
+ {
+  "start": 604.63,
+  "end": 606.59,
+  "text": "that you see during training."
+ },
+ {
+  "start": 606.59,
+  "end": 611.11,
+  "text": "But it also doesn't look like if you just made up a traffic"
+ },
+ {
+  "start": 611.11,
+  "end": 612.13,
+  "text": "workload in your head."
+ },
+ {
+  "start": 612.13,
+  "end": 615.61,
+  "text": "So what is the type thing that we typically see?"
+ },
+ {
+  "start": 615.61,
+  "end": 618.91,
+  "text": "So for a particular workload, you'll"
+ },
+ {
+  "start": 618.91,
+  "end": 621.57,
+  "text": "see a particular distribution of input and output tokens."
+ },
+ {
+  "start": 621.57,
+  "end": 624.09,
+  "text": "So let's take a coding workload."
+ },
+ {
+  "start": 624.09,
+  "end": 628.63,
+  "text": "So let's say you're somebody like Cursor, where you have"
+ },
+ {
+  "start": 628.63,
+  "end": 630.59,
+  "text": "your whole code base is available to the agent"
+ },
+ {
+  "start": 630.59,
+  "end": 632.25,
+  "text": "and you're asking questions about it,"
+ },
+ {
+  "start": 632.25,
+  "end": 633.75,
+  "text": "typically, what that will look like,"
+ },
+ {
+  "start": 633.75,
+  "end": 636.41,
+  "text": "is that you'll have a long amount of input."
+ },
+ {
+  "start": 636.41,
+  "end": 639.013,
+  "text": "So tens of thousands of input tokens."
+ },
+ {
+  "start": 639.013,
+  "end": 641.18,
+  "text": "And then depending on how you've trained your model,"
+ },
+ {
+  "start": 641.18,
+  "end": 643.74,
+  "text": "the model might output some amount of thinking tokens,"
+ },
+ {
+  "start": 643.74,
+  "end": 648.46,
+  "text": "or it might output some short input in."
+ },
+ {
+  "start": 648.46,
+  "end": 650.5,
+  "text": "And this will change based on workload."
+ },
+ {
+  "start": 650.5,
+  "end": 653.32,
+  "text": "It'll change based on model."
+ },
+ {
+  "start": 653.32,
+  "end": 657.12,
+  "text": "So a coding workload for example will look very different"
+ },
+ {
+  "start": 657.12,
+  "end": 662.02,
+  "text": "from a summarization workload, or a narrative summarization."
+ },
+ {
+  "start": 662.02,
+  "end": 666.835,
+  "text": "So if your work involves pasting entire books into a chat window"
+ },
+ {
+  "start": 666.835,
+  "end": 669.46,
+  "text": "and then talking back and forth to figure out what's happening,"
+ },
+ {
+  "start": 669.46,
+  "end": 672.4,
+  "text": "that's going to look very different than a standard chat"
+ },
+ {
+  "start": 672.4,
+  "end": 672.9,
+  "text": "thing."
+ },
+ {
+  "start": 672.9,
+  "end": 674.34,
+  "text": "So if you just go to chat and say,"
+ },
+ {
+  "start": 674.34,
+  "end": 677.84,
+  "text": "hey, explain to me first order calculus or whatever,"
+ },
+ {
+  "start": 677.84,
+  "end": 681.44,
+  "text": "that's going to have very different workload shapes."
+ },
+ {
+  "start": 681.44,
+  "end": 683.22,
+  "text": "The way that we use language models today,"
+ },
+ {
+  "start": 683.22,
+  "end": 687.24,
+  "text": "there's very turn-based agentic workflows."
+ },
+ {
+  "start": 687.24,
+  "end": 689.88,
+  "text": "So when you're coding, you go back and forth with your coding"
+ },
+ {
+  "start": 689.88,
+  "end": 691.34,
+  "text": "agent, say, hey, do this."
+ },
+ {
+  "start": 691.34,
+  "end": 692.74,
+  "text": "No, I didn't mean that, do that."
+ },
+ {
+  "start": 692.74,
+  "end": 696.04,
+  "text": "Your coding agents themselves can iterate on the language"
+ },
+ {
+  "start": 696.04,
+  "end": 696.94,
+  "text": "models quite a bit."
+ },
+ {
+  "start": 696.94,
+  "end": 701.52,
+  "text": "So they might invoke some tools and say,"
+ },
+ {
+  "start": 701.52,
+  "end": 705.46,
+  "text": "grep search for something in my data-- in my code base,"
+ },
+ {
+  "start": 705.46,
+  "end": 709.04,
+  "text": "and then take that and go feed it back to the model."
+ },
+ {
+  "start": 709.04,
+  "end": 711.76,
+  "text": "I might try to do an internet search and look up this thing"
+ },
+ {
+  "start": 711.76,
+  "end": 713.48,
+  "text": "that my user asked me."
+ },
+ {
+  "start": 713.48,
+  "end": 716.72,
+  "text": "So typically, you have these multiple turns"
+ },
+ {
+  "start": 716.72,
+  "end": 719.0,
+  "text": "in your conversation."
+ },
+ {
+  "start": 719.0,
+  "end": 720.48,
+  "text": "Now, another interesting piece is"
+ },
+ {
+  "start": 720.48,
+  "end": 722.74,
+  "text": "different applications will have different times."
+ },
+ {
+  "start": 722.74,
+  "end": 726.06,
+  "text": "So if you're in a fast, interactive chat-based loop,"
+ },
+ {
+  "start": 726.06,
+  "end": 727.92,
+  "text": "or if you're talking on your phone"
+ },
+ {
+  "start": 727.92,
+  "end": 730.68,
+  "text": "to ChatGPT in the voice mode, you"
+ },
+ {
+  "start": 730.68,
+  "end": 733.58,
+  "text": "might have relatively quick responses."
+ },
+ {
+  "start": 733.58,
+  "end": 737.52,
+  "text": "If on the other hand, you've put together an agentic workflow"
+ },
+ {
+  "start": 737.52,
+  "end": 739.7,
+  "text": "where you say, hey, go do this for me,"
+ },
+ {
+  "start": 739.7,
+  "end": 742.86,
+  "text": "I'm going to leave you alone and just iterate on your own,"
+ },
+ {
+  "start": 742.86,
+  "end": 744.34,
+  "text": "you'll have a different cadence."
+ },
+ {
+  "start": 744.34,
+  "end": 747.88,
+  "text": "If at some point your agent gets stuck and says, hey, help,"
+ },
+ {
+  "start": 747.88,
+  "end": 750.58,
+  "text": "I need to ask for advice, and you don't notice it,"
+ },
+ {
+  "start": 750.58,
+  "end": 752.92,
+  "text": "there might be another gap between turns."
+ },
+ {
+  "start": 752.92,
+  "end": 755.12,
+  "text": "So all of these things start to define"
+ },
+ {
+  "start": 755.12,
+  "end": 756.63,
+  "text": "what your workload looks like."
+ },
+ {
+  "start": 756.63,
+  "end": 760.07,
+  "text": "So how many new tokens do you get in it every time?"
+ },
+ {
+  "start": 760.07,
+  "end": 762.33,
+  "text": "How many tokens are you going to generate?"
+ },
+ {
+  "start": 762.33,
+  "end": 763.93,
+  "text": "How long is my session?"
+ },
+ {
+  "start": 763.93,
+  "end": 765.61,
+  "text": "Am I a very sticky user who keeps"
+ },
+ {
+  "start": 765.61,
+  "end": 767.83,
+  "text": "going back and forth with my Claude Agent,"
+ },
+ {
+  "start": 767.83,
+  "end": 771.49,
+  "text": "or am I a user who's just going to ask one question"
+ },
+ {
+  "start": 771.49,
+  "end": 774.41,
+  "text": "and then leave and come back the next day?"
+ },
+ {
+  "start": 774.41,
+  "end": 777.93,
+  "text": "And of course, how long between turns do you have?"
+ },
+ {
+  "start": 777.93,
+  "end": 780.85,
+  "text": "I, for example, have a chat that I've"
+ },
+ {
+  "start": 780.85,
+  "end": 784.77,
+  "text": "had with a ChatGPT agent about how I should set up my workout"
+ },
+ {
+  "start": 784.77,
+  "end": 787.53,
+  "text": "and my workouts week to week."
+ },
+ {
+  "start": 787.53,
+  "end": 792.21,
+  "text": "And I interact with that chat once every other week."
+ },
+ {
+  "start": 792.21,
+  "end": 794.49,
+  "text": "So that is a very different traffic pattern"
+ },
+ {
+  "start": 794.49,
+  "end": 796.527,
+  "text": "than some of the other ones."
+ },
+ {
+  "start": 796.527,
+  "end": 798.61,
+  "text": "And then of course, depending on your application,"
+ },
+ {
+  "start": 798.61,
+  "end": 799.985,
+  "text": "you might have different targets."
+ },
+ {
+  "start": 799.985,
+  "end": 803.513,
+  "text": "So if you have an interactive application, you might say,"
+ },
+ {
+  "start": 803.513,
+  "end": 805.93,
+  "text": "I want to get the first tokens back in less than a second,"
+ },
+ {
+  "start": 805.93,
+  "end": 808.65,
+  "text": "so that the agent can say, hey, I'm thinking"
+ },
+ {
+  "start": 808.65,
+  "end": 811.25,
+  "text": "and I'm going to say blah de blah de blah."
+ },
+ {
+  "start": 811.25,
+  "end": 814.988,
+  "text": "Or I might say, I know I'm going to be generating 500 tokens,"
+ },
+ {
+  "start": 814.988,
+  "end": 816.78,
+  "text": "and I want that whole response to come back"
+ },
+ {
+  "start": 816.78,
+  "end": 819.447,
+  "text": "within a certain amount of time so that my user can read it fast"
+ },
+ {
+  "start": 819.447,
+  "end": 823.12,
+  "text": "enough and all these pieces."
+ },
+ {
+  "start": 825.78,
+  "end": 829.98,
+  "text": "So as that— when that request comes in,"
+ },
+ {
+  "start": 829.98,
+  "end": 832.8,
+  "text": "there are a few basic pieces that come in."
+ },
+ {
+  "start": 832.8,
+  "end": 835.82,
+  "text": "I'll rest a bit on the prefill and decode piece"
+ },
+ {
+  "start": 835.82,
+  "end": 836.68,
+  "text": "in a little bit."
+ },
+ {
+  "start": 836.68,
+  "end": 839.283,
+  "text": "So let's say you have some amount of text that comes in,"
+ },
+ {
+  "start": 839.283,
+  "end": 840.7,
+  "text": "the first thing you're going to do"
+ },
+ {
+  "start": 840.7,
+  "end": 842.16,
+  "text": "is you're going to tokenize it."
+ },
+ {
+  "start": 842.16,
+  "end": 844.14,
+  "text": "I think you're all familiar with that."
+ },
+ {
+  "start": 844.14,
+  "end": 847.34,
+  "text": "But then once there, you start getting into a somewhat complex"
+ },
+ {
+  "start": 847.34,
+  "end": 850.22,
+  "text": "scheduling regime because you have to ask questions like,"
+ },
+ {
+  "start": 850.22,
+  "end": 852.32,
+  "text": "have I seen these tokens before?"
+ },
+ {
+  "start": 852.32,
+  "end": 857.1,
+  "text": "Can I just look up some of the activations in a cache?"
+ },
+ {
+  "start": 857.1,
+  "end": 861.3,
+  "text": "And then you get to basically, these two major pieces"
+ },
+ {
+  "start": 861.3,
+  "end": 864.82,
+  "text": "of the actual machine learning computation."
+ },
+ {
+  "start": 864.82,
+  "end": 866.623,
+  "text": "These are called prefill and decode,"
+ },
+ {
+  "start": 866.623,
+  "end": 868.04,
+  "text": "and they're very different beasts."
+ },
+ {
+  "start": 868.04,
+  "end": 871.22,
+  "text": "So prefill means let's say you have 10,000 tokens that"
+ },
+ {
+  "start": 871.22,
+  "end": 875.175,
+  "text": "you've never seen before, and you want to go compute what"
+ },
+ {
+  "start": 875.175,
+  "end": 877.05,
+  "text": "the activations and what the logit should be."
+ },
+ {
+  "start": 877.05,
+  "end": 879.55,
+  "text": "So 10,000 tokens in, one token out."
+ },
+ {
+  "start": 879.55,
+  "end": 881.53,
+  "text": "That's a very compute bound operation."
+ },
+ {
+  "start": 881.53,
+  "end": 883.67,
+  "text": "So that actually looks pretty close to the things"
+ },
+ {
+  "start": 883.67,
+  "end": 885.73,
+  "text": "that you guys have been looking at for training time."
+ },
+ {
+  "start": 885.73,
+  "end": 887.855,
+  "text": "So when you're training, you have some large amount"
+ },
+ {
+  "start": 887.855,
+  "end": 888.57,
+  "text": "of tokens."
+ },
+ {
+  "start": 888.57,
+  "end": 890.112,
+  "text": "You write your Flash Attention kernel"
+ },
+ {
+  "start": 890.112,
+  "end": 891.63,
+  "text": "when you run your training loop."
+ },
+ {
+  "start": 891.63,
+  "end": 892.81,
+  "text": "Prefill is very similar."
+ },
+ {
+  "start": 892.81,
+  "end": 894.658,
+  "text": "You just don't run your backwards pass."
+ },
+ {
+  "start": 894.658,
+  "end": 896.45,
+  "text": "And then you have this thing called decode."
+ },
+ {
+  "start": 896.45,
+  "end": 899.19,
+  "text": "So decode is when you're then just generating"
+ },
+ {
+  "start": 899.19,
+  "end": 900.09,
+  "text": "one token at a time."
+ },
+ {
+  "start": 900.09,
+  "end": 902.01,
+  "text": "So you pass in these 10,000 tokens."
+ },
+ {
+  "start": 902.01,
+  "end": 903.89,
+  "text": "It's like, hey, here's my code base,"
+ },
+ {
+  "start": 903.89,
+  "end": 906.47,
+  "text": "tell me what function ABC does?"
+ },
+ {
+  "start": 906.47,
+  "end": 908.71,
+  "text": "The model is going to process the whole prompt"
+ },
+ {
+  "start": 908.71,
+  "end": 911.59,
+  "text": "and then start generating one token at a time, maybe"
+ },
+ {
+  "start": 911.59,
+  "end": 915.27,
+  "text": "three or four tokens if you have speculative decoding working."
+ },
+ {
+  "start": 915.27,
+  "end": 917.83,
+  "text": "And if you think about that operation-- so every time you"
+ },
+ {
+  "start": 917.83,
+  "end": 920.35,
+  "text": "generate a new token, you then have to run that back"
+ },
+ {
+  "start": 920.35,
+  "end": 921.25,
+  "text": "through the model."
+ },
+ {
+  "start": 921.25,
+  "end": 923.625,
+  "text": "If you do the math on that, there's actually not too many"
+ },
+ {
+  "start": 923.625,
+  "end": 925.43,
+  "text": "flops that you need to compute."
+ },
+ {
+  "start": 925.43,
+  "end": 929.31,
+  "text": "So it's going to be a relatively light computation,"
+ },
+ {
+  "start": 929.31,
+  "end": 931.45,
+  "text": "but it's going to be very memory bandwidth bound."
+ },
+ {
+  "start": 931.45,
+  "end": 932.867,
+  "text": "So what that means is you're going"
+ },
+ {
+  "start": 932.867,
+  "end": 934.95,
+  "text": "to be running-- you have to load up the model"
+ },
+ {
+  "start": 934.95,
+  "end": 937.91,
+  "text": "every time just to generate a single token."
+ },
+ {
+  "start": 937.91,
+  "end": 939.342,
+  "text": "At the end, you get--"
+ },
+ {
+  "start": 939.342,
+  "end": 941.05,
+  "text": "at the end of that model pass, of course,"
+ },
+ {
+  "start": 941.05,
+  "end": 943.99,
+  "text": "you then have a single number that"
+ },
+ {
+  "start": 943.99,
+  "end": 947.33,
+  "text": "represents a token that then gets turned into a string."
+ },
+ {
+  "start": 947.33,
+  "end": 949.93,
+  "text": "You probably do a little bit of processing on that."
+ },
+ {
+  "start": 949.93,
+  "end": 951.61,
+  "text": "So you look for stop tokens."
+ },
+ {
+  "start": 951.61,
+  "end": 952.15,
+  "text": "You check."
+ },
+ {
+  "start": 952.15,
+  "end": 955.91,
+  "text": "You might run a safety check to say, oh,"
+ },
+ {
+  "start": 955.91,
+  "end": 958.91,
+  "text": "is my user trying to hack into the system"
+ },
+ {
+  "start": 958.91,
+  "end": 960.65,
+  "text": "in a bad way, et cetera?"
+ },
+ {
+  "start": 960.65,
+  "end": 964.67,
+  "text": "And then at the end, you get the tokens."
+ },
+ {
+  "start": 964.67,
+  "end": 967.83,
+  "text": "And the inference engine is really running in this loop,"
+ },
+ {
+  "start": 967.83,
+  "end": 970.27,
+  "text": "waiting for these requests to come in."
+ },
+ {
+  "start": 970.27,
+  "end": 973.35,
+  "text": "So it's waiting-- so it's running this scheduling"
+ },
+ {
+  "start": 973.35,
+  "end": 977.65,
+  "text": "execution token sampling loop and repeating."
+ },
+ {
+  "start": 980.95,
+  "end": 983.67,
+  "text": "So I'll get into a little bit of-- so now we"
+ },
+ {
+  "start": 983.67,
+  "end": 986.45,
+  "text": "can take one step deeper and start to look at,"
+ },
+ {
+  "start": 986.45,
+  "end": 987.95,
+  "text": "what does it look like when you have"
+ },
+ {
+  "start": 987.95,
+  "end": 991.56,
+  "text": "a system that is processing many different requests at a time?"
+ },
+ {
+  "start": 991.56,
+  "end": 994.36,
+  "text": "So we have this phenomenon called-- this technique called"
+ },
+ {
+  "start": 994.36,
+  "end": 995.64,
+  "text": "continuous batching."
+ },
+ {
+  "start": 995.64,
+  "end": 999.08,
+  "text": "So the way to read this figure is that it"
+ },
+ {
+  "start": 999.08,
+  "end": 1000.98,
+  "text": "is time is flowing downward."
+ },
+ {
+  "start": 1000.98,
+  "end": 1004.88,
+  "text": "So as you go down, there are new requests that are coming in."
+ },
+ {
+  "start": 1004.88,
+  "end": 1006.6,
+  "text": "So let's say, if we go to step one,"
+ },
+ {
+  "start": 1006.6,
+  "end": 1007.82,
+  "text": "you have some long requests."
+ },
+ {
+  "start": 1007.82,
+  "end": 1014.92,
+  "text": "You have a user that is asking to analyze some long document,"
+ },
+ {
+  "start": 1014.92,
+  "end": 1018.92,
+  "text": "and the engine is going and generating a bunch of tokens out."
+ },
+ {
+  "start": 1018.92,
+  "end": 1022.4,
+  "text": "You might have another request comes in that starts"
+ },
+ {
+  "start": 1022.4,
+  "end": 1024.339,
+  "text": "to take up some resources."
+ },
+ {
+  "start": 1024.339,
+  "end": 1026.579,
+  "text": "So these resources are first compute resources."
+ },
+ {
+  "start": 1026.579,
+  "end": 1030.98,
+  "text": "You have to run things over multiple requests at once."
+ },
+ {
+  "start": 1030.98,
+  "end": 1034.96,
+  "text": "They can be memory resources if you're filling up a KV Cache."
+ },
+ {
+  "start": 1034.96,
+  "end": 1038.04,
+  "text": "And so you'll see these multiple requests"
+ },
+ {
+  "start": 1038.04,
+  "end": 1040.8,
+  "text": "happening at the same time."
+ },
+ {
+  "start": 1040.8,
+  "end": 1043.24,
+  "text": "After a step, that short request might finish"
+ },
+ {
+  "start": 1043.24,
+  "end": 1046.329,
+  "text": "and you get a new request that comes in,"
+ },
+ {
+  "start": 1046.329,
+  "end": 1049.33,
+  "text": "and maybe it's running for a couple steps."
+ },
+ {
+  "start": 1049.33,
+  "end": 1051.73,
+  "text": "If you have another request that comes in,"
+ },
+ {
+  "start": 1051.73,
+  "end": 1053.505,
+  "text": "maybe it's another very long request."
+ },
+ {
+  "start": 1053.505,
+  "end": 1055.63,
+  "text": "So that's going to be that orange one in step four."
+ },
+ {
+  "start": 1055.63,
+  "end": 1057.43,
+  "text": "But maybe you don't have enough GPU memory."
+ },
+ {
+  "start": 1057.43,
+  "end": 1060.51,
+  "text": "So you need to store all your KV Cache on your GPU."
+ },
+ {
+  "start": 1060.51,
+  "end": 1061.63,
+  "text": "Maybe you've run out."
+ },
+ {
+  "start": 1061.63,
+  "end": 1065.45,
+  "text": "You might start queuing for some reason there."
+ },
+ {
+  "start": 1065.45,
+  "end": 1067.19,
+  "text": "Then once that long request is done,"
+ },
+ {
+  "start": 1067.19,
+  "end": 1069.77,
+  "text": "you can start the new request, and then, et cetera,"
+ },
+ {
+  "start": 1069.77,
+  "end": 1071.01,
+  "text": "you can watch it run."
+ },
+ {
+  "start": 1071.01,
+  "end": 1073.01,
+  "text": "So already, you're seeing some of the complexity"
+ },
+ {
+  "start": 1073.01,
+  "end": 1077.49,
+  "text": "when you have many different requests living in a system"
+ },
+ {
+  "start": 1077.49,
+  "end": 1082.25,
+  "text": "and how it goes on."
+ },
+ {
+  "start": 1082.25,
+  "end": 1085.17,
+  "text": "One of the pieces that's quite important"
+ },
+ {
+  "start": 1085.17,
+  "end": 1088.37,
+  "text": "is this thing called a KV Cache."
+ },
+ {
+  "start": 1088.37,
+  "end": 1092.21,
+  "text": "So the way to think about this is that you probably"
+ },
+ {
+  "start": 1092.21,
+  "end": 1095.13,
+  "text": "have a lot of users who are saying, hi, ChatGPT"
+ },
+ {
+  "start": 1095.13,
+  "end": 1096.23,
+  "text": "or hi, Claude."
+ },
+ {
+  "start": 1096.23,
+  "end": 1098.57,
+  "text": "And then theoretically, you don't"
+ },
+ {
+  "start": 1098.57,
+  "end": 1102.17,
+  "text": "need to compute new activations and run that again"
+ },
+ {
+  "start": 1102.17,
+  "end": 1104.53,
+  "text": "for every single user."
+ },
+ {
+  "start": 1104.53,
+  "end": 1108.49,
+  "text": "Or if you have a long book that the user has passed in,"
+ },
+ {
+  "start": 1108.49,
+  "end": 1111.15,
+  "text": "you compute, you run the prefill over that once,"
+ },
+ {
+  "start": 1111.15,
+  "end": 1114.23,
+  "text": "and then the next time you get some addendum to that request."
+ },
+ {
+  "start": 1114.23,
+  "end": 1115.75,
+  "text": "The next turn in the conversation,"
+ },
+ {
+  "start": 1115.75,
+  "end": 1118.53,
+  "text": "you don't need to compute the whole thing again."
+ },
+ {
+  "start": 1118.53,
+  "end": 1122.37,
+  "text": "So we have these mechanisms called KV Caches"
+ },
+ {
+  "start": 1122.37,
+  "end": 1124.71,
+  "text": "that use prefix sharing, that say, hey,"
+ },
+ {
+  "start": 1124.71,
+  "end": 1126.89,
+  "text": "I have this new set of tokens that comes in,"
+ },
+ {
+  "start": 1126.89,
+  "end": 1130.57,
+  "text": "use a very traditional data structure like a basic tree,"
+ },
+ {
+  "start": 1130.57,
+  "end": 1135.01,
+  "text": "look at which tokens have I seen before, which tokens are new,"
+ },
+ {
+  "start": 1135.01,
+  "end": 1137.65,
+  "text": "and then basically, do a lookup of what those activations are"
+ },
+ {
+  "start": 1137.65,
+  "end": 1140.93,
+  "text": "going to look like."
+ },
+ {
+  "start": 1140.93,
+  "end": 1144.31,
+  "text": "Once you actually have the computation on the GPUs,"
+ },
+ {
+  "start": 1144.31,
+  "end": 1146.33,
+  "text": "there's various ways to split it."
+ },
+ {
+  "start": 1146.33,
+  "end": 1148.75,
+  "text": "So I'm not sure if you talked about this too much,"
+ },
+ {
+  "start": 1148.75,
+  "end": 1151.53,
+  "text": "but let's say you have a trillion parameter model"
+ },
+ {
+  "start": 1151.53,
+  "end": 1156.433,
+  "text": "and you're running on 280 gigabyte GPUs,"
+ },
+ {
+  "start": 1156.433,
+  "end": 1157.85,
+  "text": "you're not going to be able to fit"
+ },
+ {
+  "start": 1157.85,
+  "end": 1161.317,
+  "text": "the whole model onto each GPU."
+ },
+ {
+  "start": 1161.317,
+  "end": 1163.4,
+  "text": "So there are various ways that you might split it."
+ },
+ {
+  "start": 1163.4,
+  "end": 1168.28,
+  "text": "So you might take every tensor and split four ways across four GPUs."
+ },
+ {
+  "start": 1168.28,
+  "end": 1169.98,
+  "text": "This is called tensor parallelism."
+ },
+ {
+  "start": 1169.98,
+  "end": 1173.5,
+  "text": "Or today, we have a lot of the state of the art models"
+ },
+ {
+  "start": 1173.5,
+  "end": 1175.12,
+  "text": "or a mixture of experts models."
+ },
+ {
+  "start": 1175.12,
+  "end": 1177.58,
+  "text": "So you have these individual experts"
+ },
+ {
+  "start": 1177.58,
+  "end": 1180.52,
+  "text": "that get selectively activated depending on different tokens."
+ },
+ {
+  "start": 1180.52,
+  "end": 1182.94,
+  "text": "You can split those across different GPUs."
+ },
+ {
+  "start": 1182.94,
+  "end": 1184.98,
+  "text": "The choices that you make at this point"
+ },
+ {
+  "start": 1184.98,
+  "end": 1186.94,
+  "text": "will determine what are the bottlenecks."
+ },
+ {
+  "start": 1186.94,
+  "end": 1192.14,
+  "text": "How many GPUs do you need to run your model?"
+ },
+ {
+  "start": 1192.14,
+  "end": 1195.06,
+  "text": "How many sessions can you serve at the same time?"
+ },
+ {
+  "start": 1195.06,
+  "end": 1198.06,
+  "text": "Et cetera."
+ },
+ {
+  "start": 1198.06,
+  "end": 1200.06,
+  "text": "One of the big things that happens"
+ },
+ {
+  "start": 1200.06,
+  "end": 1205.0,
+  "text": "is that we tend to split prefill and decode onto different GPUs,"
+ },
+ {
+  "start": 1205.0,
+  "end": 1207.5,
+  "text": "different sets of machines, and that's"
+ },
+ {
+  "start": 1207.5,
+  "end": 1210.5,
+  "text": "because they have very different compute bottlenecks"
+ },
+ {
+  "start": 1210.5,
+  "end": 1211.84,
+  "text": "and compute characteristics."
+ },
+ {
+  "start": 1211.84,
+  "end": 1214.98,
+  "text": "So prefill looks a lot like what you guys do during training."
+ },
+ {
+  "start": 1214.98,
+  "end": 1216.16,
+  "text": "You just run it."
+ },
+ {
+  "start": 1216.16,
+  "end": 1217.98,
+  "text": "It's very flop heavy."
+ },
+ {
+  "start": 1217.98,
+  "end": 1220.95,
+  "text": "You can really use the most out of your GPUs."
+ },
+ {
+  "start": 1220.95,
+  "end": 1223.858,
+  "text": "Decode on the other hand is very memory bandwidth heavy."
+ },
+ {
+  "start": 1223.858,
+  "end": 1225.65,
+  "text": "Because you're not doing that much compute,"
+ },
+ {
+  "start": 1225.65,
+  "end": 1230.23,
+  "text": "but you still have to load up all the model"
+ },
+ {
+  "start": 1230.23,
+  "end": 1231.36,
+  "text": "weights at the same time."
+ },
+ {
+  "start": 1231.36,
+  "end": 1233.61,
+  "text": "These things will also take different amounts of time."
+ },
+ {
+  "start": 1233.61,
+  "end": 1236.99,
+  "text": "So prefill will typically take a lot longer than a single decode"
+ },
+ {
+  "start": 1236.99,
+  "end": 1237.498,
+  "text": "step."
+ },
+ {
+  "start": 1237.498,
+  "end": 1239.79,
+  "text": "But you're going to be running a lot more decode steps,"
+ },
+ {
+  "start": 1239.79,
+  "end": 1241.93,
+  "text": "because you will run prefill once for a prompt,"
+ },
+ {
+  "start": 1241.93,
+  "end": 1246.19,
+  "text": "you'll run decode once for every token that you generate."
+ },
+ {
+  "start": 1246.19,
+  "end": 1249.932,
+  "text": "So a very basic optimization that pretty much we've"
+ },
+ {
+  "start": 1249.932,
+  "end": 1251.39,
+  "text": "all started adopting is that you'll"
+ },
+ {
+  "start": 1251.39,
+  "end": 1253.69,
+  "text": "run prefill on one set of workers,"
+ },
+ {
+  "start": 1253.69,
+  "end": 1255.79,
+  "text": "decode on another set of workers,"
+ },
+ {
+  "start": 1255.79,
+  "end": 1257.47,
+  "text": "so that you can specialize those two"
+ },
+ {
+  "start": 1257.47,
+  "end": 1260.99,
+  "text": "computations to different pieces of the stack."
+ },
+ {
+  "start": 1260.99,
+  "end": 1263.11,
+  "text": "And turns out, there's a lot of innovation"
+ },
+ {
+  "start": 1263.11,
+  "end": 1265.722,
+  "text": "that you can have when you have these splits."
+ },
+ {
+  "start": 1265.722,
+  "end": 1267.43,
+  "text": "Some things that you might have heard of,"
+ },
+ {
+  "start": 1267.43,
+  "end": 1269.61,
+  "text": "that when NVIDIA bought Grok."
+ },
+ {
+  "start": 1269.61,
+  "end": 1275.53,
+  "text": "So NVIDIA, the King of GPUs, buys this new inference chip."
+ },
+ {
+  "start": 1275.53,
+  "end": 1278.63,
+  "text": "One of the reasons is that the decode workload"
+ },
+ {
+  "start": 1278.63,
+  "end": 1280.47,
+  "text": "is so different from prefill workload,"
+ },
+ {
+  "start": 1280.47,
+  "end": 1282.87,
+  "text": "that if you're looking at code, you can"
+ },
+ {
+  "start": 1282.87,
+  "end": 1284.91,
+  "text": "be using very different chips."
+ },
+ {
+  "start": 1284.91,
+  "end": 1287.61,
+  "text": "So for example, in the next generation of hardware,"
+ },
+ {
+  "start": 1287.61,
+  "end": 1291.51,
+  "text": "NVIDIA is planning on using its GPUs for the pre-fill side,"
+ },
+ {
+  "start": 1291.51,
+  "end": 1294.73,
+  "text": "using these LPU Grok chips for the decode."
+ },
+ {
+  "start": 1294.73,
+  "end": 1297.85,
+  "text": "You see similar things with Cerebras."
+ },
+ {
+  "start": 1297.85,
+  "end": 1300.77,
+  "text": "So OpenAI has this compute partnership with Cerebras."
+ },
+ {
+  "start": 1300.77,
+  "end": 1303.35,
+  "text": "It's another chip that's much better at decode."
+ },
+ {
+  "start": 1303.35,
+  "end": 1305.03,
+  "text": "There are other companies like SambaNova"
+ },
+ {
+  "start": 1305.03,
+  "end": 1307.43,
+  "text": "and so on, that are also making bets"
+ },
+ {
+  "start": 1307.43,
+  "end": 1309.37,
+  "text": "on various parts of this space."
+ },
+ {
+  "start": 1312.93,
+  "end": 1314.69,
+  "text": "Here's a fun one, an interesting one."
+ },
+ {
+  "start": 1314.69,
+  "end": 1318.15,
+  "text": "So when you actually start deploying"
+ },
+ {
+  "start": 1318.15,
+  "end": 1319.85,
+  "text": "these inference engines at scale,"
+ },
+ {
+  "start": 1319.85,
+  "end": 1322.71,
+  "text": "so when you're starting to serve trillions of tokens or more"
+ },
+ {
+  "start": 1322.71,
+  "end": 1325.69,
+  "text": "a day, you start to get some pretty nasty bugs."
+ },
+ {
+  "start": 1325.69,
+  "end": 1327.21,
+  "text": "So this is a set of bugs."
+ },
+ {
+  "start": 1327.21,
+  "end": 1332.09,
+  "text": "I think most of these happened in"
+ },
+ {
+  "start": 1332.09,
+  "end": 1336.6,
+  "text": "late last year with some of the open source inference engines."
+ },
+ {
+  "start": 1336.6,
+  "end": 1342.0,
+  "text": "And basically, one of the characteristics"
+ },
+ {
+  "start": 1342.0,
+  "end": 1344.84,
+  "text": "of these large scale systems is that something"
+ },
+ {
+  "start": 1344.84,
+  "end": 1346.4,
+  "text": "that will work well at a small scale"
+ },
+ {
+  "start": 1346.4,
+  "end": 1348.82,
+  "text": "will inevitably start breaking at a large scale."
+ },
+ {
+  "start": 1348.82,
+  "end": 1353.28,
+  "text": "So we're talking events that happen with 0.001% of the time"
+ },
+ {
+  "start": 1353.28,
+  "end": 1354.56,
+  "text": "or less."
+ },
+ {
+  "start": 1354.56,
+  "end": 1357.74,
+  "text": "Some of these can be so NaN."
+ },
+ {
+  "start": 1357.74,
+  "end": 1359.92,
+  "text": "So sometimes, you'll have a kernel"
+ },
+ {
+  "start": 1359.92,
+  "end": 1361.62,
+  "text": "that is very slightly wrong."
+ },
+ {
+  "start": 1361.62,
+  "end": 1366.04,
+  "text": "But the conditions for triggering it are very rare."
+ },
+ {
+  "start": 1366.04,
+  "end": 1369.32,
+  "text": "And you will start having some of your logits"
+ },
+ {
+  "start": 1369.32,
+  "end": 1373.74,
+  "text": "turn into NaNs halfway through the computation."
+ },
+ {
+  "start": 1373.74,
+  "end": 1375.56,
+  "text": "When that happens, we figure it out"
+ },
+ {
+  "start": 1375.56,
+  "end": 1377.94,
+  "text": "that the model starts outputting the same token."
+ },
+ {
+  "start": 1377.94,
+  "end": 1382.6,
+  "text": "So I think some model, the output just started saying, hi, hi, hi, hi, after a while,"
+ },
+ {
+  "start": 1382.6,
+  "end": 1385.48,
+  "text": "or start outputting exclamation points"
+ },
+ {
+  "start": 1385.48,
+  "end": 1389.28,
+  "text": "and you get caught into these loops."
+ },
+ {
+  "start": 1389.28,
+  "end": 1391.88,
+  "text": "Another model, at some point, someone"
+ },
+ {
+  "start": 1391.88,
+  "end": 1394.62,
+  "text": "made a change to how you're handling tool calls."
+ },
+ {
+  "start": 1394.62,
+  "end": 1397.99,
+  "text": "So tool calls are when the model says,"
+ },
+ {
+  "start": 1397.99,
+  "end": 1401.59,
+  "text": "hey, I want to make an internet search or something like that."
+ },
+ {
+  "start": 1401.59,
+  "end": 1404.11,
+  "text": "So the model will actually say, go do an internet search."
+ },
+ {
+  "start": 1404.11,
+  "end": 1408.29,
+  "text": "And then your end harness has to then go use old fashioned code"
+ },
+ {
+  "start": 1408.29,
+  "end": 1410.29,
+  "text": "to do the internet search."
+ },
+ {
+  "start": 1410.29,
+  "end": 1415.61,
+  "text": "At some point, those tool calls stop being processed correctly"
+ },
+ {
+  "start": 1415.61,
+  "end": 1416.71,
+  "text": "in one of the engines."
+ },
+ {
+  "start": 1416.71,
+  "end": 1419.73,
+  "text": "And the symptom for that the completion lengths shot up"
+ },
+ {
+  "start": 1419.73,
+  "end": 1423.39,
+  "text": "because the model would say, hey, make an internet search,"
+ },
+ {
+  "start": 1423.39,
+  "end": 1426.768,
+  "text": "and then it would usually--"
+ },
+ {
+  "start": 1426.768,
+  "end": 1428.31,
+  "text": "when the model is behaving correctly,"
+ },
+ {
+  "start": 1428.31,
+  "end": 1430.05,
+  "text": "it says, hey, make an internet search."
+ },
+ {
+  "start": 1430.05,
+  "end": 1430.55,
+  "text": "I'm done."
+ },
+ {
+  "start": 1430.55,
+  "end": 1432.01,
+  "text": "Go return to the user."
+ },
+ {
+  "start": 1432.01,
+  "end": 1433.19,
+  "text": "Go do that, whatever."
+ },
+ {
+  "start": 1433.19,
+  "end": 1435.59,
+  "text": "But in this case, it wasn't returning correctly."
+ },
+ {
+  "start": 1435.59,
+  "end": 1437.39,
+  "text": "So it'd say, hey, make an internet search."
+ },
+ {
+  "start": 1437.39,
+  "end": 1438.75,
+  "text": "Hey, make an internet search."
+ },
+ {
+  "start": 1438.75,
+  "end": 1441.167,
+  "text": "Hey, I don't know why there's no internet search going on."
+ },
+ {
+  "start": 1441.167,
+  "end": 1443.01,
+  "text": "It would just get into this very long doom"
+ },
+ {
+  "start": 1443.01,
+  "end": 1447.25,
+  "text": "loop for tens of thousands of tokens."
+ },
+ {
+  "start": 1447.25,
+  "end": 1450.49,
+  "text": "There's another one that--"
+ },
+ {
+  "start": 1450.49,
+  "end": 1453.9,
+  "text": "this one was interesting because it actually"
+ },
+ {
+  "start": 1453.9,
+  "end": 1457.94,
+  "text": "took out a number of insurance providers at the same time."
+ },
+ {
+  "start": 1457.94,
+  "end": 1461.38,
+  "text": "And it actually got blamed on a quantization issue."
+ },
+ {
+  "start": 1461.38,
+  "end": 1463.98,
+  "text": "But actually, what was happening was a much more subtle bug"
+ },
+ {
+  "start": 1463.98,
+  "end": 1468.1,
+  "text": "where the model would just suddenly, randomly"
+ },
+ {
+  "start": 1468.1,
+  "end": 1472.32,
+  "text": "start to output Chinese characters when it had no reason to."
+ },
+ {
+  "start": 1472.32,
+  "end": 1477.82,
+  "text": "So for some models, that sometimes there's"
+ },
+ {
+  "start": 1477.82,
+  "end": 1479.528,
+  "text": "some speculation, oh, they must have"
+ },
+ {
+  "start": 1479.528,
+  "end": 1481.82,
+  "text": "fine-tuned on a Chinese model because my model suddenly"
+ },
+ {
+  "start": 1481.82,
+  "end": 1482.44,
+  "text": "starts."
+ },
+ {
+  "start": 1482.44,
+  "end": 1484.26,
+  "text": "I ask it a question in English and starts"
+ },
+ {
+  "start": 1484.26,
+  "end": 1486.9,
+  "text": "speaking back to me in Chinese."
+ },
+ {
+  "start": 1486.9,
+  "end": 1490.14,
+  "text": "Actually, what was happening is that there was just an off-by-one"
+ },
+ {
+  "start": 1490.14,
+  "end": 1493.0,
+  "text": "error in one of the kernels, and it would be a very subtle bug."
+ },
+ {
+  "start": 1493.0,
+  "end": 1498.7,
+  "text": "So sometimes, you would read in some extra uninitialized memory"
+ },
+ {
+  "start": 1498.7,
+  "end": 1502.545,
+  "text": "space from your GPU, run it through retention, and then"
+ },
+ {
+  "start": 1502.545,
+  "end": 1503.92,
+  "text": "at the end of that whole process,"
+ },
+ {
+  "start": 1503.92,
+  "end": 1505.6,
+  "text": "you get a random Chinese character."
+ },
+ {
+  "start": 1505.6,
+  "end": 1507.98,
+  "text": "Then the model will go, why did I start suddenly"
+ },
+ {
+  "start": 1507.98,
+  "end": 1509.66,
+  "text": "thinking in Chinese?"
+ },
+ {
+  "start": 1509.66,
+  "end": 1512.7,
+  "text": "I must be-- the user must be asking me a question in Chinese,"
+ },
+ {
+  "start": 1512.7,
+  "end": 1515.34,
+  "text": "and then it will just go veer off into Chinese."
+ },
+ {
+  "start": 1515.34,
+  "end": 1517.82,
+  "text": "So sometimes when this happens, it's"
+ },
+ {
+  "start": 1517.82,
+  "end": 1521.5,
+  "text": "because the model has legitimately been trained to say--"
+ },
+ {
+  "start": 1521.5,
+  "end": 1523.16,
+  "text": "to think in Chinese."
+ },
+ {
+  "start": 1523.16,
+  "end": 1527.4,
+  "text": "Sometimes, it can just be an off-by-one bug in somebody's code."
+ },
+ {
+  "start": 1531.78,
+  "end": 1533.78,
+  "text": "Some interesting things that are starting"
+ },
+ {
+  "start": 1533.78,
+  "end": 1538.18,
+  "text": "to happen in a lot of the more advanced inference stacks."
+ },
+ {
+  "start": 1538.18,
+  "end": 1543.06,
+  "text": "So a major piece of running large production systems"
+ },
+ {
+  "start": 1543.06,
+  "end": 1546.96,
+  "text": "is that you want to have as large of a KV Cache as possible."
+ },
+ {
+  "start": 1546.96,
+  "end": 1550.66,
+  "text": "So it is best if you can cache requests"
+ },
+ {
+  "start": 1550.66,
+  "end": 1553.14,
+  "text": "from many different users or from the same user"
+ },
+ {
+  "start": 1553.14,
+  "end": 1556.7,
+  "text": "across many different sessions, and be able to run"
+ },
+ {
+  "start": 1556.7,
+  "end": 1559.1,
+  "text": "as many sessions as possible."
+ },
+ {
+  "start": 1559.1,
+  "end": 1563.02,
+  "text": "You first started this by storing your KV Cache on GPU,"
+ },
+ {
+  "start": 1563.02,
+  "end": 1565.0,
+  "text": "and then you quickly run out of GPU memory."
+ },
+ {
+  "start": 1565.0,
+  "end": 1568.46,
+  "text": "So the next, you can start storing into CPU DRAM."
+ },
+ {
+  "start": 1568.46,
+  "end": 1572.99,
+  "text": "So if you're paying attention to Jensen's keynotes,"
+ },
+ {
+  "start": 1572.99,
+  "end": 1575.59,
+  "text": "he's recently started getting very obsessed"
+ },
+ {
+  "start": 1575.59,
+  "end": 1578.03,
+  "text": "with CPU performance."
+ },
+ {
+  "start": 1578.03,
+  "end": 1582.75,
+  "text": "One of the reasons is because a past generation of CPUs"
+ },
+ {
+  "start": 1582.75,
+  "end": 1585.03,
+  "text": "was actually really slow."
+ },
+ {
+  "start": 1585.03,
+  "end": 1588.39,
+  "text": "And as a result, started bottlenecking a bunch"
+ },
+ {
+  "start": 1588.39,
+  "end": 1591.23,
+  "text": "of very important workloads."
+ },
+ {
+  "start": 1591.23,
+  "end": 1593.47,
+  "text": "And as a result, you start to pay attention"
+ },
+ {
+  "start": 1593.47,
+  "end": 1597.63,
+  "text": "because if you're $500,000 machine is being bottlenecked"
+ },
+ {
+  "start": 1597.63,
+  "end": 1602.47,
+  "text": "by the $1,000 CPU that you purchased to put on top of it,"
+ },
+ {
+  "start": 1602.47,
+  "end": 1604.013,
+  "text": "that's not a great place."
+ },
+ {
+  "start": 1604.013,
+  "end": 1605.43,
+  "text": "One of the reasons that can happen"
+ },
+ {
+  "start": 1605.43,
+  "end": 1609.03,
+  "text": "is that you might be storing your KV cache on CPU memory."
+ },
+ {
+  "start": 1609.03,
+  "end": 1610.63,
+  "text": "And so you really care about the speed"
+ },
+ {
+  "start": 1610.63,
+  "end": 1613.27,
+  "text": "of being able to read that KV cache back."
+ },
+ {
+  "start": 1613.27,
+  "end": 1617.47,
+  "text": "Next, you might put more KV cache onto the disk itself."
+ },
+ {
+  "start": 1617.47,
+  "end": 1621.59,
+  "text": "And then you start caring about SSDs and SSD space."
+ },
+ {
+  "start": 1621.59,
+  "end": 1624.79,
+  "text": "Again, you've probably heard these rumblings about OpenAI"
+ },
+ {
+  "start": 1624.79,
+  "end": 1628.28,
+  "text": "buying up all the SSD, all the DRAM in the world."
+ },
+ {
+  "start": 1628.28,
+  "end": 1630.6,
+  "text": "Part of the reason is for stuff like this,"
+ },
+ {
+  "start": 1630.6,
+  "end": 1633.2,
+  "text": "where you want to store as much stuff in your KV cache"
+ },
+ {
+  "start": 1633.2,
+  "end": 1635.117,
+  "text": "as you can."
+ },
+ {
+  "start": 1635.117,
+  "end": 1637.7,
+  "text": "And then of course, when you're actually building your engine,"
+ },
+ {
+  "start": 1637.7,
+  "end": 1639.56,
+  "text": "there's this complicated dance of,"
+ },
+ {
+  "start": 1639.56,
+  "end": 1642.82,
+  "text": "I haven't seen these tokens in a while."
+ },
+ {
+  "start": 1642.82,
+  "end": 1645.4,
+  "text": "Maybe I'll evict it, send it on to the CPU,"
+ },
+ {
+  "start": 1645.4,
+  "end": 1649.28,
+  "text": "or send it into disk, or send it into some other global store."
+ },
+ {
+  "start": 1649.28,
+  "end": 1651.62,
+  "text": "When I get a new request in, I have to go look."
+ },
+ {
+  "start": 1651.62,
+  "end": 1653.56,
+  "text": "I have to go wait for those to come in,"
+ },
+ {
+  "start": 1653.56,
+  "end": 1659.68,
+  "text": "fetch them, load them up into my thing, and then we're happy."
+ },
+ {
+  "start": 1659.68,
+  "end": 1662.34,
+  "text": "It's kind of CPU offloading."
+ },
+ {
+  "start": 1662.34,
+  "end": 1664.94,
+  "text": "Is it like a special kind of workload that gets offloaded?"
+ },
+ {
+  "start": 1664.94,
+  "end": 1667.92,
+  "text": "For something fast, you don't want to do this."
+ },
+ {
+  "start": 1667.92,
+  "end": 1670.013,
+  "text": "Time to hit an SSD is very long."
+ },
+ {
+  "start": 1670.013,
+  "end": 1671.18,
+  "text": "Can you repeat the question?"
+ },
+ {
+  "start": 1671.18,
+  "end": 1671.68,
+  "text": "Yes."
+ },
+ {
+  "start": 1671.68,
+  "end": 1674.9,
+  "text": "Yeah, so the question is, so for this offloading,"
+ },
+ {
+  "start": 1674.9,
+  "end": 1678.48,
+  "text": "is it a particular type of workload that you offload?"
+ },
+ {
+  "start": 1678.48,
+  "end": 1680.785,
+  "text": "So here, we actually get to some pretty--"
+ },
+ {
+  "start": 1680.785,
+  "end": 1683.16,
+  "text": "I'm sure none of you guys have taken an operating systems"
+ },
+ {
+  "start": 1683.16,
+  "end": 1683.66,
+  "text": "class."
+ },
+ {
+  "start": 1683.66,
+  "end": 1686.32,
+  "text": "But you should take your operating systems classes--"
+ },
+ {
+  "start": 1686.32,
+  "end": 1688.98,
+  "text": "you actually get to some pretty classic scheduling things."
+ },
+ {
+  "start": 1688.98,
+  "end": 1693.32,
+  "text": "So you could have this diagram except for the GPU"
+ },
+ {
+  "start": 1693.32,
+  "end": 1694.34,
+  "text": "things on the right."
+ },
+ {
+  "start": 1694.34,
+  "end": 1698.36,
+  "text": "Looks exactly like an operating systems diagram that you might"
+ },
+ {
+  "start": 1698.36,
+  "end": 1701.04,
+  "text": "have seen in the '70s or the '80s."
+ },
+ {
+  "start": 1701.04,
+  "end": 1703.6,
+  "text": "Because we used to have this problem, where if you opened up"
+ },
+ {
+  "start": 1703.6,
+  "end": 1706.08,
+  "text": "too many applications on your computer,"
+ },
+ {
+  "start": 1706.08,
+  "end": 1708.24,
+  "text": "you would run out of CPU memory, and then"
+ },
+ {
+  "start": 1708.24,
+  "end": 1712.64,
+  "text": "you'd have to put those applications onto the disk."
+ },
+ {
+  "start": 1712.64,
+  "end": 1715.08,
+  "text": "And it is exactly the same workload."
+ },
+ {
+  "start": 1715.08,
+  "end": 1720.52,
+  "text": "So ideally, here, actually on the left side,"
+ },
+ {
+  "start": 1720.52,
+  "end": 1722.88,
+  "text": "the Nano Banana hallucinated evictions"
+ },
+ {
+  "start": 1722.88,
+  "end": 1724.6,
+  "text": "for least recently used, which is actually"
+ },
+ {
+  "start": 1724.6,
+  "end": 1726.88,
+  "text": "a pretty decent heuristic."
+ },
+ {
+  "start": 1726.88,
+  "end": 1730.08,
+  "text": "There's probably some OS paper somewhere that says that LRU is"
+ },
+ {
+  "start": 1730.08,
+  "end": 1731.82,
+  "text": "within 2x of what you can do."
+ },
+ {
+  "start": 1731.82,
+  "end": 1732.525,
+  "text": "That's optimal."
+ },
+ {
+  "start": 1732.525,
+  "end": 1734.4,
+  "text": "Of course, the best thing that you want to do"
+ },
+ {
+  "start": 1734.4,
+  "end": 1737.4,
+  "text": "is, if you could predict the future, you would know,"
+ },
+ {
+  "start": 1737.4,
+  "end": 1741.94,
+  "text": "oh, I'm about to have a request come in of a particular kind."
+ },
+ {
+  "start": 1741.94,
+  "end": 1745.37,
+  "text": "Let me go prefetch that memory in."
+ },
+ {
+  "start": 1745.37,
+  "end": 1747.59,
+  "text": "It might actually be possible to predict the future."
+ },
+ {
+  "start": 1747.59,
+  "end": 1749.73,
+  "text": "So for example, when you go into your chat app"
+ },
+ {
+  "start": 1749.73,
+  "end": 1753.145,
+  "text": "and you bring up some old conversation from a month ago,"
+ },
+ {
+  "start": 1753.145,
+  "end": 1754.77,
+  "text": "that's a very strong signal that you're"
+ },
+ {
+  "start": 1754.77,
+  "end": 1756.91,
+  "text": "going to go start asking a question about it."
+ },
+ {
+  "start": 1756.91,
+  "end": 1761.49,
+  "text": "You might then want to go load that up onto a GPU."
+ },
+ {
+  "start": 1761.49,
+  "end": 1764.75,
+  "text": "But in a perfect world, you predict the future."
+ },
+ {
+  "start": 1764.75,
+  "end": 1768.01,
+  "text": "If you can't predict the future, you use various heuristics."
+ },
+ {
+  "start": 1768.01,
+  "end": 1774.05,
+  "text": "And really, it's a question of how much traffic"
+ },
+ {
+  "start": 1774.05,
+  "end": 1777.25,
+  "text": "you want to put onto your GPU footprint."
+ },
+ {
+  "start": 1777.25,
+  "end": 1779.13,
+  "text": "I've never talked to anybody who wants to put"
+ },
+ {
+  "start": 1779.13,
+  "end": 1781.45,
+  "text": "less traffic onto their GPUs."
+ },
+ {
+  "start": 1781.45,
+  "end": 1785.49,
+  "text": "So I think modulo, or subject to, those SLAs"
+ },
+ {
+  "start": 1785.49,
+  "end": 1788.93,
+  "text": "that we splashed up at the beginning,"
+ },
+ {
+  "start": 1788.93,
+  "end": 1790.99,
+  "text": "you want to serve as much traffic as you can."
+ },
+ {
+  "start": 1794.01,
+  "end": 1797.11,
+  "text": "Some fun things that are starting to happen."
+ },
+ {
+  "start": 1797.11,
+  "end": 1800.73,
+  "text": "So in the last generation of Blackwell GPUs,"
+ },
+ {
+  "start": 1800.73,
+  "end": 1804.86,
+  "text": "NVIDIA started putting together these new GPUs called"
+ },
+ {
+  "start": 1804.86,
+  "end": 1806.86,
+  "text": "NVL72 Grace Blackwell chips."
+ },
+ {
+  "start": 1806.86,
+  "end": 1809.34,
+  "text": "So these are 72 GPUs that are connected"
+ },
+ {
+  "start": 1809.34,
+  "end": 1811.86,
+  "text": "with really fast interconnects."
+ },
+ {
+  "start": 1811.86,
+  "end": 1813.5,
+  "text": "And so you start to do things like,"
+ },
+ {
+  "start": 1813.5,
+  "end": 1817.3,
+  "text": "how can I split my trillion parameter model across all 72"
+ },
+ {
+  "start": 1817.3,
+  "end": 1818.18,
+  "text": "GPUs?"
+ },
+ {
+  "start": 1818.18,
+  "end": 1819.94,
+  "text": "Does this make any sense?"
+ },
+ {
+  "start": 1819.94,
+  "end": 1822.5,
+  "text": "What does it buy me?"
+ },
+ {
+  "start": 1822.5,
+  "end": 1823.9,
+  "text": "What happens?"
+ },
+ {
+  "start": 1823.9,
+  "end": 1826.28,
+  "text": "How do I start to think about fault tolerance?"
+ },
+ {
+  "start": 1826.28,
+  "end": 1830.82,
+  "text": "So these things can fail a lot for various different reasons."
+ },
+ {
+  "start": 1830.82,
+  "end": 1834.32,
+  "text": "One reason is that the connectors are flimsy."
+ },
+ {
+  "start": 1834.32,
+  "end": 1836.4,
+  "text": "They're made of plastic, not made of metal."
+ },
+ {
+  "start": 1836.4,
+  "end": 1838.24,
+  "text": "So if you like jam the thing in too much,"
+ },
+ {
+  "start": 1838.24,
+  "end": 1841.1,
+  "text": "then your cables are going to bend the things a little bit,"
+ },
+ {
+  "start": 1841.1,
+  "end": 1845.86,
+  "text": "and then you get really flaky NV links, which"
+ },
+ {
+  "start": 1845.86,
+  "end": 1847.56,
+  "text": "is a whole thing in itself."
+ },
+ {
+  "start": 1847.56,
+  "end": 1850.48,
+  "text": "But what happens when--so this is the AI generation."
+ },
+ {
+  "start": 1850.48,
+  "end": 1853.78,
+  "text": "So let's put a fan into the chips, which doesn't quite"
+ },
+ {
+  "start": 1853.78,
+  "end": 1855.088,
+  "text": "make sense."
+ },
+ {
+  "start": 1855.088,
+  "end": 1857.38,
+  "text": "One of the things that you want to start thinking about"
+ },
+ {
+  "start": 1857.38,
+  "end": 1860.48,
+  "text": "is, if I've taken a model split it across 64 GPUs,"
+ },
+ {
+  "start": 1860.48,
+  "end": 1863.02,
+  "text": "and I'm serving production traffic against millions"
+ },
+ {
+  "start": 1863.02,
+  "end": 1865.16,
+  "text": "of users, trillions of tokens."
+ },
+ {
+  "start": 1865.16,
+  "end": 1867.883,
+  "text": "What do I do when a single GPU goes down?"
+ },
+ {
+  "start": 1867.883,
+  "end": 1869.8,
+  "text": "Is there some way to make that fault tolerant?"
+ },
+ {
+  "start": 1869.8,
+  "end": 1874.02,
+  "text": "And there's a lot of fun things to think about there."
+ },
+ {
+  "start": 1874.02,
+  "end": 1875.66,
+  "text": "And then, of course, you're starting"
+ },
+ {
+  "start": 1875.66,
+  "end": 1878.86,
+  "text": "to see these models have a million contexts or more."
+ },
+ {
+  "start": 1878.86,
+  "end": 1880.92,
+  "text": "How do you actually process it?"
+ },
+ {
+  "start": 1880.92,
+  "end": 1884.46,
+  "text": "Do you split that context across many different GPUs?"
+ },
+ {
+  "start": 1884.46,
+  "end": 1886.2,
+  "text": "How do you do these different things?"
+ },
+ {
+  "start": 1889.7,
+  "end": 1893.78,
+  "text": "So I want to dive--just very briefly highlight one set--"
+ },
+ {
+  "start": 1893.78,
+  "end": 1896.1,
+  "text": "one example of an optimization that you"
+ },
+ {
+  "start": 1896.1,
+  "end": 1899.66,
+  "text": "can start to make when you start looking"
+ },
+ {
+  "start": 1899.66,
+  "end": 1902.94,
+  "text": "at this whole process from a systems level."
+ },
+ {
+  "start": 1902.94,
+  "end": 1907.14,
+  "text": "So this is a piece of work that we put together"
+ },
+ {
+  "start": 1907.14,
+  "end": 1909.78,
+  "text": "a few months ago called Cache-aware Prefill-decode"
+ },
+ {
+  "start": 1909.78,
+  "end": 1911.22,
+  "text": "Disaggregation."
+ },
+ {
+  "start": 1911.22,
+  "end": 1912.72,
+  "text": "It's a very simple optimization."
+ },
+ {
+  "start": 1912.72,
+  "end": 1915.62,
+  "text": "It's two lines of code in the routing layer,"
+ },
+ {
+  "start": 1915.62,
+  "end": 1917.72,
+  "text": "but can actually make a pretty big difference."
+ },
+ {
+  "start": 1917.72,
+  "end": 1921.35,
+  "text": "So the basic idea is, you have all these requests that"
+ },
+ {
+  "start": 1921.35,
+  "end": 1922.23,
+  "text": "are coming in."
+ },
+ {
+  "start": 1922.23,
+  "end": 1926.838,
+  "text": "Most of them are going to be turn by turn requests"
+ },
+ {
+  "start": 1926.838,
+  "end": 1928.63,
+  "text": "in a conversation, where somebody's already"
+ },
+ {
+  "start": 1928.63,
+  "end": 1930.71,
+  "text": "started a conversation."
+ },
+ {
+  "start": 1930.71,
+  "end": 1933.99,
+  "text": "But let's say your average conversation lasts 10 turns"
+ },
+ {
+  "start": 1933.99,
+  "end": 1936.23,
+  "text": "and then the user goes away, that suggests"
+ },
+ {
+  "start": 1936.23,
+  "end": 1939.59,
+  "text": "that 10% of your requests are going to be very fresh, very"
+ },
+ {
+  "start": 1939.59,
+  "end": 1940.595,
+  "text": "new requests."
+ },
+ {
+  "start": 1940.595,
+  "end": 1942.47,
+  "text": "So when you have a new request that comes in,"
+ },
+ {
+  "start": 1942.47,
+  "end": 1944.85,
+  "text": "that's going to be thousands of tokens."
+ },
+ {
+  "start": 1944.85,
+  "end": 1946.43,
+  "text": "It's going to look very different."
+ },
+ {
+  "start": 1946.43,
+  "end": 1949.09,
+  "text": "It's going to be a lot more expensive to compute."
+ },
+ {
+  "start": 1949.09,
+  "end": 1951.67,
+  "text": "You don't necessarily want to put that prefill"
+ },
+ {
+  "start": 1951.67,
+  "end": 1955.83,
+  "text": "against a short conversation where you're halfway"
+ },
+ {
+  "start": 1955.83,
+  "end": 1956.81,
+  "text": "through conversation."
+ },
+ {
+  "start": 1956.81,
+  "end": 1959.01,
+  "text": "So someone paste in a book and says,"
+ },
+ {
+  "start": 1959.01,
+  "end": 1960.45,
+  "text": "hey, talk to me about this book."
+ },
+ {
+  "start": 1960.45,
+  "end": 1962.35,
+  "text": "You don't want that running at the same time"
+ },
+ {
+  "start": 1962.35,
+  "end": 1964.49,
+  "text": "as someone who's midway through a conversation,"
+ },
+ {
+  "start": 1964.49,
+  "end": 1970.19,
+  "text": "like, chat explain to me why 1 plus 1 equals 2."
+ },
+ {
+  "start": 1970.19,
+  "end": 1971.71,
+  "text": "And chat is like, 1 plus 1 equals 2"
+ },
+ {
+  "start": 1971.71,
+  "end": 1972.99,
+  "text": "because numbers and whatnot."
+ },
+ {
+  "start": 1972.99,
+  "end": 1974.49,
+  "text": "And you're like, oh, I don't get it."
+ },
+ {
+  "start": 1974.49,
+  "end": 1978.04,
+  "text": "You don't want that very short question and answering"
+ },
+ {
+  "start": 1978.04,
+  "end": 1980.72,
+  "text": "to happen in the same time, on the same GPUs,"
+ },
+ {
+  "start": 1980.72,
+  "end": 1986.24,
+  "text": "as the very long request."
+ },
+ {
+  "start": 1986.24,
+  "end": 1989.4,
+  "text": "So you can put together this really simple router that"
+ },
+ {
+  "start": 1989.4,
+  "end": 1991.44,
+  "text": "says, OK, if we have a new request that"
+ },
+ {
+  "start": 1991.44,
+  "end": 1993.98,
+  "text": "comes in that's very low cache hit rate,"
+ },
+ {
+  "start": 1993.98,
+  "end": 1996.84,
+  "text": "send it to one set of GPUs so that those can all"
+ },
+ {
+  "start": 1996.84,
+  "end": 2000.36,
+  "text": "process things together and then send all my other warm requests"
+ },
+ {
+  "start": 2000.36,
+  "end": 2002.488,
+  "text": "to another set of prefill nodes."
+ },
+ {
+  "start": 2002.488,
+  "end": 2004.28,
+  "text": "It turns out if you do this, you can get up"
+ },
+ {
+  "start": 2004.28,
+  "end": 2010.7,
+  "text": "to 40% faster serving with these very, very simple optimization."
+ },
+ {
+  "start": 2010.7,
+  "end": 2013.08,
+  "text": "So that's one set of things I'd say,"
+ },
+ {
+  "start": 2013.08,
+  "end": 2014.88,
+  "text": "the way that I would characterize"
+ },
+ {
+  "start": 2014.88,
+  "end": 2017.88,
+  "text": "where we are in terms of the research"
+ },
+ {
+  "start": 2017.88,
+  "end": 2019.86,
+  "text": "and these techniques is that we're very early."
+ },
+ {
+  "start": 2019.86,
+  "end": 2024.68,
+  "text": "So this is the type of thing that in 10, 20 years,"
+ },
+ {
+  "start": 2024.68,
+  "end": 2027.36,
+  "text": "they're going to look back on and be like, oh, why are"
+ },
+ {
+  "start": 2027.36,
+  "end": 2028.72,
+  "text": "these guys talking about this?"
+ },
+ {
+  "start": 2028.72,
+  "end": 2031.92,
+  "text": "Isn't this already obvious to folks?"
+ },
+ {
+  "start": 2031.92,
+  "end": 2034.75,
+  "text": "But really, it's because we're starting to see these things,"
+ },
+ {
+  "start": 2034.75,
+  "end": 2036.99,
+  "text": "running them at production in new ways."
+ },
+ {
+  "start": 2036.99,
+  "end": 2043.53,
+  "text": "Seeing these new bits of traffic in new ways."
+ },
+ {
+  "start": 2043.53,
+  "end": 2044.03,
+  "text": "All right."
+ },
+ {
+  "start": 2044.03,
+  "end": 2049.33,
+  "text": "So that was an overview of the inference lifetime of a kernel."
+ },
+ {
+  "start": 2049.33,
+  "end": 2051.69,
+  "text": "Now I'm going to talk about two interesting research"
+ },
+ {
+  "start": 2051.69,
+  "end": 2055.409,
+  "text": "projects that are very much inspired by some of the things"
+ },
+ {
+  "start": 2055.409,
+  "end": 2057.81,
+  "text": "that we see when serving things."
+ },
+ {
+  "start": 2057.81,
+  "end": 2062.09,
+  "text": "So this first one we're going to be talking about language model"
+ },
+ {
+  "start": 2062.09,
+  "end": 2064.29,
+  "text": "decode, and how you can make it go"
+ },
+ {
+  "start": 2064.29,
+  "end": 2067.09,
+  "text": "a lot faster with these things called mega kernels."
+ },
+ {
+  "start": 2067.09,
+  "end": 2072.09,
+  "text": "This is a collaboration between Stanford and Together."
+ },
+ {
+  "start": 2072.09,
+  "end": 2074.429,
+  "text": "So the fundamental challenge when you're running decode."
+ },
+ {
+  "start": 2074.429,
+  "end": 2076.969,
+  "text": "So decode is the process by which you've processed your prompt"
+ },
+ {
+  "start": 2076.969,
+  "end": 2079.29,
+  "text": "and now you're generating one token at a time."
+ },
+ {
+  "start": 2079.29,
+  "end": 2082.85,
+  "text": "The fundamental challenge is that you"
+ },
+ {
+  "start": 2082.85,
+  "end": 2086.969,
+  "text": "have to run the whole model to generate a single token."
+ },
+ {
+  "start": 2086.969,
+  "end": 2090.77,
+  "text": "So that means that instead of using all this big parallelism"
+ },
+ {
+  "start": 2090.77,
+  "end": 2092.81,
+  "text": "that you get with a GPU that you can"
+ },
+ {
+  "start": 2092.81,
+  "end": 2094.85,
+  "text": "do during pre-fill training, you've"
+ },
+ {
+  "start": 2094.85,
+  "end": 2098.77,
+  "text": "now turned this massively parallel system into basically"
+ },
+ {
+  "start": 2098.77,
+  "end": 2103.13,
+  "text": "a glorified memory loader."
+ },
+ {
+  "start": 2103.13,
+  "end": 2106.09,
+  "text": "And one of the things that makes this extra challenging"
+ },
+ {
+  "start": 2106.09,
+  "end": 2108.37,
+  "text": "is that the way that we typically"
+ },
+ {
+  "start": 2108.37,
+  "end": 2110.97,
+  "text": "write down kernels and run a model"
+ },
+ {
+  "start": 2110.97,
+  "end": 2114.21,
+  "text": "is that we will write down kernels and program"
+ },
+ {
+  "start": 2114.21,
+  "end": 2116.37,
+  "text": "things one operation at a time."
+ },
+ {
+  "start": 2116.37,
+  "end": 2118.95,
+  "text": "So you guys can probably understand why this is so."
+ },
+ {
+  "start": 2118.95,
+  "end": 2121.39,
+  "text": "Kernels tend to be pretty challenging to write."
+ },
+ {
+  "start": 2121.39,
+  "end": 2125.33,
+  "text": "I'm sure you guys all had a lot of fun writing Flash Attention."
+ },
+ {
+  "start": 2125.33,
+  "end": 2127.21,
+  "text": "But that means that typically, what we do is"
+ },
+ {
+  "start": 2127.21,
+  "end": 2130.79,
+  "text": "we look at all the different operations in a language model,"
+ },
+ {
+  "start": 2130.79,
+  "end": 2132.37,
+  "text": "and we will run—"
+ },
+ {
+  "start": 2132.37,
+  "end": 2136.73,
+  "text": "we will write a single kernel for that operation at a time."
+ },
+ {
+  "start": 2136.73,
+  "end": 2139.53,
+  "text": "So this makes things a lot easier to program"
+ },
+ {
+  "start": 2139.53,
+  "end": 2141.77,
+  "text": "because you just have to write your norm"
+ },
+ {
+  "start": 2141.77,
+  "end": 2145.77,
+  "text": "kernel, your matmul kernel, your attention kernel."
+ },
+ {
+  "start": 2145.77,
+  "end": 2152.02,
+  "text": "But you end up seeing, it ends up introducing a lot of downtime"
+ },
+ {
+  "start": 2152.02,
+  "end": 2153.94,
+  "text": "into your system."
+ },
+ {
+  "start": 2153.94,
+  "end": 2156.86,
+  "text": "So this is an example of what it might"
+ },
+ {
+  "start": 2156.86,
+  "end": 2159.72,
+  "text": "look like when you're running inference across your kernel."
+ },
+ {
+  "start": 2159.72,
+  "end": 2163.5,
+  "text": "So this is obviously a cartoon, but the example"
+ },
+ {
+  "start": 2163.5,
+  "end": 2169.02,
+  "text": "is drawn from a particular attention inference kernel."
+ },
+ {
+  "start": 2169.02,
+  "end": 2172.12,
+  "text": "The way to read this is that on the x-axis, you have time."
+ },
+ {
+  "start": 2172.12,
+  "end": 2174.24,
+  "text": "So time is flowing from left to right."
+ },
+ {
+  "start": 2174.24,
+  "end": 2178.86,
+  "text": "On the y-axis, you have all the different little streaming"
+ },
+ {
+  "start": 2178.86,
+  "end": 2180.8,
+  "text": "multiprocessors on your GPU."
+ },
+ {
+  "start": 2180.8,
+  "end": 2183.94,
+  "text": "So on an H100, there are 132 of these."
+ },
+ {
+  "start": 2183.94,
+  "end": 2187.18,
+  "text": "On the B200, there's 148, et cetera."
+ },
+ {
+  "start": 2187.18,
+  "end": 2189.42,
+  "text": "The bars indicate useful work."
+ },
+ {
+  "start": 2189.42,
+  "end": 2195.02,
+  "text": "So when there's a bar here, one of the processors on the GPU"
+ },
+ {
+  "start": 2195.02,
+  "end": 2198.92,
+  "text": "is actually doing work, and the empty space is just waiting."
+ },
+ {
+  "start": 2198.92,
+  "end": 2200.82,
+  "text": "So you're just waiting for other operations"
+ },
+ {
+  "start": 2200.82,
+  "end": 2204.98,
+  "text": "to finish so that you can have something else go on."
+ },
+ {
+  "start": 2204.98,
+  "end": 2208.67,
+  "text": "And so basically, you get into this position"
+ },
+ {
+  "start": 2208.67,
+  "end": 2211.808,
+  "text": "where no matter how well you try to write the kernel,"
+ },
+ {
+  "start": 2211.808,
+  "end": 2213.85,
+  "text": "you're always going to have downtime in your GPU."
+ },
+ {
+  "start": 2213.85,
+  "end": 2215.933,
+  "text": "So you're going to have things like kernel launch."
+ },
+ {
+  "start": 2215.933,
+  "end": 2217.69,
+  "text": "So a kernel launch or kernel teardown,"
+ },
+ {
+  "start": 2217.69,
+  "end": 2220.8,
+  "text": "that's these big gaps in the red and the yellow."
+ },
+ {
+  "start": 2220.8,
+  "end": 2223.05,
+  "text": "You're going to have these things called tail effects."
+ },
+ {
+  "start": 2223.05,
+  "end": 2226.55,
+  "text": "So this is just the same way that if you"
+ },
+ {
+  "start": 2226.55,
+  "end": 2229.91,
+  "text": "have a short prompt that gets processed with a very long"
+ },
+ {
+  "start": 2229.91,
+  "end": 2231.95,
+  "text": "prompt, this same thing goes all the way down"
+ },
+ {
+  "start": 2231.95,
+  "end": 2233.81,
+  "text": "to the basic attention operation."
+ },
+ {
+  "start": 2233.81,
+  "end": 2235.87,
+  "text": "If you're processing a batch of inputs"
+ },
+ {
+  "start": 2235.87,
+  "end": 2238.21,
+  "text": "and one input is very short, one input is very long,"
+ },
+ {
+  "start": 2238.21,
+  "end": 2242.39,
+  "text": "you're going to be waiting for the very long input to finish."
+ },
+ {
+  "start": 2242.39,
+  "end": 2247.03,
+  "text": "And then because you're running these across multiple kernels,"
+ },
+ {
+  "start": 2247.03,
+  "end": 2249.83,
+  "text": "you will actually start to see these gaps between kernels start"
+ },
+ {
+  "start": 2249.83,
+  "end": 2252.27,
+  "text": "to add up."
+ },
+ {
+  "start": 2252.27,
+  "end": 2255.09,
+  "text": "So one thing that we put together to try to solve this,"
+ },
+ {
+  "start": 2255.09,
+  "end": 2256.57,
+  "text": "is a thing called Megakernels."
+ },
+ {
+  "start": 2256.57,
+  "end": 2258.95,
+  "text": "So this is basically saying instead"
+ },
+ {
+  "start": 2258.95,
+  "end": 2261.75,
+  "text": "of treating each operation in the model as its own operation"
+ },
+ {
+  "start": 2261.75,
+  "end": 2264.43,
+  "text": "writing a kernel for it, instead, let's write a single kernel"
+ },
+ {
+  "start": 2264.43,
+  "end": 2267.03,
+  "text": "to cover multiple operations at once."
+ },
+ {
+  "start": 2267.03,
+  "end": 2269.91,
+  "text": "This is similar to the fusion that you see in Flash Attention,"
+ },
+ {
+  "start": 2269.91,
+  "end": 2273.91,
+  "text": "except done more aggressively across a larger"
+ },
+ {
+  "start": 2273.91,
+  "end": 2274.973,
+  "text": "number of things."
+ },
+ {
+  "start": 2274.973,
+  "end": 2276.39,
+  "text": "And in particular, what it does is"
+ },
+ {
+  "start": 2276.39,
+  "end": 2280.29,
+  "text": "it turns a GPU from a single device--"
+ },
+ {
+  "start": 2280.29,
+  "end": 2282.99,
+  "text": "a single operation, is you start thinking of the GPU"
+ },
+ {
+  "start": 2282.99,
+  "end": 2285.29,
+  "text": "as a massive distributed system and saying,"
+ },
+ {
+  "start": 2285.29,
+  "end": 2287.65,
+  "text": "OK, I have all this work that I need to get done."
+ },
+ {
+  "start": 2287.65,
+  "end": 2289.89,
+  "text": "Some of it has dependencies on other stuff."
+ },
+ {
+  "start": 2289.89,
+  "end": 2292.35,
+  "text": "So that red stuff has some dependencies"
+ },
+ {
+  "start": 2292.35,
+  "end": 2294.39,
+  "text": "on some of the green bars."
+ },
+ {
+  "start": 2294.39,
+  "end": 2295.41,
+  "text": "How can I schedule it?"
+ },
+ {
+  "start": 2295.41,
+  "end": 2300.85,
+  "text": "How can I distribute the work to maximize my GPU utilization?"
+ },
+ {
+  "start": 2303.43,
+  "end": 2306.09,
+  "text": "If you do this just to the attention inference kernel,"
+ },
+ {
+  "start": 2306.09,
+  "end": 2307.91,
+  "text": "you get 30% to 70% speedups."
+ },
+ {
+  "start": 2307.91,
+  "end": 2309.91,
+  "text": "And then the nice thing is that you can actually"
+ },
+ {
+  "start": 2309.91,
+  "end": 2311.71,
+  "text": "do this to the whole model."
+ },
+ {
+  "start": 2311.71,
+  "end": 2315.01,
+  "text": "So this is one layer of a Llama-1B model."
+ },
+ {
+  "start": 2315.01,
+  "end": 2319.99,
+  "text": "So here, we've basically taken the entire layer"
+ },
+ {
+  "start": 2319.99,
+  "end": 2321.563,
+  "text": "and put it together into one kernel."
+ },
+ {
+  "start": 2321.563,
+  "end": 2323.23,
+  "text": "If you look at all these different bars,"
+ },
+ {
+  "start": 2323.23,
+  "end": 2326.36,
+  "text": "you see things are overlapped in really weird ways."
+ },
+ {
+  "start": 2326.36,
+  "end": 2329.96,
+  "text": "That's because we are now starting to overlap a weight"
+ },
+ {
+  "start": 2329.96,
+  "end": 2334.92,
+  "text": "load from the next-- from the layer into the attention,"
+ },
+ {
+  "start": 2334.92,
+  "end": 2337.96,
+  "text": "or starting to run parts of reduction"
+ },
+ {
+  "start": 2337.96,
+  "end": 2339.9,
+  "text": "before the attention operation is over."
+ },
+ {
+  "start": 2343.28,
+  "end": 2345.66,
+  "text": "Here's one interesting example."
+ },
+ {
+  "start": 2345.66,
+  "end": 2347.7,
+  "text": "So here's one thing that you can do."
+ },
+ {
+  "start": 2347.7,
+  "end": 2352.3,
+  "text": "So if you look at modern LLMs, you have the attention layer."
+ },
+ {
+  "start": 2352.3,
+  "end": 2354.06,
+  "text": "You have the QKV projections."
+ },
+ {
+  "start": 2354.06,
+  "end": 2356.44,
+  "text": "You're going to add some rope scaling to it."
+ },
+ {
+  "start": 2356.44,
+  "end": 2357.94,
+  "text": "So that's these blue lines."
+ },
+ {
+  "start": 2357.94,
+  "end": 2360.84,
+  "text": "So those blue lines are QKV plus rope."
+ },
+ {
+  "start": 2360.84,
+  "end": 2362.36,
+  "text": "And then the orange lines, this is"
+ },
+ {
+  "start": 2362.36,
+  "end": 2364.66,
+  "text": "the beginning of the attention."
+ },
+ {
+  "start": 2364.66,
+  "end": 2369.84,
+  "text": "So one of the insights is that you can start loading in your KV"
+ },
+ {
+  "start": 2369.84,
+  "end": 2373.72,
+  "text": "Cache into your attention before you're finished with QKV,"
+ },
+ {
+  "start": 2373.72,
+  "end": 2375.68,
+  "text": "and particularly, during decode."
+ },
+ {
+  "start": 2375.68,
+  "end": 2377.68,
+  "text": "So these orange bars with some of these circles,"
+ },
+ {
+  "start": 2377.68,
+  "end": 2381.72,
+  "text": "you start the KV Cache load while the QKV plus rope is still"
+ },
+ {
+  "start": 2381.72,
+  "end": 2382.36,
+  "text": "running."
+ },
+ {
+  "start": 2382.36,
+  "end": 2385.67,
+  "text": "And then once QKV is done, then you have your new query tokens."
+ },
+ {
+  "start": 2385.67,
+  "end": 2388.53,
+  "text": "You can run the rest of the attention operation."
+ },
+ {
+  "start": 2388.53,
+  "end": 2393.51,
+  "text": "So basically, when you have this fine-grained control of GPUs,"
+ },
+ {
+  "start": 2393.51,
+  "end": 2398.41,
+  "text": "you can start some operations before others are over."
+ },
+ {
+  "start": 2398.41,
+  "end": 2401.15,
+  "text": "Here's another one."
+ },
+ {
+  "start": 2401.15,
+  "end": 2403.45,
+  "text": "So again, the orange is the first part"
+ },
+ {
+  "start": 2403.45,
+  "end": 2405.19,
+  "text": "of the attention computation."
+ },
+ {
+  "start": 2405.19,
+  "end": 2408.61,
+  "text": "The red is the O projection that comes after attention."
+ },
+ {
+  "start": 2408.61,
+  "end": 2410.07,
+  "text": "And you have your O projection."
+ },
+ {
+  "start": 2410.07,
+  "end": 2412.45,
+  "text": "Start loading the weights before your attention operation"
+ },
+ {
+  "start": 2412.45,
+  "end": 2413.11,
+  "text": "is over."
+ },
+ {
+  "start": 2415.81,
+  "end": 2421.33,
+  "text": "We put this together in a very relatively complex CUDA"
+ },
+ {
+  "start": 2421.33,
+  "end": 2424.41,
+  "text": "framework with basically instruction and instruction"
+ },
+ {
+  "start": 2424.41,
+  "end": 2426.65,
+  "text": "based abstraction, where we can implement"
+ },
+ {
+  "start": 2426.65,
+  "end": 2430.21,
+  "text": "each sub-kernel in its own file, and then"
+ },
+ {
+  "start": 2430.21,
+  "end": 2432.65,
+  "text": "have a big virtualized shared memory"
+ },
+ {
+  "start": 2432.65,
+  "end": 2437.07,
+  "text": "system to orchestrate the running of these operations."
+ },
+ {
+  "start": 2440.58,
+  "end": 2443.14,
+  "text": "And to do this, we put together this library"
+ },
+ {
+  "start": 2443.14,
+  "end": 2448.42,
+  "text": "called ThunderKittens, which is one of these kernel writing"
+ },
+ {
+  "start": 2448.42,
+  "end": 2449.08,
+  "text": "libraries."
+ },
+ {
+  "start": 2449.08,
+  "end": 2451.0,
+  "text": "You can think of it as almost like Triton,"
+ },
+ {
+  "start": 2451.0,
+  "end": 2452.74,
+  "text": "except more low level, a lot more"
+ },
+ {
+  "start": 2452.74,
+  "end": 2456.82,
+  "text": "fine-grained control over things."
+ },
+ {
+  "start": 2456.82,
+  "end": 2460.46,
+  "text": "The payoff is you get near speed of light decoding inference."
+ },
+ {
+  "start": 2460.46,
+  "end": 2463.3,
+  "text": "So these numbers are actually a lot better now."
+ },
+ {
+  "start": 2463.3,
+  "end": 2466.94,
+  "text": "But the Megakernel shown by this bar in teal,"
+ },
+ {
+  "start": 2466.94,
+  "end": 2469.38,
+  "text": "and you can see it runs a lot faster than some"
+ },
+ {
+  "start": 2469.38,
+  "end": 2471.62,
+  "text": "of the other state of the art engines."
+ },
+ {
+  "start": 2471.62,
+  "end": 2474.62,
+  "text": "And on the H100, it's achieving 72%"
+ },
+ {
+  "start": 2474.62,
+  "end": 2477.94,
+  "text": "bandwidth utilization, which is near the speed of light"
+ },
+ {
+  "start": 2477.94,
+  "end": 2478.72,
+  "text": "on the GPU."
+ },
+ {
+  "start": 2478.72,
+  "end": 2482.22,
+  "text": "So if you just ignore all the complexities of what we're"
+ },
+ {
+  "start": 2482.22,
+  "end": 2485.02,
+  "text": "doing here and say, how fast can the GPU physically"
+ },
+ {
+  "start": 2485.02,
+  "end": 2486.64,
+  "text": "go to do this operation?"
+ },
+ {
+  "start": 2486.64,
+  "end": 2492.38,
+  "text": "We are pretty close to 72% of that speed of light."
+ },
+ {
+  "start": 2492.38,
+  "end": 2495.3,
+  "text": "So one interesting bit there is a takeaway from that section,"
+ },
+ {
+  "start": 2495.3,
+  "end": 2498.02,
+  "text": "is that, if you have very deep control of the kernels"
+ },
+ {
+  "start": 2498.02,
+  "end": 2500.46,
+  "text": "and the understanding of the hardware,"
+ },
+ {
+  "start": 2500.46,
+  "end": 2503.9,
+  "text": "you can start to enable very different compute paradigms."
+ },
+ {
+  "start": 2503.9,
+  "end": 2505.62,
+  "text": "And all these things, you only see"
+ },
+ {
+  "start": 2505.62,
+  "end": 2511.02,
+  "text": "when you start playing with inference at a deep level."
+ },
+ {
+  "start": 2511.02,
+  "end": 2514.12,
+  "text": "And now, I'll talk about something that's a little bit new."
+ },
+ {
+  "start": 2514.12,
+  "end": 2518.78,
+  "text": "So this is now getting into the realm of new architectures."
+ },
+ {
+  "start": 2518.78,
+  "end": 2521.54,
+  "text": "And I'm going to be talking about this new model called"
+ },
+ {
+  "start": 2521.54,
+  "end": 2522.04,
+  "text": "Parcae."
+ },
+ {
+  "start": 2522.04,
+  "end": 2524.18,
+  "text": "So this is some work that comes out"
+ },
+ {
+  "start": 2524.18,
+  "end": 2526.78,
+  "text": "of my UCSD lab led by Hayden, and then"
+ },
+ {
+  "start": 2526.78,
+  "end": 2532.3,
+  "text": "also in collaboration with these two folks, Zachary and Taylor."
+ },
+ {
+  "start": 2532.3,
+  "end": 2533.88,
+  "text": "So I'm going to come back to this."
+ },
+ {
+  "start": 2533.88,
+  "end": 2536.3,
+  "text": "So at the beginning of the talk, I talked about, hey,"
+ },
+ {
+  "start": 2536.3,
+  "end": 2537.877,
+  "text": "all these new capabilities are coming"
+ },
+ {
+  "start": 2537.877,
+  "end": 2540.46,
+  "text": "because you're starting to scale these models, and parameters,"
+ },
+ {
+  "start": 2540.46,
+  "end": 2541.252,
+  "text": "and data."
+ },
+ {
+  "start": 2541.252,
+  "end": 2543.46,
+  "text": "With Parcae, we wanted to ask another question, which"
+ },
+ {
+  "start": 2543.46,
+  "end": 2546.22,
+  "text": "is, is this the only way you have to scale?"
+ },
+ {
+  "start": 2546.22,
+  "end": 2548.46,
+  "text": "Or is it potentially, is there potentially something"
+ },
+ {
+  "start": 2548.46,
+  "end": 2552.66,
+  "text": "else, some other way that you can get this quality?"
+ },
+ {
+  "start": 2552.66,
+  "end": 2555.82,
+  "text": "And with Parcae, we wanted to-- this was basically"
+ },
+ {
+  "start": 2555.82,
+  "end": 2558.93,
+  "text": "our take on a technique called loop transformers,"
+ },
+ {
+  "start": 2558.93,
+  "end": 2561.19,
+  "text": "where you take some blocks of your transformer"
+ },
+ {
+  "start": 2561.19,
+  "end": 2562.57,
+  "text": "and you run them in a loop."
+ },
+ {
+  "start": 2562.57,
+  "end": 2566.673,
+  "text": "So instead of having your tokens go all one"
+ },
+ {
+  "start": 2566.673,
+  "end": 2568.09,
+  "text": "layer at a time through the model,"
+ },
+ {
+  "start": 2568.09,
+  "end": 2571.01,
+  "text": "at some point you say, hey, as you're going through,"
+ },
+ {
+  "start": 2571.01,
+  "end": 2574.75,
+  "text": "just send it back through that loop at a time."
+ },
+ {
+  "start": 2574.75,
+  "end": 2577.25,
+  "text": "You're going to see, there's a couple different pieces here."
+ },
+ {
+  "start": 2577.25,
+  "end": 2580.87,
+  "text": "So one is, we use some State Space Model theory, some SSM"
+ },
+ {
+  "start": 2580.87,
+  "end": 2583.81,
+  "text": "theory to stabilize this operation."
+ },
+ {
+  "start": 2583.81,
+  "end": 2587.11,
+  "text": "Naively, if you just run this and let the thing train,"
+ },
+ {
+  "start": 2587.11,
+  "end": 2589.15,
+  "text": "we saw that the thing was going to blow up."
+ },
+ {
+  "start": 2589.15,
+  "end": 2590.79,
+  "text": "And then the other thing is we started"
+ },
+ {
+  "start": 2590.79,
+  "end": 2594.03,
+  "text": "to see some interesting scaling laws that suggest that you want"
+ },
+ {
+  "start": 2594.03,
+  "end": 2597.47,
+  "text": "to be scaling the recurrence of these recurrent models"
+ },
+ {
+  "start": 2597.47,
+  "end": 2599.79,
+  "text": "as you increase the data."
+ },
+ {
+  "start": 2599.79,
+  "end": 2604.89,
+  "text": "So in order to make the best use out of your parameters,"
+ },
+ {
+  "start": 2604.89,
+  "end": 2609.03,
+  "text": "you want to actually be reusing them somewhat."
+ },
+ {
+  "start": 2609.03,
+  "end": 2611.27,
+  "text": "First, I'll talk a little bit of motivation"
+ },
+ {
+  "start": 2611.27,
+  "end": 2615.12,
+  "text": "of why we found this looping problem to be very interesting."
+ },
+ {
+  "start": 2615.12,
+  "end": 2619.28,
+  "text": "So the basic idea is, let's say you have some activation that's"
+ },
+ {
+  "start": 2619.28,
+  "end": 2621.28,
+  "text": "going through part of your model, at some point,"
+ },
+ {
+  "start": 2621.28,
+  "end": 2623.8,
+  "text": "it hits these loop blocks and it's just going"
+ },
+ {
+  "start": 2623.8,
+  "end": 2625.34,
+  "text": "to run the same activation."
+ },
+ {
+  "start": 2625.34,
+  "end": 2628.46,
+  "text": "It's going to run through that same layer some number of times."
+ },
+ {
+  "start": 2628.46,
+  "end": 2631.4,
+  "text": "So that purple block is the recurrent block."
+ },
+ {
+  "start": 2631.4,
+  "end": 2635.44,
+  "text": "And then at the end, you get the thing that comes back."
+ },
+ {
+  "start": 2635.44,
+  "end": 2637.98,
+  "text": "所以这样做有一些优势。"
+ },
+ {
+  "start": 2637.98,
+  "end": 2639.7,
+  "text": "所以你可以保持参数量不变，"
+ },
+ {
+  "start": 2639.7,
+  "end": 2642.44,
+  "text": "但它给了你一个调节旋钮来增加你的浮点运算量。"
+ },
+ {
+  "start": 2642.44,
+  "end": 2646.24,
+  "text": "所以如果你认为浮点运算量——更多的浮点运算量"
+ },
+ {
+  "start": 2646.24,
+  "end": 2648.08,
+  "text": "等于更高的质量，那么这是一种"
+ },
+ {
+  "start": 2648.08,
+  "end": 2652.04,
+  "text": "在不付出更高参数成本的情况下提升质量的方法。"
+ },
+ {
+  "start": 2652.04,
+  "end": 2655.08,
+  "text": "另一件事是，有一项早期的工作——"
+ },
+ {
+  "start": 2655.08,
+  "end": 2657.36,
+  "text": "早期是个相对的说法，几年前——"
+ },
+ {
+  "start": 2657.36,
+  "end": 2659.86,
+  "text": "它表明你实际上能获得更高的表达力——"
+ },
+ {
+  "start": 2659.86,
+  "end": 2661.06,
+  "text": "它们的表达力。"
+ },
+ {
+  "start": 2661.06,
+  "end": 2666.04,
+  "text": "有些东西你无法表达"
+ },
+ {
+  "start": 2666.04,
+  "end": 2667.88,
+  "text": "在相同参数量下，"
+ },
+ {
+  "start": 2667.88,
+  "end": 2672.56,
+  "text": "而在这些循环模型中你可以表达。"
+ },
+ {
+  "start": 2672.56,
+  "end": 2674.72,
+  "text": "我们驱动性问题之一是，"
+ },
+ {
+  "start": 2674.72,
+  "end": 2676.288,
+  "text": "每个参数的最佳质量是什么？"
+ },
+ {
+  "start": 2676.288,
+  "end": 2678.08,
+  "text": "每个参数的最佳智能是什么？"
+ },
+ {
+  "start": 2678.08,
+  "end": 2680.32,
+  "text": "或者说每参数和每数据量的智能"
+ },
+ {
+  "start": 2680.32,
+  "end": 2684.64,
+  "text": "这些东西能让你做到什么？"
+ },
+ {
+  "start": 2684.64,
+  "end": 2686.82,
+  "text": "有一些有希望的初步结果。"
+ },
+ {
+  "start": 2686.82,
+  "end": 2691.357,
+  "text": "这是马里兰大学Tom Goldstein组的一篇论文，"
+ },
+ {
+  "start": 2691.357,
+  "end": 2693.44,
+  "text": "它表明，嘿，这个东西可能比"
+ },
+ {
+  "start": 2693.44,
+  "end": 2695.32,
+  "text": "变换器更好。"
+ },
+ {
+  "start": 2695.32,
+  "end": 2699.852,
+  "text": "这些是在Arc任务上的一些结果。"
+ },
+ {
+  "start": 2699.852,
+  "end": 2701.56,
+  "text": "而且还有一堆Twitter上的炒作，"
+ },
+ {
+  "start": 2701.56,
+  "end": 2704.76,
+  "text": "因为在我们发布Parcae大约一周前，"
+ },
+ {
+  "start": 2704.76,
+  "end": 2708.12,
+  "text": "OpenAI的某个人说Claude mythos是一个循环的——"
+ },
+ {
+  "start": 2708.12,
+  "end": 2709.92,
+  "text": "是一个循环语言模型。"
+ },
+ {
+  "start": 2709.92,
+  "end": 2711.005,
+  "text": "我认为这不对。"
+ },
+ {
+  "start": 2711.005,
+  "end": 2712.38,
+  "text": "我觉得他只是在编造。"
+ },
+ {
+  "start": 2712.38,
+  "end": 2717.64,
+  "text": "但结果是，它真的在Twitter上炸开了"
+ },
+ {
+  "start": 2717.64,
+  "end": 2721.122,
+  "text": "在这之前的各种猜测中。"
+ },
+ {
+  "start": 2721.122,
+  "end": 2723.58,
+  "text": "最终，他不得不写这篇博客文章，像是说，嘿，"
+ },
+ {
+  "start": 2723.58,
+  "end": 2725.08,
+  "text": "我的错，我只是编造的。"
+ },
+ {
+  "start": 2725.08,
+  "end": 2726.92,
+  "text": "这些都不是真的。"
+ },
+ {
+  "start": 2726.92,
+  "end": 2729.02,
+  "text": "但它足够有趣，值得一看。"
+ },
+ {
+  "start": 2729.02,
+  "end": 2731.89,
+  "text": "所以我们在这次Twitter炒作之前就在研究它，"
+ },
+ {
+  "start": 2731.89,
+  "end": 2735.69,
+  "text": "但我觉得这里有一些有趣的东西，一些"
+ },
+ {
+  "start": 2735.69,
+  "end": 2738.25,
+  "text": "值得一看的东西。"
+ },
+ {
+  "start": 2738.25,
+  "end": 2740.41,
+  "text": "现在，这些循环模型的一个问题是"
+ },
+ {
+  "start": 2740.41,
+  "end": 2743.27,
+  "text": "如果你看其中的任何一个，并且你试着训练它们，"
+ },
+ {
+  "start": 2743.27,
+  "end": 2746.01,
+  "text": "and then you changed anything about the training algorithm"
+ },
+ {
+  "start": 2746.01,
+  "end": 2746.51,
+  "text": "at all."
+ },
+ {
+  "start": 2746.51,
+  "end": 2750.03,
+  "text": "So if you change the learning rate by a little bit,"
+ },
+ {
+  "start": 2750.03,
+  "end": 2752.35,
+  "text": "you'd suddenly start to see these models blow up."
+ },
+ {
+  "start": 2752.35,
+  "end": 2754.91,
+  "text": "So if you did a simple thing like a learning rate sweep,"
+ },
+ {
+  "start": 2754.91,
+  "end": 2757.97,
+  "text": "you'd see nine times out of 10, this model just"
+ },
+ {
+  "start": 2757.97,
+  "end": 2760.03,
+  "text": "isn't going to converge, it's going to blow up."
+ },
+ {
+  "start": 2760.03,
+  "end": 2761.072,
+  "text": "You're going to get NaNs."
+ },
+ {
+  "start": 2761.072,
+  "end": 2763.05,
+  "text": "You're going to get these big loss spikes."
+ },
+ {
+  "start": 2763.05,
+  "end": 2764.81,
+  "text": "And so we were saying, hey, there"
+ },
+ {
+  "start": 2764.81,
+  "end": 2766.393,
+  "text": "seems to be something wrong with this."
+ },
+ {
+  "start": 2766.393,
+  "end": 2768.893,
+  "text": "So if you're training a model and you're actually scaling it"
+ },
+ {
+  "start": 2768.893,
+  "end": 2771.13,
+  "text": "up, and you see there, these big loss spikes, that"
+ },
+ {
+  "start": 2771.13,
+  "end": 2773.61,
+  "text": "suggests something has gone very wrong with your training"
+ },
+ {
+  "start": 2773.61,
+  "end": 2775.97,
+  "text": "process, you should take a deeper look"
+ },
+ {
+  "start": 2775.97,
+  "end": 2778.465,
+  "text": "and try to figure out what happened."
+ },
+ {
+  "start": 2778.465,
+  "end": 2780.09,
+  "text": "In previous work, there were some hacks"
+ },
+ {
+  "start": 2780.09,
+  "end": 2782.01,
+  "text": "like you can put norms in every layer"
+ },
+ {
+  "start": 2782.01,
+  "end": 2785.25,
+  "text": "to figure out what's happening or just pick two--"
+ },
+ {
+  "start": 2785.25,
+  "end": 2787.19,
+  "text": "the learning rate of 2e-4."
+ },
+ {
+  "start": 2787.19,
+  "end": 2789.36,
+  "text": "Don't pick any of the other learning rates."
+ },
+ {
+  "start": 2789.36,
+  "end": 2792.5,
+  "text": "But we were thinking, hey, the existence of these loss spikes"
+ },
+ {
+  "start": 2792.5,
+  "end": 2799.14,
+  "text": "suggests that there's probably something deeper going on."
+ },
+ {
+  "start": 2799.14,
+  "end": 2802.3,
+  "text": "And so we took a bit of a mathematical state space"
+ },
+ {
+  "start": 2802.3,
+  "end": 2807.5,
+  "text": "model-esque approach to the stabilization question."
+ },
+ {
+  "start": 2807.5,
+  "end": 2812.62,
+  "text": "Our basic insight was, you can look at this process."
+ },
+ {
+  "start": 2812.62,
+  "end": 2814.56,
+  "text": "So actually, if you look at this process,"
+ },
+ {
+  "start": 2814.56,
+  "end": 2818.692,
+  "text": "you try to think about how to analyze it analytically."
+ },
+ {
+  "start": 2818.692,
+  "end": 2820.9,
+  "text": "It's going to be very complicated, because this big R"
+ },
+ {
+  "start": 2820.9,
+  "end": 2823.26,
+  "text": "block has tons of parameters."
+ },
+ {
+  "start": 2823.26,
+  "end": 2825.04,
+  "text": "There's all sorts of nonlinearities."
+ },
+ {
+  "start": 2825.04,
+  "end": 2828.42,
+  "text": "There's a Softmax, there's GELU, and RoPE,"
+ },
+ {
+  "start": 2828.42,
+  "end": 2829.68,
+  "text": "and all these other things."
+ },
+ {
+  "start": 2829.68,
+  "end": 2834.18,
+  "text": "So if you try to analyze it analytically, it's quite complex."
+ },
+ {
+  "start": 2834.18,
+  "end": 2836.16,
+  "text": "Our insight was, we were just saying,"
+ },
+ {
+  "start": 2836.16,
+  "end": 2839.62,
+  "text": "OK, let's actually just look at the residual of this thing."
+ },
+ {
+  "start": 2839.62,
+  "end": 2843.98,
+  "text": "So how is this activation changing from block to block?"
+ },
+ {
+  "start": 2843.98,
+  "end": 2845.758,
+  "text": "Our first empirical observation was, hey,"
+ },
+ {
+  "start": 2845.758,
+  "end": 2847.3,
+  "text": "it actually doesn't change that much."
+ },
+ {
+  "start": 2847.3,
+  "end": 2850.5,
+  "text": "So each of these residual blocks is"
+ },
+ {
+  "start": 2850.5,
+  "end": 2852.04,
+  "text": "changing the vector a little bit,"
+ },
+ {
+  "start": 2852.04,
+  "end": 2857.94,
+  "text": "but not really having a massive impact."
+ },
+ {
+  "start": 2857.94,
+  "end": 2861.1,
+  "text": "And as a result, how can we-- so maybe"
+ },
+ {
+  "start": 2861.1,
+  "end": 2862.28,
+  "text": "we can actually model this."
+ },
+ {
+  "start": 2862.28,
+  "end": 2866.34,
+  "text": "Maybe we can actually look at what's happening more deeply."
+ },
+ {
+  "start": 2866.34,
+  "end": 2869.7,
+  "text": "And so what we did is we went and wrote down a dynamic system"
+ },
+ {
+  "start": 2869.7,
+  "end": 2871.18,
+  "text": "over this residual."
+ },
+ {
+  "start": 2871.18,
+  "end": 2873.82,
+  "text": "And when we did, we realized there's a couple pieces in here"
+ },
+ {
+  "start": 2873.82,
+  "end": 2877.66,
+  "text": "that when you look at how you write down the model,"
+ },
+ {
+  "start": 2877.66,
+  "end": 2882.14,
+  "text": "might look relatively benign, but actually"
+ },
+ {
+  "start": 2882.14,
+  "end": 2884.06,
+  "text": "end up being a huge bit."
+ },
+ {
+  "start": 2884.06,
+  "end": 2886.98,
+  "text": "So what we did was we said, OK, there's all this nonlinear"
+ },
+ {
+  "start": 2886.98,
+  "end": 2891.06,
+  "text": "stuff, there's this attention, there's this GELU,"
+ },
+ {
+  "start": 2891.06,
+  "end": 2892.7,
+  "text": "there's this big feed-forward network"
+ },
+ {
+  "start": 2892.7,
+  "end": 2896.42,
+  "text": "with the intermediates and stuff,"
+ },
+ {
+  "start": 2896.42,
+  "end": 2898.08,
+  "text": "we're going to all put that into a box."
+ },
+ {
+  "start": 2898.08,
+  "end": 2900.46,
+  "text": "We're just going to call that R. And this R"
+ },
+ {
+  "start": 2900.46,
+  "end": 2903.02,
+  "text": "is going to be some big nonlinear thing."
+ },
+ {
+  "start": 2903.02,
+  "end": 2909.27,
+  "text": "But we're going to put it-- just take it to the side."
+ },
+ {
+  "start": 2909.27,
+  "end": 2912.85,
+  "text": "What you're left with is these A and B matrices."
+ },
+ {
+  "start": 2912.85,
+  "end": 2917.63,
+  "text": "So this B matrix is some transformation"
+ },
+ {
+  "start": 2917.63,
+  "end": 2920.45,
+  "text": "over your initial vector."
+ },
+ {
+  "start": 2920.45,
+  "end": 2923.79,
+  "text": "So what is that first vector before you start the loop?"
+ },
+ {
+  "start": 2923.79,
+  "end": 2927.47,
+  "text": "And then this A vector is-- this A matrix is how do you transform"
+ },
+ {
+  "start": 2927.47,
+  "end": 2930.63,
+  "text": "that residual in each loop?"
+ },
+ {
+  "start": 2930.63,
+  "end": 2933.67,
+  "text": "And what we did is we said, hey, this simple thing, if you take"
+ },
+ {
+  "start": 2933.67,
+  "end": 2936.19,
+  "text": "all the complexity of the transformer,"
+ },
+ {
+  "start": 2936.19,
+  "end": 2939.11,
+  "text": "stick it to the side, you have a relatively simple way"
+ },
+ {
+  "start": 2939.11,
+  "end": 2941.75,
+  "text": "of looking at all the previous loop transformers."
+ },
+ {
+  "start": 2941.75,
+  "end": 2944.07,
+  "text": "And in previous cases, you do end up"
+ },
+ {
+  "start": 2944.07,
+  "end": 2945.97,
+  "text": "making some pretty normal decisions."
+ },
+ {
+  "start": 2945.97,
+  "end": 2950.59,
+  "text": "So in one case you just say, oh, you just"
+ },
+ {
+  "start": 2950.59,
+  "end": 2951.897,
+  "text": "treat it as the identity."
+ },
+ {
+  "start": 2951.897,
+  "end": 2953.23,
+  "text": "You're just going to add things."
+ },
+ {
+  "start": 2953.23,
+  "end": 2958.15,
+  "text": "In another case, it's a fully learnable matrix."
+ },
+ {
+  "start": 2958.15,
+  "end": 2961.55,
+  "text": "And then we said, OK, what happens if we just so--"
+ },
+ {
+  "start": 2961.55,
+  "end": 2964.8,
+  "text": "the residual-- we observed empirically,"
+ },
+ {
+  "start": 2964.8,
+  "end": 2968.4,
+  "text": "that these A and B matrices are actually dominating"
+ },
+ {
+  "start": 2968.4,
+  "end": 2970.88,
+  "text": "the magnitude of this equation."
+ },
+ {
+  "start": 2970.88,
+  "end": 2974.28,
+  "text": "What happens if you just drop that complicated nonlinear"
+ },
+ {
+  "start": 2974.28,
+  "end": 2974.82,
+  "text": "piece?"
+ },
+ {
+  "start": 2974.82,
+  "end": 2975.82,
+  "text": "What do you get out?"
+ },
+ {
+  "start": 2975.82,
+  "end": 2978.32,
+  "text": "Well, you get out actually a pretty simple system"
+ },
+ {
+  "start": 2978.32,
+  "end": 2980.14,
+  "text": "that if you use high school calculus,"
+ },
+ {
+  "start": 2980.14,
+  "end": 2982.0,
+  "text": "you can just solve it to figure out what"
+ },
+ {
+  "start": 2982.0,
+  "end": 2984.2,
+  "text": "the answers are going to be."
+ },
+ {
+  "start": 2984.2,
+  "end": 2986.24,
+  "text": "So here's the closed form solution."
+ },
+ {
+  "start": 2986.24,
+  "end": 2988.52,
+  "text": "You can actually compute what is,"
+ },
+ {
+  "start": 2988.52,
+  "end": 2990.32,
+  "text": "given what the initial activation is,"
+ },
+ {
+  "start": 2990.32,
+  "end": 2992.5,
+  "text": "and what that initial injection is,"
+ },
+ {
+  "start": 2992.5,
+  "end": 2994.92,
+  "text": "you can actually just empirically compute"
+ },
+ {
+  "start": 2994.92,
+  "end": 3000.28,
+  "text": "what the activation is going to look like at Step T plus 1."
+ },
+ {
+  "start": 3000.28,
+  "end": 3001.94,
+  "text": "And you notice a couple of things."
+ },
+ {
+  "start": 3001.94,
+  "end": 3008.04,
+  "text": "So this thing is dominated by these A matrices."
+ },
+ {
+  "start": 3008.04,
+  "end": 3011.16,
+  "text": "And especially, this A matrix that you are powering up"
+ },
+ {
+  "start": 3011.16,
+  "end": 3014.6,
+  "text": "to a large degree."
+ },
+ {
+  "start": 3014.6,
+  "end": 3017.6,
+  "text": "And from here, what we realize is"
+ },
+ {
+  "start": 3017.6,
+  "end": 3020.08,
+  "text": "that there's this quantity called the spectral radius"
+ },
+ {
+  "start": 3020.08,
+  "end": 3022.61,
+  "text": "of this A. So spectral radius is basically"
+ },
+ {
+  "start": 3022.61,
+  "end": 3024.675,
+  "text": "like another word for norm."
+ },
+ {
+  "start": 3024.675,
+  "end": 3029.63,
+  "text": "One way that you can look at this that, you're taking this matrix."
+ },
+ {
+  "start": 3029.63,
+  "end": 3032.77,
+  "text": "You're powering it up to huge amounts."
+ },
+ {
+  "start": 3032.77,
+  "end": 3036.01,
+  "text": "If this matrix can learn to be something like--"
+ },
+ {
+  "start": 3036.01,
+  "end": 3038.33,
+  "text": "let's say that this matrix--"
+ },
+ {
+  "start": 3038.33,
+  "end": 3040.89,
+  "text": "if you go to scalars, imagine that this matrix is 2."
+ },
+ {
+  "start": 3040.89,
+  "end": 3043.47,
+  "text": "And then this T is like 16 or something,"
+ },
+ {
+  "start": 3043.47,
+  "end": 3044.91,
+  "text": "you've now taken this activation,"
+ },
+ {
+  "start": 3044.91,
+  "end": 3047.37,
+  "text": "you've blown it up to 2 to the power of 16."
+ },
+ {
+  "start": 3047.37,
+  "end": 3048.97,
+  "text": "And it's really big."
+ },
+ {
+  "start": 3048.97,
+  "end": 3052.49,
+  "text": "And this starts to explain some of those big loss spikes."
+ },
+ {
+  "start": 3052.49,
+  "end": 3055.13,
+  "text": "And in particular, what we found is that, the choices that you"
+ },
+ {
+  "start": 3055.13,
+  "end": 3059.05,
+  "text": "make for these A and B matrices that people"
+ },
+ {
+  "start": 3059.05,
+  "end": 3061.69,
+  "text": "have made in these previous papers are either--"
+ },
+ {
+  "start": 3061.69,
+  "end": 3065.37,
+  "text": "we call them, marginally stable or unstable."
+ },
+ {
+  "start": 3065.37,
+  "end": 3068.39,
+  "text": "Unstable-- make the system unstable."
+ },
+ {
+  "start": 3070.97,
+  "end": 3073.09,
+  "text": "And so with Parcae we said, OK, well, we"
+ },
+ {
+  "start": 3073.09,
+  "end": 3076.41,
+  "text": "figured out this thing where if you take this particular look"
+ },
+ {
+  "start": 3076.41,
+  "end": 3079.992,
+  "text": "at it, and you let these A and B do whatever they want,"
+ },
+ {
+  "start": 3079.992,
+  "end": 3081.95,
+  "text": "you're going to get things that really explode."
+ },
+ {
+  "start": 3081.95,
+  "end": 3087.29,
+  "text": "What if we just constrain A and B such that if you run the math they're not going to explode?"
+ },
+ {
+  "start": 3087.29,
+  "end": 3089.95,
+  "text": "So for A, what we did is we said,"
+ },
+ {
+  "start": 3089.95,
+  "end": 3091.97,
+  "text": "OK, we're effectively going to make"
+ },
+ {
+  "start": 3091.97,
+  "end": 3094.19,
+  "text": "that A matrix a negative diagonal matrix."
+ },
+ {
+  "start": 3094.19,
+  "end": 3097.91,
+  "text": "So if you power that up, the term eventually goes to zero,"
+ },
+ {
+  "start": 3097.91,
+  "end": 3099.675,
+  "text": "so it doesn't blow up."
+ },
+ {
+  "start": 3099.675,
+  "end": 3101.05,
+  "text": "This B matrix, we're going to put"
+ },
+ {
+  "start": 3101.05,
+  "end": 3103.73,
+  "text": "a-- stick a really simple linear norm against it,"
+ },
+ {
+  "start": 3103.73,
+  "end": 3106.33,
+  "text": "because this B matrix actually only gets applied once"
+ },
+ {
+  "start": 3106.33,
+  "end": 3108.57,
+  "text": "and doesn't really blow up."
+ },
+ {
+  "start": 3108.57,
+  "end": 3109.93,
+  "text": "E can be the spectral radius."
+ },
+ {
+  "start": 3109.93,
+  "end": 3111.305,
+  "text": "It's now going to be less than 1."
+ },
+ {
+  "start": 3111.305,
+  "end": 3115.13,
+  "text": "It's now actually going to be a stable system."
+ },
+ {
+  "start": 3115.13,
+  "end": 3117.93,
+  "text": "And now if you go train this model, what we saw"
+ },
+ {
+  "start": 3117.93,
+  "end": 3120.27,
+  "text": "is that you actually saw a stable loss curve."
+ },
+ {
+  "start": 3120.27,
+  "end": 3123.87,
+  "text": "So Parcae is this stabilized thing where we re-parameterize"
+ },
+ {
+  "start": 3123.87,
+  "end": 3128.57,
+  "text": "A and B. You can see that even with this the 6e-4 learning rate"
+ },
+ {
+  "start": 3128.57,
+  "end": 3131.03,
+  "text": "that was so bad for the other models,"
+ },
+ {
+  "start": 3131.03,
+  "end": 3133.89,
+  "text": "you actually got a stable model at the end."
+ },
+ {
+  "start": 3133.89,
+  "end": 3136.49,
+  "text": "And you see that with doing this,"
+ },
+ {
+  "start": 3136.49,
+  "end": 3142.42,
+  "text": "you can naturally constrain the state norm of the activations."
+ },
+ {
+  "start": 3142.42,
+  "end": 3143.56,
+  "text": "So two pieces here."
+ },
+ {
+  "start": 3143.56,
+  "end": 3146.26,
+  "text": "So that orange baseline is just a completely unconstrained"
+ },
+ {
+  "start": 3146.26,
+  "end": 3146.76,
+  "text": "model."
+ },
+ {
+  "start": 3146.76,
+  "end": 3149.7,
+  "text": "You can see it blows up, goes to 10 to the 19th."
+ },
+ {
+  "start": 3149.7,
+  "end": 3154.74,
+  "text": "This blue line is actually a model where"
+ },
+ {
+  "start": 3154.74,
+  "end": 3157.1,
+  "text": "you are applying a norm to it."
+ },
+ {
+  "start": 3157.1,
+  "end": 3159.86,
+  "text": "So what happens here is that the model is actually"
+ },
+ {
+  "start": 3159.86,
+  "end": 3164.0,
+  "text": "trying to expand the activations because it's saying,"
+ },
+ {
+  "start": 3164.0,
+  "end": 3168.24,
+  "text": "oh, with more room, I can represent different things better."
+ },
+ {
+  "start": 3168.24,
+  "end": 3170.54,
+  "text": "I can put these different concepts further away"
+ },
+ {
+  "start": 3170.54,
+  "end": 3172.482,
+  "text": "from each other or whatnot."
+ },
+ {
+  "start": 3172.482,
+  "end": 3173.94,
+  "text": "And then you're applying norm to it"
+ },
+ {
+  "start": 3173.94,
+  "end": 3176.12,
+  "text": "to take that big thing that's trying to expand."
+ },
+ {
+  "start": 3176.12,
+  "end": 3179.14,
+  "text": "Then you try to norm it back down to one."
+ },
+ {
+  "start": 3179.14,
+  "end": 3181.18,
+  "text": "And then you have this big--"
+ },
+ {
+  "start": 3181.18,
+  "end": 3184.22,
+  "text": "these two pressures that are fighting against each other that"
+ },
+ {
+  "start": 3184.22,
+  "end": 3185.64,
+  "text": "manifests in loss spikes."
+ },
+ {
+  "start": 3185.64,
+  "end": 3188.16,
+  "text": "So even though on the right, your norms are very good,"
+ },
+ {
+  "start": 3188.16,
+  "end": 3190.82,
+  "text": "you're not seeing the activation actually blow up."
+ },
+ {
+  "start": 3190.82,
+  "end": 3196.23,
+  "text": "You do see that the loss can do some pretty gnarly things."
+ },
+ {
+  "start": 3196.23,
+  "end": 3199.35,
+  "text": "So basically, there's this pretty simple change"
+ },
+ {
+  "start": 3199.35,
+  "end": 3202.61,
+  "text": "in the activations can stabilize the training,"
+ },
+ {
+  "start": 3202.61,
+  "end": 3206.59,
+  "text": "stabilize these recurrent loops."
+ },
+ {
+  "start": 3206.59,
+  "end": 3208.37,
+  "text": "So it's not only a more stable system,"
+ },
+ {
+  "start": 3208.37,
+  "end": 3211.55,
+  "text": "you actually also get higher quality models."
+ },
+ {
+  "start": 3211.55,
+  "end": 3216.71,
+  "text": "So this is a table where we are comparing Parcae models"
+ },
+ {
+  "start": 3216.71,
+  "end": 3219.79,
+  "text": "against a previous loop transformer called Recurrent"
+ },
+ {
+  "start": 3219.79,
+  "end": 3220.49,
+  "text": "Depth Model."
+ },
+ {
+  "start": 3220.49,
+  "end": 3222.19,
+  "text": "So you can see higher performance"
+ },
+ {
+  "start": 3222.19,
+  "end": 3225.43,
+  "text": "across a variety of applications."
+ },
+ {
+  "start": 3225.43,
+  "end": 3228.79,
+  "text": "So you see Parcae outperforms the previous models"
+ },
+ {
+  "start": 3228.79,
+  "end": 3231.25,
+  "text": "and also outperforms strong transformer baselines."
+ },
+ {
+  "start": 3231.25,
+  "end": 3234.55,
+  "text": "So this transformer is one of the nanochat ones where"
+ },
+ {
+  "start": 3234.55,
+  "end": 3236.59,
+  "text": "a bunch of people are trying to just get"
+ },
+ {
+  "start": 3236.59,
+  "end": 3238.87,
+  "text": "it to learn as fast as it can."
+ },
+ {
+  "start": 3238.87,
+  "end": 3241.55,
+  "text": "And these Parcae models, if you take that same basic transformer"
+ },
+ {
+  "start": 3241.55,
+  "end": 3244.89,
+  "text": "architecture, start looping it, and then stabilize it,"
+ },
+ {
+  "start": 3244.89,
+  "end": 3248.95,
+  "text": "you get better perplexities, better end"
+ },
+ {
+  "start": 3248.95,
+  "end": 3250.49,
+  "text": "to end quality as well."
+ },
+ {
+  "start": 3253.03,
+  "end": 3254.79,
+  "text": "And then one-- and then we started"
+ },
+ {
+  "start": 3254.79,
+  "end": 3257.83,
+  "text": "to run some very basic scaling laws here."
+ },
+ {
+  "start": 3257.83,
+  "end": 3260.79,
+  "text": "And here, our question was, OK, this is really, really cute."
+ },
+ {
+  "start": 3260.79,
+  "end": 3263.21,
+  "text": "You can do this looping thing to make things better."
+ },
+ {
+  "start": 3263.21,
+  "end": 3265.51,
+  "text": "But really, should you-- is there any evidence"
+ },
+ {
+  "start": 3265.51,
+  "end": 3267.15,
+  "text": "that there's something here that we"
+ },
+ {
+  "start": 3267.15,
+  "end": 3272.59,
+  "text": "want to be doing looping more aggressively?"
+ },
+ {
+  "start": 3272.59,
+  "end": 3274.71,
+  "text": "So here, I'll take a step back."
+ },
+ {
+  "start": 3274.71,
+  "end": 3277.31,
+  "text": "A few years ago, there was all this work"
+ },
+ {
+  "start": 3277.31,
+  "end": 3281.03,
+  "text": "as we started to enter this regime where you wanted"
+ },
+ {
+  "start": 3281.03,
+  "end": 3283.59,
+  "text": "to scale up all these models, a natural question"
+ },
+ {
+  "start": 3283.59,
+  "end": 3285.47,
+  "text": "is, should I make the models bigger"
+ },
+ {
+  "start": 3285.47,
+  "end": 3287.95,
+  "text": "or should I just train on more data?"
+ },
+ {
+  "start": 3287.95,
+  "end": 3289.79,
+  "text": "So a few years ago, folks started"
+ },
+ {
+  "start": 3289.79,
+  "end": 3293.037,
+  "text": "to ask, how should I scale these two quantities with each other?"
+ },
+ {
+  "start": 3293.037,
+  "end": 3294.37,
+  "text": "Should I scale model parameters?"
+ },
+ {
+  "start": 3294.37,
+  "end": 3295.91,
+  "text": "Should I scale data?"
+ },
+ {
+  "start": 3295.91,
+  "end": 3299.75,
+  "text": "And we came up with all these very complicated power law"
+ },
+ {
+  "start": 3299.75,
+  "end": 3301.497,
+  "text": "curves that all look like this."
+ },
+ {
+  "start": 3301.497,
+  "end": 3302.33,
+  "text": "They're very pretty."
+ },
+ {
+  "start": 3302.33,
+  "end": 3303.57,
+  "text": "There's lots of colors."
+ },
+ {
+  "start": 3303.57,
+  "end": 3307.91,
+  "text": "What you want to look out for is basically--"
+ },
+ {
+  "start": 3307.91,
+  "end": 3310.79,
+  "text": "what you want to look out for is, if that curve is going down"
+ },
+ {
+  "start": 3310.79,
+  "end": 3312.4,
+  "text": "into the right, it suggests you should"
+ },
+ {
+  "start": 3312.4,
+  "end": 3316.14,
+  "text": "be scaling both data and parameters at the same time."
+ },
+ {
+  "start": 3316.14,
+  "end": 3317.64,
+  "text": "If we were going straight down, that"
+ },
+ {
+  "start": 3317.64,
+  "end": 3320.62,
+  "text": "would mean just increase your training data."
+ },
+ {
+  "start": 3320.62,
+  "end": 3323.958,
+  "text": "There's no need to increase your parameters."
+ },
+ {
+  "start": 3323.958,
+  "end": 3326.0,
+  "text": "If it's going-- if it's flat, just going straight"
+ },
+ {
+  "start": 3326.0,
+  "end": 3329.66,
+  "text": "to the right, that means don't increase your data at all,"
+ },
+ {
+  "start": 3329.66,
+  "end": 3331.347,
+  "text": "just increase your parameters."
+ },
+ {
+  "start": 3331.347,
+  "end": 3333.18,
+  "text": "But you see, it's going down into the right."
+ },
+ {
+  "start": 3333.18,
+  "end": 3336.385,
+  "text": "That means you should scale data and parameters at the same time."
+ },
+ {
+  "start": 3336.385,
+  "end": 3337.26,
+  "text": "And now you see this."
+ },
+ {
+  "start": 3337.26,
+  "end": 3338.84,
+  "text": "You train a $1 trillion parameter"
+ },
+ {
+  "start": 3338.84,
+  "end": 3344.28,
+  "text": "model on $35 trillion tokens, and you get better quality."
+ },
+ {
+  "start": 3344.28,
+  "end": 3348.2,
+  "text": "So our question was, OK, where does recurrence fit into this?"
+ },
+ {
+  "start": 3348.2,
+  "end": 3350.18,
+  "text": "And there are a couple--"
+ },
+ {
+  "start": 3350.18,
+  "end": 3352.98,
+  "text": "so down into the right means you want to scale data and params--"
+ },
+ {
+  "start": 3352.98,
+  "end": 3357.76,
+  "text": "there are a couple possibilities with recurrence."
+ },
+ {
+  "start": 3357.76,
+  "end": 3360.64,
+  "text": "And so for example, you might conclude,"
+ },
+ {
+  "start": 3360.64,
+  "end": 3362.26,
+  "text": "you should never run a recurrence."
+ },
+ {
+  "start": 3362.26,
+  "end": 3365.38,
+  "text": "It's better to just keep the same single recurrent model."
+ },
+ {
+  "start": 3365.38,
+  "end": 3367.86,
+  "text": "You might conclude, you should do a ton of recurrence,"
+ },
+ {
+  "start": 3367.86,
+  "end": 3372.97,
+  "text": "or maybe only some recurrence to the bit."
+ },
+ {
+  "start": 3372.97,
+  "end": 3376.25,
+  "text": "What we're showing here is, at least in these initial scaling"
+ },
+ {
+  "start": 3376.25,
+  "end": 3380.01,
+  "text": "laws, all of these curves are isometric,"
+ },
+ {
+  "start": 3380.01,
+  "end": 3381.63,
+  "text": "and ISO-param, ISO-FLOP."
+ },
+ {
+  "start": 3381.63,
+  "end": 3383.955,
+  "text": "So each of these curves is a model."
+ },
+ {
+  "start": 3383.955,
+  "end": 3385.33,
+  "text": "So on the left and the right, you"
+ },
+ {
+  "start": 3385.33,
+  "end": 3387.65,
+  "text": "have the same number of parameters."
+ },
+ {
+  "start": 3387.65,
+  "end": 3389.828,
+  "text": "As you go down, as you change the colors,"
+ },
+ {
+  "start": 3389.828,
+  "end": 3391.37,
+  "text": "we are increasing the amount of flops"
+ },
+ {
+  "start": 3391.37,
+  "end": 3394.57,
+  "text": "that you use to train the model by increasing"
+ },
+ {
+  "start": 3394.57,
+  "end": 3395.73,
+  "text": "the amount of data."
+ },
+ {
+  "start": 3395.73,
+  "end": 3398.29,
+  "text": "So here, we're varying data and varying"
+ },
+ {
+  "start": 3398.29,
+  "end": 3400.65,
+  "text": "the number of recurrences."
+ },
+ {
+  "start": 3400.65,
+  "end": 3403.01,
+  "text": "What we find is that in both of these models,"
+ },
+ {
+  "start": 3403.01,
+  "end": 3405.13,
+  "text": "you see this down into the right trend again."
+ },
+ {
+  "start": 3405.13,
+  "end": 3409.29,
+  "text": "So what this is suggesting is that for these fixed parameter"
+ },
+ {
+  "start": 3409.29,
+  "end": 3412.15,
+  "text": "training things, as you increase the amount of data,"
+ },
+ {
+  "start": 3412.15,
+  "end": 3414.77,
+  "text": "you should actually also be increasing the amount"
+ },
+ {
+  "start": 3414.77,
+  "end": 3420.29,
+  "text": "of recurrences that you have."
+ },
+ {
+  "start": 3420.29,
+  "end": 3423.69,
+  "text": "We find that these recurrences follow some pretty classic power"
+ },
+ {
+  "start": 3423.69,
+  "end": 3424.81,
+  "text": "laws."
+ },
+ {
+  "start": 3424.81,
+  "end": 3427.65,
+  "text": "So you can actually start to predict."
+ },
+ {
+  "start": 3427.65,
+  "end": 3431.13,
+  "text": "You can get these scaling laws to start to predict quality,"
+ },
+ {
+  "start": 3431.13,
+  "end": 3435.23,
+  "text": "as you scale, recurrences and your tokens jointly."
+ },
+ {
+  "start": 3435.73,
+  "end": 3438.65,
+  "text": "For a fixed model size [INAUDIBLE] recurrence."
+ },
+ {
+  "start": 3438.65,
+  "end": 3441.11,
+  "text": "What about jointly [INAUDIBLE] scaling [INAUDIBLE]?"
+ },
+ {
+  "start": 3441.61,
+  "end": 3446.73,
+  "text": "So we have this really complex 3D figure that showed"
+ },
+ {
+  "start": 3446.73,
+  "end": 3450.61,
+  "text": "recurrences, and data, and parameters."
+ },
+ {
+  "start": 3450.61,
+  "end": 3455.65,
+  "text": "And it pointed also whatever down into the right,"
+ },
+ {
+  "start": 3455.65,
+  "end": 3459.25,
+  "text": "and down that way at the same time."
+ },
+ {
+  "start": 3459.25,
+  "end": 3461.97,
+  "text": "So if you believe that figure, it"
+ },
+ {
+  "start": 3461.97,
+  "end": 3464.93,
+  "text": "suggests you should be scaling all three together."
+ },
+ {
+  "start": 3464.93,
+  "end": 3467.81,
+  "text": "But that figure was just really hard to look at, because it was"
+ },
+ {
+  "start": 3467.81,
+  "end": 3470.43,
+  "text": "3D and weird."
+ },
+ {
+  "start": 3470.43,
+  "end": 3474.63,
+  "text": "So these power laws suggest, when you're increasing data"
+ },
+ {
+  "start": 3474.63,
+  "end": 3476.93,
+  "text": "you should be increasing recurrence."
+ },
+ {
+  "start": 3476.93,
+  "end": 3479.423,
+  "text": "And then you have other power laws that suggest,"
+ },
+ {
+  "start": 3479.423,
+  "end": 3482.09,
+  "text": "when you're increasing data you should be increasing parameters."
+ },
+ {
+  "start": 3482.09,
+  "end": 3484.853,
+  "text": "So obviously, you should increase--"
+ },
+ {
+  "start": 3484.853,
+  "end": 3487.02,
+  "text": "well, it suggests that you should increase all three"
+ },
+ {
+  "start": 3487.02,
+  "end": 3489.1,
+  "text": "of them if you can."
+ },
+ {
+  "start": 3489.1,
+  "end": 3491.74,
+  "text": "But one piece here is that if you're"
+ },
+ {
+  "start": 3491.74,
+  "end": 3493.38,
+  "text": "going to fix your model size and you're"
+ },
+ {
+  "start": 3493.38,
+  "end": 3495.18,
+  "text": "going to increase the amount of data,"
+ },
+ {
+  "start": 3495.18,
+  "end": 3498.34,
+  "text": "you should also be increasing the recurrence, which"
+ },
+ {
+  "start": 3498.34,
+  "end": 3501.58,
+  "text": "is interesting because as far as I know, all of our models"
+ },
+ {
+  "start": 3501.58,
+  "end": 3503.08,
+  "text": "today have no recurrence in them."
+ },
+ {
+  "start": 3503.08,
+  "end": 3506.98,
+  "text": "So they're all at the very left of these curves."
+ },
+ {
+  "start": 3506.98,
+  "end": 3508.77,
+  "text": "And they all have a ton of data, which"
+ },
+ {
+  "start": 3508.77,
+  "end": 3511.02,
+  "text": "suggests that there might be something slightly better"
+ },
+ {
+  "start": 3511.02,
+  "end": 3516.18,
+  "text": "that we could be doing when training these models."
+ },
+ {
+  "start": 3516.18,
+  "end": 3520.24,
+  "text": "And here's just that experiment in another way."
+ },
+ {
+  "start": 3520.24,
+  "end": 3523.94,
+  "text": "So on the orange curve, you have-- so here,"
+ },
+ {
+  "start": 3523.94,
+  "end": 3526.68,
+  "text": "we fixed the model size."
+ },
+ {
+  "start": 3526.68,
+  "end": 3529.92,
+  "text": "The orange curve is a fixed depth model."
+ },
+ {
+  "start": 3529.92,
+  "end": 3532.2,
+  "text": "So this is like a traditional transformer model."
+ },
+ {
+  "start": 3532.2,
+  "end": 3537.9,
+  "text": "The blue curve is when you fix the FLOP budget,"
+ },
+ {
+  "start": 3537.9,
+  "end": 3542.42,
+  "text": "where do you hit on the curve for a looping model?"
+ },
+ {
+  "start": 3542.42,
+  "end": 3546.17,
+  "text": "So here, the orange and blue dots"
+ },
+ {
+  "start": 3546.17,
+  "end": 3548.17,
+  "text": "have been trained with the same number of FLOPs,"
+ },
+ {
+  "start": 3548.17,
+  "end": 3551.59,
+  "text": "but a different amount of data, but they're the same size."
+ },
+ {
+  "start": 3551.59,
+  "end": 3553.83,
+  "text": "When you get to that number of FLOPs"
+ },
+ {
+  "start": 3553.83,
+  "end": 3556.99,
+  "text": "by increasing recurrences as well as--"
+ },
+ {
+  "start": 3556.99,
+  "end": 3558.47,
+  "text": "and not just increasing data, you"
+ },
+ {
+  "start": 3558.47,
+  "end": 3562.83,
+  "text": "start to get smaller validation losses, which again suggests"
+ },
+ {
+  "start": 3562.83,
+  "end": 3566.27,
+  "text": "it might be the case that we should be looping all"
+ },
+ {
+  "start": 3566.27,
+  "end": 3567.77,
+  "text": "of our big pre-training runs."
+ },
+ {
+  "start": 3570.91,
+  "end": 3572.63,
+  "text": "So that's Parcae."
+ },
+ {
+  "start": 3572.63,
+  "end": 3576.55,
+  "text": "If I take a little step back and go back"
+ },
+ {
+  "start": 3576.55,
+  "end": 3580.11,
+  "text": "to the big takeaway of the talk, I think hopefully,"
+ },
+ {
+  "start": 3580.11,
+  "end": 3581.91,
+  "text": "I've given you a little sense today"
+ },
+ {
+  "start": 3581.91,
+  "end": 3584.45,
+  "text": "of if you understand the inference of these models,"
+ },
+ {
+  "start": 3584.45,
+  "end": 3586.35,
+  "text": "if you understand the GPU kernels,"
+ },
+ {
+  "start": 3586.35,
+  "end": 3590.29,
+  "text": "you understand all the pieces that goes into it."
+ },
+ {
+  "start": 3590.29,
+  "end": 3593.077,
+  "text": "You can really start to enable full stack innovation"
+ },
+ {
+  "start": 3593.077,
+  "end": 3594.41,
+  "text": "and machine learning algorithms."
+ },
+ {
+  "start": 3594.41,
+  "end": 3597.11,
+  "text": "So whether that's through a new routing algorithm that"
+ },
+ {
+  "start": 3597.11,
+  "end": 3600.97,
+  "text": "lets you serve more traffic, serve traffic in a different way."
+ },
+ {
+  "start": 3600.97,
+  "end": 3603.96,
+  "text": "Or new kernels that allow you to run part of your system way"
+ },
+ {
+  "start": 3603.96,
+  "end": 3604.74,
+  "text": "faster."
+ },
+ {
+  "start": 3604.74,
+  "end": 3607.8,
+  "text": "Or new architectures that say, if you"
+ },
+ {
+  "start": 3607.8,
+  "end": 3610.12,
+  "text": "have a lot fewer parameters, you can fit them"
+ },
+ {
+  "start": 3610.12,
+  "end": 3612.74,
+  "text": "in a subset of your GPUs in a different way,"
+ },
+ {
+  "start": 3612.74,
+  "end": 3615.12,
+  "text": "reduce the amount of communication,"
+ },
+ {
+  "start": 3615.12,
+  "end": 3618.6,
+  "text": "these are all different pieces of that question"
+ },
+ {
+  "start": 3618.6,
+  "end": 3623.52,
+  "text": "of that research problem that we're seeing today."
+ },
+ {
+  "start": 3623.52,
+  "end": 3626.52,
+  "text": "And yeah, hopefully I've inspired at least one of you"
+ },
+ {
+  "start": 3626.52,
+  "end": 3631.12,
+  "text": "in this room to go take a deeper look at some of that."
+ },
+ {
+  "start": 3631.12,
+  "end": 3632.34,
+  "text": "So with that, thanks."
+ },
+ {
+  "start": 3632.34,
+  "end": 3633.82,
+  "text": "Happy to take a few questions."
+ },
+ {
+  "start": 3633.82,
+  "end": 3635.775,
+  "text": "[APPLAUSE]"
+ },
+ {
+  "start": 3637.72,
+  "end": 3641.1,
+  "text": "We have about five, 10 minutes for questions."
+ },
+ {
+  "start": 3641.1,
+  "end": 3643.02,
+  "text": "So if you have a question, raise your hand."
+ },
+ {
+  "start": 3646.0,
+  "end": 3650.46,
+  "text": "Parcae, are you training from scratch on the loop?"
+ },
+ {
+  "start": 3650.46,
+  "end": 3651.96,
+  "text": "I guess I was wondering if you could"
+ },
+ {
+  "start": 3651.96,
+  "end": 3654.36,
+  "text": "拍一张[INAUDIBLE]的照片。"
+ },
+ {
+  "start": 3656.72,
+  "end": 3657.22,
+  "text": "是的。"
+ },
+ {
+  "start": 3657.22,
+  "end": 3657.845,
+  "text": "好问题。"
+ },
+ {
+  "start": 3657.845,
+  "end": 3660.08,
+  "text": "所以问题是，用Parcae，"
+ },
+ {
+  "start": 3660.08,
+  "end": 3661.64,
+  "text": "我们是从头训练吗？"
+ },
+ {
+  "start": 3661.64,
+  "end": 3664.56,
+  "text": "有没有什么可以用预训练模型做的事情？"
+ },
+ {
+  "start": 3664.56,
+  "end": 3668.01,
+  "text": "所以几个月前有一个人发了一篇很钓鱼的博客文章，"
+ },
+ {
+  "start": 3668.01,
+  "end": 3669.76,
+  "text": "大概就是说，嘿，我"
+ },
+ {
+  "start": 3669.76,
+  "end": 3673.74,
+  "text": "没有训练任何东西就赢了一个排行榜比赛。"
+ },
+ {
+  "start": 3673.74,
+  "end": 3677.16,
+  "text": "他做的是，他实际上循环了Quinn模型中的两三层，"
+ },
+ {
+  "start": 3677.16,
+  "end": 3680.88,
+  "text": "然后只是"
+ },
+ {
+  "start": 3680.88,
+  "end": 3685.24,
+  "text": "发现它在一些数学任务上开始有更高的质量。"
+ },
+ {
+  "start": 3685.24,
+  "end": 3687.08,
+  "text": "所以我们有一些工作正在"
+ },
+ {
+  "start": 3687.08,
+  "end": 3689.6,
+  "text": "研究这个，可能很快就会出来。"
+ },
+ {
+  "start": 3689.6,
+  "end": 3691.4,
+  "text": "但可能有一些模型，"
+ },
+ {
+  "start": 3691.4,
+  "end": 3693.52,
+  "text": "如果你对预训练模型做一点点循环，"
+ },
+ {
+  "start": 3693.52,
+  "end": 3697.2,
+  "text": "你就能得到更高质量的东西，"
+ },
+ {
+  "start": 3697.2,
+  "end": 3698.26,
+  "text": "这真的很奇怪。"
+ },
+ {
+  "start": 3698.26,
+  "end": 3699.62,
+  "text": "这让我感到不安。"
+ },
+ {
+  "start": 3699.62,
+  "end": 3702.88,
+  "text": "我不知道为什么会这样。"
+ },
+ {
+  "start": 3702.88,
+  "end": 3705.86,
+  "text": "但是的，我们会——我们对此非常感兴趣。"
+ },
+ {
+  "start": 3705.86,
+  "end": 3708.8,
+  "text": "我想我们会研究它，希望，"
+ },
+ {
+  "start": 3708.8,
+  "end": 3710.48,
+  "text": "如果我能说服Hayden，他会"
+ },
+ {
+  "start": 3710.48,
+  "end": 3714.64,
+  "text": "盯着激活——盯着实际的权重"
+ },
+ {
+  "start": 3714.64,
+  "end": 3718.45,
+  "text": "去弄清楚为什么当你循环它时，它会变得更好。"
+ },
+ {
+  "start": 3718.45,
+  "end": 3719.95,
+  "text": "这里就这个问题追问一下。"
+ },
+ {
+  "start": 3719.95,
+  "end": 3723.67,
+  "text": "所以你谈到了循环模型的计算最优性，"
+ },
+ {
+  "start": 3723.67,
+  "end": 3726.05,
+  "text": "你能谈谈推理方面的影响"
+ },
+ {
+  "start": 3726.05,
+  "end": 3729.59,
+  "text": "以及内存，以及它如何能让你跑得更快吗？"
+ },
+ {
+  "start": 3729.59,
+  "end": 3730.09,
+  "text": "是的。"
+ },
+ {
+  "start": 3730.09,
+  "end": 3731.882,
+  "text": "所以其中一个让我个人"
+ },
+ {
+  "start": 3731.882,
+  "end": 3734.01,
+  "text": "对这些循环东西非常兴奋的原因"
+ },
+ {
+  "start": 3734.01,
+  "end": 3736.702,
+  "text": "是，服务推理的一个大瓶颈"
+ },
+ {
+  "start": 3736.702,
+  "end": 3738.41,
+  "text": "实际上"
+ },
+ {
+  "start": 3738.41,
+  "end": 3740.01,
+  "text": "最终是GPU内存。"
+ },
+ {
+  "start": 3740.01,
+  "end": 3742.05,
+  "text": "所以如果你有更少的参数量，你"
+ },
+ {
+  "start": 3742.05,
+  "end": 3744.93,
+  "text": "可以装下，比如，更多的KV Cache，"
+ },
+ {
+  "start": 3744.93,
+  "end": 3747.93,
+  "text": "或者你可以做更少的通信，因为你"
+ },
+ {
+  "start": 3747.93,
+  "end": 3751.39,
+  "text": "需要把你的模型分布到更少的GPU上，诸如此类。"
+ },
+ {
+  "start": 3751.39,
+  "end": 3753.73,
+  "text": "所以实际上有很多灵活性"
+ },
+ {
+  "start": 3753.73,
+  "end": 3756.81,
+  "text": "That a smaller model will get you."
+ },
+ {
+  "start": 3756.81,
+  "end": 3758.37,
+  "text": "I also had this dream that if you"
+ },
+ {
+  "start": 3758.37,
+  "end": 3761.13,
+  "text": "could make the recurrent block small enough,"
+ },
+ {
+  "start": 3761.13,
+  "end": 3762.97,
+  "text": "you could actually write a little megakernel"
+ },
+ {
+  "start": 3762.97,
+  "end": 3765.45,
+  "text": "to just do that recurrent in a little very"
+ },
+ {
+  "start": 3765.45,
+  "end": 3767.405,
+  "text": "fast megakernel loop."
+ },
+ {
+  "start": 3767.405,
+  "end": 3770.03,
+  "text": "So far, we haven't been able to make those blocks small enough."
+ },
+ {
+  "start": 3770.03,
+  "end": 3772.93,
+  "text": "But I think it's quite interesting."
+ },
+ {
+  "start": 3772.93,
+  "end": 3775.47,
+  "text": "Certainly, with the next generation of the LPU,"
+ },
+ {
+  "start": 3775.47,
+  "end": 3777.96,
+  "text": "the Groq chips that are coming with NVIDIA things."
+ },
+ {
+  "start": 3777.96,
+  "end": 3782.12,
+  "text": "Those have 250 megabytes of memory or something like that."
+ },
+ {
+  "start": 3782.12,
+  "end": 3784.34,
+  "text": "So the thing that you'll be able to fit into them"
+ },
+ {
+  "start": 3784.34,
+  "end": 3785.532,
+  "text": "is very, very small."
+ },
+ {
+  "start": 3785.532,
+  "end": 3787.74,
+  "text": "But maybe you can design something that will actually"
+ },
+ {
+  "start": 3787.74,
+  "end": 3791.5,
+  "text": "fit into them, and then you can just keep your weights in memory"
+ },
+ {
+  "start": 3791.5,
+  "end": 3793.74,
+  "text": "the whole time and just run your activations through"
+ },
+ {
+  "start": 3793.74,
+  "end": 3794.8,
+  "text": "as quickly as you can."
+ },
+ {
+  "start": 3794.8,
+  "end": 3797.1,
+  "text": "So there are non-linear benefits that you"
+ },
+ {
+  "start": 3797.1,
+  "end": 3800.3,
+  "text": "can get if you can cross some of these thresholds"
+ },
+ {
+  "start": 3800.3,
+  "end": 3802.92,
+  "text": "that I'm hoping that we'll be able to get to pretty soon."
+ },
+ {
+  "start": 3805.94,
+  "end": 3807.14,
+  "text": "Yeah, OK."
+ },
+ {
+  "start": 3807.14,
+  "end": 3810.56,
+  "text": "[INAUDIBLE] I'm curious."
+ },
+ {
+  "start": 3810.56,
+  "end": 3813.98,
+  "text": "I guess the trade-offs are that it's always"
+ },
+ {
+  "start": 3813.98,
+  "end": 3815.66,
+  "text": "strictly more optimal."
+ },
+ {
+  "start": 3815.66,
+  "end": 3817.78,
+  "text": "[INAUDIBLE] Great."
+ },
+ {
+  "start": 3817.78,
+  "end": 3820.62,
+  "text": "So the question is, what are the trade-offs for my kernels?"
+ },
+ {
+  "start": 3820.62,
+  "end": 3824.02,
+  "text": "The trade-offs are people's blood, sweat, and tears."
+ },
+ {
+  "start": 3824.02,
+  "end": 3826.78,
+  "text": "So megakernels, turns out they're very, very labor"
+ },
+ {
+  "start": 3826.78,
+  "end": 3828.58,
+  "text": "intensive to write."
+ },
+ {
+  "start": 3828.58,
+  "end": 3837.54,
+  "text": "So to give you some context, a full talented kernel engineer"
+ },
+ {
+  "start": 3837.54,
+  "end": 3839.46,
+  "text": "over the course of a year, will probably"
+ },
+ {
+  "start": 3839.46,
+  "end": 3843.19,
+  "text": "be able to write megakernels for one hardware for two"
+ },
+ {
+  "start": 3843.19,
+  "end": 3846.9,
+  "text": "or three models for batch sizes 1 to 16."
+ },
+ {
+  "start": 3846.9,
+  "end": 3849.9,
+  "text": "Go batch size 17, he was like nope, start over."
+ },
+ {
+  "start": 3849.9,
+  "end": 3851.288,
+  "text": "Got to go again."
+ },
+ {
+  "start": 3851.288,
+  "end": 3853.08,
+  "text": "So they're very, very challenging to write."
+ },
+ {
+  "start": 3853.08,
+  "end": 3854.83,
+  "text": "And together, we're trying to put together"
+ },
+ {
+  "start": 3854.83,
+  "end": 3857.94,
+  "text": "some compilers that can automate some of that process."
+ },
+ {
+  "start": 3857.94,
+  "end": 3861.8,
+  "text": "But I'd say, it's a very challenging thing to do."
+ },
+ {
+  "start": 3861.8,
+  "end": 3864.14,
+  "text": "I think the basic megakernel idea"
+ },
+ {
+  "start": 3864.14,
+  "end": 3869.78,
+  "text": "has gone in peaks and troughs over the last few decades"
+ },
+ {
+  "start": 3869.78,
+  "end": 3871.94,
+  "text": "when it comes to GPU programming."
+ },
+ {
+  "start": 3871.94,
+  "end": 3874.68,
+  "text": "But yeah, so if you can do it, it will go super fast."
+ },
+ {
+  "start": 3874.68,
+  "end": 3877.38,
+  "text": "You will never be able to go faster,"
+ },
+ {
+  "start": 3877.38,
+  "end": 3881.0,
+  "text": "but it just takes a lot of energy and a lot of effort."
+ },
+ {
+  "start": 3884.5,
+  "end": 3885.86,
+  "text": "Cool."
+ },
+ {
+  "start": 3885.86,
+  "end": 3887.38,
+  "text": "Maybe I can ask a question."
+ },
+ {
+  "start": 3887.38,
+  "end": 3890.86,
+  "text": "So can we talk a little bit more about co-design?"
+ },
+ {
+  "start": 3890.86,
+  "end": 3894.75,
+  "text": "And in particular, you mentioned all these new hardware"
+ },
+ {
+  "start": 3894.75,
+  "end": 3897.19,
+  "text": "like Grok and Cerebras on the inference side."
+ },
+ {
+  "start": 3897.19,
+  "end": 3900.11,
+  "text": "So if you're designing a model and that's"
+ },
+ {
+  "start": 3900.11,
+  "end": 3901.57,
+  "text": "going to be the serving platform,"
+ },
+ {
+  "start": 3901.57,
+  "end": 3903.69,
+  "text": "how should you be changing your architecture?"
+ },
+ {
+  "start": 3903.69,
+  "end": 3906.53,
+  "text": "Yeah, I think there's a couple of things"
+ },
+ {
+  "start": 3906.53,
+  "end": 3907.53,
+  "text": "that you should look at."
+ },
+ {
+  "start": 3907.53,
+  "end": 3911.31,
+  "text": "So one is, you are going to be most constrained by memory"
+ },
+ {
+  "start": 3911.31,
+  "end": 3911.99,
+  "text": "first."
+ },
+ {
+  "start": 3911.99,
+  "end": 3914.51,
+  "text": "So if you know that you're going to be taking a model"
+ },
+ {
+  "start": 3914.51,
+  "end": 3919.16,
+  "text": "and serving it a particular Cerebras chip,"
+ },
+ {
+  "start": 3919.16,
+  "end": 3920.91,
+  "text": "you want to go look at the Cerebras wafer,"
+ },
+ {
+  "start": 3920.91,
+  "end": 3923.19,
+  "text": "and figure out how much memory you have, and then"
+ },
+ {
+  "start": 3923.19,
+  "end": 3926.39,
+  "text": "size your model so that it can fit there with enough KV cache"
+ },
+ {
+  "start": 3926.39,
+  "end": 3929.31,
+  "text": "or whatever to spare."
+ },
+ {
+  "start": 3929.31,
+  "end": 3931.75,
+  "text": "If you look at carefully, at the Chinese models that"
+ },
+ {
+  "start": 3931.75,
+  "end": 3935.51,
+  "text": "are coming out, they've started making some interesting choices"
+ },
+ {
+  "start": 3935.51,
+  "end": 3937.71,
+  "text": "that suggest they might be starting"
+ },
+ {
+  "start": 3937.71,
+  "end": 3941.11,
+  "text": "to think about the Huawei chips that are coming out."
+ },
+ {
+  "start": 3941.11,
+  "end": 3944.69,
+  "text": "You'll see quantization choices that people make."
+ },
+ {
+  "start": 3944.69,
+  "end": 3946.35,
+  "text": "So if you have a model that you're"
+ },
+ {
+  "start": 3946.35,
+  "end": 3948.53,
+  "text": "intending to serve on NVIDIA GPUs,"
+ },
+ {
+  "start": 3948.53,
+  "end": 3951.04,
+  "text": "for example, NVIDIA's new Nemotron model that they"
+ },
+ {
+  "start": 3951.04,
+  "end": 3954.42,
+  "text": "released, you will train that model in NVFP4."
+ },
+ {
+  "start": 3954.42,
+  "end": 3958.4,
+  "text": "This is a FP4 format that is proprietary to NVIDIA chips."
+ },
+ {
+  "start": 3958.4,
+  "end": 3961.78,
+  "text": "If you're not going to run it on NVIDIA chips, if you're AMD,"
+ },
+ {
+  "start": 3961.78,
+  "end": 3964.96,
+  "text": "then you're going to run this other format called MXFP4."
+ },
+ {
+  "start": 3964.96,
+  "end": 3968.36,
+  "text": "They each have their pros and cons."
+ },
+ {
+  "start": 3968.36,
+  "end": 3971.36,
+  "text": "You'll make these subtle choices based on the hardware"
+ },
+ {
+  "start": 3971.36,
+  "end": 3974.12,
+  "text": "that you're choosing."
+ },
+ {
+  "start": 3974.12,
+  "end": 3977.36,
+  "text": "I think there was a question over there."
+ },
+ {
+  "start": 3977.36,
+  "end": 3980.16,
+  "text": "I was wondering if it's ever-- if you just care about"
+ },
+ {
+  "start": 3980.16,
+  "end": 3982.72,
+  "text": "compute optimal training, is it ever optimal to loop"
+ },
+ {
+  "start": 3982.72,
+  "end": 3984.92,
+  "text": "as opposed to just adding more parameters,"
+ },
+ {
+  "start": 3984.92,
+  "end": 3988.92,
+  "text": "or is it mainly like a trick to reduce inference cost?"
+ },
+ {
+  "start": 3988.92,
+  "end": 3990.04,
+  "text": "Yeah."
+ },
+ {
+  "start": 3990.04,
+  "end": 3991.6,
+  "text": "So the trick with compute optimal"
+ },
+ {
+  "start": 3991.6,
+  "end": 3995.22,
+  "text": "is it is, usually, like given a flop budget--repeat the question."
+ },
+ {
+  "start": 3995.22,
+  "end": 3995.52,
+  "text": "Oh yeah."
+ },
+ {
+  "start": 3995.52,
+  "end": 3996.2,
+  "text": "Sorry."
+ },
+ {
+  "start": 3996.2,
+  "end": 3998.04,
+  "text": "Yeah, the question was for Parcae,"
+ },
+ {
+  "start": 3998.04,
+  "end": 3999.6,
+  "text": "would you ever choose to loop instead"
+ },
+ {
+  "start": 3999.6,
+  "end": 4001.88,
+  "text": "of increasing parameters?"
+ },
+ {
+  "start": 4001.88,
+  "end": 4003.92,
+  "text": "And so the trick with compute optimal"
+ },
+ {
+  "start": 4003.92,
+  "end": 4006.1,
+  "text": "is always given some flop budget,"
+ },
+ {
+  "start": 4006.1,
+  "end": 4008.88,
+  "text": "figure out what you want to hit."
+ },
+ {
+  "start": 4008.88,
+  "end": 4011.26,
+  "text": "It's almost a little bit contrived in that sense,"
+ },
+ {
+  "start": 4011.26,
+  "end": 4014.18,
+  "text": "because if you want a higher quality model,"
+ },
+ {
+  "start": 4014.18,
+  "end": 4016.1,
+  "text": "you should just increase your FLOPs budget."
+ },
+ {
+  "start": 4016.1,
+  "end": 4019.4,
+  "text": "And if you decided on your model size, just train longer."
+ },
+ {
+  "start": 4019.4,
+  "end": 4024.68,
+  "text": "Or if you're restricted by your model size, then loop longer."
+ },
+ {
+  "start": 4024.68,
+  "end": 4027.96,
+  "text": "Or if you run out of data, then pick the model size"
+ },
+ {
+  "start": 4027.96,
+  "end": 4031.56,
+  "text": "that you think will be as overtrained-- as"
+ },
+ {
+  "start": 4031.56,
+  "end": 4034.52,
+  "text": "well trained as you can for that size."
+ },
+ {
+  "start": 4034.52,
+  "end": 4037.2,
+  "text": "So I think there are choices."
+ },
+ {
+  "start": 4037.2,
+  "end": 4040.48,
+  "text": "And of course, you make all these choices in the context of,"
+ },
+ {
+  "start": 4040.48,
+  "end": 4042.78,
+  "text": "do I think it'll get picked up?"
+ },
+ {
+  "start": 4042.78,
+  "end": 4044.348,
+  "text": "How am I going to serve it?"
+ },
+ {
+  "start": 4044.348,
+  "end": 4046.14,
+  "text": "If you're going to release the open source,"
+ },
+ {
+  "start": 4046.14,
+  "end": 4049.48,
+  "text": "what is the size of model that people can serve"
+ },
+ {
+  "start": 4049.48,
+  "end": 4051.12,
+  "text": "like on your laptop today?"
+ },
+ {
+  "start": 4051.12,
+  "end": 4054.18,
+  "text": "So I think all these choices go into making a choice."
+ },
+ {
+  "start": 4054.18,
+  "end": 4057.28,
+  "text": "All these things go into making a choice of how big a model"
+ },
+ {
+  "start": 4057.28,
+  "end": 4059.612,
+  "text": "you choose to train."
+ },
+ {
+  "start": 4059.612,
+  "end": 4061.32,
+  "text": "I think if you just make the model bigger"
+ },
+ {
+  "start": 4061.32,
+  "end": 4064.52,
+  "text": "and train it on more data, it's always going to get better."
+ },
+ {
+  "start": 4064.52,
+  "end": 4071.23,
+  "text": "But I think it really depends on those design points."
+ },
+ {
+  "start": 4074.97,
+  "end": 4076.955,
+  "text": "Maybe another question about co-design."
+ },
+ {
+  "start": 4076.955,
+  "end": 4078.33,
+  "text": "So you mentioned at the beginning"
+ },
+ {
+  "start": 4078.33,
+  "end": 4083.29,
+  "text": "different use cases like agentic coding versus let's say batch"
+ },
+ {
+  "start": 4083.29,
+  "end": 4085.15,
+  "text": "processing of data."
+ },
+ {
+  "start": 4085.15,
+  "end": 4089.53,
+  "text": "So what are the most dramatic differences"
+ },
+ {
+  "start": 4089.53,
+  "end": 4092.05,
+  "text": "in terms of optimal architectures"
+ },
+ {
+  "start": 4092.05,
+  "end": 4094.47,
+  "text": "that you see across different use cases?"
+ },
+ {
+  "start": 4094.47,
+  "end": 4096.77,
+  "text": "And at the end of the day, of course"
+ },
+ {
+  "start": 4096.77,
+  "end": 4100.569,
+  "text": "model developers has to pick one and try to not be"
+ },
+ {
+  "start": 4100.569,
+  "end": 4103.01,
+  "text": "reasonable on many use cases."
+ },
+ {
+  "start": 4103.01,
+  "end": 4104.01,
+  "text": "Yeah."
+ },
+ {
+  "start": 4104.01,
+  "end": 4105.109,
+  "text": "That's a great question."
+ },
+ {
+  "start": 4105.109,
+  "end": 4108.79,
+  "text": "So I think one of the big differences--"
+ },
+ {
+  "start": 4108.79,
+  "end": 4111.75,
+  "text": "so when you have these agentic looped workflows,"
+ },
+ {
+  "start": 4111.75,
+  "end": 4113.93,
+  "text": "one of the things that matters a lot"
+ },
+ {
+  "start": 4113.93,
+  "end": 4117.59,
+  "text": "is that you want to keep your KV cache as hot as possible."
+ },
+ {
+  "start": 4117.59,
+  "end": 4120.21,
+  "text": "So if you're doing a big batch processing thing where you only"
+ },
+ {
+  "start": 4120.21,
+  "end": 4122.99,
+  "text": "see each document once and then you translate it,"
+ },
+ {
+  "start": 4122.99,
+  "end": 4127.22,
+  "text": "the KV cache doesn't necessarily matter as much."
+ },
+ {
+  "start": 4127.22,
+  "end": 4130.24,
+  "text": "If you look at something like the DeepSeek MLA attention,"
+ },
+ {
+  "start": 4130.24,
+  "end": 4132.7,
+  "text": "that is a radical compression of the KV"
+ },
+ {
+  "start": 4132.7,
+  "end": 4136.899,
+  "text": "cache compared to what you would have for another model."
+ },
+ {
+  "start": 4136.899,
+  "end": 4141.42,
+  "text": "Or if you have the model that can process its KV cache in FP8"
+ },
+ {
+  "start": 4141.42,
+  "end": 4144.14,
+  "text": "or FP4, those are pretty big departures"
+ },
+ {
+  "start": 4144.14,
+  "end": 4146.5,
+  "text": "in terms of the size of the KV cache"
+ },
+ {
+  "start": 4146.5,
+  "end": 4148.939,
+  "text": "that if you are sensitive to an agentic workflow"
+ },
+ {
+  "start": 4148.939,
+  "end": 4150.859,
+  "text": "you would look at."
+ },
+ {
+  "start": 4150.859,
+  "end": 4153.74,
+  "text": "Then of course, the biggest one is like causal attention"
+ },
+ {
+  "start": 4153.74,
+  "end": 4155.7,
+  "text": "or non-causal attention."
+ },
+ {
+  "start": 4155.7,
+  "end": 4158.365,
+  "text": "So if you're just doing a big batch processing workflows."
+ },
+ {
+  "start": 4158.365,
+  "end": 4161.939,
+  "text": "Like for the longest time, Google was just using BERT models."
+ },
+ {
+  "start": 4161.939,
+  "end": 4165.58,
+  "text": "I think probably still uses BERT models on search."
+ },
+ {
+  "start": 4165.58,
+  "end": 4167.385,
+  "text": "And that's because you don't really"
+ },
+ {
+  "start": 4167.385,
+  "end": 4169.76,
+  "text": "need to be generating a bunch of tokens on the other end."
+ },
+ {
+  "start": 4169.76,
+  "end": 4173.46,
+  "text": "So you just do that big bidirectional attention once,"
+ },
+ {
+  "start": 4173.46,
+  "end": 4175.14,
+  "text": "you get your vector out, then you"
+ },
+ {
+  "start": 4175.14,
+  "end": 4178.38,
+  "text": "stick that in a database, do whatever you will with it."
+ },
+ {
+  "start": 4178.38,
+  "end": 4183.04,
+  "text": "Whereas the chat workflows, those processing,"
+ },
+ {
+  "start": 4183.04,
+  "end": 4186.437,
+  "text": "there's always going to be this decode portion of it."
+ },
+ {
+  "start": 4186.437,
+  "end": 4188.229,
+  "text": "I think there have been intermediate things"
+ },
+ {
+  "start": 4188.229,
+  "end": 4193.51,
+  "text": "like T5 was at some point a choice that people made"
+ },
+ {
+  "start": 4193.51,
+  "end": 4199.71,
+  "text": "to do some bidirectional processing, and then also some generation."
+ },
+ {
+  "start": 4199.71,
+  "end": 4203.51,
+  "text": "OK, maybe one last question."
+ },
+ {
+  "start": 4203.51,
+  "end": 4204.21,
+  "text": "Oh, yeah."
+ },
+ {
+  "start": 4204.21,
+  "end": 4209.51,
+  "text": "[INAUDIBLE], it was about using everything"
+ },
+ {
+  "start": 4209.51,
+  "end": 4212.71,
+  "text": "into one kernel, [INAUDIBLE] but what"
+ },
+ {
+  "start": 4212.71,
+  "end": 4215.19,
+  "text": "you were talking about before."
+ },
+ {
+  "start": 4215.19,
+  "end": 4218.95,
+  "text": "So I was just wondering, how does that [INAUDIBLE]"
+ },
+ {
+  "start": 4218.95,
+  "end": 4221.87,
+  "text": "work a communication across multiple computers"
+ },
+ {
+  "start": 4221.87,
+  "end": 4226.27,
+  "text": "are scaling the cost of [INAUDIBLE] that."
+ },
+ {
+  "start": 4226.27,
+  "end": 4227.17,
+  "text": "Yeah, great question."
+ },
+ {
+  "start": 4227.17,
+  "end": 4229.51,
+  "text": "So the question is about, how does Megakernel"
+ },
+ {
+  "start": 4229.51,
+  "end": 4234.59,
+  "text": "work when you have multiple GPUs communication in the loop?"
+ },
+ {
+  "start": 4234.59,
+  "end": 4238.01,
+  "text": "We had some very early preliminary work about this."
+ },
+ {
+  "start": 4238.01,
+  "end": 4240.67,
+  "text": "So it turns out you can also fuse the NCCL"
+ },
+ {
+  "start": 4240.67,
+  "end": 4244.27,
+  "text": "calls into the Megakernel if you set it up correctly."
+ },
+ {
+  "start": 4244.27,
+  "end": 4246.71,
+  "text": "I think we haven't found a really great killer use"
+ },
+ {
+  "start": 4246.71,
+  "end": 4250.35,
+  "text": "case for that yet, where sometimes you're"
+ },
+ {
+  "start": 4250.35,
+  "end": 4253.19,
+  "text": "just bound by the latency of the NCCL call itself."
+ },
+ {
+  "start": 4253.19,
+  "end": 4257.07,
+  "text": "So these are also pieces of things that you can fuse."
+ },
+ {
+  "start": 4257.07,
+  "end": 4260.79,
+  "text": "When DeepSeek 4 came out, the DeepSeek 4s released"
+ },
+ {
+  "start": 4260.79,
+  "end": 4264.13,
+  "text": "a Megakernel for the mixture of experts inference layer that can"
+ },
+ {
+  "start": 4264.13,
+  "end": 4266.63,
+  "text": "run just for that where they actually did fuse some of those"
+ },
+ {
+  "start": 4266.63,
+  "end": 4268.23,
+  "text": "communication."
+ },
+ {
+  "start": 4268.23,
+  "end": 4270.09,
+  "text": "So I think what we are starting to see,"
+ },
+ {
+  "start": 4270.09,
+  "end": 4272.67,
+  "text": "we're starting to see more of is,"
+ },
+ {
+  "start": 4272.67,
+  "end": 4274.25,
+  "text": "as you get to more of these models,"
+ },
+ {
+  "start": 4274.25,
+  "end": 4278.83,
+  "text": "you'll have a little Megakernel for a part for the computation,"
+ },
+ {
+  "start": 4278.83,
+  "end": 4282.252,
+  "text": "but you won't necessarily have a Megakernel for the whole model,"
+ },
+ {
+  "start": 4282.252,
+  "end": 4284.71,
+  "text": "unless of course, you pay the blood, sweat, and tears price"
+ },
+ {
+  "start": 4284.71,
+  "end": 4288.79,
+  "text": "and then really, really get the whole thing going."
+ },
+ {
+  "start": 4288.79,
+  "end": 4290.57,
+  "text": "OK, I think that's all the time we have."
+ },
+ {
+  "start": 4290.57,
+  "end": 4291.81,
+  "text": "Let's thank, Dan again."
+ },
+ {
+  "start": 4291.81,
+  "end": 4295.86,
+  "text": "[APPLAUSE] Thanks so much for having me."
+ }
+]

@@ -1,0 +1,7643 @@
+1
+00:00:05,200 --> 00:00:06,260
+All right.
+
+2
+00:00:06,260 --> 00:00:07,920
+We'll get started.
+
+3
+00:00:07,920 --> 00:00:11,520
+Sorry, the lecture slides for this lecture were not
+
+4
+00:00:11,520 --> 00:00:14,700
+up earlier today, but it is now up.
+
+5
+00:00:14,700 --> 00:00:17,540
+So if you want to have that at your fingertips to look at,
+
+6
+00:00:17,540 --> 00:00:21,840
+you should be able to get it through the course website.
+
+7
+00:00:21,840 --> 00:00:25,200
+But if not, it's definitely up there on the GitHub.
+
+8
+00:00:25,200 --> 00:00:28,440
+Today, we're going to talk about what I think of as more
+
+9
+00:00:28,440 --> 00:00:31,320
+advanced architecture ideas.
+
+10
+00:00:31,320 --> 00:00:35,080
+So last lecture was really about the basic Transformer
+
+11
+00:00:35,080 --> 00:00:38,960
+and how we might tweak different parts of the basic Transformer
+
+12
+00:00:38,960 --> 00:00:41,800
+to get to a modern language model.
+
+13
+00:00:41,800 --> 00:00:43,880
+Now, I want to talk about things that I think
+
+14
+00:00:43,880 --> 00:00:46,400
+are much more advanced, much more complex
+
+15
+00:00:46,400 --> 00:00:49,480
+developments on top of the usual Transformer.
+
+16
+00:00:49,480 --> 00:00:51,900
+And the two things I'll talk about today--
+
+17
+00:00:51,900 --> 00:00:55,760
+the first one is attention alternatives, ways
+
+18
+00:00:55,760 --> 00:01:00,140
+of going to much longer contexts using architectural changes
+
+19
+00:01:00,140 --> 00:01:02,740
+that, for the most part, generally allow for linear time
+
+20
+00:01:02,740 --> 00:01:06,558
+dependence on the length of the sequence rather than quadratic.
+
+21
+00:01:06,558 --> 00:01:08,100
+The second thing I want to talk about
+
+22
+00:01:08,100 --> 00:01:10,300
+is the idea of mixture of experts.
+
+23
+00:01:10,300 --> 00:01:13,760
+So the first part is modifying the attention block.
+
+24
+00:01:13,760 --> 00:01:16,900
+The second part is going to be modifying the MLP part.
+
+25
+00:01:16,900 --> 00:01:19,900
+A mixture of experts are going to give us significantly better
+
+26
+00:01:19,900 --> 00:01:22,240
+utilization in terms of our hardware,
+
+27
+00:01:22,240 --> 00:01:24,580
+in terms of having more parameters
+
+28
+00:01:24,580 --> 00:01:27,760
+relative to the compute that we have to spend on these models.
+
+29
+00:01:27,760 --> 00:01:32,860
+So those are the two parts and the two ideas for today.
+
+30
+00:01:32,860 --> 00:01:35,080
+So I'm going to start with attention.
+
+31
+00:01:35,080 --> 00:01:37,100
+And I'm going to set the stage.
+
+32
+00:01:37,100 --> 00:01:40,617
+It's clear now that people want longer context length.
+
+33
+00:01:40,617 --> 00:01:42,700
+You want to pack a lot of things into the context,
+
+34
+00:01:42,700 --> 00:01:44,440
+so that your model has more knowledge.
+
+35
+00:01:44,440 --> 00:01:47,100
+Maybe it's an agent and operates on lots of things.
+
+36
+00:01:47,100 --> 00:01:49,700
+If you look at different models over time
+
+37
+00:01:49,700 --> 00:01:53,600
+on the x-axis over here, and the context window size,
+
+38
+00:01:53,600 --> 00:01:56,780
+this is in log scale, there's really a clear rush
+
+39
+00:01:56,780 --> 00:01:59,130
+by a lot of the top LLM vendors that
+
+40
+00:01:59,130 --> 00:02:00,890
+provide larger and larger context
+
+41
+00:02:00,890 --> 00:02:05,530
+sizes to support these kinds of more complex workloads.
+
+42
+00:02:05,530 --> 00:02:08,050
+Now, how do we control these costs?
+
+43
+00:02:10,690 --> 00:02:11,610
+Not yet.
+
+44
+00:02:11,610 --> 00:02:13,890
+The right plot also shows the ratio
+
+45
+00:02:13,890 --> 00:02:16,250
+between how much compute cost is spent
+
+46
+00:02:16,250 --> 00:02:19,050
+in the feed forward part of the network versus the attention
+
+47
+00:02:19,050 --> 00:02:21,970
+part of the network as you increase the sequence length.
+
+48
+00:02:21,970 --> 00:02:23,850
+And you see that the feed forward,
+
+49
+00:02:23,850 --> 00:02:27,342
+fairly large at the start, but grows linearly. Attention
+
+50
+00:02:27,342 --> 00:02:29,050
+It's an all to all connection between all
+
+51
+00:02:29,050 --> 00:02:32,290
+the different positions, quadratic, so quickly outpaces
+
+52
+00:02:32,290 --> 00:02:35,230
+feed forward as the sequence length grows.
+
+53
+00:02:35,230 --> 00:02:38,010
+So it used to be that for big models,
+
+54
+00:02:38,010 --> 00:02:40,570
+that smaller sequence lengths, feed forward
+
+55
+00:02:40,570 --> 00:02:41,950
+was the dominant cost.
+
+56
+00:02:41,950 --> 00:02:43,750
+As you go to these longer sequence lengths,
+
+57
+00:02:43,750 --> 00:02:49,236
+attention increasingly becomes more and more of a problem.
+
+58
+00:02:49,236 --> 00:02:53,235
+Now, what's the basic toolkit by which we can control these?
+
+59
+00:02:53,235 --> 00:02:54,610
+We've already talked about these.
+
+60
+00:02:54,610 --> 00:02:56,230
+Well, we talked about one of these,
+
+61
+00:02:56,230 --> 00:02:59,350
+and we will talk about another one of these.
+
+62
+00:02:59,350 --> 00:03:03,590
+We can basically take things like local attention
+
+63
+00:03:03,590 --> 00:03:06,750
+and combine them in different kinds of hybrid ways
+
+64
+00:03:06,750 --> 00:03:09,770
+to control the very high cost of global attention.
+
+65
+00:03:09,770 --> 00:03:12,270
+If you're only doing global attention once
+
+66
+00:03:12,270 --> 00:03:14,470
+every eight layers, and all the other ones
+
+67
+00:03:14,470 --> 00:03:18,750
+are these very local attentions, you've very much controlled the cost.
+
+68
+00:03:18,750 --> 00:03:21,630
+The other thing you can do is systems engineering.
+
+69
+00:03:21,630 --> 00:03:26,150
+I think a very underappreciated fact is, constant factors
+
+70
+00:03:26,150 --> 00:03:27,270
+really, really matter.
+
+71
+00:03:27,270 --> 00:03:29,310
+Part of the theme of this course is,
+
+72
+00:03:29,310 --> 00:03:31,630
+you need to pay attention to the details.
+
+73
+00:03:31,630 --> 00:03:33,790
+And it's very easy for people trained
+
+74
+00:03:33,790 --> 00:03:37,110
+in a more classical theory-oriented computer science
+
+75
+00:03:37,110 --> 00:03:40,350
+tradition to be like, yes, it's the big O that matters,
+
+76
+00:03:40,350 --> 00:03:41,840
+linear or quadratic.
+
+77
+00:03:41,840 --> 00:03:43,590
+But I think one of the biggest things that
+
+78
+00:03:43,590 --> 00:03:47,590
+has happened to context and attention cost
+
+79
+00:03:47,590 --> 00:03:48,910
+is flash attention.
+
+80
+00:03:48,910 --> 00:03:51,670
+Flash attention, we'll talk about this in a lot more detail
+
+81
+00:03:51,670 --> 00:03:53,720
+once we get to the systems lecture and as you do,
+
+82
+00:03:53,720 --> 00:03:55,140
+the systems assignments.
+
+83
+00:03:55,140 --> 00:03:58,100
+But FlashAttention is really just a very clever way
+
+84
+00:03:58,100 --> 00:04:01,500
+of rearranging the attention operation
+
+85
+00:04:01,500 --> 00:04:03,620
+into a much more systems-friendly way,
+
+86
+00:04:03,620 --> 00:04:07,540
+to minimize memory transfer overhead.
+
+87
+00:04:07,540 --> 00:04:10,620
+And by doing so, you can get truly, truly dramatic
+
+88
+00:04:10,620 --> 00:04:13,680
+improvements in the performance of your attention.
+
+89
+00:04:13,680 --> 00:04:16,420
+So base PyTorch is this blue.
+
+90
+00:04:16,420 --> 00:04:18,920
+You can just look at some of the shorter sequence lengths.
+
+91
+00:04:18,920 --> 00:04:24,277
+You're doing 30 to 40 teraflops per second.
+
+92
+00:04:24,277 --> 00:04:25,860
+And then you do FlashAttention, which
+
+93
+00:04:25,860 --> 00:04:28,142
+is really a constant factor systems improvement.
+
+94
+00:04:28,142 --> 00:04:30,100
+And you're getting these big, big improvements,
+
+95
+00:04:30,100 --> 00:04:31,960
+factors of 2 improvements.
+
+96
+00:04:31,960 --> 00:04:34,720
+And at some sizes, you can't even fit this in memory anymore.
+
+97
+00:04:34,720 --> 00:04:36,470
+But with FlashAttention, where you're not
+
+98
+00:04:36,470 --> 00:04:38,720
+materializing these big attention matrices anymore,
+
+99
+00:04:38,720 --> 00:04:42,000
+you can continue to run these, albeit somewhat slowly.
+
+100
+00:04:42,000 --> 00:04:45,540
+This doesn't fix any of the quadratic cost issues,
+
+101
+00:04:45,540 --> 00:04:48,540
+but constant factors are very, very powerful.
+
+102
+00:04:48,540 --> 00:04:53,880
+Now, that said, if we're going to 5, 10 million tokens,
+
+103
+00:04:53,880 --> 00:04:55,540
+these tricks might not be enough.
+
+104
+00:04:55,540 --> 00:04:57,880
+We want much more radical, much larger
+
+105
+00:04:57,880 --> 00:05:01,360
+gains in our ability to handle long context.
+
+106
+00:05:01,360 --> 00:05:02,960
+So this leads us to the question,
+
+107
+00:05:02,960 --> 00:05:06,680
+is there ways for us to have linear time or linear dependence
+
+108
+00:05:06,680 --> 00:05:08,360
+on the length of the sequence?
+
+109
+00:05:08,360 --> 00:05:12,880
+And what would those kinds of things look like?
+
+110
+00:05:12,880 --> 00:05:15,640
+There you go.
+
+111
+00:05:15,640 --> 00:05:18,280
+It turns out that a lot of people
+
+112
+00:05:18,280 --> 00:05:21,280
+have tried a lot of different things over the years.
+
+113
+00:05:21,280 --> 00:05:23,880
+And I think there are a few false starts.
+
+114
+00:05:23,880 --> 00:05:27,920
+But in the recent years, I would say, the last two-ish years,
+
+115
+00:05:27,920 --> 00:05:31,240
+there's been an emergence of a set of recipes
+
+116
+00:05:31,240 --> 00:05:33,920
+that are fairly effective in linear time attention, that
+
+117
+00:05:33,920 --> 00:05:36,080
+are now battle-tested at scale.
+
+118
+00:05:36,080 --> 00:05:39,360
+And that's why this is finally the first year when
+
+119
+00:05:39,360 --> 00:05:41,280
+I'm talking about linear time attention,
+
+120
+00:05:41,280 --> 00:05:43,720
+because it's clear now that these things really
+
+121
+00:05:43,720 --> 00:05:47,260
+work at scale, and in production, and so on.
+
+122
+00:05:47,260 --> 00:05:51,270
+To really explain all of these different methods that
+
+123
+00:05:51,270 --> 00:05:53,510
+work well, I think you need to really only understand
+
+124
+00:05:53,510 --> 00:05:55,590
+one core idea to start with, and then we're
+
+125
+00:05:55,590 --> 00:05:58,750
+going to elaborate and build upon that idea.
+
+126
+00:05:58,750 --> 00:06:01,990
+And that idea to start with is the associativity
+
+127
+00:06:01,990 --> 00:06:03,050
+of multiplication.
+
+128
+00:06:03,050 --> 00:06:05,672
+So let's think about how attention works.
+
+129
+00:06:05,672 --> 00:06:07,630
+We can write it in this compact notation, where
+
+130
+00:06:07,630 --> 00:06:11,950
+we say, the attention operation is going to be of Q, Ks, and Vs,
+
+131
+00:06:11,950 --> 00:06:15,230
+with these matrix dimensions up here.
+
+132
+00:06:15,230 --> 00:06:16,930
+And I'm going to take my Qs and the Ks,
+
+133
+00:06:16,930 --> 00:06:18,930
+and I'm going to have an all to all interaction.
+
+134
+00:06:18,930 --> 00:06:21,305
+All the n positions are going to interact with each other
+
+135
+00:06:21,305 --> 00:06:22,810
+by matrix multiplication.
+
+136
+00:06:22,810 --> 00:06:25,330
+And then I'll normalize them through a softmax,
+
+137
+00:06:25,330 --> 00:06:27,030
+this row over here.
+
+138
+00:06:27,030 --> 00:06:30,030
+And then I will multiply it with my values
+
+139
+00:06:30,030 --> 00:06:32,450
+V to get the attention outputs.
+
+140
+00:06:32,450 --> 00:06:36,630
+This is a classic self-attention or whatever other attention
+
+141
+00:06:36,630 --> 00:06:38,310
+operation.
+
+142
+00:06:38,310 --> 00:06:41,030
+Now, for the moment, let's forget
+
+143
+00:06:41,030 --> 00:06:43,050
+that attention has a softmax.
+
+144
+00:06:43,050 --> 00:06:45,008
+And then I'm just going to drop the row.
+
+145
+00:06:45,008 --> 00:06:46,050
+Forget it for the moment.
+
+146
+00:06:46,050 --> 00:06:49,690
+Now, if we didn't have a row, maybe we
+
+147
+00:06:49,690 --> 00:06:52,390
+can actually change the complexity of this operation.
+
+148
+00:06:52,390 --> 00:06:54,250
+So if you look at attention, it's
+
+149
+00:06:54,250 --> 00:06:57,490
+n squared dk, because we're taking this QK transpose
+
+150
+00:06:57,490 --> 00:06:58,810
+multiplication.
+
+151
+00:06:58,810 --> 00:07:01,930
+But if Rho was the identity, I can just move the parentheses
+
+152
+00:07:01,930 --> 00:07:02,850
+around a little bit.
+
+153
+00:07:02,850 --> 00:07:05,690
+And I can say, all right, instead of QK transpose
+
+154
+00:07:05,690 --> 00:07:09,630
+V, really, what I'm going to have is QK transpose V.
+
+155
+00:07:09,630 --> 00:07:12,810
+And if we do this reordering, well, we've
+
+156
+00:07:12,810 --> 00:07:14,950
+changed which part is quadratic.
+
+157
+00:07:14,950 --> 00:07:17,290
+Instead of having the n squareds,
+
+158
+00:07:17,290 --> 00:07:19,942
+which were pretty terrible, because these n's are very big.
+
+159
+00:07:19,942 --> 00:07:20,650
+They're millions.
+
+160
+00:07:20,650 --> 00:07:22,530
+It's the context length.
+
+161
+00:07:22,530 --> 00:07:25,790
+Instead, I can have dependence on n d_v d_k.
+
+162
+00:07:25,790 --> 00:07:28,370
+So now, we're multiplying essentially,
+
+163
+00:07:28,370 --> 00:07:30,070
+the key and the value dimensions.
+
+164
+00:07:30,070 --> 00:07:31,870
+These could be big, in principle.
+
+165
+00:07:31,870 --> 00:07:33,130
+I can have a big model.
+
+166
+00:07:33,130 --> 00:07:35,610
+But these are usually on the order of thousands,
+
+167
+00:07:35,610 --> 00:07:36,750
+tens of thousands.
+
+168
+00:07:36,750 --> 00:07:43,130
+No one has a million coordinates in their hidden dimensions.
+
+169
+00:07:43,130 --> 00:07:47,880
+And so this is a much more favorable term
+
+170
+00:07:47,880 --> 00:07:50,680
+to be dependent on compared to this n squared term
+
+171
+00:07:50,680 --> 00:07:53,660
+when we were doing this original attention operation.
+
+172
+00:07:53,660 --> 00:07:56,440
+So this is the first thing that you should know,
+
+173
+00:07:56,440 --> 00:07:59,120
+which is like, associativity of multiplication
+
+174
+00:07:59,120 --> 00:08:04,400
+allows us to change the dependence on the sequence length.
+
+175
+00:08:04,400 --> 00:08:09,160
+Now, the other thing that we can do now
+
+176
+00:08:09,160 --> 00:08:11,840
+is, if we consider this reordering,
+
+177
+00:08:11,840 --> 00:08:16,980
+this Q K transpose V, something that's even nicer about this,
+
+178
+00:08:16,980 --> 00:08:20,080
+and I think this has led to really, a lot of the research
+
+179
+00:08:20,080 --> 00:08:23,000
+that I'm going to mention in the next couple of slides,
+
+180
+00:08:23,000 --> 00:08:25,400
+is that this matrix multiply on the right,
+
+181
+00:08:25,400 --> 00:08:28,840
+in the self-attention case, looks just like an RNN.
+
+182
+00:08:28,840 --> 00:08:31,980
+Instead of writing it in this dense form up here,
+
+183
+00:08:31,980 --> 00:08:33,240
+I can write it incrementally.
+
+184
+00:08:33,240 --> 00:08:36,000
+As I sweep left to right on my context,
+
+185
+00:08:36,000 --> 00:08:39,880
+I can multiply my Ks and Vs, and I can update this thing
+
+186
+00:08:39,880 --> 00:08:43,539
+S, which is a state, and I can add it to my previous state.
+
+187
+00:08:43,539 --> 00:08:47,340
+This is incrementally multiplying and accumulating my KVs.
+
+188
+00:08:47,340 --> 00:08:50,840
+And I can multiply it with my Q to get my output.
+
+189
+00:08:50,840 --> 00:08:55,180
+And this dense operation up here and this RNN form
+
+190
+00:08:55,180 --> 00:08:56,660
+are equivalent.
+
+191
+00:08:56,660 --> 00:08:58,280
+And so what have we done?
+
+192
+00:08:58,280 --> 00:09:02,240
+Well, we've started from linear attention on the top left.
+
+193
+00:09:02,240 --> 00:09:04,100
+And then we've somehow gotten something that
+
+194
+00:09:04,100 --> 00:09:06,220
+looks very much like an RNN.
+
+195
+00:09:06,220 --> 00:09:07,720
+And what's nice about RNNs?
+
+196
+00:09:07,720 --> 00:09:10,640
+Well, RNNs are quite nice, because at inference time,
+
+197
+00:09:10,640 --> 00:09:14,300
+I have this S, which is my state, it's fixed in size.
+
+198
+00:09:14,300 --> 00:09:16,280
+And I'm just carrying that forward and forward.
+
+199
+00:09:16,280 --> 00:09:19,580
+So RNNs are very nice for inference reasons.
+
+200
+00:09:19,580 --> 00:09:22,640
+They are not nice for training reasons.
+
+201
+00:09:22,640 --> 00:09:24,460
+But the nice thing about linear attention
+
+202
+00:09:24,460 --> 00:09:25,940
+is, you can use them in either way.
+
+203
+00:09:25,940 --> 00:09:27,380
+You can have it in this dense form, which
+
+204
+00:09:27,380 --> 00:09:28,505
+will be great for training.
+
+205
+00:09:28,505 --> 00:09:29,540
+It's parallel.
+
+206
+00:09:29,540 --> 00:09:31,860
+Or you can have it in this serial form,
+
+207
+00:09:31,860 --> 00:09:34,340
+like an RNN, which is great for inference.
+
+208
+00:09:34,340 --> 00:09:36,780
+So you can get the best of both worlds.
+
+209
+00:09:36,780 --> 00:09:39,977
+Now, at least in terms of dependence of all these objects,
+
+210
+00:09:39,977 --> 00:09:40,560
+this is great.
+
+211
+00:09:40,560 --> 00:09:41,860
+This is lovely.
+
+212
+00:09:41,860 --> 00:09:46,600
+Unfortunately, this is linear, which is not very good.
+
+213
+00:09:46,600 --> 00:09:49,585
+This is really the starting point of our discussion.
+
+214
+00:09:49,585 --> 00:09:50,460
+Any questions so far?
+
+215
+00:09:50,460 --> 00:09:51,740
+This is really the basics.
+
+216
+00:09:54,710 --> 00:10:00,680
+One cool thing is, there have been people that have basically
+
+217
+00:10:00,680 --> 00:10:05,480
+used this linear attention as part of their attention
+
+218
+00:10:05,480 --> 00:10:07,000
+mechanism.
+
+219
+00:10:07,000 --> 00:10:10,920
+So Minimax M1, which is a fairly large scale, fairly
+
+220
+00:10:10,920 --> 00:10:16,360
+high-performance Chinese open model, uses a 7 to 1
+
+221
+00:10:16,360 --> 00:10:19,760
+hybrid, so seven linear attention layers plus one
+
+222
+00:10:19,760 --> 00:10:22,800
+full softmax attention.
+
+223
+00:10:22,800 --> 00:10:24,380
+Performance, generally strong.
+
+224
+00:10:24,380 --> 00:10:27,280
+You can compare it to a number of strong models
+
+225
+00:10:27,280 --> 00:10:31,400
+like OpenAI's O3 or DeepSeek-R1, fairly competitive.
+
+226
+00:10:31,400 --> 00:10:33,580
+And then since it's linear attention,
+
+227
+00:10:33,580 --> 00:10:36,200
+most of the dependence on context length is linear.
+
+228
+00:10:36,200 --> 00:10:38,860
+It's not fully linear, because you've got these softmaxes,
+
+229
+00:10:38,860 --> 00:10:42,790
+but the dependence is much, much milder.
+
+230
+00:10:42,790 --> 00:10:46,390
+So this is one example, where people
+
+231
+00:10:46,390 --> 00:10:48,830
+have shown that even this basic linear attention, which
+
+232
+00:10:48,830 --> 00:10:51,590
+is very, very simple to understand,
+
+233
+00:10:51,590 --> 00:10:54,910
+can be used fairly effectively at scale, as long as you've
+
+234
+00:10:54,910 --> 00:10:59,550
+got some full quadratic connections involved.
+
+235
+00:10:59,550 --> 00:11:03,550
+No one has, thus far, really proven out fully linear time
+
+236
+00:11:03,550 --> 00:11:05,053
+attention mechanisms at scale.
+
+237
+00:11:05,053 --> 00:11:07,470
+Everything that I'm going to talk about in the next couple
+
+238
+00:11:07,470 --> 00:11:08,770
+of slides is a hybrid.
+
+239
+00:11:11,670 --> 00:11:13,850
+So now, we've done linear attention.
+
+240
+00:11:13,850 --> 00:11:15,430
+But you might say, linear attention
+
+241
+00:11:15,430 --> 00:11:17,530
+is too naive and simple for me.
+
+242
+00:11:17,530 --> 00:11:18,650
+This is not what I want.
+
+243
+00:11:18,650 --> 00:11:23,190
+I want some more serious complex neural network stuff
+
+244
+00:11:23,190 --> 00:11:24,130
+to be happening.
+
+245
+00:11:24,130 --> 00:11:27,750
+Well, what you can now do is--
+
+246
+00:11:27,750 --> 00:11:31,630
+oh, sorry, I went a little too far, look
+
+247
+00:11:31,630 --> 00:11:34,250
+at the RNN form of linear attention.
+
+248
+00:11:34,250 --> 00:11:36,670
+So I've put the linear attention equation right here,
+
+249
+00:11:36,670 --> 00:11:39,650
+just so you don't have to keep going back and forth.
+
+250
+00:11:39,650 --> 00:11:43,650
+And we can add a small elaboration to linear attention
+
+251
+00:11:43,650 --> 00:11:46,770
+in order to get more expressive updates.
+
+252
+00:11:46,770 --> 00:11:49,690
+And this is how you end up getting Mamba-2.
+
+253
+00:11:49,690 --> 00:11:52,590
+Some of you may have heard of Mamba, Mamba-2, Mamba-3 now,
+
+254
+00:11:52,590 --> 00:11:53,770
+I think.
+
+255
+00:11:53,770 --> 00:11:56,730
+These are a family of state space models
+
+256
+00:11:56,730 --> 00:12:00,330
+by Albert Gu, and Tri Dao, and friends.
+
+257
+00:12:00,330 --> 00:12:04,410
+And they're derived, originally, from this state space
+
+258
+00:12:04,410 --> 00:12:05,630
+theory and view.
+
+259
+00:12:05,630 --> 00:12:09,670
+But actually, if you look at the mechanics of what is being done,
+
+260
+00:12:09,670 --> 00:12:12,490
+you can actually see it as a very simple elaboration
+
+261
+00:12:12,490 --> 00:12:14,270
+of the linear attention mechanism.
+
+262
+00:12:14,270 --> 00:12:16,210
+And so the idea is the following.
+
+263
+00:12:16,210 --> 00:12:18,330
+So we start with linear attention.
+
+264
+00:12:18,330 --> 00:12:20,290
+And you might say, really, the main problem
+
+265
+00:12:20,290 --> 00:12:22,570
+with linear attention is that I'm always
+
+266
+00:12:22,570 --> 00:12:24,110
+passing my state forward.
+
+267
+00:12:24,110 --> 00:12:27,250
+We know, from the olden days of LSTMs,
+
+268
+00:12:27,250 --> 00:12:30,610
+that it's important to when to pass information forward
+
+269
+00:12:30,610 --> 00:12:32,850
+and when to just not pass information forward,
+
+270
+00:12:32,850 --> 00:12:34,890
+to forget things and send them to 0.
+
+271
+00:12:34,890 --> 00:12:37,980
+So what I'm going to do is, I'm going to be inspired by that.
+
+272
+00:12:37,980 --> 00:12:40,480
+And I'm going to add a gate, gamma of t.
+
+273
+00:12:40,480 --> 00:12:42,420
+Gamma of t is not stateful.
+
+274
+00:12:42,420 --> 00:12:45,600
+Gamma of t only depends on my current inputs x of t.
+
+275
+00:12:45,600 --> 00:12:50,800
+And gamma of t is going to modulate how much of my state
+
+276
+00:12:50,800 --> 00:12:53,400
+I'm going to carry forward into the future.
+
+277
+00:12:53,400 --> 00:12:56,240
+Now, if you think about this, the state-dependent terms
+
+278
+00:12:56,240 --> 00:12:58,040
+are all these Ss.
+
+279
+00:12:58,040 --> 00:13:00,440
+This gamma is not state-dependent at all,
+
+280
+00:13:00,440 --> 00:13:03,500
+so this means that this is very simple to compute.
+
+281
+00:13:03,500 --> 00:13:05,420
+And there's still this duality.
+
+282
+00:13:05,420 --> 00:13:08,160
+You can compute this Mamba-2 term,
+
+283
+00:13:08,160 --> 00:13:12,020
+either as a big dense matrix multiply or at inference time,
+
+284
+00:13:12,020 --> 00:13:17,540
+use it in this recurrent form to get nice inference improvements.
+
+285
+00:13:17,540 --> 00:13:21,200
+So that's the core conceit or view of this idea
+
+286
+00:13:21,200 --> 00:13:23,740
+that you can either use it in parallel or sequence,
+
+287
+00:13:23,740 --> 00:13:25,560
+just like linear attention.
+
+288
+00:13:25,560 --> 00:13:28,620
+And people have now used this at scale.
+
+289
+00:13:28,620 --> 00:13:33,280
+So Nemotron-3, I mentioned briefly last lecture,
+
+290
+00:13:33,280 --> 00:13:35,900
+uses this idea of combining Mamba-2
+
+291
+00:13:35,900 --> 00:13:37,773
+as their lightweight layer.
+
+292
+00:13:37,773 --> 00:13:39,940
+And of course, you've got your big softmax attention
+
+293
+00:13:39,940 --> 00:13:41,152
+every now and then.
+
+294
+00:13:41,152 --> 00:13:43,580
+And they alternate this in various ways
+
+295
+00:13:43,580 --> 00:13:46,920
+to manage their inference cost, expressiveness trade-off.
+
+296
+00:13:49,700 --> 00:13:53,300
+Nemotron-3 achieves pretty good performance
+
+297
+00:13:53,300 --> 00:13:58,540
+compared to Qwen3 thinking as compared to GPT OSS.
+
+298
+00:13:58,540 --> 00:14:00,980
+And because of all these Mamba-2 layers,
+
+299
+00:14:00,980 --> 00:14:04,240
+has pretty good throughput at fairly large context length.
+
+300
+00:14:04,240 --> 00:14:06,780
+So you can see that it works.
+
+301
+00:14:06,780 --> 00:14:09,240
+At least, these are small frontier models,
+
+302
+00:14:09,240 --> 00:14:12,340
+not really big frontier models, but small frontier
+
+303
+00:14:12,340 --> 00:14:15,900
+models that are open source.
+
+304
+00:14:15,900 --> 00:14:17,120
+Cool.
+
+305
+00:14:17,120 --> 00:14:21,500
+So now, we've built on this gating idea, which is cool.
+
+306
+00:14:21,500 --> 00:14:24,740
+You might say, though, can we just keep
+
+307
+00:14:24,740 --> 00:14:28,020
+pushing this idea further, and taking this recurrence,
+
+308
+00:14:28,020 --> 00:14:31,860
+and making it increasingly more complex?
+
+309
+00:14:31,860 --> 00:14:35,090
+And the rule of thumb, in some sense, for what you
+
+310
+00:14:35,090 --> 00:14:38,370
+can do with your operations here is, as long
+
+311
+00:14:38,370 --> 00:14:41,230
+as you're getting the various terms in your RNN,
+
+312
+00:14:41,230 --> 00:14:44,310
+so to speak, with only input-dependent terms,
+
+313
+00:14:44,310 --> 00:14:46,730
+so no state dependence, then you will still
+
+314
+00:14:46,730 --> 00:14:50,870
+have this fairly nice duality between parallel operations,
+
+315
+00:14:50,870 --> 00:14:54,690
+which you can use for training, and serial operations, which you
+
+316
+00:14:54,690 --> 00:14:56,850
+are going to use for inference.
+
+317
+00:14:56,850 --> 00:15:02,170
+So gated delta net is probably among the most widely
+
+318
+00:15:02,170 --> 00:15:05,190
+used, I would say, state space model now.
+
+319
+00:15:05,190 --> 00:15:08,330
+I think it's been tested in quite a few papers.
+
+320
+00:15:08,330 --> 00:15:12,370
+And there's a very nice large scale scale
+
+321
+00:15:12,370 --> 00:15:16,590
+up in 3.5 for these models.
+
+322
+00:15:16,590 --> 00:15:20,810
+So let me talk you through what gated delta net is
+
+323
+00:15:20,810 --> 00:15:22,970
+in comparison to Mamba-2.
+
+324
+00:15:22,970 --> 00:15:26,590
+So Mamba-2 is, as I have at the top here,
+
+325
+00:15:26,590 --> 00:15:30,210
+we take the linear recurrence, this state update.
+
+326
+00:15:30,210 --> 00:15:32,890
+And what I'm going to do is I'm going to gate it with my gamma.
+
+327
+00:15:32,890 --> 00:15:34,290
+Oh, I forgot to explain this vt.
+
+328
+00:15:34,290 --> 00:15:34,790
+Sorry.
+
+329
+00:15:34,790 --> 00:15:36,790
+I apologize for that.
+
+330
+00:15:36,790 --> 00:15:38,210
+I added this for completeness.
+
+331
+00:15:38,210 --> 00:15:39,910
+Mamba-2 also has a modification, where
+
+332
+00:15:39,910 --> 00:15:43,530
+they add what is basically a residual layer to the yt update.
+
+333
+00:15:43,530 --> 00:15:46,647
+It's not really core to the state update or their arguments
+
+334
+00:15:46,647 --> 00:15:49,230
+for why this is a good idea, but I put it in for completeness,
+
+335
+00:15:49,230 --> 00:15:53,490
+just to make sure I'm actually giving the true Mamba-2 updates
+
+336
+00:15:53,490 --> 00:15:57,350
+rather than a more abridged version that only gets the core
+
+337
+00:15:57,350 --> 00:15:59,790
+ideas across.
+
+338
+00:15:59,790 --> 00:16:01,210
+But you can ignore the vt for now.
+
+339
+00:16:01,210 --> 00:16:03,830
+This is really just like an architectural improvement that's
+
+340
+00:16:03,830 --> 00:16:06,350
+not core to the state updates.
+
+341
+00:16:06,350 --> 00:16:10,270
+Gated delta net takes this idea in some sense and adds
+
+342
+00:16:10,270 --> 00:16:11,730
+a second gate, beta t.
+
+343
+00:16:11,730 --> 00:16:14,110
+So what does beta t do?
+
+344
+00:16:14,110 --> 00:16:19,190
+Beta t, I think of as a no input operation gate.
+
+345
+00:16:19,190 --> 00:16:21,950
+If beta t is 0, that basically means,
+
+346
+00:16:21,950 --> 00:16:23,970
+don't take any of my current information,
+
+347
+00:16:23,970 --> 00:16:26,330
+don't add it into my state.
+
+348
+00:16:26,330 --> 00:16:29,350
+And I think, most or all of you are probably
+
+349
+00:16:29,350 --> 00:16:30,840
+familiar with LSTMs.
+
+350
+00:16:30,840 --> 00:16:33,840
+This is very reminiscent of the ideas in LSTM.
+
+351
+00:16:33,840 --> 00:16:37,220
+You've got gates that control whether to forget
+
+352
+00:16:37,220 --> 00:16:39,960
+and whether to put in information from the current time step.
+
+353
+00:16:39,960 --> 00:16:43,400
+So it operates in a very similar set of principles,
+
+354
+00:16:43,400 --> 00:16:45,860
+although, of course, derived, I think, originally
+
+355
+00:16:45,860 --> 00:16:47,660
+in a very different way.
+
+356
+00:16:47,660 --> 00:16:50,590
+Now, the other thing that's interesting about gated delta
+
+357
+00:16:50,590 --> 00:16:52,780
+net, and this comes from the delta net rather than
+
+358
+00:16:52,780 --> 00:16:56,305
+the gated delta net, is this update direction.
+
+359
+00:16:56,305 --> 00:16:57,680
+So instead of just gating things,
+
+360
+00:16:57,680 --> 00:17:01,100
+you could have made this 1 minus beta t, for example.
+
+361
+00:17:01,100 --> 00:17:03,843
+What they do is, if you're going to do an update,
+
+362
+00:17:03,843 --> 00:17:06,260
+where you're putting in this beta, what you're going to do
+
+363
+00:17:06,260 --> 00:17:07,920
+is, you're going to try to project out,
+
+364
+00:17:07,920 --> 00:17:09,720
+in some sense, my current key direction.
+
+365
+00:17:09,720 --> 00:17:11,660
+So the intuition here is, I'm going
+
+366
+00:17:11,660 --> 00:17:15,500
+to be writing in information from my current key, k of t.
+
+367
+00:17:15,500 --> 00:17:17,619
+And when doing that, not only do I
+
+368
+00:17:17,619 --> 00:17:19,780
+want to put in new information, I also
+
+369
+00:17:19,780 --> 00:17:22,720
+want to erase any previous keys that have gone into it.
+
+370
+00:17:22,720 --> 00:17:24,800
+That's one way that you can think about updates--
+
+371
+00:17:24,800 --> 00:17:27,980
+not just put stuff in, I want to clear out the current key that
+
+372
+00:17:27,980 --> 00:17:28,993
+has gone in.
+
+373
+00:17:28,993 --> 00:17:31,160
+And that's why there's this blue term, this identity
+
+374
+00:17:31,160 --> 00:17:34,280
+minus beta t k t k t transpose, which is essentially
+
+375
+00:17:34,280 --> 00:17:36,960
+acting as a projector that is projecting out
+
+376
+00:17:36,960 --> 00:17:38,425
+things in the kt dimension.
+
+377
+00:17:38,425 --> 00:17:40,800
+That's not exactly right, because you're not doing things
+
+378
+00:17:40,800 --> 00:17:46,440
+like unit normalization, but you get roughly the intuition here.
+
+379
+00:17:46,440 --> 00:17:48,407
+The other thing I'll mention before--
+
+380
+00:17:48,407 --> 00:17:50,240
+oops, sorry, I have this blue box here, I'll
+
+381
+00:17:50,240 --> 00:17:54,040
+move on with beta delta net, is that this
+
+382
+00:17:54,040 --> 00:17:57,840
+has been reinvented, in some ways, in various settings.
+
+383
+00:17:57,840 --> 00:18:00,120
+This update, this projector appears
+
+384
+00:18:00,120 --> 00:18:02,360
+if you try to solve certain kinds of meta
+
+385
+00:18:02,360 --> 00:18:04,120
+learning least squares problems.
+
+386
+00:18:04,120 --> 00:18:09,040
+It's been reinvented in other forms in fast weight programming
+
+387
+00:18:09,040 --> 00:18:11,240
+or test time training, where essentially,
+
+388
+00:18:11,240 --> 00:18:13,720
+through very different design principles,
+
+389
+00:18:13,720 --> 00:18:15,600
+researchers from those areas have basically
+
+390
+00:18:15,600 --> 00:18:21,400
+ended up with the exact same kinds of solutions.
+
+391
+00:18:21,400 --> 00:18:25,400
+And the thing that I'll say here is, the Qwen 3.5 and the Qwen
+
+392
+00:18:25,400 --> 00:18:28,190
+Next models that were predecessors to that,
+
+393
+00:18:28,190 --> 00:18:31,390
+some of the best open source models available today.
+
+394
+00:18:31,390 --> 00:18:33,370
+And they use exactly this architecture.
+
+395
+00:18:33,370 --> 00:18:37,490
+They use a 3 to 1 gated delta net attention hybrid.
+
+396
+00:18:37,490 --> 00:18:40,550
+Very reasonable performance, strong inference characteristics
+
+397
+00:18:40,550 --> 00:18:42,150
+that you can see on the right there.
+
+398
+00:18:42,150 --> 00:18:45,950
+Qwen Next has much higher decoding throughput
+
+399
+00:18:45,950 --> 00:18:48,510
+relative to Qwen 3 as the context length goes up
+
+400
+00:18:48,510 --> 00:18:50,270
+and up and up.
+
+401
+00:18:50,270 --> 00:18:52,510
+The middle panel is a comparison of performance
+
+402
+00:18:52,510 --> 00:18:55,790
+versus various closed-source models and previous generation
+
+403
+00:18:55,790 --> 00:18:56,870
+models.
+
+404
+00:18:56,870 --> 00:18:59,270
+This hybrid architecture doesn't seem to hurt performance
+
+405
+00:18:59,270 --> 00:19:00,170
+very much at all.
+
+406
+00:19:03,030 --> 00:19:06,750
+The last thing that I will say is,
+
+407
+00:19:06,750 --> 00:19:11,230
+there haven't been that many great controlled studies of how
+
+408
+00:19:11,230 --> 00:19:13,310
+hybrid architectures perform.
+
+409
+00:19:13,310 --> 00:19:16,630
+There's maybe one by ByteDance Seed and UC Santa Cruz
+
+410
+00:19:16,630 --> 00:19:19,597
+folks, where they compared things like Mamba-2,
+
+411
+00:19:19,597 --> 00:19:21,430
+and gated delta net, and other architectures
+
+412
+00:19:21,430 --> 00:19:26,130
+as a function of how many hybrid layers you have.
+
+413
+00:19:26,130 --> 00:19:28,070
+Some of the results, I would say, are messy,
+
+414
+00:19:28,070 --> 00:19:29,650
+but the things that I would point at
+
+415
+00:19:29,650 --> 00:19:32,370
+is, this dashed line over here on this right panel,
+
+416
+00:19:32,370 --> 00:19:34,870
+this guy is full attention performance.
+
+417
+00:19:34,870 --> 00:19:36,630
+And as you go from left to right,
+
+418
+00:19:36,630 --> 00:19:41,190
+this is increasing the number of non-full attention layers.
+
+419
+00:19:41,190 --> 00:19:43,622
+So the RNN layers, let's call them,
+
+420
+00:19:43,622 --> 00:19:45,330
+you increase them as you go to the right,
+
+421
+00:19:45,330 --> 00:19:47,810
+and you see performance degradation.
+
+422
+00:19:47,810 --> 00:19:49,718
+But maybe the thing to see here is
+
+423
+00:19:49,718 --> 00:19:52,010
+that for some of the best architectures that you have--
+
+424
+00:19:52,010 --> 00:19:54,050
+the yellow, the orange, the blue,
+
+425
+00:19:54,050 --> 00:19:57,490
+these are like the gated delta nets and various other variants.
+
+426
+00:19:57,490 --> 00:20:01,070
+You see that at the low ratios, there's basically no hit.
+
+427
+00:20:01,070 --> 00:20:03,110
+And then once you pass a certain point,
+
+428
+00:20:03,110 --> 00:20:06,930
+you start to see more significant degradation
+
+429
+00:20:06,930 --> 00:20:09,930
+in long context performance, in this case.
+
+430
+00:20:09,930 --> 00:20:12,250
+Basically, at the end, as you go to full RNN,
+
+431
+00:20:12,250 --> 00:20:14,810
+you have very noticeable performance degradation
+
+432
+00:20:14,810 --> 00:20:16,410
+in all these architectures.
+
+433
+00:20:16,410 --> 00:20:18,850
+The same is true at various different other kinds
+
+434
+00:20:18,850 --> 00:20:20,195
+of evaluations.
+
+435
+00:20:20,195 --> 00:20:21,570
+Some of these, I think, have been
+
+436
+00:20:21,570 --> 00:20:24,590
+optimized by the architectures themselves.
+
+437
+00:20:24,590 --> 00:20:26,510
+Single key retrieval is a task that, I think,
+
+438
+00:20:26,510 --> 00:20:28,870
+all of these long context architectures
+
+439
+00:20:28,870 --> 00:20:30,490
+explicitly optimize for.
+
+440
+00:20:30,490 --> 00:20:31,930
+But if you look at QA performance,
+
+441
+00:20:31,930 --> 00:20:34,150
+we see the same story that as we increase
+
+442
+00:20:34,150 --> 00:20:36,710
+the amount of hybrid ratio, we see decreases
+
+443
+00:20:36,710 --> 00:20:39,350
+in performance, fairly steadily and fairly clearly,
+
+444
+00:20:39,350 --> 00:20:41,590
+ending up at this pure point.
+
+445
+00:20:41,590 --> 00:20:45,450
+Any questions for the linear time attention stuff?
+
+446
+00:20:45,450 --> 00:20:46,990
+I have one last efficient attention
+
+447
+00:20:46,990 --> 00:20:48,750
+thing to talk about, but yes.
+
+448
+00:20:48,750 --> 00:20:52,830
+[INAUDIBLE] look like the parallel form of attention
+
+449
+00:20:52,830 --> 00:20:56,390
+versus the linear form.
+
+450
+00:20:56,390 --> 00:21:02,050
+[INAUDIBLE] Shouldn't they be mathematically equivalent?
+
+451
+00:21:02,050 --> 00:21:02,550
+Yes.
+
+452
+00:21:02,550 --> 00:21:07,470
+Why do you see degradation in performance if you [INAUDIBLE]?
+
+453
+00:21:07,470 --> 00:21:07,990
+Sorry.
+
+454
+00:21:07,990 --> 00:21:11,910
+By recurrent, I meant RNN in general,
+
+455
+00:21:11,910 --> 00:21:13,650
+any recurrent formulation.
+
+456
+00:21:13,650 --> 00:21:15,950
+So gated delta net would be a recurrence.
+
+457
+00:21:15,950 --> 00:21:17,850
+That is not equivalent to this top one.
+
+458
+00:21:17,850 --> 00:21:20,530
+This is full softmax attention with the row.
+
+459
+00:21:20,530 --> 00:21:23,020
+The first step is lossy, where we drop the row,
+
+460
+00:21:23,020 --> 00:21:24,120
+and then we become linear.
+
+461
+00:21:24,120 --> 00:21:26,260
+That's the very, very first step of any of these.
+
+462
+00:21:26,260 --> 00:21:27,720
+So this part is going to be lossy.
+
+463
+00:21:27,720 --> 00:21:30,620
+And then after that, this linear form
+
+464
+00:21:30,620 --> 00:21:36,100
+to this recurrent form, this equivalence, that is exact.
+
+465
+00:21:36,100 --> 00:21:36,820
+Good.
+
+466
+00:21:36,820 --> 00:21:37,320
+Yes.
+
+467
+00:21:37,320 --> 00:21:45,860
+[INAUDIBLE] Oh, yes.
+
+468
+00:21:45,860 --> 00:21:47,122
+Yes.
+
+469
+00:21:47,122 --> 00:21:48,080
+Yeah, this term, right?
+
+470
+00:21:48,080 --> 00:21:49,780
+Yeah.
+
+471
+00:21:49,780 --> 00:21:53,620
+So in the linear attention form, what we're really doing is,
+
+472
+00:21:53,620 --> 00:21:55,860
+we're taking these kv's, and we're
+
+473
+00:21:55,860 --> 00:21:57,340
+accumulating them with queues.
+
+474
+00:21:57,340 --> 00:22:01,140
+In the dual form, that's how this operates.
+
+475
+00:22:01,140 --> 00:22:03,620
+But you might actually want in your outputs
+
+476
+00:22:03,620 --> 00:22:05,968
+to also have some value from your current time step.
+
+477
+00:22:05,968 --> 00:22:08,260
+You might think that, oh, the value for my current time
+
+478
+00:22:08,260 --> 00:22:10,860
+step for my token is actually useful for various things
+
+479
+00:22:10,860 --> 00:22:11,785
+downstream.
+
+480
+00:22:11,785 --> 00:22:14,160
+And so this acts a little bit like a residual connection,
+
+481
+00:22:14,160 --> 00:22:15,900
+where the value of my current inputs
+
+482
+00:22:15,900 --> 00:22:18,640
+directly pass through to the outputs of my attention.
+
+483
+00:22:18,640 --> 00:22:20,767
+And D is another modulated gate, where
+
+484
+00:22:20,767 --> 00:22:23,100
+you can control the amount of pass through that happens.
+
+485
+00:22:26,340 --> 00:22:26,840
+Good.
+
+486
+00:22:26,840 --> 00:22:27,840
+OK.
+
+487
+00:22:27,840 --> 00:22:29,340
+So that's linear time attention.
+
+488
+00:22:29,340 --> 00:22:31,440
+There's a lot of really interesting stuff.
+
+489
+00:22:31,440 --> 00:22:34,600
+It's also interesting that a lot of the methods that
+
+490
+00:22:34,600 --> 00:22:37,600
+have gotten tested out really have
+
+491
+00:22:37,600 --> 00:22:41,440
+this nice, simple, linear attention style, recurrent form.
+
+492
+00:22:41,440 --> 00:22:44,240
+There's a few exceptions, but for the most part, a lot of this
+
+493
+00:22:44,240 --> 00:22:48,820
+has converged to almost very LSTM-like objects in the end.
+
+494
+00:22:52,485 --> 00:22:53,800
+What do I want to say?
+
+495
+00:22:53,800 --> 00:22:54,300
+OK.
+
+496
+00:22:54,300 --> 00:22:56,000
+So there's another alternative.
+
+497
+00:22:56,000 --> 00:22:57,860
+What I talked about was linear attention,
+
+498
+00:22:57,860 --> 00:23:03,120
+which has this very nice complexity theoretic flavor to it.
+
+499
+00:23:03,120 --> 00:23:06,120
+I want to talk about another attention optimization, which
+
+500
+00:23:06,120 --> 00:23:08,960
+I did not talk about, but falls into this family
+
+501
+00:23:08,960 --> 00:23:13,040
+of efficient attention things that are important.
+
+502
+00:23:13,040 --> 00:23:21,190
+So DeepSeek in DeepSeek 3.2, I think, had DSA, not Do Sparse
+
+503
+00:23:21,190 --> 00:23:25,070
+Attention, that's DeepSeek Attention, where what they do
+
+504
+00:23:25,070 --> 00:23:28,270
+is, instead of computing attention—
+
+505
+00:23:28,270 --> 00:23:31,750
+that was not intentional part, instead of computing attention
+
+506
+00:23:31,750 --> 00:23:33,830
+over all the tokens, what you're going to do
+
+507
+00:23:33,830 --> 00:23:36,830
+is you're going to first have a lightweight indexer that's going
+
+508
+00:23:36,830 --> 00:23:38,150
+to subset a bunch of tokens.
+
+509
+00:23:38,150 --> 00:23:40,490
+So you're going to look at your very long context.
+
+510
+00:23:40,490 --> 00:23:44,390
+And the indexer is going to pick out some subset of these, much
+
+511
+00:23:44,390 --> 00:23:45,973
+smaller than the full sequence.
+
+512
+00:23:45,973 --> 00:23:48,390
+And then you're going to do full attention on that smaller
+
+513
+00:23:48,390 --> 00:23:49,130
+subset.
+
+514
+00:23:49,130 --> 00:23:52,890
+So the mechanics of this are pretty simple,
+
+515
+00:23:52,890 --> 00:23:56,630
+at least in the forward pass, where what you do
+
+516
+00:23:56,630 --> 00:23:59,790
+is you have your normal Qs and Ks,
+
+517
+00:23:59,790 --> 00:24:02,010
+but then you pass this through this indexer.
+
+518
+00:24:02,010 --> 00:24:05,010
+And what the indexer does is, it takes the qk inner products,
+
+519
+00:24:05,010 --> 00:24:06,990
+it takes a ReLU.
+
+520
+00:24:06,990 --> 00:24:10,910
+And then it's going to have these weights that are derived
+
+521
+00:24:10,910 --> 00:24:12,090
+from the preceding tokens.
+
+522
+00:24:12,090 --> 00:24:17,810
+And then this is going to give you the activations for each
+
+523
+00:24:17,810 --> 00:24:18,953
+of the positions.
+
+524
+00:24:18,953 --> 00:24:20,370
+And then you're going to take this
+
+525
+00:24:20,370 --> 00:24:24,890
+through a top k, where some number of these top positions
+
+526
+00:24:24,890 --> 00:24:27,358
+get included into my attention computation.
+
+527
+00:24:27,358 --> 00:24:29,650
+And I'm going to do my usual attention computation that
+
+528
+00:24:29,650 --> 00:24:32,370
+emits a key value.
+
+529
+00:24:32,370 --> 00:24:36,250
+The nice thing about this is it's very, very sparse.
+
+530
+00:24:36,250 --> 00:24:38,430
+And if this indexer is lightweight,
+
+531
+00:24:38,430 --> 00:24:40,930
+now, this bottom term, where you're doing full attention,
+
+532
+00:24:40,930 --> 00:24:43,050
+can be done on a very small subset.
+
+533
+00:24:43,050 --> 00:24:45,730
+Another thing that both DSA and I
+
+534
+00:24:45,730 --> 00:24:49,633
+think, GLM show is that, you don't actually
+
+535
+00:24:49,633 --> 00:24:51,050
+have to train the model with this,
+
+536
+00:24:51,050 --> 00:24:53,010
+because training with this indexer thing
+
+537
+00:24:53,010 --> 00:24:56,710
+is maybe pretty annoying and very complex.
+
+538
+00:24:56,710 --> 00:24:59,030
+What you do is you just train a normal transformer.
+
+539
+00:24:59,030 --> 00:25:01,230
+And when you do your long context extension,
+
+540
+00:25:01,230 --> 00:25:03,970
+you actually then drop in this lightning indexer,
+
+541
+00:25:03,970 --> 00:25:06,930
+and then you train the model to handle this indexer
+
+542
+00:25:06,930 --> 00:25:09,950
+in an extension stage that's separate from pretraining.
+
+543
+00:25:09,950 --> 00:25:13,170
+So actually, the computational cost of doing this is itself,
+
+544
+00:25:13,170 --> 00:25:15,480
+pretty light.
+
+545
+00:25:15,480 --> 00:25:19,080
+And I want to highlight in DeepSeek's v3.2,
+
+546
+00:25:19,080 --> 00:25:22,400
+where they proposed DSA, this model is quite good.
+
+547
+00:25:22,400 --> 00:25:26,840
+The v3.2 matches all the other frontier models at the time,
+
+548
+00:25:26,840 --> 00:25:29,855
+like Claude 4.5 Sonnet or Gemini 3.
+
+549
+00:25:29,855 --> 00:25:31,480
+And they also have this very nice plot,
+
+550
+00:25:31,480 --> 00:25:34,500
+where they're showing, well, our prefill,
+
+551
+00:25:34,500 --> 00:25:38,520
+which is the attending to the input, and also decoding,
+
+552
+00:25:38,520 --> 00:25:40,640
+where you're actually generating, both of these
+
+553
+00:25:40,640 --> 00:25:43,320
+are very favorable scaling compared
+
+554
+00:25:43,320 --> 00:25:45,840
+to the previous generation of DeepSeek models
+
+555
+00:25:45,840 --> 00:25:47,540
+that did not use sparse attention.
+
+556
+00:25:47,540 --> 00:25:48,600
+And that makes sense.
+
+557
+00:25:48,600 --> 00:25:51,260
+If you're only paying attention to a very small subset,
+
+558
+00:25:51,260 --> 00:25:53,000
+you're going to dramatically be reducing
+
+559
+00:25:53,000 --> 00:25:56,920
+your costs of doing attention.
+
+560
+00:25:56,920 --> 00:26:05,760
+And I think another nice orthogonal validation of this GLM5, which came out last year.
+
+561
+00:26:05,760 --> 00:26:10,800
+I think GLM5 is one of the best open models that are available,
+
+562
+00:26:10,800 --> 00:26:12,300
+like period.
+
+563
+00:26:12,300 --> 00:26:14,910
+And they also adopted this DSA approach.
+
+564
+00:26:14,910 --> 00:26:17,410
+And they have actually fairly nice ablations in their paper
+
+565
+00:26:17,410 --> 00:26:21,080
+here, if you're curious, where they end up comparing with, oh,
+
+566
+00:26:21,080 --> 00:26:23,100
+what happens if we do DSA with some warm
+
+567
+00:26:23,100 --> 00:26:26,602
+up or just do DSA or don't do DSA at all?
+
+568
+00:26:26,602 --> 00:26:28,060
+The main thing that they're showing
+
+569
+00:26:28,060 --> 00:26:31,260
+is, if they do full DSA training,
+
+570
+00:26:31,260 --> 00:26:33,420
+you don't lose very much in performance
+
+571
+00:26:33,420 --> 00:26:37,260
+relative to full attention, even at long context retrieval
+
+572
+00:26:37,260 --> 00:26:41,900
+tasks that are fairly difficult to do with RNN style
+
+573
+00:26:41,900 --> 00:26:42,840
+architectures.
+
+574
+00:26:42,840 --> 00:26:44,860
+So this is a totally alternative view
+
+575
+00:26:44,860 --> 00:26:48,200
+of how to reduce attention costs.
+
+576
+00:26:48,200 --> 00:26:52,380
+Notice, I'll go back one slide, this is not linear time.
+
+577
+00:26:52,380 --> 00:26:55,260
+The indexer still has to operate on full all
+
+578
+00:26:55,260 --> 00:26:57,180
+to all attention, because you got these qk
+
+579
+00:26:57,180 --> 00:27:00,480
+inner products that are not going to be linear in cost.
+
+580
+00:27:00,480 --> 00:27:03,940
+But you can make this indexer much, much cheaper,
+
+581
+00:27:03,940 --> 00:27:05,980
+for example, by making this lower dimensional
+
+582
+00:27:05,980 --> 00:27:08,340
+or making this w very small.
+
+583
+00:27:08,340 --> 00:27:13,620
+All of this can be made much cheaper in its cost.
+
+584
+00:27:13,620 --> 00:27:15,870
+So that's a totally alternative view, works very well.
+
+585
+00:27:15,870 --> 00:27:17,470
+I won't talk much about this.
+
+586
+00:27:17,470 --> 00:27:21,050
+But it turns out that this idea of top k selection
+
+587
+00:27:21,050 --> 00:27:24,070
+is going to be core to the next part of this lecture.
+
+588
+00:27:24,070 --> 00:27:26,650
+I'll stop here for any efficient attention questions
+
+589
+00:27:26,650 --> 00:27:29,750
+before I move on to MoEs.
+
+590
+00:27:29,750 --> 00:27:30,250
+Yes.
+
+591
+00:27:30,250 --> 00:27:35,830
+So the indexer, the time complexity for that,
+
+592
+00:27:35,830 --> 00:27:36,770
+is it n squared?
+
+593
+00:27:36,770 --> 00:27:40,150
+Yeah.
+
+594
+00:27:40,150 --> 00:27:42,412
+I mean, in order to know what to select,
+
+595
+00:27:42,412 --> 00:27:43,870
+it does have to look at everything.
+
+596
+00:27:43,870 --> 00:27:47,030
+And there's no clever state transition
+
+597
+00:27:47,030 --> 00:27:48,030
+stuff that happens here.
+
+598
+00:27:48,030 --> 00:27:49,910
+It is really brute force inner products.
+
+599
+00:27:49,910 --> 00:27:52,210
+So if you're going through all of it,
+
+600
+00:27:52,210 --> 00:27:56,570
+then the step afterwards is also quadratic as well.
+
+601
+00:27:56,570 --> 00:27:59,130
+How are we getting time like [INAUDIBLE]?
+
+602
+00:27:59,130 --> 00:28:01,730
+I mean, it's like a system's trick, almost.
+
+603
+00:28:01,730 --> 00:28:04,132
+You're going to do the indexer much more lightweight.
+
+604
+00:28:04,132 --> 00:28:05,590
+And there are many ways to do that.
+
+605
+00:28:05,590 --> 00:28:07,050
+You can do that in much lower precision, which
+
+606
+00:28:07,050 --> 00:28:08,030
+they talk about.
+
+607
+00:28:08,030 --> 00:28:11,910
+You can do it in ways that are lower dimensional by projecting
+
+608
+00:28:11,910 --> 00:28:14,068
+the q's and k's further, just for the indexing.
+
+609
+00:28:14,068 --> 00:28:16,110
+So there are lots of tricks that you can do here,
+
+610
+00:28:16,110 --> 00:28:17,750
+that you can imagine, but the indexer
+
+611
+00:28:17,750 --> 00:28:18,890
+is going to be much more lightweight.
+
+612
+00:28:18,890 --> 00:28:20,637
+So the constant factors are very good.
+
+613
+00:28:20,637 --> 00:28:22,970
+And then for the second one, even though it's quadratic,
+
+614
+00:28:22,970 --> 00:28:24,762
+it's quadratic on a shorter context length,
+
+615
+00:28:24,762 --> 00:28:26,530
+because it's top k, we can control k.
+
+616
+00:28:26,530 --> 00:28:29,210
+So now, this is expensive but small.
+
+617
+00:28:29,210 --> 00:28:31,310
+So this is another one of these things
+
+618
+00:28:31,310 --> 00:28:34,850
+of, sometimes, don't get too stuck up on the quadratic versus
+
+619
+00:28:34,850 --> 00:28:35,350
+not.
+
+620
+00:28:35,350 --> 00:28:38,248
+Sometimes, the constant factors are really, really important.
+
+621
+00:28:38,248 --> 00:28:39,290
+There's another question?
+
+622
+00:28:39,290 --> 00:28:39,790
+Yeah.
+
+623
+00:28:39,790 --> 00:28:45,792
+[INAUDIBLE] That's right.
+
+624
+00:28:45,792 --> 00:28:48,190
+Or it's part of a continued pretraining style thing,
+
+625
+00:28:48,190 --> 00:28:51,110
+because all the models, you don't train long contexts
+
+626
+00:28:51,110 --> 00:28:53,850
+from scratch for compute and various other reasons,
+
+627
+00:28:53,850 --> 00:28:56,330
+you train a short-ish context model first,
+
+628
+00:28:56,330 --> 00:28:58,970
+and then you've got these long context extension stages.
+
+629
+00:28:58,970 --> 00:29:01,230
+And so the nice idea here is that, we're going
+
+630
+00:29:01,230 --> 00:29:02,770
+to do the second phase anyway.
+
+631
+00:29:02,770 --> 00:29:05,910
+Why don't we bolt the long context cost savings
+
+632
+00:29:05,910 --> 00:29:07,330
+on at the same stage?
+
+633
+00:29:07,330 --> 00:29:09,590
+And it's surprising that it works.
+
+634
+00:29:09,590 --> 00:29:15,050
+Honestly, they can bolt on this frankly scary-looking TopK
+
+635
+00:29:15,050 --> 00:29:16,630
+non-differentiable object.
+
+636
+00:29:16,630 --> 00:29:19,050
+But as you'll see in the next part,
+
+637
+00:29:19,050 --> 00:29:21,590
+maybe you shouldn't be so scared of TopK selection.
+
+638
+00:29:21,590 --> 00:29:27,050
+[INAUDIBLE] So this is also part of the post
+
+639
+00:29:27,050 --> 00:29:28,850
+with other post-training steps?
+
+640
+00:29:28,850 --> 00:29:29,350
+Yeah.
+
+641
+00:29:29,350 --> 00:29:31,410
+The usual recipe that I am familiar with,
+
+642
+00:29:31,410 --> 00:29:33,210
+when a lot of the open source models, is it
+
+643
+00:29:33,210 --> 00:29:39,850
+usually goes like short context pre-training, long context extension, then post-training.
+
+644
+00:29:39,850 --> 00:29:40,450
+Yes.
+
+645
+00:29:40,450 --> 00:29:45,638
+Is the k here similar in length [INAUDIBLE]?
+
+646
+00:29:45,638 --> 00:29:46,430
+Yeah, that's right.
+
+647
+00:29:46,430 --> 00:29:49,350
+You would pick values that are much closer to short context
+
+648
+00:29:49,350 --> 00:29:49,850
+performance.
+
+649
+00:29:49,850 --> 00:29:50,808
+And you would bound it.
+
+650
+00:29:50,808 --> 00:29:55,547
+So regardless of the input size, they would be bounded.
+
+651
+00:29:55,547 --> 00:29:56,130
+Any questions?
+
+652
+00:29:56,130 --> 00:29:57,810
+OK.
+
+653
+00:29:57,810 --> 00:30:01,730
+Does the removal of softmax for [INAUDIBLE]
+
+654
+00:30:01,730 --> 00:30:03,890
+causing training instability?
+
+655
+00:30:03,890 --> 00:30:05,180
+Training stability issues.
+
+656
+00:30:05,180 --> 00:30:06,680
+That's a good question.
+
+657
+00:30:06,680 --> 00:30:07,620
+I don't think so.
+
+658
+00:30:07,620 --> 00:30:12,110
+I'm not aware of documented linear softmax causing
+
+659
+00:30:12,110 --> 00:30:12,860
+lots of attention.
+
+660
+00:30:12,860 --> 00:30:14,480
+If anything, softmaxes are usually
+
+661
+00:30:14,480 --> 00:30:17,075
+more of the problems for various reasons.
+
+662
+00:30:17,075 --> 00:30:19,200
+So I think this will actually improve the stability
+
+663
+00:30:19,200 --> 00:30:21,040
+properties of the architecture.
+
+664
+00:30:23,960 --> 00:30:28,360
+Can you predict the next [INAUDIBLE] attention?
+
+665
+00:30:28,360 --> 00:30:33,400
+Consider the [INAUDIBLE] attention mechanism requests,
+
+666
+00:30:33,400 --> 00:30:39,560
+because of the low computing cost and the low latency.
+
+667
+00:30:39,560 --> 00:30:44,580
+Given that you predict, I mean, in high level,
+
+668
+00:30:44,580 --> 00:30:50,780
+what kind of features that will be [INAUDIBLE] the [INAUDIBLE].
+
+669
+00:30:50,780 --> 00:30:51,280
+Yeah.
+
+670
+00:30:51,280 --> 00:30:54,080
+I don't know if I have good predictions for what
+
+671
+00:30:54,080 --> 00:30:56,840
+the future attention architecture looks like.
+
+672
+00:30:56,840 --> 00:31:01,760
+I mean, my somewhat cop out answer to this, I think a lot of this will look like we
+
+673
+00:31:01,760 --> 00:31:03,540
+throw all of these tricks in.
+
+674
+00:31:03,540 --> 00:31:05,540
+In the same way as the architectures have gotten
+
+675
+00:31:05,540 --> 00:31:08,300
+very complex by taking all of these successful recipes
+
+676
+00:31:08,300 --> 00:31:10,060
+and throwing them in, I think also
+
+677
+00:31:10,060 --> 00:31:14,660
+that there's an even broader layer or a higher level
+
+678
+00:31:14,660 --> 00:31:17,140
+layer of basically using post-training
+
+679
+00:31:17,140 --> 00:31:19,540
+to have the model manage its own context.
+
+680
+00:31:19,540 --> 00:31:21,500
+Compaction, retrieval, all of these things
+
+681
+00:31:21,500 --> 00:31:24,260
+are basically an added layer on top.
+
+682
+00:31:24,260 --> 00:31:26,860
+I think a lot of the work that I imagine
+
+683
+00:31:26,860 --> 00:31:29,040
+will be integration of these different layers,
+
+684
+00:31:29,040 --> 00:31:32,580
+because we've seen that, at least the linear time attention
+
+685
+00:31:32,580 --> 00:31:35,220
+stuff has converged a lot into LSTM-like
+
+686
+00:31:35,220 --> 00:31:36,960
+or linear attention-like architectures.
+
+687
+00:31:36,960 --> 00:31:38,980
+And I don't really see that changing too much
+
+688
+00:31:38,980 --> 00:31:41,940
+in the near future.
+
+689
+00:31:41,940 --> 00:31:42,700
+Cool.
+
+690
+00:31:42,700 --> 00:31:43,230
+Oh, yes.
+
+691
+00:31:43,230 --> 00:31:43,980
+One last question.
+
+692
+00:31:43,980 --> 00:31:47,700
+Can you speak about lower precision attention?
+
+693
+00:31:47,700 --> 00:31:50,660
+Is FP4 attention possible?
+
+694
+00:31:50,660 --> 00:31:54,600
+I think the indexer is partially motivated by things like this.
+
+695
+00:31:54,600 --> 00:31:58,660
+FP4 attention, definitely possible.
+
+696
+00:31:58,660 --> 00:32:02,050
+I think the drawback is that the loss of precision for things
+
+697
+00:32:02,050 --> 00:32:04,868
+like softmaxes, where small, underflow, overflow,
+
+698
+00:32:04,868 --> 00:32:06,910
+these kinds of things can really start to matter,
+
+699
+00:32:06,910 --> 00:32:09,090
+can, sometimes, be pretty problematic.
+
+700
+00:32:09,090 --> 00:32:11,330
+And so I think this motivation of saying
+
+701
+00:32:11,330 --> 00:32:14,010
+like, OK, let's do selection with low precision
+
+702
+00:32:14,010 --> 00:32:16,350
+and then do a full precision computation afterwards,
+
+703
+00:32:16,350 --> 00:32:19,010
+because then the value vectors can be more finely
+
+704
+00:32:19,010 --> 00:32:21,530
+added together and weighted together.
+
+705
+00:32:21,530 --> 00:32:23,310
+It's an approach that makes sense.
+
+706
+00:32:23,310 --> 00:32:27,010
+I don't know if there's really good ways
+
+707
+00:32:27,010 --> 00:32:30,570
+of doing full attention in FP4 or even
+
+708
+00:32:30,570 --> 00:32:32,030
+lower precision of some kind.
+
+709
+00:32:32,030 --> 00:32:34,650
+Yeah.
+
+710
+00:32:34,650 --> 00:32:35,650
+OK.
+
+711
+00:32:35,650 --> 00:32:39,210
+OK, one last question then, then I'll move on.
+
+712
+00:32:39,210 --> 00:32:43,810
+So compared to transformers, compared to state space models,
+
+713
+00:32:43,810 --> 00:32:49,810
+what's the downside of training more complicated state space
+
+714
+00:32:49,810 --> 00:32:50,350
+models?
+
+715
+00:32:50,350 --> 00:32:50,570
+Yeah.
+
+716
+00:32:50,570 --> 00:32:51,750
+So that's a good question.
+
+717
+00:32:51,750 --> 00:32:54,042
+There have to be some downside or otherwise everybody--
+
+718
+00:32:54,042 --> 00:32:57,810
+Well, the downside, I think, is expressive power.
+
+719
+00:32:57,810 --> 00:33:00,150
+The all to all connection in softmax
+
+720
+00:33:00,150 --> 00:33:01,570
+attention is incredibly powerful.
+
+721
+00:33:01,570 --> 00:33:03,750
+It's also very easy to train.
+
+722
+00:33:03,750 --> 00:33:06,470
+It used to be, I think, compared to say, an LSTM.
+
+723
+00:33:06,470 --> 00:33:08,110
+Attention had the very strong advantage
+
+724
+00:33:08,110 --> 00:33:09,830
+of hardware efficiency.
+
+725
+00:33:09,830 --> 00:33:12,070
+You could train in parallel.
+
+726
+00:33:12,070 --> 00:33:16,070
+I think the reason why the state space models have caught on,
+
+727
+00:33:16,070 --> 00:33:18,030
+despite their similarity to LSTMs
+
+728
+00:33:18,030 --> 00:33:20,950
+and similar drawbacks in terms of representational power,
+
+729
+00:33:20,950 --> 00:33:24,910
+is that now, there's this kind of well-understood duality
+
+730
+00:33:24,910 --> 00:33:26,590
+because of the linear attention thing
+
+731
+00:33:26,590 --> 00:33:30,430
+that I talked about, where you can go from this RNN form
+
+732
+00:33:30,430 --> 00:33:32,770
+to the more dense matrix multiply form.
+
+733
+00:33:32,770 --> 00:33:34,270
+And the matrix multiply form allows
+
+734
+00:33:34,270 --> 00:33:35,650
+for computational efficiency.
+
+735
+00:33:35,650 --> 00:33:38,727
+So that trade-off has now been checked off.
+
+736
+00:33:38,727 --> 00:33:40,310
+But you've still got the trade-off of,
+
+737
+00:33:40,310 --> 00:33:41,670
+if you have a finite state and you
+
+738
+00:33:41,670 --> 00:33:43,045
+have to carry everything through,
+
+739
+00:33:43,045 --> 00:33:46,317
+you're going to be losing some information relative to just
+
+740
+00:33:46,317 --> 00:33:47,150
+carrying everything.
+
+741
+00:33:47,150 --> 00:33:50,690
+[INAUDIBLE] is going to be a problem in state space.
+
+742
+00:33:50,690 --> 00:33:54,190
+So [INAUDIBLE] the context itself, [INAUDIBLE].
+
+743
+00:33:56,843 --> 00:33:58,260
+Well, in the state space, you have
+
+744
+00:33:58,260 --> 00:34:00,340
+to basically think about the context length
+
+745
+00:34:00,340 --> 00:34:02,140
+relative to the size of your state.
+
+746
+00:34:02,140 --> 00:34:04,660
+I mean, if you have a state the size of your context,
+
+747
+00:34:04,660 --> 00:34:06,300
+then you're good to go, but then you're
+
+748
+00:34:06,300 --> 00:34:08,020
+paying these very large costs.
+
+749
+00:34:08,020 --> 00:34:10,719
+So really, the point is, the free lunches,
+
+750
+00:34:10,719 --> 00:34:12,420
+if you want a really tiny state, it's
+
+751
+00:34:12,420 --> 00:34:15,739
+really hard to compress all the information in a big context.
+
+752
+00:34:15,739 --> 00:34:18,642
+It might be possible one day to not have any trade-offs,
+
+753
+00:34:18,642 --> 00:34:20,100
+but I think, thus far, that's where
+
+754
+00:34:20,100 --> 00:34:22,100
+the trade-offs are showing up.
+
+755
+00:34:22,100 --> 00:34:22,659
+Cool.
+
+756
+00:34:22,659 --> 00:34:23,159
+OK.
+
+757
+00:34:23,159 --> 00:34:26,139
+So now, I'm going to talk about mixture of experts.
+
+758
+00:34:26,139 --> 00:34:29,340
+And I think mixture of experts are important to talk about.
+
+759
+00:34:29,340 --> 00:34:31,639
+Conceptually, they don't really change the game.
+
+760
+00:34:31,639 --> 00:34:33,500
+One way of thinking about mixture of experts
+
+761
+00:34:33,500 --> 00:34:36,139
+is, they are just a more efficient MLP.
+
+762
+00:34:36,139 --> 00:34:37,179
+You take your MLP.
+
+763
+00:34:37,179 --> 00:34:40,540
+And somehow, someone gives you just a more efficient MLP.
+
+764
+00:34:40,540 --> 00:34:43,020
+That is what mixture of experts is.
+
+765
+00:34:43,020 --> 00:34:45,060
+But I think you need to understand
+
+766
+00:34:45,060 --> 00:34:46,739
+what mixture of experts is, I think,
+
+767
+00:34:46,739 --> 00:34:50,139
+for two reasons-- one is this slide of everyone's
+
+768
+00:34:50,139 --> 00:34:53,969
+doing MoEs these days, everyone's shipping MoEs these days.
+
+769
+00:34:53,969 --> 00:34:55,719
+You should understand what it is if you're
+
+770
+00:34:55,719 --> 00:35:00,080
+going to want to be people who deeply understand language
+
+771
+00:35:00,080 --> 00:35:01,280
+models and how they work.
+
+772
+00:35:01,280 --> 00:35:03,080
+So that's one reason.
+
+773
+00:35:03,080 --> 00:35:05,400
+The other reason is that MoEs actually
+
+774
+00:35:05,400 --> 00:35:09,860
+has some really interesting mechanical components to them.
+
+775
+00:35:09,860 --> 00:35:11,800
+If you look at how MoEs are built
+
+776
+00:35:11,800 --> 00:35:13,320
+and what primitives they use, you
+
+777
+00:35:13,320 --> 00:35:17,520
+will quickly see MoE like primitives in many places.
+
+778
+00:35:17,520 --> 00:35:20,160
+And you'll realize, wow, I can do more interesting things
+
+779
+00:35:20,160 --> 00:35:21,060
+with neural networks.
+
+780
+00:35:21,060 --> 00:35:22,800
+So there's a broader reason why I
+
+781
+00:35:22,800 --> 00:35:24,500
+think MoEs are interesting and cool,
+
+782
+00:35:24,500 --> 00:35:26,960
+and you should learn about them.
+
+783
+00:35:26,960 --> 00:35:28,860
+So what is an MoE?
+
+784
+00:35:28,860 --> 00:35:31,140
+MoEs are very simple things in some ways,
+
+785
+00:35:31,140 --> 00:35:33,420
+they're just replacements of your MLP.
+
+786
+00:35:33,420 --> 00:35:37,097
+So on the left is your usual MLP for a transformer.
+
+787
+00:35:37,097 --> 00:35:38,180
+You've got your attention.
+
+788
+00:35:38,180 --> 00:35:39,580
+You've got some normalization.
+
+789
+00:35:39,580 --> 00:35:42,220
+And then you've got a feed forward right after that.
+
+790
+00:35:42,220 --> 00:35:45,080
+This is where a lot of the dense, big information
+
+791
+00:35:45,080 --> 00:35:46,680
+processing happens.
+
+792
+00:35:46,680 --> 00:35:51,520
+Now, what I can do instead is, let's say, I take my big FFN.
+
+793
+00:35:51,520 --> 00:35:54,590
+And I'm going to cut them up into smaller FFNs.
+
+794
+00:35:54,590 --> 00:35:57,662
+So I now have four feed forward networks.
+
+795
+00:35:57,662 --> 00:36:00,370
+And actually, let's say, I don't cut them up into smaller pieces.
+
+796
+00:36:00,370 --> 00:36:03,790
+Let's say, they're the same size as my original FFN.
+
+797
+00:36:03,790 --> 00:36:06,310
+And somehow, by some magic, I have
+
+798
+00:36:06,310 --> 00:36:10,010
+a system that tells me which FFN to pick for every input.
+
+799
+00:36:10,010 --> 00:36:14,210
+Now, what I've done is, I have 4x the parameters,
+
+800
+00:36:14,210 --> 00:36:17,830
+or at least for my FFN, I have four FFNs worth of parameters.
+
+801
+00:36:17,830 --> 00:36:20,670
+But on any forward or backward pass,
+
+802
+00:36:20,670 --> 00:36:24,230
+I'm only going to pay one FFN worth of cost.
+
+803
+00:36:24,230 --> 00:36:25,310
+That's great.
+
+804
+00:36:25,310 --> 00:36:29,130
+So in some sense, the original motivations for MoEs,
+
+805
+00:36:29,130 --> 00:36:33,070
+if you read the original papers, have this very parameter-centric
+
+806
+00:36:33,070 --> 00:36:33,710
+view.
+
+807
+00:36:33,710 --> 00:36:35,810
+If you start something like, well,
+
+808
+00:36:35,810 --> 00:36:37,670
+let's say, you just wanted more parameters,
+
+809
+00:36:37,670 --> 00:36:40,030
+because you believe more parameters are good.
+
+810
+00:36:40,030 --> 00:36:40,530
+OK.
+
+811
+00:36:40,530 --> 00:36:40,930
+Good.
+
+812
+00:36:40,930 --> 00:36:42,390
+If we want more parameters, and we
+
+813
+00:36:42,390 --> 00:36:44,530
+don't want to pay the cost for more parameters,
+
+814
+00:36:44,530 --> 00:36:46,250
+you need something on the right.
+
+815
+00:36:46,250 --> 00:36:50,010
+So this is the mental model that you should have for MoEs.
+
+816
+00:36:50,010 --> 00:36:54,650
+You want to increase parameters without affecting your flops.
+
+817
+00:36:54,650 --> 00:36:57,250
+Now, why are they so popular?
+
+818
+00:36:57,250 --> 00:36:59,450
+Every model that you get on Hugging Face
+
+819
+00:36:59,450 --> 00:37:02,770
+or whatever these days are MoEs past a certain size.
+
+820
+00:37:02,770 --> 00:37:06,530
+Past a certain size, everything that you get seems to be an MoE.
+
+821
+00:37:06,530 --> 00:37:09,050
+And the reason is because it seems
+
+822
+00:37:09,050 --> 00:37:12,370
+to be the case that for whatever reason, if you keep
+
+823
+00:37:12,370 --> 00:37:15,850
+the total compute the same, but you just increase
+
+824
+00:37:15,850 --> 00:37:19,330
+the number of sparse parameters, somehow,
+
+825
+00:37:19,330 --> 00:37:21,570
+the models are generally getting better.
+
+826
+00:37:21,570 --> 00:37:24,570
+So this is evidence, maybe in favor of the view
+
+827
+00:37:24,570 --> 00:37:26,650
+that more parameters are, in fact,
+
+828
+00:37:26,650 --> 00:37:29,890
+generally good, even if only a subset of them are active
+
+829
+00:37:29,890 --> 00:37:31,170
+at a time.
+
+830
+00:37:31,170 --> 00:37:34,370
+And I'm going to refer to some of the original Google papers
+
+831
+00:37:34,370 --> 00:37:36,070
+extensively throughout this lecture.
+
+832
+00:37:36,070 --> 00:37:39,590
+This one's from Fedus, et al, in 2022, where they were doing,
+
+833
+00:37:39,590 --> 00:37:41,503
+I think, the switch transformer for this one.
+
+834
+00:37:41,503 --> 00:37:43,170
+And they're showing, oh, as you increase
+
+835
+00:37:43,170 --> 00:37:46,170
+the number of experts, so this is active parameter
+
+836
+00:37:46,170 --> 00:37:49,050
+stays the same, number of experts increases,
+
+837
+00:37:49,050 --> 00:37:50,948
+your test loss for language modeling
+
+838
+00:37:50,948 --> 00:37:52,740
+is just decreasing, decreasing, decreasing.
+
+839
+00:37:52,740 --> 00:37:54,280
+That's lovely if all you care about
+
+840
+00:37:54,280 --> 00:37:57,080
+is your forward pass flops.
+
+841
+00:37:57,080 --> 00:38:01,680
+On the right, you see similar things as you train faster.
+
+842
+00:38:01,680 --> 00:38:05,060
+As you increase your training compute on the x-axis,
+
+843
+00:38:05,060 --> 00:38:07,940
+if you have more experts for the same amount of training compute,
+
+844
+00:38:07,940 --> 00:38:09,840
+you just get better performance.
+
+845
+00:38:09,840 --> 00:38:12,080
+So for both training and inference,
+
+846
+00:38:12,080 --> 00:38:14,040
+MoEs just give you a free win.
+
+847
+00:38:14,040 --> 00:38:15,500
+This is pretty wonderful.
+
+848
+00:38:15,500 --> 00:38:18,160
+It's pretty great.
+
+849
+00:38:18,160 --> 00:38:21,725
+And this is really something that's been seen many times.
+
+850
+00:38:21,725 --> 00:38:23,600
+This is the same plot from before on the left
+
+851
+00:38:23,600 --> 00:38:25,360
+from the Fedus paper.
+
+852
+00:38:25,360 --> 00:38:26,640
+Last year.
+
+853
+00:38:26,640 --> 00:38:30,780
+I think, AIQ folks put out this OlMoE paper,
+
+854
+00:38:30,780 --> 00:38:34,080
+which was their open source mixture of experts
+
+855
+00:38:34,080 --> 00:38:36,160
+analysis and training paper.
+
+856
+00:38:36,160 --> 00:38:37,660
+And they see the same thing as well.
+
+857
+00:38:37,660 --> 00:38:40,720
+If you look at training loss, or validation loss,
+
+858
+00:38:40,720 --> 00:38:43,380
+or downstream benchmark performance,
+
+859
+00:38:43,380 --> 00:38:46,960
+you see that in training time, these models
+
+860
+00:38:46,960 --> 00:38:49,700
+are doing much better as MoEs compared
+
+861
+00:38:49,700 --> 00:38:50,960
+to their dense counterparts.
+
+862
+00:38:50,960 --> 00:38:54,900
+So something like two times faster or something like that,
+
+863
+00:38:54,900 --> 00:38:57,920
+training a MoE relative to a dense model.
+
+864
+00:38:57,920 --> 00:39:02,460
+So you can really see the benefits of sparsity here.
+
+865
+00:39:02,460 --> 00:39:04,360
+And I think the proof is in the pudding.
+
+866
+00:39:04,360 --> 00:39:06,780
+But if you look at all the MoEs that got released,
+
+867
+00:39:06,780 --> 00:39:10,460
+they are much stronger than dense models
+
+868
+00:39:10,460 --> 00:39:12,500
+in terms of activated parameters, which
+
+869
+00:39:12,500 --> 00:39:15,060
+is what matters if you care about inference flops,
+
+870
+00:39:15,060 --> 00:39:17,860
+or really, even just in general, the cost
+
+871
+00:39:17,860 --> 00:39:21,440
+to train and serve these systems, the all-in cost.
+
+872
+00:39:21,440 --> 00:39:25,300
+So in DeepSeek v2 and the earlier DeepSeekMoEs came out,
+
+873
+00:39:25,300 --> 00:39:28,780
+it was really a big shift from a lot of these dense models
+
+874
+00:39:28,780 --> 00:39:30,240
+that everyone else was training.
+
+875
+00:39:30,240 --> 00:39:34,060
+You saw that, wow, we have much fewer active parameters, just as
+
+876
+00:39:34,060 --> 00:39:36,620
+good, if not better MoE performance compared
+
+877
+00:39:36,620 --> 00:39:37,780
+to everyone else.
+
+878
+00:39:37,780 --> 00:39:41,380
+This is some really good stuff happening with MoEs.
+
+879
+00:39:41,380 --> 00:39:42,780
+Good.
+
+880
+00:39:42,780 --> 00:39:43,420
+OK.
+
+881
+00:39:43,420 --> 00:39:45,340
+So hopefully, I've convinced you that MoEs
+
+882
+00:39:45,340 --> 00:39:48,160
+are an interesting thing that you should spend your time
+
+883
+00:39:48,160 --> 00:39:50,380
+thinking about and studying.
+
+884
+00:39:50,380 --> 00:39:51,120
+Oh, great.
+
+885
+00:39:51,120 --> 00:39:52,720
+And then one last thing that I'll
+
+886
+00:39:52,720 --> 00:39:55,040
+say for why this is important is,
+
+887
+00:39:55,040 --> 00:39:58,360
+MoEs give you another axis of parallelization.
+
+888
+00:39:58,360 --> 00:40:02,400
+We'll talk about parallelization in systems in three more
+
+889
+00:40:02,400 --> 00:40:03,942
+lectures, I think.
+
+890
+00:40:03,942 --> 00:40:05,400
+But parallelization is actually one
+
+891
+00:40:05,400 --> 00:40:08,100
+of the really big important things in LLMs.
+
+892
+00:40:08,100 --> 00:40:09,340
+LLMs are very big.
+
+893
+00:40:09,340 --> 00:40:10,960
+They don't fit in single devices,
+
+894
+00:40:10,960 --> 00:40:12,285
+either to train or inference.
+
+895
+00:40:12,285 --> 00:40:14,160
+So you want many different ways of cutting up
+
+896
+00:40:14,160 --> 00:40:16,400
+your model to efficiently serve or train them.
+
+897
+00:40:16,400 --> 00:40:18,920
+Mixture of experts have this additional nice thing
+
+898
+00:40:18,920 --> 00:40:22,400
+that you can do, where your experts within each FFN
+
+899
+00:40:22,400 --> 00:40:25,200
+naturally come in different chunks.
+
+900
+00:40:25,200 --> 00:40:26,900
+Each expert is a natural chunk.
+
+901
+00:40:26,900 --> 00:40:28,740
+You can put them on different devices.
+
+902
+00:40:28,740 --> 00:40:31,540
+And then you can route the activations to different devices.
+
+903
+00:40:31,540 --> 00:40:34,300
+We'll talk about expert parallel later, which is what this is.
+
+904
+00:40:34,300 --> 00:40:36,520
+But this gives you an additional systems thing
+
+905
+00:40:36,520 --> 00:40:38,960
+that you can optimize, which is very helpful if you
+
+906
+00:40:38,960 --> 00:40:42,120
+want to optimize your serving.
+
+907
+00:40:42,120 --> 00:40:47,150
+In the West, I think there's been several open source
+
+908
+00:40:47,150 --> 00:40:50,110
+releases that are big, strong MoEs.
+
+909
+00:40:50,110 --> 00:40:55,910
+On the big model side, there was Llama 4 and GPT OSS from OpenAI.
+
+910
+00:40:55,910 --> 00:40:58,950
+Unfortunately, I guess, open source model releases
+
+911
+00:40:58,950 --> 00:41:02,110
+in the West have stalled, for the most part.
+
+912
+00:41:02,110 --> 00:41:04,330
+So there aren't quite as many being released now,
+
+913
+00:41:04,330 --> 00:41:07,710
+but there's at least two good examples of this,
+
+914
+00:41:07,710 --> 00:41:12,070
+both top tier models in their own right.
+
+915
+00:41:12,070 --> 00:41:15,030
+But I think a lot of the action for both MoE
+
+916
+00:41:15,030 --> 00:41:19,670
+research and training has happened in China.
+
+917
+00:41:19,670 --> 00:41:23,610
+Qwen, and DeepSeek, and some others, like mini CPM,
+
+918
+00:41:23,610 --> 00:41:27,910
+did some of the earliest work training and popularizing MoEs.
+
+919
+00:41:27,910 --> 00:41:31,350
+They continue to do really great work on MoEs.
+
+920
+00:41:31,350 --> 00:41:33,810
+If you look at some of the early Qwen MoE models,
+
+921
+00:41:33,810 --> 00:41:36,510
+this was Qwen 1.5 MoE.
+
+922
+00:41:36,510 --> 00:41:40,110
+They showed that their like small 2.7 billion parameter
+
+923
+00:41:40,110 --> 00:41:44,050
+active model was doing better than many of the 7B models
+
+924
+00:41:44,050 --> 00:41:44,710
+at the time.
+
+925
+00:41:44,710 --> 00:41:47,290
+And I think some of this early proof of work from DeepSeek
+
+926
+00:41:47,290 --> 00:41:50,810
+and Qwen really convinced everyone else in the open source
+
+927
+00:41:50,810 --> 00:41:54,610
+community that this was the right way to go.
+
+928
+00:41:54,610 --> 00:41:56,670
+Speaking of DeepSeek-- was there a question?
+
+929
+00:41:56,670 --> 00:41:57,410
+Yes.
+
+930
+00:41:57,410 --> 00:42:01,430
+I guess one question I had about the expert parallel,
+
+931
+00:42:01,430 --> 00:42:04,290
+isn't there like a communication bottleneck that's
+
+932
+00:42:04,290 --> 00:42:06,730
+built up because these experts are communicating
+
+933
+00:42:06,730 --> 00:42:07,890
+with each other?
+
+934
+00:42:07,890 --> 00:42:08,930
+Yes.
+
+935
+00:42:08,930 --> 00:42:11,170
+So in some sense, you pay the communication cost
+
+936
+00:42:11,170 --> 00:42:13,130
+of shipping an activation over.
+
+937
+00:42:13,130 --> 00:42:16,810
+And I will not explain, but I will show you one trick
+
+938
+00:42:16,810 --> 00:42:19,130
+of how you reduce that.
+
+939
+00:42:19,130 --> 00:42:21,550
+But in general, you're trading certain things off.
+
+940
+00:42:21,550 --> 00:42:23,217
+You're getting more aggregate flops.
+
+941
+00:42:23,217 --> 00:42:24,550
+You're reducing your memory use.
+
+942
+00:42:24,550 --> 00:42:26,508
+And in exchange, you're going to pay for comms.
+
+943
+00:42:26,508 --> 00:42:30,090
+So it's highly dependent on your topology and all
+
+944
+00:42:30,090 --> 00:42:33,070
+these other things, whether this is going to be a net win.
+
+945
+00:42:33,070 --> 00:42:33,570
+Cool.
+
+946
+00:42:33,570 --> 00:42:34,370
+Oh, yeah.
+
+947
+00:42:34,370 --> 00:42:37,690
+So during training [INAUDIBLE].
+
+948
+00:42:37,690 --> 00:42:38,190
+OK.
+
+949
+00:42:38,190 --> 00:42:39,370
+This is the important part.
+
+950
+00:42:39,370 --> 00:42:41,680
+During training, they are also sparse.
+
+951
+00:42:41,680 --> 00:42:44,420
+This is really the key thing that makes MoEs hard.
+
+952
+00:42:44,420 --> 00:42:50,160
+I mean, I'm spoilering the key idea from a few slides down,
+
+953
+00:42:50,160 --> 00:42:53,013
+but it would be very easy if we activated all the experts
+
+954
+00:42:53,013 --> 00:42:53,680
+during training.
+
+955
+00:42:53,680 --> 00:42:54,760
+Because then we get to see, oh, which
+
+956
+00:42:54,760 --> 00:42:56,100
+expert is good for my input?
+
+957
+00:42:56,100 --> 00:42:57,960
+So you get to learn how to route.
+
+958
+00:42:57,960 --> 00:43:01,360
+The hard thing about MoE is that during training, you only
+
+959
+00:43:01,360 --> 00:43:03,540
+have one or k experts active.
+
+960
+00:43:03,540 --> 00:43:06,000
+So you don't what happened with the rest of them.
+
+961
+00:43:06,000 --> 00:43:07,940
+You only know the ones that activated.
+
+962
+00:43:07,940 --> 00:43:10,200
+Despite this, you must somehow learn to route.
+
+963
+00:43:10,200 --> 00:43:13,960
+So it's got this RL bandit flavor to the problem,
+
+964
+00:43:13,960 --> 00:43:16,380
+but we're not going to solve it with either RL or bandits.
+
+965
+00:43:16,380 --> 00:43:18,547
+We're going to solve it with the power of heuristics
+
+966
+00:43:18,547 --> 00:43:19,560
+and deep learning magic.
+
+967
+00:43:19,560 --> 00:43:20,580
+Yes.
+
+968
+00:43:20,580 --> 00:43:24,360
+What is the granularity of switching between experts?
+
+969
+00:43:24,360 --> 00:43:27,760
+So the granularity, as in the scale at which we route experts,
+
+970
+00:43:27,760 --> 00:43:28,532
+is at token level.
+
+971
+00:43:28,532 --> 00:43:29,740
+I don't know if--OK, good.
+
+972
+00:43:29,740 --> 00:43:29,840
+Good.
+
+973
+00:43:29,840 --> 00:43:30,540
+That was the question.
+
+974
+00:43:30,540 --> 00:43:31,540
+Yes, at the token level.
+
+975
+00:43:31,540 --> 00:43:32,920
+So every token gets an expert.
+
+976
+00:43:32,920 --> 00:43:36,300
+And the routers, just to get your mental model correct,
+
+977
+00:43:36,300 --> 00:43:37,780
+the routers are super naive.
+
+978
+00:43:37,780 --> 00:43:40,740
+They're a single matrix multiply between your input
+
+979
+00:43:40,740 --> 00:43:41,715
+and your whatever.
+
+980
+00:43:41,715 --> 00:43:43,840
+And so you're not going to do anything complicated.
+
+981
+00:43:43,840 --> 00:43:46,040
+You don't know it's like a medical question or not.
+
+982
+00:43:46,040 --> 00:43:47,980
+You're like, oh, this is a token that looks like it's
+
+983
+00:43:47,980 --> 00:43:49,120
+in, I don't know, Japanese.
+
+984
+00:43:49,120 --> 00:43:51,500
+Let's route it to expert 7.
+
+985
+00:43:51,500 --> 00:43:52,300
+Yes.
+
+986
+00:43:52,300 --> 00:43:52,800
+Yeah.
+
+987
+00:43:52,800 --> 00:43:59,140
+So is there an upper limit to parallelizing these MoE models
+
+988
+00:43:59,140 --> 00:44:00,960
+in training or inference?
+
+989
+00:44:00,960 --> 00:44:03,460
+Yeah, in general, there's an upper limit to parallelization,
+
+990
+00:44:03,460 --> 00:44:06,180
+because as you shard over more and more devices,
+
+991
+00:44:06,180 --> 00:44:09,860
+the communication cost explodes.
+
+992
+00:44:09,860 --> 00:44:12,540
+Well, if we get the assignment to design done correctly,
+
+993
+00:44:12,540 --> 00:44:15,040
+you will have to deal with some of these in your assignment.
+
+994
+00:44:15,040 --> 00:44:16,940
+We will ask you to figure out the networking
+
+995
+00:44:16,940 --> 00:44:19,795
+topology and things like this that will make sharding make
+
+996
+00:44:19,795 --> 00:44:20,920
+sense, or it's the reverse.
+
+997
+00:44:20,920 --> 00:44:22,420
+Given a networking topology, you'll
+
+998
+00:44:22,420 --> 00:44:25,620
+have to figure out how to shard models and things like this.
+
+999
+00:44:25,620 --> 00:44:26,460
+Yeah.
+
+1000
+00:44:26,460 --> 00:44:27,140
+Good.
+
+1001
+00:44:30,580 --> 00:44:33,973
+DeepSeek，现在以 DeepSeek R1 等闻名。
+
+1002
+00:44:33,973 --> 00:44:36,140
+但我觉得我真正喜欢 DeepSeek 的一点是——
+
+1003
+00:44:36,140 --> 00:44:38,410
+最初，这门课原本是，我们就
+
+1004
+00:44:38,410 --> 00:44:40,330
+过一遍 DeepSeek 论文的讲解，最早
+
+1005
+00:44:40,330 --> 00:44:42,770
+那一版，是因为他们其实做了
+
+1006
+00:44:42,770 --> 00:44:47,230
+很长时间里在 LLM 科学研究中非常好的架构工作。
+
+1007
+00:44:47,230 --> 00:44:50,210
+而 DeepSeek 是较早一批
+
+1008
+00:44:50,210 --> 00:44:52,030
+展示为什么 MoE 很好的工作之一。
+
+1009
+00:44:52,030 --> 00:44:55,085
+他们在消融实验方面做了大量优秀的工作，比如，
+
+1010
+00:44:55,085 --> 00:44:56,710
+如果我们使用稠密层会怎样？
+
+1011
+00:44:56,710 --> 00:44:57,990
+如果我们使用哈希路由会怎样？
+
+1012
+00:44:57,990 --> 00:44:59,430
+如果我们使用 switch router 会怎样？
+
+1013
+00:44:59,430 --> 00:45:01,370
+所有这些不同的设计决策，
+
+1014
+00:45:01,370 --> 00:45:04,203
+你可以在他们早期的一些 DeepSeekMoE 论文中看到。
+
+1015
+00:45:04,203 --> 00:45:06,370
+所以如果你对这些问题感兴趣，
+
+1016
+00:45:06,370 --> 00:45:07,910
+比如架构、设计等等，
+
+1017
+00:45:07,910 --> 00:45:10,430
+我建议你读一读早期的 DeepSeek 论文。
+
+1018
+00:45:10,430 --> 00:45:13,210
+从这些论文里能学到很多东西。
+
+1019
+00:45:13,210 --> 00:45:15,210
+当然，进展并没有停止。
+
+1020
+00:45:15,210 --> 00:45:20,170
+DeepSeek v3、v3.2，以及 GLM 等等，已经构建了这些
+
+1021
+00:45:20,170 --> 00:45:23,170
+出色的、非常强大的 MoE 模型。
+
+1022
+00:45:23,170 --> 00:45:24,970
+很明显，这就是
+
+1023
+00:45:24,970 --> 00:45:27,530
+这些大模型未来发展的方向，
+
+1024
+00:45:27,530 --> 00:45:29,550
+在可预见的未来。
+
+1025
+00:45:29,550 --> 00:45:33,250
+至少我想接下来的几年，都会是 MoE。
+
+1026
+00:45:33,250 --> 00:45:33,970
+好的。
+
+1027
+00:45:33,970 --> 00:45:40,350
+那么现在的问题是，为什么它们没有更流行？
+
+1028
+00:45:40,350 --> 00:45:42,270
+在很多方面，我觉得 MoE
+
+1029
+00:45:42,270 --> 00:45:43,795
+被接受得相当慢。
+
+1030
+00:45:43,795 --> 00:45:45,170
+你看看其中一些论文。
+
+1031
+00:45:45,170 --> 00:45:46,510
+它们是 2022 年的。
+
+1032
+00:45:46,510 --> 00:45:51,190
+Google 当时在研究并真正尝试推动 MoE。
+
+1033
+00:45:51,190 --> 00:45:55,070
+但直到 2024 年之后，MoE 才真正
+
+1034
+00:45:55,070 --> 00:45:56,790
+开始流行起来，为什么？
+
+1035
+00:45:56,790 --> 00:45:59,890
+另外，如果你在做各种 LLM 研究，
+
+1036
+00:45:59,890 --> 00:46:02,150
+你很可能主要使用的是稠密模型，
+
+1037
+00:46:02,150 --> 00:46:04,710
+那为什么不用 MoE 模型呢，如果它们这么好？
+
+1038
+00:46:04,710 --> 00:46:06,670
+我们可以节省计算。
+
+1039
+00:46:06,670 --> 00:46:09,170
+MoE 带来了很多复杂性。
+
+1040
+00:46:09,170 --> 00:46:11,990
+训练 MoE 或使用 MoE 并不容易，
+
+1041
+00:46:11,990 --> 00:46:14,630
+or to do many things.
+
+1042
+00:46:14,630 --> 00:46:16,790
+The infrastructure is very complex.
+
+1043
+00:46:16,790 --> 00:46:19,290
+I mean, there were a couple questions about parallelization,
+
+1044
+00:46:19,290 --> 00:46:20,910
+but this is generally right, that it's
+
+1045
+00:46:20,910 --> 00:46:23,950
+hard to parallelize experts in ways that
+
+1046
+00:46:23,950 --> 00:46:26,110
+are efficient in utilization.
+
+1047
+00:46:26,110 --> 00:46:27,570
+MoEs have a lot of parameters.
+
+1048
+00:46:27,570 --> 00:46:30,270
+It's hard to fit them on a single device.
+
+1049
+00:46:30,270 --> 00:46:33,860
+And if you're training them, the MoEs can really blow up on you.
+
+1050
+00:46:33,860 --> 00:46:36,120
+And you'll see why in a few slides,
+
+1051
+00:46:36,120 --> 00:46:38,040
+why MoEs are just really hard to deal with,
+
+1052
+00:46:38,040 --> 00:46:40,940
+but they're just not easy objects to work with.
+
+1053
+00:46:40,940 --> 00:46:46,260
+I mean, there's good rules of thumb now, but it's not easy.
+
+1054
+00:46:46,260 --> 00:46:49,700
+I'll briefly mention with one slide that there are people
+
+1055
+00:46:49,700 --> 00:46:53,620
+that also mixture of experts, the attention block
+
+1056
+00:46:53,620 --> 00:46:54,980
+in transformers.
+
+1057
+00:46:54,980 --> 00:46:57,140
+There have been a couple of papers,
+
+1058
+00:46:57,140 --> 00:46:59,600
+but they are much less common.
+
+1059
+00:46:59,600 --> 00:47:02,140
+And I think the things that I have seen
+
+1060
+00:47:02,140 --> 00:47:03,660
+is that they haven't been quite as
+
+1061
+00:47:03,660 --> 00:47:08,500
+easy to tame or to get to work compared to just replacing
+
+1062
+00:47:08,500 --> 00:47:10,800
+the FFN or the MLP layer.
+
+1063
+00:47:10,800 --> 00:47:12,560
+So I'm only going to talk about the left.
+
+1064
+00:47:12,560 --> 00:47:15,820
+This is basically what all the big models do.
+
+1065
+00:47:15,820 --> 00:47:18,900
+People are not, for the most part, sharding or sorry,
+
+1066
+00:47:18,900 --> 00:47:23,420
+splitting up attention heads into experts.
+
+1067
+00:47:23,420 --> 00:47:23,980
+OK.
+
+1068
+00:47:23,980 --> 00:47:28,180
+So that was the broad industrial overview of MoE
+
+1069
+00:47:28,180 --> 00:47:30,260
+and what the state of things are.
+
+1070
+00:47:30,260 --> 00:47:32,920
+But now, let's talk about how you design an MoE, how
+
+1071
+00:47:32,920 --> 00:47:34,360
+you think about an MoE.
+
+1072
+00:47:34,360 --> 00:47:38,120
+So to do that, I'm going to talk about three different kind
+
+1073
+00:47:38,120 --> 00:47:40,180
+of axes of variation.
+
+1074
+00:47:40,180 --> 00:47:43,770
+So what kinds of things can change for MoEs?
+
+1075
+00:47:43,770 --> 00:47:45,520
+Well, you can change the routing function.
+
+1076
+00:47:45,520 --> 00:47:48,960
+We know that MoEs have this core thing of a router
+
+1077
+00:47:48,960 --> 00:47:50,620
+has to send tokens to experts.
+
+1078
+00:47:50,620 --> 00:47:52,160
+So we can change that.
+
+1079
+00:47:52,160 --> 00:47:54,420
+We can change the sizes of the different experts.
+
+1080
+00:47:54,420 --> 00:47:57,720
+For a given budget, you might have more experts
+
+1081
+00:47:57,720 --> 00:48:01,552
+with fewer parameters or fewer experts with more parameters.
+
+1082
+00:48:01,552 --> 00:48:03,760
+And then finally, we're going to talk about training,
+
+1083
+00:48:03,760 --> 00:48:05,820
+because training is going to be really difficult.
+
+1084
+00:48:05,820 --> 00:48:09,920
+Once you start to realize how MoEs work, you realize, wow,
+
+1085
+00:48:09,920 --> 00:48:12,440
+it is not easy to train something that routes
+
+1086
+00:48:12,440 --> 00:48:15,300
+tokens to different places.
+
+1087
+00:48:15,300 --> 00:48:15,800
+OK.
+
+1088
+00:48:15,800 --> 00:48:20,840
+So in all cases, we don't want to activate all the experts.
+
+1089
+00:48:20,840 --> 00:48:24,800
+We want to only have some subset of experts active.
+
+1090
+00:48:24,800 --> 00:48:28,800
+And so we are going to always be choosing some TopK.
+
+1091
+00:48:28,800 --> 00:48:32,260
+There are different kinds of choices that you can do.
+
+1092
+00:48:32,260 --> 00:48:35,000
+You can have the token choose the expert.
+
+1093
+00:48:35,000 --> 00:48:36,940
+You can have the expert choose the token.
+
+1094
+00:48:36,940 --> 00:48:39,080
+So each expert picks their favorite tokens,
+
+1095
+00:48:39,080 --> 00:48:42,340
+or you can have each token pick their favorite experts.
+
+1096
+00:48:42,340 --> 00:48:45,580
+Or you can, somehow, have this very complicated router
+
+1097
+00:48:45,580 --> 00:48:48,180
+that globally decides, oh, yes, you, token, should
+
+1098
+00:48:48,180 --> 00:48:48,933
+go to this expert.
+
+1099
+00:48:48,933 --> 00:48:51,100
+And this other token should go to that other experts
+
+1100
+00:48:51,100 --> 00:48:55,500
+to try to globally optimize assignments.
+
+1101
+00:48:55,500 --> 00:49:00,880
+So basically, almost all the MoE do token choice TopK.
+
+1102
+00:49:00,880 --> 00:49:04,020
+And so the token is going to be the one to choose the experts.
+
+1103
+00:49:04,020 --> 00:49:06,020
+And there's going to be k different experts that
+
+1104
+00:49:06,020 --> 00:49:09,740
+get selected to be in the pool.
+
+1105
+00:49:09,740 --> 00:49:13,580
+And you can see, this is from the OlMoE paper,
+
+1106
+00:49:13,580 --> 00:49:16,403
+differences between token choice and expert choice.
+
+1107
+00:49:16,403 --> 00:49:17,820
+You see that token choice is going
+
+1108
+00:49:17,820 --> 00:49:21,180
+to get lower validation losses, higher downstream benchmark
+
+1109
+00:49:21,180 --> 00:49:24,000
+scores compared to expert choice.
+
+1110
+00:49:24,000 --> 00:49:26,000
+There have been successful expert choice models.
+
+1111
+00:49:26,000 --> 00:49:27,610
+I mean, this also trains fine.
+
+1112
+00:49:27,610 --> 00:49:32,570
+But token choice has generally been much easier to get working
+
+1113
+00:49:32,570 --> 00:49:34,930
+and has been the standard for all of the models
+
+1114
+00:49:34,930 --> 00:49:36,610
+that we see today.
+
+1115
+00:49:36,610 --> 00:49:39,950
+I think one of the four models was maybe expert choice.
+
+1116
+00:49:39,950 --> 00:49:41,530
+But I don't think that's necessarily
+
+1117
+00:49:41,530 --> 00:49:43,390
+a strong vote of confidence.
+
+1118
+00:49:46,610 --> 00:49:48,850
+I think that was one of the unreleased Llama 4
+
+1119
+00:49:48,850 --> 00:49:50,350
+models in my defense.
+
+1120
+00:49:50,350 --> 00:49:50,970
+OK.
+
+1121
+00:49:50,970 --> 00:49:53,410
+So I think there are many different ways
+
+1122
+00:49:53,410 --> 00:49:55,290
+that you can do routing.
+
+1123
+00:49:55,290 --> 00:49:57,370
+So one of the ways that you can do routing
+
+1124
+00:49:57,370 --> 00:50:02,930
+is, you can actually have a small linear projection
+
+1125
+00:50:02,930 --> 00:50:04,790
+that says, OK, I'm going to get my input.
+
+1126
+00:50:04,790 --> 00:50:07,490
+My router is going to compute an inner product.
+
+1127
+00:50:07,490 --> 00:50:09,830
+Each expert has a vector direction.
+
+1128
+00:50:09,830 --> 00:50:13,470
+And the closest in inner product space will get selected.
+
+1129
+00:50:13,470 --> 00:50:16,270
+This is, by far, the most common router.
+
+1130
+00:50:16,270 --> 00:50:19,450
+It's used in the classic Switch Transformer, the GShard.
+
+1131
+00:50:19,450 --> 00:50:21,550
+Those two are the early Google papers.
+
+1132
+00:50:21,550 --> 00:50:25,270
+It's used in Grok, Mixtral, DBRX, DeepSeek, and others.
+
+1133
+00:50:25,270 --> 00:50:30,430
+The number of k that you choose varies, depending on which paper
+
+1134
+00:50:30,430 --> 00:50:32,190
+you're looking at.
+
+1135
+00:50:32,190 --> 00:50:36,390
+But for the most part, you're just taking inner products.
+
+1136
+00:50:36,390 --> 00:50:39,470
+One thing that has always been a little mysterious to me
+
+1137
+00:50:39,470 --> 00:50:43,550
+is that many, many papers have shown that actually, you don't
+
+1138
+00:50:43,550 --> 00:50:45,210
+need to do any learned routing.
+
+1139
+00:50:45,210 --> 00:50:47,990
+You can just take your X's, you can hash them and send them
+
+1140
+00:50:47,990 --> 00:50:50,290
+to different feedforward networks.
+
+1141
+00:50:50,290 --> 00:50:52,430
+And actually, this is fine too.
+
+1142
+00:50:52,430 --> 00:50:54,710
+This gives gains, not as much as TopK,
+
+1143
+00:50:54,710 --> 00:50:58,190
+but somehow, hashing-based expert routing is also something
+
+1144
+00:50:58,190 --> 00:50:59,130
+that people do.
+
+1145
+00:50:59,130 --> 00:51:03,650
+Common baseline in papers, not used in deployment
+
+1146
+00:51:03,650 --> 00:51:05,350
+for many reasons.
+
+1147
+00:51:05,350 --> 00:51:07,570
+You can do RL to learn the routes.
+
+1148
+00:51:07,570 --> 00:51:11,230
+You can basically have a router that's an inner product router.
+
+1149
+00:51:11,230 --> 00:51:13,390
+And you can use reinforcement learning
+
+1150
+00:51:13,390 --> 00:51:16,310
+to try to treat this router as a kind of policy
+
+1151
+00:51:16,310 --> 00:51:18,550
+and then learn it.
+
+1152
+00:51:18,550 --> 00:51:21,550
+If you're a machine learning classic learning
+
+1153
+00:51:21,550 --> 00:51:23,643
+theory-type oriented person, I think
+
+1154
+00:51:23,643 --> 00:51:26,060
+this should be the natural way to think about the problem.
+
+1155
+00:51:26,060 --> 00:51:27,720
+You're like, OK, what am I doing?
+
+1156
+00:51:27,720 --> 00:51:29,240
+It's a bandit problem.
+
+1157
+00:51:29,240 --> 00:51:32,260
+I'm selecting one out of k or k out of n.
+
+1158
+00:51:32,260 --> 00:51:35,000
+And I don't observe all of them.
+
+1159
+00:51:35,000 --> 00:51:36,400
+This is a bandit problem.
+
+1160
+00:51:36,400 --> 00:51:38,400
+I will use a bandit or an RL algorithm.
+
+1161
+00:51:38,400 --> 00:51:42,910
+Used in some of the earliest work, because this is the natural way to think about the problem,
+
+1162
+00:51:42,910 --> 00:51:45,460
+like Bengio in 2013.
+
+1163
+00:51:45,460 --> 00:51:48,500
+But it is not a common approach.
+
+1164
+00:51:48,500 --> 00:51:50,580
+And I think the reason why it's not common
+
+1165
+00:51:50,580 --> 00:51:54,420
+is because the approaches needed to do RL introduce
+
+1166
+00:51:54,420 --> 00:51:57,420
+a lot of overhead in terms of both the RL algorithm
+
+1167
+00:51:57,420 --> 00:52:00,460
+and the stochasticity.
+
+1168
+00:52:00,460 --> 00:52:02,060
+And what people have figured out is,
+
+1169
+00:52:02,060 --> 00:52:04,080
+there's a good set of heuristics,
+
+1170
+00:52:04,080 --> 00:52:08,420
+these recipes that you can apply to this very simple classic TopK
+
+1171
+00:52:08,420 --> 00:52:12,800
+routing scheme that basically just has it working right.
+
+1172
+00:52:12,800 --> 00:52:16,580
+And so there's no reason to do something much more complicated.
+
+1173
+00:52:16,580 --> 00:52:20,980
+I will finally mention an idea that I think is really cool
+
+1174
+00:52:20,980 --> 00:52:24,160
+and that I love as a person that likes things that make sense.
+
+1175
+00:52:24,160 --> 00:52:26,400
+You can solve a linear assignment problem,
+
+1176
+00:52:26,400 --> 00:52:29,440
+where you say, OK, I'm going to globally compute the score that
+
+1177
+00:52:29,440 --> 00:52:32,720
+says like, oh, it would be this good for this token
+
+1178
+00:52:32,720 --> 00:52:33,640
+to go to that expert.
+
+1179
+00:52:33,640 --> 00:52:35,440
+So you compute all these pairwise scores
+
+1180
+00:52:35,440 --> 00:52:37,020
+of how good the assignments are.
+
+1181
+00:52:37,020 --> 00:52:38,720
+And you can use linear assignment
+
+1182
+00:52:38,720 --> 00:52:41,280
+to exactly solve for the optimal assignment
+
+1183
+00:52:41,280 --> 00:52:43,920
+from experts to tokens.
+
+1184
+00:52:43,920 --> 00:52:47,880
+It's been shown to do good things in some cases,
+
+1185
+00:52:47,880 --> 00:52:50,320
+hasn't been seen at scale at all.
+
+1186
+00:52:50,320 --> 00:52:52,800
+I would think, because it's extremely expensive
+
+1187
+00:52:52,800 --> 00:52:56,880
+relative to the others to get working.
+
+1188
+00:52:56,880 --> 00:53:01,360
+So TopK routing, as I said, is basically the consensus
+
+1189
+00:53:01,360 --> 00:53:03,000
+routing mechanism.
+
+1190
+00:53:03,000 --> 00:53:04,240
+How does this work?
+
+1191
+00:53:04,240 --> 00:53:05,420
+It's very, very simple.
+
+1192
+00:53:05,420 --> 00:53:10,200
+And if you were paying attention in the DSA slide,
+
+1193
+00:53:10,200 --> 00:53:12,680
+this looks a lot like DSA.
+
+1194
+00:53:12,680 --> 00:53:16,288
+You will also notice this if you were reading some other papers like H-Nets
+
+1195
+00:53:16,288 --> 00:53:17,580
+or these other kinds of things.
+
+1196
+00:53:17,580 --> 00:53:19,330
+This will appear in many different places.
+
+1197
+00:53:19,330 --> 00:53:23,390
+So this is a good kind of pattern to be able to recognize.
+
+1198
+00:53:23,390 --> 00:53:29,390
+So what you're doing is, you are going to take in your inputs.
+
+1199
+00:53:29,390 --> 00:53:31,930
+And you're going to take it through a feed forward.
+
+1200
+00:53:31,930 --> 00:53:34,730
+And then I'm going to compute some sort of scores.
+
+1201
+00:53:34,730 --> 00:53:36,550
+And the scores that I'm going to compute
+
+1202
+00:53:36,550 --> 00:53:40,870
+is going to be the softmax between the experts
+
+1203
+00:53:40,870 --> 00:53:42,330
+and my inputs u.
+
+1204
+00:53:42,330 --> 00:53:45,330
+And then this s is going to be the scores.
+
+1205
+00:53:45,330 --> 00:53:47,677
+And I'm going to select the TopK of those guys.
+
+1206
+00:53:47,677 --> 00:53:49,510
+And that's going to be the gate that's going
+
+1207
+00:53:49,510 --> 00:53:51,410
+to control each of my experts.
+
+1208
+00:53:51,410 --> 00:53:53,250
+So this is like input.
+
+1209
+00:53:53,250 --> 00:53:54,370
+This is the residual term.
+
+1210
+00:53:54,370 --> 00:53:55,230
+This is the FFN.
+
+1211
+00:53:55,230 --> 00:53:55,910
+I've got gates.
+
+1212
+00:53:55,910 --> 00:53:57,630
+And the gates are controlled TopK.
+
+1213
+00:53:57,630 --> 00:54:00,230
+This is the equation form of what you
+
+1214
+00:54:00,230 --> 00:54:02,250
+would imagine of a TopK router.
+
+1215
+00:54:02,250 --> 00:54:04,990
+And the only detail that you're probably learning here
+
+1216
+00:54:04,990 --> 00:54:07,050
+is, how do I learn my gates?
+
+1217
+00:54:07,050 --> 00:54:09,070
+My gates are just learned by taking
+
+1218
+00:54:09,070 --> 00:54:12,550
+inner product between a weight for each expert and the inputs
+
+1219
+00:54:12,550 --> 00:54:13,390
+that I have.
+
+1220
+00:54:13,390 --> 00:54:14,690
+Very, very lightweight.
+
+1221
+00:54:14,690 --> 00:54:17,030
+So there's nothing complicated about the ways
+
+1222
+00:54:17,030 --> 00:54:20,730
+that I'm going to select my gates.
+
+1223
+00:54:20,730 --> 00:54:22,490
+Even within this simple thing, there's
+
+1224
+00:54:22,490 --> 00:54:27,890
+been some innovation and variation from DeepSeek and friends.
+
+1225
+00:54:27,890 --> 00:54:32,550
+DeepSeekMoE pioneered this idea, which is now very widely used,
+
+1226
+00:54:32,550 --> 00:54:34,850
+called Shared Experts.
+
+1227
+00:54:34,850 --> 00:54:39,570
+This is a very intuitive idea, where in the classic TopK
+
+1228
+00:54:39,570 --> 00:54:41,890
+router, you would have k different-- or sorry,
+
+1229
+00:54:41,890 --> 00:54:44,410
+in this case, n different experts.
+
+1230
+00:54:44,410 --> 00:54:47,810
+And these experts, you would select amongst them.
+
+1231
+00:54:47,810 --> 00:54:49,570
+But sometimes, you might say, well,
+
+1232
+00:54:49,570 --> 00:54:52,050
+there's some very common processing
+
+1233
+00:54:52,050 --> 00:54:53,750
+that I want to apply to all tokens.
+
+1234
+00:54:53,750 --> 00:54:57,870
+Maybe you don't want experts to be different every time.
+
+1235
+00:54:57,870 --> 00:55:00,810
+You want some experts to always be applied
+
+1236
+00:55:00,810 --> 00:55:03,990
+and then some other experts to be applied conditionally.
+
+1237
+00:55:03,990 --> 00:55:07,410
+So what DeepSeekMoE did was, they
+
+1238
+00:55:07,410 --> 00:55:10,530
+took the original expert design.
+
+1239
+00:55:10,530 --> 00:55:13,870
+They cut up the experts into smaller, finer grained chunks.
+
+1240
+00:55:13,870 --> 00:55:16,290
+And some subset of those fine grained experts
+
+1241
+00:55:16,290 --> 00:55:19,960
+were as shared experts that are always on.
+
+1242
+00:55:19,960 --> 00:55:21,900
+So these bypass the router.
+
+1243
+00:55:21,900 --> 00:55:23,520
+They always process our inputs.
+
+1244
+00:55:23,520 --> 00:55:25,760
+And they go back on the outputs.
+
+1245
+00:55:25,760 --> 00:55:27,880
+Sorry.
+
+1246
+00:55:27,880 --> 00:55:30,720
+And this is a nice idea, because it turned out
+
+1247
+00:55:30,720 --> 00:55:33,380
+that if you had this classic expert design,
+
+1248
+00:55:33,380 --> 00:55:35,480
+you were just reusing a lot of these weights
+
+1249
+00:55:35,480 --> 00:55:36,860
+to do common modeling.
+
+1250
+00:55:36,860 --> 00:55:39,720
+And so you can offload this into the one shared expert,
+
+1251
+00:55:39,720 --> 00:55:43,200
+letting these guys specialize even more.
+
+1252
+00:55:43,200 --> 00:55:45,320
+And as I was kind of saying, DeepSeek
+
+1253
+00:55:45,320 --> 00:55:48,080
+is really nice in that they do careful ablations
+
+1254
+00:55:48,080 --> 00:55:50,000
+in a lot of their papers.
+
+1255
+00:55:50,000 --> 00:55:52,160
+And so they have this very nice ablation,
+
+1256
+00:55:52,160 --> 00:55:54,980
+where they look at zero shared experts
+
+1257
+00:55:54,980 --> 00:55:57,740
+and then you have these big experts, 16 routed experts.
+
+1258
+00:55:57,740 --> 00:56:01,040
+And this is really the old GShard Google design,
+
+1259
+00:56:01,040 --> 00:56:04,360
+compared to, they have very fine grained segmentation
+
+1260
+00:56:04,360 --> 00:56:07,220
+of experts and one shared expert amongst these.
+
+1261
+00:56:07,220 --> 00:56:10,400
+And as you make the experts smaller and smaller,
+
+1262
+00:56:10,400 --> 00:56:12,360
+and you have one shared expert, you
+
+1263
+00:56:12,360 --> 00:56:15,300
+see significant gains from both of those interventions.
+
+1264
+00:56:15,300 --> 00:56:17,300
+And for some of these, the shared expert
+
+1265
+00:56:17,300 --> 00:56:18,860
+has very significant improvements,
+
+1266
+00:56:18,860 --> 00:56:20,600
+like TriviaQA, NaturalQuestions.
+
+1267
+00:56:20,600 --> 00:56:24,380
+This blue to yellow gap, right, is shared experts or not.
+
+1268
+00:56:24,380 --> 00:56:28,520
+So more experts, shared experts, all generally seem to help.
+
+1269
+00:56:28,520 --> 00:56:33,500
+And if you want more validation of these claims and ideas,
+
+1270
+00:56:33,500 --> 00:56:35,640
+you see this from OlMoE as well.
+
+1271
+00:56:35,640 --> 00:56:40,860
+OlMoE is, I think, the nice Western carefully controlled MoE
+
+1272
+00:56:40,860 --> 00:56:41,600
+study.
+
+1273
+00:56:41,600 --> 00:56:44,100
+They do things like, oh, do shared experts help?
+
+1274
+00:56:44,100 --> 00:56:47,300
+They conclude that shared experts don't help very much.
+
+1275
+00:56:47,300 --> 00:56:49,620
+And number of experts, they show,
+
+1276
+00:56:49,620 --> 00:56:51,800
+doing fine-grained, many experts is helpful.
+
+1277
+00:56:51,800 --> 00:56:55,580
+So they disagree a little bit on the shared expert point,
+
+1278
+00:56:55,580 --> 00:57:00,620
+but they also have very nice, carefully controlled ablations.
+
+1279
+00:57:00,620 --> 00:57:05,500
+Many of the recent MoE do follow essentially the DeepSeek design.
+
+1280
+00:57:05,500 --> 00:57:10,700
+There were a couple of early MoEs up until this point.
+
+1281
+00:57:10,700 --> 00:57:13,650
+The first three, I keep giving Google
+
+1282
+00:57:13,650 --> 00:57:15,650
+praise for doing lots of interesting things.
+
+1283
+00:57:15,650 --> 00:57:17,570
+The first three were from Google,
+
+1284
+00:57:17,570 --> 00:57:20,530
+Mixtral, DBRX, and Grok were some of the early MoE
+
+1285
+00:57:20,530 --> 00:57:21,890
+attempts in the West.
+
+1286
+00:57:21,890 --> 00:57:24,970
+DeepSeek v1 comes up with both the fine-grained and shared
+
+1287
+00:57:24,970 --> 00:57:26,058
+expert design.
+
+1288
+00:57:26,058 --> 00:57:27,850
+And then that catches on, and everyone else
+
+1289
+00:57:27,850 --> 00:57:29,530
+follows from DeepSeek.
+
+1290
+00:57:29,530 --> 00:57:31,030
+I mean, it's a similar, I would say,
+
+1291
+00:57:31,030 --> 00:57:34,650
+phenomenon to the Llama design for dense transformers
+
+1292
+00:57:34,650 --> 00:57:38,850
+being essentially, the standard DeepSeekMoE and DeepSeek v3
+
+1293
+00:57:38,850 --> 00:57:41,170
+are the standard design that people have copied
+
+1294
+00:57:41,170 --> 00:57:44,410
+for the MoE side of things.
+
+1295
+00:57:44,410 --> 00:57:46,850
+And if you look at Qwen 3.5, or GLM, or any
+
+1296
+00:57:46,850 --> 00:57:48,850
+of these modern models, you continue
+
+1297
+00:57:48,850 --> 00:57:52,490
+to see both shared experts and fine-grained experts
+
+1298
+00:57:52,490 --> 00:57:55,610
+in widespread use amongst all of these people.
+
+1299
+00:57:55,610 --> 00:57:59,570
+And so that's been a very battle-tested design.
+
+1300
+00:57:59,570 --> 00:58:01,010
+Any questions?
+
+1301
+00:58:01,010 --> 00:58:01,510
+Oh, yes.
+
+1302
+00:58:01,510 --> 00:58:02,050
+Good.
+
+1303
+00:58:02,050 --> 00:58:02,550
+Yeah.
+
+1304
+00:58:02,550 --> 00:58:08,650
+If there is a shared expert or there are few shared experts,
+
+1305
+00:58:08,650 --> 00:58:12,930
+how would parallelization work in that case?
+
+1306
+00:58:12,930 --> 00:58:13,430
+Yeah.
+
+1307
+00:58:13,430 --> 00:58:15,182
+So in the shared expert case, you
+
+1308
+00:58:15,182 --> 00:58:16,890
+wouldn't get any parallelization savings.
+
+1309
+00:58:16,890 --> 00:58:18,910
+Every activation has to route through those.
+
+1310
+00:58:18,910 --> 00:58:22,430
+You can copy the shared expert to basically eat memory savings
+
+1311
+00:58:22,430 --> 00:58:25,950
+to reduce comms cost.
+
+1312
+00:58:25,950 --> 00:58:26,910
+Cool.
+
+1313
+00:58:26,910 --> 00:58:27,410
+All right.
+
+1314
+00:58:27,410 --> 00:58:31,050
+So that's the design space of routers.
+
+1315
+00:58:31,050 --> 00:58:32,890
+Now, I want to talk about training MoEs.
+
+1316
+00:58:32,890 --> 00:58:36,950
+And it gets into really surprising,
+
+1317
+00:58:36,950 --> 00:58:40,070
+and I would say, very deep learning things about this.
+
+1318
+00:58:40,070 --> 00:58:42,570
+I think, initially, when I was learning about MoEs,
+
+1319
+00:58:42,570 --> 00:58:45,750
+I thought, there's no way that we can train these things well
+
+1320
+00:58:45,750 --> 00:58:47,230
+or reasonably.
+
+1321
+00:58:47,230 --> 00:58:50,270
+But it turns out, there are lots of tricks
+
+1322
+00:58:50,270 --> 00:58:53,470
+that when combined together, just really work well
+
+1323
+00:58:53,470 --> 00:58:57,030
+and robustly for some reason.
+
+1324
+00:58:57,030 --> 00:58:58,970
+So as we'll raise in the previous question,
+
+1325
+00:58:58,970 --> 00:59:01,417
+we don't want to activate all the experts during training,
+
+1326
+00:59:01,417 --> 00:59:03,750
+because if we do that, we're going to pay the full flops
+
+1327
+00:59:03,750 --> 00:59:05,050
+cost of all of our experts.
+
+1328
+00:59:05,050 --> 00:59:06,950
+And we have a lot of experts.
+
+1329
+00:59:06,950 --> 00:59:09,890
+So we need sparsity for efficiency at training time.
+
+1330
+00:59:09,890 --> 00:59:13,130
+But if we have sparsity, then gating decisions
+
+1331
+00:59:13,130 --> 00:59:14,350
+are no longer differentiable.
+
+1332
+00:59:14,350 --> 00:59:17,375
+And we also don't see all of the different counterfactual experts
+
+1333
+00:59:17,375 --> 00:59:18,250
+we could have picked.
+
+1334
+00:59:18,250 --> 00:59:20,575
+So these are both big problems.
+
+1335
+00:59:20,575 --> 00:59:21,950
+So there are different solutions.
+
+1336
+00:59:21,950 --> 00:59:24,070
+We could use RL to optimize our gating policies.
+
+1337
+00:59:24,070 --> 00:59:27,050
+I already mentioned this, not super popular.
+
+1338
+00:59:27,050 --> 00:59:29,670
+You could do things like stochastic perturbations.
+
+1339
+00:59:29,670 --> 00:59:33,130
+So if you're familiar with explore, exploit, bandit style
+
+1340
+00:59:33,130 --> 00:59:35,010
+stuff, you could do some of that.
+
+1341
+00:59:35,010 --> 00:59:37,210
+Now, the third one is, you could have
+
+1342
+00:59:37,210 --> 00:59:39,050
+a whole bunch of weird heuristics
+
+1343
+00:59:39,050 --> 00:59:42,130
+that deal with the fact that the gating decisions are
+
+1344
+00:59:42,130 --> 00:59:46,210
+sparse to balance out which experts go where.
+
+1345
+00:59:46,210 --> 00:59:47,950
+Guess which one people use in practice?
+
+1346
+00:59:47,950 --> 00:59:49,850
+I've been hinting at this.
+
+1347
+00:59:49,850 --> 00:59:50,890
+It's number 3.
+
+1348
+00:59:50,890 --> 00:59:53,690
+It's a collection of really interesting heuristics
+
+1349
+00:59:53,690 --> 00:59:56,090
+that end up working.
+
+1350
+00:59:56,090 --> 00:59:58,930
+I'll talk about the other two first.
+
+1351
+00:59:58,930 --> 01:00:00,070
+They're not widely used.
+
+1352
+01:00:00,070 --> 01:00:02,270
+I would open with that.
+
+1353
+01:00:02,270 --> 01:00:04,490
+But I think it's useful to know.
+
+1354
+01:00:04,490 --> 01:00:06,490
+So some people have done, this is
+
+1355
+01:00:06,490 --> 01:00:09,460
+from Clark 2020, research on things like,
+
+1356
+01:00:09,460 --> 01:00:11,760
+can you use RL to learn routers?
+
+1357
+01:00:11,760 --> 01:00:12,780
+So it does work.
+
+1358
+01:00:12,780 --> 01:00:15,880
+You can use RL, this is the green line over here.
+
+1359
+01:00:15,880 --> 01:00:17,880
+That's one of the baseline approaches.
+
+1360
+01:00:17,880 --> 01:00:19,020
+It works fine.
+
+1361
+01:00:19,020 --> 01:00:21,600
+But because of the gradient variance and complexity,
+
+1362
+01:00:21,600 --> 01:00:24,300
+it's not actually the optimal thing to do.
+
+1363
+01:00:24,300 --> 01:00:27,680
+And even some of the approaches that are proposed in this paper
+
+1364
+01:00:27,680 --> 01:00:32,800
+handily beat using reinforced gradients for routing decisions.
+
+1365
+01:00:32,800 --> 01:00:37,960
+Now, something that's very close to the idea of RL
+
+1366
+01:00:37,960 --> 01:00:44,520
+but starts to move more towards this heuristic world of write
+
+1367
+01:00:44,520 --> 01:00:47,280
+down objectives and try things is this idea
+
+1368
+01:00:47,280 --> 01:00:49,020
+of a stochastic approximation.
+
+1369
+01:00:49,020 --> 01:00:54,520
+And it comes from the earliest MoE paper from Noam, Shazeer,
+
+1370
+01:00:54,520 --> 01:00:56,640
+and others, where what you do is,
+
+1371
+01:00:56,640 --> 01:00:59,220
+you don't really make a hard decision during training.
+
+1372
+01:00:59,220 --> 01:01:01,880
+What you do is you make stochastic decisions.
+
+1373
+01:01:01,880 --> 01:01:06,060
+So what you do is, you still have this routing setup.
+
+1374
+01:01:06,060 --> 01:01:10,700
+So this H is, you have the inner product between your parameters
+
+1375
+01:01:10,700 --> 01:01:11,560
+and your inputs.
+
+1376
+01:01:11,560 --> 01:01:14,820
+This is your standard routing inner product.
+
+1377
+01:01:14,820 --> 01:01:17,100
+But then, instead of just doing this,
+
+1378
+01:01:17,100 --> 01:01:20,540
+I'm going to inject some noise that's
+
+1379
+01:01:20,540 --> 01:01:22,940
+dependent on the scale of the input.
+
+1380
+01:01:22,940 --> 01:01:24,740
+And then that's going to be my H.
+
+1381
+01:01:24,740 --> 01:01:27,500
+And now, I'm going to keep the TopK and softmax, just like I
+
+1382
+01:01:27,500 --> 01:01:29,900
+was explaining with TopK.
+
+1383
+01:01:29,900 --> 01:01:32,340
+And then that's going to be the output that
+
+1384
+01:01:32,340 --> 01:01:36,980
+goes in to my TopK function.
+
+1385
+01:01:36,980 --> 01:01:39,200
+Now, if you look at this, what is this doing?
+
+1386
+01:01:39,200 --> 01:01:41,900
+Well, it just means that if you have two experts that
+
+1387
+01:01:41,900 --> 01:01:44,800
+are closely tied or it's very close to each other,
+
+1388
+01:01:44,800 --> 01:01:47,860
+then stochastically, you'll pick one of them and not the other.
+
+1389
+01:01:47,860 --> 01:01:50,500
+And as you backprop, you're going to backprop in a way
+
+1390
+01:01:50,500 --> 01:01:53,980
+that the experts that are helpful will get high weights.
+
+1391
+01:01:53,980 --> 01:01:57,260
+So this perturbation allows you to tie break and explore
+
+1392
+01:01:57,260 --> 01:01:58,420
+a little bit more.
+
+1393
+01:01:58,420 --> 01:01:59,980
+And hopefully, the gradient structure
+
+1394
+01:01:59,980 --> 01:02:02,260
+is such that, if an expert is helpful,
+
+1395
+01:02:02,260 --> 01:02:04,300
+it's going to emphasize that expert more,
+
+1396
+01:02:04,300 --> 01:02:06,770
+and it will get higher and higher weights in general.
+
+1397
+01:02:06,770 --> 01:02:09,550
+So this is one reasonable thing that you can do.
+
+1398
+01:02:09,550 --> 01:02:12,370
+It leads to experts that are a bit more robust.
+
+1399
+01:02:12,370 --> 01:02:15,730
+And the softmax allows you to learn how
+
+1400
+01:02:15,730 --> 01:02:17,610
+to rank all these k experts.
+
+1401
+01:02:17,610 --> 01:02:20,150
+Rather than just doing a hard selection of TopK,
+
+1402
+01:02:20,150 --> 01:02:25,330
+you're weighting by these elements.
+
+1403
+01:02:25,330 --> 01:02:30,770
+There's another scheme that's very closely related that's
+
+1404
+01:02:30,770 --> 01:02:33,610
+done in Fedus, et al., in 2022, which
+
+1405
+01:02:33,610 --> 01:02:36,890
+does a uniform, multiplicative perturbation.
+
+1406
+01:02:36,890 --> 01:02:39,810
+They do this for the reason of hardening the experts,
+
+1407
+01:02:39,810 --> 01:02:42,050
+making them robust.
+
+1408
+01:02:42,050 --> 01:02:44,690
+This was a useful thing to do, but this was later
+
+1409
+01:02:44,690 --> 01:02:48,070
+removed in later Google papers that do routing.
+
+1410
+01:02:48,070 --> 01:02:51,610
+And it's not really clear that this is necessary at all.
+
+1411
+01:02:51,610 --> 01:02:54,730
+You see later ablation showing that not
+
+1412
+01:02:54,730 --> 01:02:58,770
+doing any of these stochastic or robustness tricks
+
+1413
+01:02:58,770 --> 01:03:03,830
+actually helps with both stability and overall quality
+
+1414
+01:03:03,830 --> 01:03:06,550
+of the final trained MoE.
+
+1415
+01:03:06,550 --> 01:03:09,230
+So this suggests you don't need necessarily
+
+1416
+01:03:09,230 --> 01:03:13,030
+the stochastic exploration terms.
+
+1417
+01:03:13,030 --> 01:03:17,470
+So this takes us to what you actually do,
+
+1418
+01:03:17,470 --> 01:03:21,530
+which is a series of heuristics that, in the end,
+
+1419
+01:03:21,530 --> 01:03:24,550
+is going to give us a working MoE.
+
+1420
+01:03:24,550 --> 01:03:28,770
+And a lot of these have to do with essentially balancing.
+
+1421
+01:03:28,770 --> 01:03:32,290
+So what's the problem if you just do normal gradient descent,
+
+1422
+01:03:32,290 --> 01:03:35,550
+ignoring any of these exploration-exploitation concerns?
+
+1423
+01:03:35,550 --> 01:03:37,175
+Well, what's going to happen is, you're
+
+1424
+01:03:37,175 --> 01:03:38,970
+going to first route your TopK experts.
+
+1425
+01:03:38,970 --> 01:03:42,050
+And then the strongest of those experts will get more signal.
+
+1426
+01:03:42,050 --> 01:03:44,570
+Your backprop is going to say, that expert was good.
+
+1427
+01:03:44,570 --> 01:03:46,630
+You increase the weight of that expert, move
+
+1428
+01:03:46,630 --> 01:03:48,330
+that parameter closer to that.
+
+1429
+01:03:48,330 --> 01:03:50,870
+So you get this rich-gets-richer effect, where
+
+1430
+01:03:50,870 --> 01:03:52,940
+experts that are chosen get very strong weights.
+
+1431
+01:03:52,940 --> 01:03:55,190
+Strong weights means that they're selected more often.
+
+1432
+01:03:55,190 --> 01:03:58,450
+And they run away, taking on everything.
+
+1433
+01:03:58,450 --> 01:04:03,420
+And so this expert collapse phenomenon or expert starvation
+
+1434
+01:04:03,420 --> 01:04:06,260
+phenomenon is a very, very real problem.
+
+1435
+01:04:06,260 --> 01:04:08,300
+And in some sense, this is the core issue
+
+1436
+01:04:08,300 --> 01:04:12,820
+that you have to solve with heuristic training of MoEs.
+
+1437
+01:04:12,820 --> 01:04:13,760
+And so what do you do?
+
+1438
+01:04:13,760 --> 01:04:17,820
+Well, what you do is, you add a heuristic loss
+
+1439
+01:04:17,820 --> 01:04:19,600
+to the total modeling loss.
+
+1440
+01:04:19,600 --> 01:04:22,380
+And this loss is supposed to balance out the tokens that
+
+1441
+01:04:22,380 --> 01:04:24,780
+go to different experts.
+
+1442
+01:04:24,780 --> 01:04:27,060
+And one approach, which is done in the Switch
+
+1443
+01:04:27,060 --> 01:04:32,410
+Transformer over here, you can look at what this does.
+
+1444
+01:04:32,410 --> 01:04:35,860
+You have different experts going from 1 to n
+
+1445
+01:04:35,860 --> 01:04:37,720
+And you have a batch of tokens.
+
+1446
+01:04:37,720 --> 01:04:39,540
+And what you want to do is, you want
+
+1447
+01:04:39,540 --> 01:04:42,260
+to make sure that these two inner products are small.
+
+1448
+01:04:42,260 --> 01:04:42,760
+OK.
+
+1449
+01:04:42,760 --> 01:04:44,340
+So what is happening here?
+
+1450
+01:04:44,340 --> 01:04:46,660
+F is the fraction of tokens that are dispatched
+
+1451
+01:04:46,660 --> 01:04:49,380
+to any single expert.
+
+1452
+01:04:49,380 --> 01:04:51,880
+And then P of I is the softer version.
+
+1453
+01:04:51,880 --> 01:04:54,620
+This is not just whether the token is dispatched
+
+1454
+01:04:54,620 --> 01:04:57,420
+to an expert, this is the total probability mass
+
+1455
+01:04:57,420 --> 01:04:59,140
+of the router that's allocated.
+
+1456
+01:04:59,140 --> 01:05:02,480
+And you multiply these two terms.
+
+1457
+01:05:02,480 --> 01:05:05,960
+And this is, at least to me, not a thing,
+
+1458
+01:05:05,960 --> 01:05:08,180
+where you would derive it from first principles.
+
+1459
+01:05:08,180 --> 01:05:11,880
+I think the easiest way to see what this thing is doing
+
+1460
+01:05:11,880 --> 01:05:14,020
+is to take the derivative of this object.
+
+1461
+01:05:14,020 --> 01:05:16,720
+So if you take the derivative of this with respect to P of I--
+
+1462
+01:05:16,720 --> 01:05:20,480
+and P of I, remember, is the probability mass allocated
+
+1463
+01:05:20,480 --> 01:05:22,760
+to an expert, well, the derivative
+
+1464
+01:05:22,760 --> 01:05:26,500
+is going to be the fraction of tokens that are allocated.
+
+1465
+01:05:26,500 --> 01:05:28,840
+So in some sense, you can think of this as a penalty
+
+1466
+01:05:28,840 --> 01:05:31,760
+in the gradient space, where the more tokens you get,
+
+1467
+01:05:31,760 --> 01:05:33,860
+the more negative gradient you get.
+
+1468
+01:05:33,860 --> 01:05:37,520
+So this is trying to push down the probability mass
+
+1469
+01:05:37,520 --> 01:05:41,680
+on very popular experts proportional to their fraction.
+
+1470
+01:05:41,680 --> 01:05:43,645
+And that's the action of this loss.
+
+1471
+01:05:43,645 --> 01:05:45,020
+That's the way to think about it.
+
+1472
+01:05:45,020 --> 01:05:49,000
+So the objective itself in equation 4
+
+1473
+01:05:49,000 --> 01:05:50,580
+might not be clear to start with,
+
+1474
+01:05:50,580 --> 01:05:53,700
+but once you reason about the action of the gradient,
+
+1475
+01:05:53,700 --> 01:05:55,500
+it becomes clear what this is trying to do,
+
+1476
+01:05:55,500 --> 01:06:00,150
+which is to push down popular experts.
+
+1477
+01:06:00,150 --> 01:06:04,670
+So then we can actually take these ideas and essentially
+
+1478
+01:06:04,670 --> 01:06:09,610
+reconstruct DeepSeek v1 and 2's MoE system.
+
+1479
+01:06:09,610 --> 01:06:12,190
+So what do you do to build DeepSeekMoE?
+
+1480
+01:06:12,190 --> 01:06:14,120
+Well, you're going to do your normal losses.
+
+1481
+01:06:14,120 --> 01:06:15,870
+And you're just going to backprop straight
+
+1482
+01:06:15,870 --> 01:06:18,430
+through the experts, ignoring all this nondifferentiability
+
+1483
+01:06:18,430 --> 01:06:20,350
+and exploration concerns.
+
+1484
+01:06:20,350 --> 01:06:22,830
+But you're going to add per expert balancing that's
+
+1485
+01:06:22,830 --> 01:06:25,407
+identical to the switch transformer, what I just showed you.
+
+1486
+01:06:25,407 --> 01:06:26,990
+So you're going to have this loss that
+
+1487
+01:06:26,990 --> 01:06:28,970
+multiplies F, which is the fraction,
+
+1488
+01:06:28,970 --> 01:06:31,630
+and P, which is the total mass.
+
+1489
+01:06:31,630 --> 01:06:35,770
+But DeepSeek folks, they're very savvy with their systems design,
+
+1490
+01:06:35,770 --> 01:06:37,890
+so they don't just balance the experts,
+
+1491
+01:06:37,890 --> 01:06:40,590
+they also want to balance by device.
+
+1492
+01:06:40,590 --> 01:06:43,510
+So if your experts are allocated to some devices-- so let's say,
+
+1493
+01:06:43,510 --> 01:06:46,710
+my machine over here has four experts, this machine over here
+
+1494
+01:06:46,710 --> 01:06:49,630
+has another four experts, you want those two machines
+
+1495
+01:06:49,630 --> 01:06:52,730
+to be balanced, so both of them are running at full utilization.
+
+1496
+01:06:52,730 --> 01:06:55,030
+So you don't want to just make the experts even,
+
+1497
+01:06:55,030 --> 01:06:57,670
+you also want to ensure that the devices are even.
+
+1498
+01:06:57,670 --> 01:06:59,570
+So this is a secondary objective.
+
+1499
+01:06:59,570 --> 01:07:01,150
+It acts in exactly the same way.
+
+1500
+01:07:01,150 --> 01:07:03,350
+If you look at the function here instead of experts,
+
+1501
+01:07:03,350 --> 01:07:05,990
+you're just operating on each device's fraction,
+
+1502
+01:07:05,990 --> 01:07:08,170
+you apply the secondary device balancing loss,
+
+1503
+01:07:08,170 --> 01:07:11,850
+just for utilization reasons.
+
+1504
+01:07:11,850 --> 01:07:18,250
+In DeepSeek v3, they have a per expert bias term that they use.
+
+1505
+01:07:18,250 --> 01:07:23,110
+And they use an online learning trick to balance out experts,
+
+1506
+01:07:23,110 --> 01:07:27,730
+getting rid of some of these auxiliary losses,
+
+1507
+01:07:27,730 --> 01:07:31,250
+but they do, in the end, have to add
+
+1508
+01:07:31,250 --> 01:07:33,450
+some of these auxiliary losses in order
+
+1509
+01:07:33,450 --> 01:07:35,830
+to ensure extreme imbalances don't happen.
+
+1510
+01:07:35,830 --> 01:07:40,050
+So I think, I add this as a side note that DeepSeek v3
+
+1511
+01:07:40,050 --> 01:07:42,270
+and others have started to get rid of some of these,
+
+1512
+01:07:42,270 --> 01:07:44,770
+I would say, uglier auxiliary losses,
+
+1513
+01:07:44,770 --> 01:07:48,590
+but there's no solution that fully gets rid of them so far.
+
+1514
+01:07:52,810 --> 01:07:55,310
+The last thing I'll talk about with load balancing losses
+
+1515
+01:07:55,310 --> 01:07:58,090
+is, you might ask, do I need to deal with this?
+
+1516
+01:07:58,090 --> 01:08:00,670
+It's all a bunch of complicated heuristics.
+
+1517
+01:08:00,670 --> 01:08:03,630
+I wish I could just get rid of the load balancing loss.
+
+1518
+01:08:03,630 --> 01:08:06,310
+But if you remove the load balancing loss,
+
+1519
+01:08:06,310 --> 01:08:09,130
+the effects are pretty catastrophic.
+
+1520
+01:08:09,130 --> 01:08:11,130
+These are both from the OlMoE paper, where
+
+1521
+01:08:11,130 --> 01:08:14,150
+they do this nice ablation of removing the load balancing
+
+1522
+01:08:14,150 --> 01:08:15,529
+loss entirely.
+
+1523
+01:08:15,529 --> 01:08:17,029
+If you have the load balancing loss,
+
+1524
+01:08:17,029 --> 01:08:19,830
+you get this pink line at the top, very nice normal curves.
+
+1525
+01:08:19,830 --> 01:08:23,350
+Remove the load balancing loss, your losses significantly
+
+1526
+01:08:23,350 --> 01:08:26,970
+increase, and your training loss also is not doing so well.
+
+1527
+01:08:26,970 --> 01:08:28,550
+Maybe more tellingly, if you look
+
+1528
+01:08:28,550 --> 01:08:32,710
+at which experts are doing what, with load balancing
+
+1529
+01:08:32,710 --> 01:08:34,350
+and without load balancing, that's
+
+1530
+01:08:34,350 --> 01:08:36,870
+these bottom panels over here, you
+
+1531
+01:08:36,870 --> 01:08:38,870
+see a really, really stark difference.
+
+1532
+01:08:38,870 --> 01:08:41,710
+Without load balancing, almost all the tokens
+
+1533
+01:08:41,710 --> 01:08:44,310
+are going to two experts-- the yellow expert
+
+1534
+01:08:44,310 --> 01:08:46,910
+and the pinkish expert that you see here.
+
+1535
+01:08:46,910 --> 01:08:49,050
+Whereas if you have the load balancing loss,
+
+1536
+01:08:49,050 --> 01:08:51,630
+even though we had this kind of heuristic thing going on,
+
+1537
+01:08:51,630 --> 01:08:54,319
+all of these experts are being utilized across the token.
+
+1538
+01:08:54,319 --> 01:08:57,420
+So we have this nice, even utilization.
+
+1539
+01:08:57,420 --> 01:08:59,620
+So we do see that the load balancing
+
+1540
+01:08:59,620 --> 01:09:00,760
+loss does what we expect.
+
+1541
+01:09:00,760 --> 01:09:03,359
+And without it, we've thrown away a ton of parameters.
+
+1542
+01:09:03,359 --> 01:09:05,580
+Those experts are doing absolutely nothing
+
+1543
+01:09:05,580 --> 01:09:07,660
+for most of training.
+
+1544
+01:09:07,660 --> 01:09:11,819
+So this is how MoEs are trained.
+
+1545
+01:09:11,819 --> 01:09:15,340
+And I think, just to go back, this is pretty surprising to me,
+
+1546
+01:09:15,340 --> 01:09:17,680
+that you've got this thing that's nondifferentiable,
+
+1547
+01:09:17,680 --> 01:09:19,060
+you're doing this TopK selection.
+
+1548
+01:09:19,060 --> 01:09:22,420
+And it is, honestly, a pretty complicated object,
+
+1549
+01:09:22,420 --> 01:09:25,660
+and all you really need to do is to just add this balancing
+
+1550
+01:09:25,660 --> 01:09:27,680
+loss to even out the experts.
+
+1551
+01:09:27,680 --> 01:09:29,260
+And then the rest of it, you treat it
+
+1552
+01:09:29,260 --> 01:09:32,620
+as if you can just pump gradients through the system,
+
+1553
+01:09:32,620 --> 01:09:34,380
+and the model trains very nicely.
+
+1554
+01:09:34,380 --> 01:09:36,046
+And I think a big part of this is,
+
+1555
+01:09:36,046 --> 01:09:38,231
+this dynamic that if an expert is useful,
+
+1556
+01:09:38,231 --> 01:09:39,439
+you're going to reinforce it.
+
+1557
+01:09:39,439 --> 01:09:42,620
+And that's a positive reinforcement cycle
+
+1558
+01:09:42,620 --> 01:09:45,800
+that's nicely balanced out by evening things out.
+
+1559
+01:09:45,800 --> 01:09:47,960
+Those two dynamics cancel each other out.
+
+1560
+01:09:50,740 --> 01:09:51,240
+Cool.
+
+1561
+01:09:51,240 --> 01:09:54,240
+Oh, and the final thing I'll say is, that same trick
+
+1562
+01:09:54,240 --> 01:09:56,760
+is used in DSA.
+
+1563
+01:09:56,760 --> 01:09:58,340
+We already saw the TopK thing.
+
+1564
+01:09:58,340 --> 01:09:59,983
+It's used in things like H-Nets.
+
+1565
+01:09:59,983 --> 01:10:01,400
+If you're familiar with that, that
+
+1566
+01:10:01,400 --> 01:10:03,920
+was a temp to remove tokenizers.
+
+1567
+01:10:03,920 --> 01:10:07,080
+And so I think you'll see this trick more often
+
+1568
+01:10:07,080 --> 01:10:10,080
+in the future, where this idea of TopK selection
+
+1569
+01:10:10,080 --> 01:10:14,000
+and using load balancing or other kinds of auxiliary losses
+
+1570
+01:10:14,000 --> 01:10:15,880
+to enable that nondifferentiability
+
+1571
+01:10:15,880 --> 01:10:19,760
+will be an ingredient of future architecture design.
+
+1572
+01:10:19,760 --> 01:10:20,700
+Yes.
+
+1573
+01:10:20,700 --> 01:10:24,220
+[INAUDIBLE] mixture of experts is like a systems optimization.
+
+1574
+01:10:24,220 --> 01:10:28,140
+But if you actually exploit, can you look at them?
+
+1575
+01:10:28,140 --> 01:10:30,580
+Are they actually doing something in different domains?
+
+1576
+01:10:30,580 --> 01:10:31,080
+Yeah.
+
+1577
+01:10:31,080 --> 01:10:35,120
+So some papers have a visualization of which tokens
+
+1578
+01:10:35,120 --> 01:10:37,080
+are activated by which experts.
+
+1579
+01:10:37,080 --> 01:10:38,980
+And because the routers are so simple,
+
+1580
+01:10:38,980 --> 01:10:41,720
+it's not like, experts are like smart experts.
+
+1581
+01:10:41,720 --> 01:10:44,577
+They're not like medical experts, legal experts, or whatever.
+
+1582
+01:10:44,577 --> 01:10:47,160
+You do see that certain tokens are routed to different things,
+
+1583
+01:10:47,160 --> 01:10:49,230
+like punctuations might be routed
+
+1584
+01:10:49,230 --> 01:10:52,990
+to one expert or other symbols might be routed to one expert,
+
+1585
+01:10:52,990 --> 01:10:54,470
+non-English language character sets
+
+1586
+01:10:54,470 --> 01:10:56,870
+might be routed to another expert.
+
+1587
+01:10:56,870 --> 01:10:59,150
+But it's not really something where you can look at it
+
+1588
+01:10:59,150 --> 01:11:01,150
+and be like, oh, this is the Wall Street Journal
+
+1589
+01:11:01,150 --> 01:11:03,390
+expert or something, nothing like that.
+
+1590
+01:11:03,390 --> 01:11:05,750
+There's no semantics of maybe one way of putting it.
+
+1591
+01:11:05,750 --> 01:11:06,390
+Yeah.
+
+1592
+01:11:06,390 --> 01:11:12,190
+[INAUDIBLE]
+
+1593
+01:11:12,190 --> 01:11:15,150
+Yeah, the per expert loss, in principle, if it's perfectly
+
+1594
+01:11:15,150 --> 01:11:17,355
+enforced, will also enforce a per device balancing
+
+1595
+01:11:17,355 --> 01:11:18,730
+if your experts are evenly split.
+
+1596
+01:11:18,730 --> 01:11:21,470
+But I think, at least my interpretation of that
+
+1597
+01:11:21,470 --> 01:11:24,350
+is, you don't want to crank up the per expert loss so high
+
+1598
+01:11:24,350 --> 01:11:26,530
+that you get true full uniformity,
+
+1599
+01:11:26,530 --> 01:11:29,093
+because that has deleterious effects on training dynamics.
+
+1600
+01:11:29,093 --> 01:11:30,510
+But per device is important enough
+
+1601
+01:11:30,510 --> 01:11:32,843
+that you're willing to add on a little bit of extra loss
+
+1602
+01:11:32,843 --> 01:11:34,850
+to encourage per device balancing over others.
+
+1603
+01:11:37,550 --> 01:11:38,150
+Cool.
+
+1604
+01:11:38,150 --> 01:11:38,690
+OK.
+
+1605
+01:11:38,690 --> 01:11:41,190
+So now, I'm going to talk a little bit about the system side
+
+1606
+01:11:41,190 --> 01:11:43,950
+of things before we wrap up.
+
+1607
+01:11:43,950 --> 01:11:48,690
+So training MoEs has additional fun systems dynamics
+
+1608
+01:11:48,690 --> 01:11:50,330
+that are introduced.
+
+1609
+01:11:50,330 --> 01:11:52,130
+When I talk about parallelism, I'm
+
+1610
+01:11:52,130 --> 01:11:55,690
+mostly going to talk about the standard, let's call it,
+
+1611
+01:11:55,690 --> 01:11:57,010
+forms of parallelism.
+
+1612
+01:12:00,707 --> 01:12:02,790
+You can split up your data over many small chunks.
+
+1613
+01:12:02,790 --> 01:12:04,707
+You can take your one data set and split it up
+
+1614
+01:12:04,707 --> 01:12:06,410
+over many machines.
+
+1615
+01:12:06,410 --> 01:12:09,630
+You can do model parallelism, where you can take your model,
+
+1616
+01:12:09,630 --> 01:12:13,473
+and maybe you can split up your model over different machines.
+
+1617
+01:12:13,473 --> 01:12:15,390
+And you can combine those two in various ways,
+
+1618
+01:12:15,390 --> 01:12:17,810
+you can, of course, do that.
+
+1619
+01:12:17,810 --> 01:12:19,497
+But I think the thing that we realize
+
+1620
+01:12:19,497 --> 01:12:22,930
+is that each of those parallelism techniques has some limit.
+
+1621
+01:12:22,930 --> 01:12:26,130
+For data parallelism, you're maxed out your batch size.
+
+1622
+01:12:26,130 --> 01:12:28,930
+Once you hit your batch size, you can't parallelize by data
+
+1623
+01:12:28,930 --> 01:12:29,730
+anymore.
+
+1624
+01:12:29,730 --> 01:12:32,170
+For model size, there's natural cut points,
+
+1625
+01:12:32,170 --> 01:12:33,430
+where you can cut your model.
+
+1626
+01:12:33,430 --> 01:12:36,210
+Once you exhaust those, you can't parallelize anymore.
+
+1627
+01:12:36,210 --> 01:12:38,110
+If you combine this with expert parallelism,
+
+1628
+01:12:38,110 --> 01:12:42,050
+you get another additional nice access to parallelize on.
+
+1629
+01:12:42,050 --> 01:12:47,400
+And when you do this, a lot of the underlying implementations
+
+1630
+01:12:47,400 --> 01:12:51,160
+for this allow you to take advantage of sparse matrix
+
+1631
+01:12:51,160 --> 01:12:54,583
+multiply that has been built into GPUs.
+
+1632
+01:12:54,583 --> 01:12:56,000
+So another thing that I'll mention
+
+1633
+01:12:56,000 --> 01:13:00,335
+is, if you have multiple experts, let's say, on one GPU,
+
+1634
+01:13:00,335 --> 01:13:01,960
+one way of thinking about it is to say,
+
+1635
+01:13:01,960 --> 01:13:04,980
+I'm going to have multiple small matrix multiplies.
+
+1636
+01:13:04,980 --> 01:13:07,600
+But this is not nice, because you ideally
+
+1637
+01:13:07,600 --> 01:13:09,480
+want these bigger matrix multiplies,
+
+1638
+01:13:09,480 --> 01:13:12,440
+where you can reuse caches and do all sorts of things.
+
+1639
+01:13:12,440 --> 01:13:14,640
+So instead, what you can do is, you
+
+1640
+01:13:14,640 --> 01:13:17,440
+can nicely leverage sparsity.
+
+1641
+01:13:17,440 --> 01:13:20,340
+And block diagonal, of course, is the most basic form,
+
+1642
+01:13:20,340 --> 01:13:22,760
+but you can use much more complicated forms
+
+1643
+01:13:22,760 --> 01:13:27,160
+of structured sparsity that are natively supported in hardware
+
+1644
+01:13:27,160 --> 01:13:30,280
+to allow you to essentially multiply
+
+1645
+01:13:30,280 --> 01:13:34,880
+experts and inputs in very, very clean ways, very fast.
+
+1646
+01:13:34,880 --> 01:13:37,560
+So this is another reason why MoEs are nice.
+
+1647
+01:13:37,560 --> 01:13:41,000
+If you think about the computation patterns of MoEs,
+
+1648
+01:13:41,000 --> 01:13:44,020
+they almost correspond to these kinds of structured matrix
+
+1649
+01:13:44,020 --> 01:13:47,020
+multiplications that are very easy and efficient to support
+
+1650
+01:13:47,020 --> 01:13:47,860
+in hardware.
+
+1651
+01:13:47,860 --> 01:13:50,540
+So there's this hardware architecture codesign
+
+1652
+01:13:50,540 --> 01:13:55,420
+that's happening with MoEs.
+
+1653
+01:13:55,420 --> 01:13:58,300
+And in terms of parallelism, one thing I'll mention,
+
+1654
+01:13:58,300 --> 01:14:00,120
+this is a very recent development.
+
+1655
+01:14:00,120 --> 01:14:03,420
+This is from Nemotron-3.
+
+1656
+01:14:03,420 --> 01:14:06,820
+I forgot who asked this question.
+
+1657
+01:14:06,820 --> 01:14:08,640
+When we do this expert parallelism,
+
+1658
+01:14:08,640 --> 01:14:10,740
+we have to be shipping activations from device
+
+1659
+01:14:10,740 --> 01:14:14,480
+to device in order to say like, oh, you belong in that expert,
+
+1660
+01:14:14,480 --> 01:14:15,900
+I need to ship you over.
+
+1661
+01:14:15,900 --> 01:14:19,143
+That can result in significant communications overhead.
+
+1662
+01:14:19,143 --> 01:14:21,060
+So some of the things that people have started
+
+1663
+01:14:21,060 --> 01:14:24,460
+to think about is to say, well, my shared expert, which
+
+1664
+01:14:24,460 --> 01:14:28,540
+I'm not going to communicate, this can be in big dimensions.
+
+1665
+01:14:28,540 --> 01:14:31,880
+But my experts, I need to communicate those activations,
+
+1666
+01:14:31,880 --> 01:14:34,960
+I want those to be in smaller lower dimensional vectors.
+
+1667
+01:14:34,960 --> 01:14:38,500
+So you might actually take your residual stream
+
+1668
+01:14:38,500 --> 01:14:41,450
+and downproject it first, and then
+
+1669
+01:14:41,450 --> 01:14:44,890
+decide to do the collective communication call of sending
+
+1670
+01:14:44,890 --> 01:14:46,190
+this activation out.
+
+1671
+01:14:46,190 --> 01:14:49,930
+And that will significantly save on communication
+
+1672
+01:14:49,930 --> 01:14:53,530
+without fully having the drawbacks of having a smaller
+
+1673
+01:14:53,530 --> 01:14:54,710
+hidden dimension size.
+
+1674
+01:14:54,710 --> 01:14:57,530
+So you can actually do these kind of projection tricks
+
+1675
+01:14:57,530 --> 01:15:01,730
+to nicely control the trade-off of communication
+
+1676
+01:15:01,730 --> 01:15:04,750
+and having your MoEs parallelized.
+
+1677
+01:15:07,650 --> 01:15:12,850
+One final trivia, let's call it detail of MoEs
+
+1678
+01:15:12,850 --> 01:15:16,210
+that I think is fun, but it has been solved in recent years,
+
+1679
+01:15:16,210 --> 01:15:17,650
+is stochasticity.
+
+1680
+01:15:17,650 --> 01:15:22,210
+If you do MoE infrastructure naively, what you'll find
+
+1681
+01:15:22,210 --> 01:15:26,170
+is that, unless your experts are perfectly balanced on your input
+
+1682
+01:15:26,170 --> 01:15:28,530
+distribution, you'll find that certain experts might be
+
+1683
+01:15:28,530 --> 01:15:30,450
+much more popular than others.
+
+1684
+01:15:30,450 --> 01:15:32,650
+And if some expert like, let's say, in this case,
+
+1685
+01:15:32,650 --> 01:15:35,550
+expert 0 is just a really popular expert,
+
+1686
+01:15:35,550 --> 01:15:38,050
+you're going to actually start running into situations where
+
+1687
+01:15:38,050 --> 01:15:42,142
+this expert queue of tokens just starts building up, and building up.
+
+1688
+01:15:42,142 --> 01:15:44,350
+And eventually, you'll get to a point, where you say,
+
+1689
+01:15:44,350 --> 01:15:48,350
+my queue is so long, I have to start dropping tokens.
+
+1690
+01:15:48,350 --> 01:15:50,510
+And the earlier generation of MoE
+
+1691
+01:15:50,510 --> 01:15:53,025
+inference infrastructure and code,
+
+1692
+01:15:53,025 --> 01:15:55,150
+a lot of what happened was, you would just actually
+
+1693
+01:15:55,150 --> 01:15:56,510
+silently drop this expert.
+
+1694
+01:15:56,510 --> 01:15:58,630
+And you just proceed on with your computation
+
+1695
+01:15:58,630 --> 01:16:00,030
+as if nothing had happened.
+
+1696
+01:16:00,030 --> 01:16:03,630
+You just send a zero back and pretend that that was fine.
+
+1697
+01:16:03,630 --> 01:16:08,030
+And this means that you can have these weird stochasticities,
+
+1698
+01:16:08,030 --> 01:16:12,030
+where if other users sent in queries that
+
+1699
+01:16:12,030 --> 01:16:14,270
+hit the experts that you're using, then
+
+1700
+01:16:14,270 --> 01:16:16,070
+you could actually get a worse result,
+
+1701
+01:16:16,070 --> 01:16:18,250
+because they would bump you out of the expert queue.
+
+1702
+01:16:18,250 --> 01:16:21,270
+These kinds of very strange things can happen.
+
+1703
+01:16:21,270 --> 01:16:24,070
+But these days, they drop less architectures
+
+1704
+01:16:24,070 --> 01:16:26,290
+that have gotten rid of a lot of these issues.
+
+1705
+01:16:26,290 --> 01:16:28,330
+So this is no longer really an issue.
+
+1706
+01:16:28,330 --> 01:16:32,390
+So mega blocks and other very common open source MoE
+
+1707
+01:16:32,390 --> 01:16:35,750
+frameworks don't have this issue anymore.
+
+1708
+01:16:35,750 --> 01:16:38,740
+So the last thing that I'll talk about in terms
+
+1709
+01:16:38,740 --> 01:16:42,020
+of the design of MoEs is this issue of stability.
+
+1710
+01:16:42,020 --> 01:16:43,860
+We've already talked about stability issues
+
+1711
+01:16:43,860 --> 01:16:48,180
+in the context of architecture design last lecture.
+
+1712
+01:16:48,180 --> 01:16:50,740
+But if you remember what I said then,
+
+1713
+01:16:50,740 --> 01:16:54,160
+I said exponentials are bad, divisions are bad,
+
+1714
+01:16:54,160 --> 01:16:58,100
+which means softmaxes are danger zone for stability issues.
+
+1715
+01:16:58,100 --> 01:17:01,300
+Now, what we done with mixture of experts?
+
+1716
+01:17:01,300 --> 01:17:03,860
+Well, we have introduced yet another softmax in the routing,
+
+1717
+01:17:03,860 --> 01:17:05,240
+because we're going to do TopK.
+
+1718
+01:17:05,240 --> 01:17:06,600
+We're going to do softmax.
+
+1719
+01:17:06,600 --> 01:17:10,180
+And that's going to be how we route to experts.
+
+1720
+01:17:10,180 --> 01:17:15,460
+Now, people have long noticed that the softmax operation
+
+1721
+01:17:15,460 --> 01:17:19,060
+in MoEs are potentially very, very dangerous.
+
+1722
+01:17:19,060 --> 01:17:22,760
+Barret Zoph and others, in the early days of Google MoE design,
+
+1723
+01:17:22,760 --> 01:17:25,880
+had an entire paper on MoE stability.
+
+1724
+01:17:25,880 --> 01:17:28,340
+And this was one of the things that they noticed.
+
+1725
+01:17:28,340 --> 01:17:30,900
+And I'm going to go into some of the details.
+
+1726
+01:17:30,900 --> 01:17:32,820
+You'll see the solution fairly often
+
+1727
+01:17:32,820 --> 01:17:35,420
+for some of the more sensitive and tricky parts.
+
+1728
+01:17:35,420 --> 01:17:37,560
+You might end up using something like Float 32
+
+1729
+01:17:37,560 --> 01:17:39,400
+for just the expert router.
+
+1730
+01:17:39,400 --> 01:17:41,600
+You might have a z-loss as well here.
+
+1731
+01:17:41,600 --> 01:17:44,080
+We've talked about z-loss before in order
+
+1732
+01:17:44,080 --> 01:17:49,600
+to control the softmax stability issues that we saw.
+
+1733
+01:17:49,600 --> 01:17:53,000
+Z-loss, I think, was quite popular, actually,
+
+1734
+01:17:53,000 --> 01:17:58,200
+to do MoE router stability even in the early days.
+
+1735
+01:17:58,200 --> 01:18:00,260
+OlMoE, which I've been talking about extensively,
+
+1736
+01:18:00,260 --> 01:18:03,872
+has done ablations on adding or removing z-loss.
+
+1737
+01:18:03,872 --> 01:18:06,080
+It's quite clear, from these very spiky training loss
+
+1738
+01:18:06,080 --> 01:18:11,480
+curves, that z-loss on the router can be quite helpful.
+
+1739
+01:18:11,480 --> 01:18:15,160
+There are other issues with MoEs that you can end up with.
+
+1740
+01:18:15,160 --> 01:18:18,240
+And I think you probably all have experienced this maybe
+
+1741
+01:18:18,240 --> 01:18:21,160
+recently if you work with language models, which
+
+1742
+01:18:21,160 --> 01:18:24,300
+is that MoEs can be pretty annoying to fine tune.
+
+1743
+01:18:24,300 --> 01:18:26,320
+They have so many parameters that if you're
+
+1744
+01:18:26,320 --> 01:18:29,440
+trying to fine tune the experts, you actually
+
+1745
+01:18:29,440 --> 01:18:32,340
+end up with very serious overfitting issues.
+
+1746
+01:18:32,340 --> 01:18:35,800
+So you can see that if you have your dense models,
+
+1747
+01:18:35,800 --> 01:18:39,800
+train and val are fairly close, they don't overfit crazily.
+
+1748
+01:18:39,800 --> 01:18:41,860
+But if you look at the sparse, train and val gap
+
+1749
+01:18:41,860 --> 01:18:44,940
+is extremely large, as you fine tune
+
+1750
+01:18:44,940 --> 01:18:48,580
+these models, or, in this case, downstream task.
+
+1751
+01:18:48,580 --> 01:18:51,700
+I think it was one of the glue benchmark tasks.
+
+1752
+01:18:51,700 --> 01:18:57,460
+Now, you could have a case, where you fine tune
+
+1753
+01:18:57,460 --> 01:18:59,880
+non-MoE feed forwards.
+
+1754
+01:18:59,880 --> 01:19:01,760
+You could also fine tune just attention.
+
+1755
+01:19:01,760 --> 01:19:05,840
+These are pretty common interventions that people do,
+
+1756
+01:19:05,840 --> 01:19:07,780
+especially the attention fine-tuning
+
+1757
+01:19:07,780 --> 01:19:12,460
+is something that I see quite often with MoE works recently.
+
+1758
+01:19:12,460 --> 01:19:15,400
+But if your model has non-MoE layers, then, of course,
+
+1759
+01:19:15,400 --> 01:19:16,860
+you can also just fine tune those.
+
+1760
+01:19:16,860 --> 01:19:20,980
+And there is often others, we're kind of arguing for those.
+
+1761
+01:19:20,980 --> 01:19:23,420
+And of course, there's also the bitter lesson version
+
+1762
+01:19:23,420 --> 01:19:25,580
+of this, which is, maybe you should just
+
+1763
+01:19:25,580 --> 01:19:29,200
+use 1.4 million examples instead of whatever number you have.
+
+1764
+01:19:29,200 --> 01:19:31,660
+If you have a lot of data, you can retrain, basically,
+
+1765
+01:19:31,660 --> 01:19:34,430
+the MoE entirely during your fine-tuning stage.
+
+1766
+01:19:34,430 --> 01:19:39,530
+And you won't have quite as much of a generalization gap.
+
+1767
+01:19:39,530 --> 01:19:40,690
+OK.
+
+1768
+01:19:40,690 --> 01:19:44,170
+The last MoE-specific trick that I'll mention
+
+1769
+01:19:44,170 --> 01:19:46,710
+is this idea of upcycling.
+
+1770
+01:19:46,710 --> 01:19:49,790
+This has actually become a lot less popular in the last year.
+
+1771
+01:19:49,790 --> 01:19:53,570
+I don't think I've seen a single upcycled model this year.
+
+1772
+01:19:53,570 --> 01:19:54,630
+But it's a cool idea.
+
+1773
+01:19:54,630 --> 01:19:56,730
+And also, there were some very nice models
+
+1774
+01:19:56,730 --> 01:19:58,510
+earlier on using this trick.
+
+1775
+01:19:58,510 --> 01:20:00,490
+So I want to mention this.
+
+1776
+01:20:00,490 --> 01:20:04,970
+So upcycling is this idea that if you want a MoE,
+
+1777
+01:20:04,970 --> 01:20:07,670
+maybe you can just take a dense model that you've trained,
+
+1778
+01:20:07,670 --> 01:20:11,390
+and then you can instantiate a MoE based on that dense model.
+
+1779
+01:20:11,390 --> 01:20:15,490
+And the idea is, you just copy everything, including the MLPs.
+
+1780
+01:20:15,490 --> 01:20:18,570
+You just make a whole bunch of copies from these MLPs.
+
+1781
+01:20:18,570 --> 01:20:22,290
+You have a router, which have a random initialization.
+
+1782
+01:20:22,290 --> 01:20:23,790
+And then you just train this model.
+
+1783
+01:20:23,790 --> 01:20:27,090
+And if you do this, then because of the stochasticity of which
+
+1784
+01:20:27,090 --> 01:20:29,450
+inputs go to where and the MLP, you're
+
+1785
+01:20:29,450 --> 01:20:32,550
+going to get these experts that start to specialize.
+
+1786
+01:20:32,550 --> 01:20:35,990
+And in the end, you'll actually end up with MoE.
+
+1787
+01:20:35,990 --> 01:20:40,430
+And in some of the earliest papers that proposed upcycling,
+
+1788
+01:20:40,430 --> 01:20:42,710
+they show that an upcycled method
+
+1789
+01:20:42,710 --> 01:20:46,090
+could get much better language modeling,
+
+1790
+01:20:46,090 --> 01:20:50,070
+in this case, accuracy, performance,
+
+1791
+01:20:50,070 --> 01:20:53,790
+upcycling a dense model rather than continuing
+
+1792
+01:20:53,790 --> 01:20:56,190
+to train the same model, which is
+
+1793
+01:20:56,190 --> 01:20:59,470
+a cool thing that you can show.
+
+1794
+01:20:59,470 --> 01:21:03,610
+People have validated this at scale in many ways.
+
+1795
+01:21:03,610 --> 01:21:08,770
+So many CPM is another Chinese model that I quite like,
+
+1796
+01:21:08,770 --> 01:21:11,210
+because they do a lot of carefully controlled ablations.
+
+1797
+01:21:11,210 --> 01:21:15,690
+They had a MoE, where they took their miniCPM 2.4b model.
+
+1798
+01:21:15,690 --> 01:21:18,850
+They upcycled it to a 13.4 billion parameter model.
+
+1799
+01:21:18,850 --> 01:21:22,370
+And they got a bunch of almost free wins from doing that.
+
+1800
+01:21:24,910 --> 01:21:28,020
+Qwen also, when they did their Qwen MoE,
+
+1801
+01:21:28,020 --> 01:21:31,100
+initialize from there 1.8B Qwen model.
+
+1802
+01:21:31,100 --> 01:21:37,340
+They upcycled that to a Qwen 1.5.A, 2.7B model.
+
+1803
+01:21:37,340 --> 01:21:39,580
+And they ended up with one of the first
+
+1804
+01:21:39,580 --> 01:21:43,060
+and one of the very high performance models.
+
+1805
+01:21:43,060 --> 01:21:45,260
+It's, I think, one of the first larger scale
+
+1806
+01:21:45,260 --> 01:21:46,980
+upcycling successes.
+
+1807
+01:21:46,980 --> 01:21:49,180
+Of course, these days, I don't think
+
+1808
+01:21:49,180 --> 01:21:51,060
+anyone's really upcycling anymore,
+
+1809
+01:21:51,060 --> 01:21:53,780
+because you don't really train dense models
+
+1810
+01:21:53,780 --> 01:21:55,120
+and then convert them.
+
+1811
+01:21:55,120 --> 01:21:58,100
+You might as well just train your big hero run
+
+1812
+01:21:58,100 --> 01:21:59,820
+on an MoE to start with.
+
+1813
+01:21:59,820 --> 01:22:01,760
+So I don't think we see this quite as much,
+
+1814
+01:22:01,760 --> 01:22:03,385
+but I wanted to mention this, because I
+
+1815
+01:22:03,385 --> 01:22:05,060
+think it's an important thing to know
+
+1816
+01:22:05,060 --> 01:22:11,500
+in the action space of mixture of experts models.
+
+1817
+01:22:11,500 --> 01:22:12,100
+OK.
+
+1818
+01:22:12,100 --> 01:22:15,420
+So the last thing I want to end with is,
+
+1819
+01:22:15,420 --> 01:22:17,540
+I want to just walk us through the DeepSeek
+
+1820
+01:22:17,540 --> 01:22:19,520
+models-- v1, v2, and v3.
+
+1821
+01:22:19,520 --> 01:22:22,100
+I think there's a lot to learn from the evolution of DeepSeek
+
+1822
+01:22:22,100 --> 01:22:22,600
+models.
+
+1823
+01:22:22,600 --> 01:22:24,100
+And also, if you're interested, just
+
+1824
+01:22:24,100 --> 01:22:26,600
+in general about MoEs or architecture design,
+
+1825
+01:22:26,600 --> 01:22:28,940
+I would encourage that you read the DeepSeek papers.
+
+1826
+01:22:28,940 --> 01:22:30,020
+I think they're very well written.
+
+1827
+01:22:30,020 --> 01:22:31,437
+I think they have a lot of details
+
+1828
+01:22:31,437 --> 01:22:33,040
+that are worth digging into.
+
+1829
+01:22:33,040 --> 01:22:36,720
+So the DeepSeekMoE architecture at v1
+
+1830
+01:22:36,720 --> 01:22:39,840
+is already, actually, the prototype
+
+1831
+01:22:39,840 --> 01:22:41,580
+of a lot of different modern MoE.
+
+1832
+01:22:41,580 --> 01:22:43,980
+It's got the shared and fine-grained expert structure.
+
+1833
+01:22:43,980 --> 01:22:47,360
+It uses standard TopK routing with the auxiliary loss
+
+1834
+01:22:47,360 --> 01:22:47,980
+balancing.
+
+1835
+01:22:47,980 --> 01:22:49,397
+I mean, in some ways, I would say,
+
+1836
+01:22:49,397 --> 01:22:55,040
+this is like the prototypical platonic ideal of MoE model.
+
+1837
+01:22:55,040 --> 01:22:58,340
+DeepSeekMoE v2 scales this guy up.
+
+1838
+01:22:58,340 --> 01:23:01,080
+So you've got two shared experts, many more fine-grained
+
+1839
+01:23:01,080 --> 01:23:02,200
+experts.
+
+1840
+01:23:02,200 --> 01:23:04,920
+And you've got this device routing component,
+
+1841
+01:23:04,920 --> 01:23:07,700
+and you've got a communication balancing component.
+
+1842
+01:23:07,700 --> 01:23:10,640
+Both of these are essentially adding auxiliary losses
+
+1843
+01:23:10,640 --> 01:23:11,940
+to optimize systems.
+
+1844
+01:23:11,940 --> 01:23:14,920
+I think it's important to realize that successful language
+
+1845
+01:23:14,920 --> 01:23:17,660
+model training is not just about deep learning,
+
+1846
+01:23:17,660 --> 01:23:20,100
+it's also about really respecting your systems.
+
+1847
+01:23:20,100 --> 01:23:22,720
+So DeepSeek v2 is really a reflection, I think,
+
+1848
+01:23:22,720 --> 01:23:25,350
+of this philosophy.
+
+1849
+01:23:25,350 --> 01:23:28,630
+And then in DeepSeekMoE v3, they've still
+
+1850
+01:23:28,630 --> 01:23:31,410
+got the shared and fine-grained experts design,
+
+1851
+01:23:31,410 --> 01:23:35,530
+but they've got different ways of doing balancing.
+
+1852
+01:23:35,530 --> 01:23:37,430
+They've gotten aux-loss-free ways
+
+1853
+01:23:37,430 --> 01:23:40,590
+of balancing the different experts.
+
+1854
+01:23:40,590 --> 01:23:44,270
+And they've switched to using sigmoid plus softmax, which
+
+1855
+01:23:44,270 --> 01:23:48,670
+is a different way of weighting their experts, but really,
+
+1856
+01:23:48,670 --> 01:23:50,070
+mostly similar.
+
+1857
+01:23:50,070 --> 01:23:51,638
+Finally, since we're already here,
+
+1858
+01:23:51,638 --> 01:23:53,430
+we might as well just walk through the rest
+
+1859
+01:23:53,430 --> 01:23:54,890
+of DeepSeekMoE V3.
+
+1860
+01:23:54,890 --> 01:23:56,790
+They've got lots of other cool things.
+
+1861
+01:23:56,790 --> 01:23:59,870
+I'm a big fan of how they think about systems.
+
+1862
+01:23:59,870 --> 01:24:01,670
+They've got multihead latent attention,
+
+1863
+01:24:01,670 --> 01:24:05,310
+where instead of doing QKV directly,
+
+1864
+01:24:05,310 --> 01:24:06,870
+what you're going to do is you're
+
+1865
+01:24:06,870 --> 01:24:11,050
+going to represent them as this lower dimensional latent c.
+
+1866
+01:24:11,050 --> 01:24:12,390
+So you have your hidden input.
+
+1867
+01:24:12,390 --> 01:24:15,330
+Instead of directly producing your Qs, Ks, and Vs,
+
+1868
+01:24:15,330 --> 01:24:17,310
+you're going to first produce the c.
+
+1869
+01:24:17,310 --> 01:24:19,710
+And then you're going to produce your Q, Ks, and Vs
+
+1870
+01:24:19,710 --> 01:24:20,970
+as a function of that.
+
+1871
+01:24:20,970 --> 01:24:25,650
+And that allows you to get significantly improved savings.
+
+1872
+01:24:25,650 --> 01:24:28,350
+Instead of KV caching all your Ks and Vs,
+
+1873
+01:24:28,350 --> 01:24:30,490
+I only need to store these Cs.
+
+1874
+01:24:30,490 --> 01:24:32,650
+And the Cs are hopefully, lower dimensional.
+
+1875
+01:24:32,650 --> 01:24:35,930
+And that's why it's called MLA, latent activation,
+
+1876
+01:24:35,930 --> 01:24:37,990
+because the Cs, which are latent,
+
+1877
+01:24:37,990 --> 01:24:42,410
+are the KV cache quantities that you need to save.
+
+1878
+01:24:42,410 --> 01:24:45,130
+The only complexity that you might need to worry about
+
+1879
+01:24:45,130 --> 01:24:48,710
+is that this is going to conflict with rope
+
+1880
+01:24:48,710 --> 01:24:51,150
+when you do KV caching.
+
+1881
+01:24:51,150 --> 01:24:54,450
+So you have to be a little bit careful about how you rotate
+
+1882
+01:24:54,450 --> 01:24:56,290
+different dimensions and so on.
+
+1883
+01:24:56,290 --> 01:24:58,890
+And so the trick is, you have non-latent dimensions
+
+1884
+01:24:58,890 --> 01:25:01,330
+that encode positions, but I'm not
+
+1885
+01:25:01,330 --> 01:25:04,750
+going to go into too much more details about that.
+
+1886
+01:25:04,750 --> 01:25:06,290
+Finally, something that I thought
+
+1887
+01:25:06,290 --> 01:25:08,730
+was a very cool idea for MoE, actually,
+
+1888
+01:25:08,730 --> 01:25:11,770
+DeepSeekMoE v3, but hasn't caught on very much,
+
+1889
+01:25:11,770 --> 01:25:14,910
+is the idea of MTP or multitoken prediction.
+
+1890
+01:25:14,910 --> 01:25:16,870
+Instead of predicting one future token,
+
+1891
+01:25:16,870 --> 01:25:20,010
+you predict multiple tokens all at once.
+
+1892
+01:25:20,010 --> 01:25:23,045
+That has a statistical argument for why that's a good idea.
+
+1893
+01:25:23,045 --> 01:25:25,420
+Maybe it lets you predict the future a little bit better.
+
+1894
+01:25:25,420 --> 01:25:27,440
+But also, there's this nice systems argument
+
+1895
+01:25:27,440 --> 01:25:30,840
+that you now have a speculative decoder built in.
+
+1896
+01:25:30,840 --> 01:25:34,680
+Percy will talk about that when he talks about inference later,
+
+1897
+01:25:34,680 --> 01:25:38,000
+but it's just a trick that you can use to speed up
+
+1898
+01:25:38,000 --> 01:25:40,780
+your decoding from your model.
+
+1899
+01:25:40,780 --> 01:25:41,280
+OK.
+
+1900
+01:25:41,280 --> 01:25:42,760
+I think we're roughly at time.
+
+1901
+01:25:42,760 --> 01:25:44,860
+So to put everything together, right,
+
+1902
+01:25:44,860 --> 01:25:49,400
+MoEs are this very clever idea to take advantage of sparsity,
+
+1903
+01:25:49,400 --> 01:25:53,040
+so that you can have more parameters than you're paying for.
+
+1904
+01:25:53,040 --> 01:25:56,540
+So you don't pay for the compute cost of all of your parameters,
+
+1905
+01:25:56,540 --> 01:25:59,640
+but you are getting the parameter benefits.
+
+1906
+01:25:59,640 --> 01:26:02,400
+You might initially think that this kind of routing problem
+
+1907
+01:26:02,400 --> 01:26:05,480
+is very hard, but it turns out that very simple things
+
+1908
+01:26:05,480 --> 01:26:07,680
+work well, even at scale.
+
+1909
+01:26:07,680 --> 01:26:10,580
+And at this point, it's clear that MoEs are here to stay,
+
+1910
+01:26:10,580 --> 01:26:13,960
+so you should understand how they work and what they are.
+
+1911
+01:26:13,960 --> 01:26:15,510
+Thanks.

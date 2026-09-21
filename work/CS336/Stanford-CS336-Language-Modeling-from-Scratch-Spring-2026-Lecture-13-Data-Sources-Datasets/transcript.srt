@@ -1,0 +1,5619 @@
+1
+00:00:04,640 --> 00:00:07,400
+So today we're going to talk about data.
+
+2
+00:00:07,400 --> 00:00:10,880
+And where we are is that you know how
+
+3
+00:00:10,880 --> 00:00:13,720
+to train a model, given data.
+
+4
+00:00:13,720 --> 00:00:17,880
+Last time we saw evaluations, so we know what a good model is.
+
+5
+00:00:17,880 --> 00:00:20,340
+And for the next two lectures, this week
+
+6
+00:00:20,340 --> 00:00:24,760
+we're going to focus on what data should we train on.
+
+7
+00:00:24,760 --> 00:00:27,480
+And I want to argue that data is the most important thing
+
+8
+00:00:27,480 --> 00:00:29,880
+to get right in language models.
+
+9
+00:00:29,880 --> 00:00:31,720
+And one justification for this is
+
+10
+00:00:31,720 --> 00:00:35,020
+if you look at what companies actually disclose--
+
+11
+00:00:35,020 --> 00:00:38,120
+So here is the Llama 3 paper.
+
+12
+00:00:38,120 --> 00:00:41,540
+They have full transparency into the architecture--
+
+13
+00:00:41,540 --> 00:00:44,440
+well of course, because it's open-weight model--
+
+14
+00:00:44,440 --> 00:00:47,600
+they even tell you about their training procedures,
+
+15
+00:00:47,600 --> 00:00:51,120
+but they don't say anything about their data.
+
+16
+00:00:51,120 --> 00:00:56,400
+So they just say, we train for a variety of data sources
+
+17
+00:00:56,400 --> 00:00:58,560
+and do some stuff.
+
+18
+00:00:58,560 --> 00:01:02,200
+And there's good reasons for this secrecy.
+
+19
+00:01:02,200 --> 00:01:07,360
+One is that data is your competitive secret sauce.
+
+20
+00:01:07,360 --> 00:01:08,260
+Competitive dynamics.
+
+21
+00:01:08,260 --> 00:01:11,160
+You don't want your competitors to know what you're doing.
+
+22
+00:01:11,160 --> 00:01:13,040
+And the second thing, which we'll
+
+23
+00:01:13,040 --> 00:01:16,258
+talk a little bit more about, is copyright liability.
+
+24
+00:01:16,258 --> 00:01:18,800
+You don't want to get sued if you tell people you're training
+
+25
+00:01:18,800 --> 00:01:21,600
+on certain types of data.
+
+26
+00:01:21,600 --> 00:01:25,480
+So data is a long topic in machine learning.
+
+27
+00:01:25,480 --> 00:01:28,520
+And before foundation models, data work
+
+28
+00:01:28,520 --> 00:01:33,880
+meant you annotate-- label data for supervised learning.
+
+29
+00:01:33,880 --> 00:01:37,380
+Nowadays there's less manual annotation--
+
+30
+00:01:37,380 --> 00:01:39,560
+at least in pre-training-- but there's still
+
+31
+00:01:39,560 --> 00:01:43,600
+a lot of curation and cleaning work that needs to be done.
+
+32
+00:01:43,600 --> 00:01:46,500
+And so fundamentally, this hasn't really changed.
+
+33
+00:01:46,500 --> 00:01:48,960
+Data has always been a bottleneck,
+
+34
+00:01:48,960 --> 00:01:51,120
+and always will be a bottleneck because it's
+
+35
+00:01:51,120 --> 00:01:53,960
+in some sense a long-tail problem,
+
+36
+00:01:53,960 --> 00:01:55,620
+and that scales with human effort.
+
+37
+00:01:55,620 --> 00:01:59,370
+So if you have a lot of people trying to work on the problem,
+
+38
+00:01:59,370 --> 00:02:01,170
+well, there's only so many people
+
+39
+00:02:01,170 --> 00:02:03,670
+that can work on architectures and systems.
+
+40
+00:02:03,670 --> 00:02:06,676
+But data, well, that's-- especially if you're training
+
+41
+00:02:06,676 --> 00:02:09,009
+a foundation model that's trying to do all these things,
+
+42
+00:02:09,009 --> 00:02:10,910
+you can paralyze that effort easily.
+
+43
+00:02:10,910 --> 00:02:15,130
+So that's why these data teams and these model developers
+
+44
+00:02:15,130 --> 00:02:18,410
+are actually quite big.
+
+45
+00:02:18,410 --> 00:02:23,850
+So data comes in at different stages of the pipeline.
+
+46
+00:02:23,850 --> 00:02:26,530
+Today we're focusing mostly on pre-training.
+
+47
+00:02:26,530 --> 00:02:28,350
+So pre-training, you take raw data—
+
+48
+00:02:28,350 --> 00:02:30,370
+these are documents from the web.
+
+49
+00:02:30,370 --> 00:02:32,570
+Then you move into mid-training where
+
+50
+00:02:32,570 --> 00:02:34,650
+you train on more high quality data
+
+51
+00:02:34,650 --> 00:02:38,010
+to enhance certain capabilities, and give long context, things
+
+52
+00:02:38,010 --> 00:02:38,588
+like that.
+
+53
+00:02:38,588 --> 00:02:40,130
+And then finally post-training, where
+
+54
+00:02:40,130 --> 00:02:43,410
+you're training on things like chat transcripts,
+
+55
+00:02:43,410 --> 00:02:45,910
+or if you're doing reinforcement learning,
+
+56
+00:02:45,910 --> 00:02:48,210
+you get some environments that you're training on.
+
+57
+00:02:48,210 --> 00:02:50,970
+This becomes more task specific.
+
+58
+00:02:50,970 --> 00:02:55,730
+In practice the lines are a bit blurry,
+
+59
+00:02:55,730 --> 00:02:59,770
+and there could be more than three stages.
+
+60
+00:02:59,770 --> 00:03:02,810
+But this is a basic template.
+
+61
+00:03:02,810 --> 00:03:05,270
+The trend is that we go from training
+
+62
+00:03:05,270 --> 00:03:06,770
+on large amounts of low quality data
+
+63
+00:03:06,770 --> 00:03:10,770
+to smaller amounts of high quality data.
+
+64
+00:03:10,770 --> 00:03:13,610
+So as a result of this process—
+
+65
+00:03:13,610 --> 00:03:16,050
+you'll see in the literature when we talk about the base
+
+66
+00:03:16,050 --> 00:03:19,490
+model, this usually means after pre-training and mid-training,
+
+67
+00:03:19,490 --> 00:03:24,330
+instruct models or chat models, or post-training.
+
+68
+00:03:24,330 --> 00:03:26,490
+But of course, the lines are becoming
+
+69
+00:03:26,490 --> 00:03:28,770
+blurry enough that what is the base model anymore
+
+70
+00:03:28,770 --> 00:03:30,790
+is really unclear.
+
+71
+00:03:30,790 --> 00:03:36,070
+And more recently, the largest models, there's no base model.
+
+72
+00:03:36,070 --> 00:03:39,510
+There's just Qwen3.5-397B-A17B, and that's it.
+
+73
+00:03:39,510 --> 00:03:44,010
+You don't see the intermediate checkpoints.
+
+74
+00:03:44,010 --> 00:03:48,550
+So for models that are open source like OLMo from AI2,
+
+75
+00:03:48,550 --> 00:03:51,590
+you can see everything that's happening.
+
+76
+00:03:51,590 --> 00:03:54,690
+And so, we'll study some of these models.
+
+77
+00:03:54,690 --> 00:03:58,570
+So for example, in pre-training, there's a bunch of sources which
+
+78
+00:03:58,570 --> 00:04:01,050
+we'll talk about what these mean, but—
+
+79
+00:04:01,050 --> 00:04:06,050
+web pages, academic papers, math pages, proofs, and so on.
+
+80
+00:04:06,050 --> 00:04:09,510
+There's mid-training—higher quality web data,
+
+81
+00:04:09,510 --> 00:04:14,410
+instruction data，bunch of synthetic data often goes here.
+
+82
+00:04:14,410 --> 00:04:19,990
+And then finally post-training，there is a bunch of chat logs.
+
+83
+00:04:19,990 --> 00:04:21,410
+There are more math and reasoning，
+
+84
+00:04:21,410 --> 00:04:27,170
+and coding，you do safety at this point as well.
+
+85
+00:04:27,170 --> 00:04:30,010
+So what are all these datasets?
+
+86
+00:04:30,010 --> 00:04:33,090
+How do you choose them，and how do you process them?
+
+87
+00:04:33,090 --> 00:04:36,730
+So that's the main question.
+
+88
+00:04:36,730 --> 00:04:40,510
+So in the spirit of the class，we're going to talk about data.
+
+89
+00:04:40,510 --> 00:04:42,510
+I'm going to start from scratch.
+
+90
+00:04:42,510 --> 00:04:45,410
+So where does data come from?
+
+91
+00:04:45,410 --> 00:04:50,210
+So one might hear in the hallway，
+
+92
+00:04:50,210 --> 00:04:53,300
+oh，language models are trained on the entire internet.
+
+93
+00:04:53,300 --> 00:04:56,540
+So first of all，this doesn't really quite type-check.
+
+94
+00:04:56,540 --> 00:04:58,380
+Because for that to be true，it would
+
+95
+00:04:58,380 --> 00:05:01,300
+have to be an agent that-- like an RL agent that goes
+
+96
+00:05:01,300 --> 00:05:02,920
+on the internet and does stuff.
+
+97
+00:05:02,920 --> 00:05:05,620
+But that's not actually how pre-training works.
+
+98
+00:05:05,620 --> 00:05:09,700
+Slightly more accurately，it's trained on the public world
+
+99
+00:05:09,700 --> 00:05:14,180
+wide web，but this is not quite accurate for reasons
+
+100
+00:05:14,180 --> 00:05:16,060
+I'll explain.
+
+101
+00:05:16,060 --> 00:05:21,420
+OK，so first of all，the web is actually a bunch of live servers
+
+102
+00:05:21,420 --> 00:05:24,040
+that just exist in the world，and you can connect to.
+
+103
+00:05:24,040 --> 00:05:27,740
+So take any website-- you can go and download the page.
+
+104
+00:05:27,740 --> 00:05:31,420
+Or，you can basically send a request and get back a response.
+
+105
+00:05:31,420 --> 00:05:34,100
+So you can't actually train on these live servers
+
+106
+00:05:34,100 --> 00:05:36,620
+unless you're training an RL agent.
+
+107
+00:05:36,620 --> 00:05:40,060
+So typically what you do is you have a crawler，
+
+108
+00:05:40,060 --> 00:05:43,620
+or someone builds a crawler，not necessarily you.
+
+109
+00:05:43,620 --> 00:05:47,280
+The crawler needs to discover what web pages are out there，
+
+110
+00:05:47,280 --> 00:05:50,700
+starting with the seed set，and it downloads the discovered web
+
+111
+00:05:50,700 --> 00:05:52,480
+pages as it is crawling.
+
+112
+00:05:55,320 --> 00:05:59,660
+But still，can't just run a crawl
+
+113
+00:05:59,660 --> 00:06:01,980
+and download all the web pages on the internet，
+
+114
+00:06:01,980 --> 00:06:05,260
+and there's a few reasons for this.
+
+115
+00:06:05,260 --> 00:06:09,480
+One is that a lot of the web content is actually dynamic.
+
+116
+00:06:09,480 --> 00:06:12,460
+So especially these days，a lot of sites are apps.
+
+117
+00:06:12,460 --> 00:06:15,220
+The URL isn't even as full of specification
+
+118
+00:06:15,220 --> 00:06:20,180
+of the content，it's just an app that you interact with，
+
+119
+00:06:20,180 --> 00:06:23,060
+and you need to often click buttons or submit forms
+
+120
+00:06:23,060 --> 00:06:25,140
+to access content.
+
+121
+00:06:25,140 --> 00:06:27,520
+For example, if you're on Discord or something,
+
+122
+00:06:27,520 --> 00:06:32,900
+it's not like you can just crawl Discord and get all the content
+
+123
+00:06:32,900 --> 00:06:34,860
+on Discord.
+
+124
+00:06:34,860 --> 00:06:38,060
+So that's one kind of thing, and a lot of content
+
+125
+00:06:38,060 --> 00:06:42,580
+is actually known as in the deep web, which is not just
+
+126
+00:06:42,580 --> 00:06:46,860
+doing web page crawling and following
+
+127
+00:06:46,860 --> 00:06:50,990
+hyperlinks, which is a very traditional model of web
+
+128
+00:06:50,990 --> 00:06:52,550
+crawling.
+
+129
+00:06:52,550 --> 00:06:56,450
+The second thing is that authentication.
+
+130
+00:06:56,450 --> 00:07:00,510
+So some pages need a login, an account, and generally
+
+131
+00:07:00,510 --> 00:07:03,550
+you have to pay.
+
+132
+00:07:03,550 --> 00:07:08,150
+For example, there's Facebook, X, LinkedIn, New York Times.
+
+133
+00:07:08,150 --> 00:07:10,030
+There's actually huge amounts of content
+
+134
+00:07:10,030 --> 00:07:12,690
+that are actually locked up behind these walled gardens.
+
+135
+00:07:12,690 --> 00:07:15,950
+So these are technically on the internet or on the web,
+
+136
+00:07:15,950 --> 00:07:21,350
+but you can't just build a crawler and go crawl Facebook.
+
+137
+00:07:21,350 --> 00:07:23,383
+I guess if you're Facebook, you can crawl--
+
+138
+00:07:23,383 --> 00:07:25,550
+you don't need to crawl Facebook, you have the data,
+
+139
+00:07:25,550 --> 00:07:26,633
+and you can train a model.
+
+140
+00:07:26,633 --> 00:07:30,690
+Or if you're X AI, you can train on X. But if you're anyone else,
+
+141
+00:07:30,690 --> 00:07:34,830
+you can't actually access this content.
+
+142
+00:07:34,830 --> 00:07:38,610
+OK, suppose you don't have the authentication issue.
+
+143
+00:07:38,610 --> 00:07:43,210
+There's still potential restrictions here.
+
+144
+00:07:43,210 --> 00:07:46,350
+So there's something called robots.txt,
+
+145
+00:07:46,350 --> 00:07:49,070
+and this is a file that is usually
+
+146
+00:07:49,070 --> 00:07:54,290
+placed at the root level of a directory, such as nytimes.com,
+
+147
+00:07:54,290 --> 00:07:55,910
+and it basically tells you what you're
+
+148
+00:07:55,910 --> 00:07:57,670
+allowed to crawl and whatnot.
+
+149
+00:07:57,670 --> 00:08:00,250
+So these things are-- a lot of things are disallowed,
+
+150
+00:08:00,250 --> 00:08:06,030
+such as OAI-SearchBot, or PerplexityBot, QuoraBot.
+
+151
+00:08:06,030 --> 00:08:12,030
+I think basically, ChatGPT-User, ClaudeBot, and all these things.
+
+152
+00:08:12,030 --> 00:08:17,350
+OK, so this is not a tech--
+
+153
+00:08:17,350 --> 00:08:21,550
+this is not a legal restriction, this just like, you're supposed to be a good citizen
+
+154
+00:08:21,550 --> 00:08:23,490
+and look at robots.txt.
+
+155
+00:08:23,490 --> 00:08:25,550
+And if your name is on that list,
+
+156
+00:08:25,550 --> 00:08:26,970
+then you should not crawl it.
+
+157
+00:08:26,970 --> 00:08:31,150
+That's basically the-- not even a contract,
+
+158
+00:08:31,150 --> 00:08:36,470
+that is the thing you're supposed to do.
+
+159
+00:08:36,470 --> 00:08:40,630
+A lot of websites now use something like Cloudflare
+
+160
+00:08:40,630 --> 00:08:43,470
+to detect and block bot activity.
+
+161
+00:08:43,470 --> 00:08:45,290
+So sometimes you've gone to a website,
+
+162
+00:08:45,290 --> 00:08:46,930
+and it gives you a CAPTCHA.
+
+163
+00:08:46,930 --> 00:08:49,230
+That's because somehow, some algorithm
+
+164
+00:08:49,230 --> 00:08:51,150
+has detected that you might be a bot,
+
+165
+00:08:51,150 --> 00:08:53,110
+and then it's making sure you're human.
+
+166
+00:08:53,110 --> 00:08:56,942
+And if you're actually a bot, then, well, you can't--
+
+167
+00:08:56,942 --> 00:08:58,650
+I mean, you could try to get around this,
+
+168
+00:08:58,650 --> 00:09:01,950
+but generally this is an obstacle in your way.
+
+169
+00:09:01,950 --> 00:09:06,590
+A website might block certain IP addresses or countries,
+
+170
+00:09:06,590 --> 00:09:08,370
+and they might have rate limits.
+
+171
+00:09:08,370 --> 00:09:09,750
+So there's technical restrictions
+
+172
+00:09:09,750 --> 00:09:15,030
+on what you can actually crawl, and then there's
+
+173
+00:09:15,030 --> 00:09:17,350
+also legal restrictions.
+
+174
+00:09:17,350 --> 00:09:22,070
+So websites have terms of service
+
+175
+00:09:22,070 --> 00:09:23,510
+that say, if you go to a website,
+
+176
+00:09:23,510 --> 00:09:26,830
+you have to obey this contract to use the website.
+
+177
+00:09:26,830 --> 00:09:30,090
+And the terms of service often will say, if you're a bot,
+
+178
+00:09:30,090 --> 00:09:30,910
+go away.
+
+179
+00:09:30,910 --> 00:09:34,230
+You cannot use this, the content of the site for AI training,
+
+180
+00:09:34,230 --> 00:09:37,030
+or whatever it might be.
+
+181
+00:09:37,030 --> 00:09:42,870
+And also, even if terms of service don't say anything,
+
+182
+00:09:42,870 --> 00:09:47,760
+the content of the website might have a license,
+
+183
+00:09:47,760 --> 00:09:50,460
+or you might not have a license to train.
+
+184
+00:09:50,460 --> 00:09:52,760
+And we'll talk more about this in a bit.
+
+185
+00:09:52,760 --> 00:09:54,400
+So there's legal restrictions on what
+
+186
+00:09:54,400 --> 00:09:57,160
+you are allowed to train on.
+
+187
+00:09:57,160 --> 00:10:00,360
+These things are also evolving over time.
+
+188
+00:10:00,360 --> 00:10:03,400
+So there's a nice paper by Shane Longpre
+
+189
+00:10:03,400 --> 00:10:07,120
+called Consent in Crisis, and what
+
+190
+00:10:07,120 --> 00:10:09,380
+they did is they examined the restrictions--
+
+191
+00:10:09,380 --> 00:10:11,760
+both the technical restrictions, robots.txt,
+
+192
+00:10:11,760 --> 00:10:14,800
+and the legal restrictions, the terms of service,
+
+193
+00:10:14,800 --> 00:10:17,100
+for various URLs in common datasets,
+
+194
+00:10:17,100 --> 00:10:19,240
+which we'll talk about later.
+
+195
+00:10:19,240 --> 00:10:21,600
+And the conclusion was that the restrictions
+
+196
+00:10:21,600 --> 00:10:22,900
+have increased over time.
+
+197
+00:10:22,900 --> 00:10:28,160
+So here's a graphic that shows-- the top one shows robots.txt.
+
+198
+00:10:28,160 --> 00:10:29,920
+And if you just look at this red,
+
+199
+00:10:29,920 --> 00:10:32,840
+that's the full restrictions.
+
+200
+00:10:32,840 --> 00:10:39,480
+And up until 2023, everything was fairly constant.
+
+201
+00:10:39,480 --> 00:10:43,680
+And then up until mid 2023, all of a sudden
+
+202
+00:10:43,680 --> 00:10:46,560
+you see the amount of the fraction of websites
+
+203
+00:10:46,560 --> 00:10:51,920
+that have full restrictions on it has grown to almost 50% here.
+
+204
+00:10:51,920 --> 00:11:00,000
+And for terms, there's a similar trend where I guess in 2016,
+
+205
+00:11:00,000 --> 00:11:02,460
+no one really put any terms on their pages.
+
+206
+00:11:02,460 --> 00:11:07,920
+And now most pages put some terms, and most of the terms
+
+207
+00:11:07,920 --> 00:11:12,800
+say you can't use this for AI.
+
+208
+00:11:12,800 --> 00:11:18,560
+So even though it was possible to crawl the internet back in,
+
+209
+00:11:18,560 --> 00:11:22,000
+let's say 2020, the internet actually,
+
+210
+00:11:22,000 --> 00:11:26,260
+at least what you can legally crawl, is actually much smaller.
+
+211
+00:11:29,080 --> 00:11:34,060
+So of course, these are guidelines.
+
+212
+00:11:34,060 --> 00:11:36,360
+And sometimes, either intentionally
+
+213
+00:11:36,360 --> 00:11:40,140
+or not intentionally, you could violate these things.
+
+214
+00:11:40,140 --> 00:11:44,640
+So this is-- sometimes you get into these situations where
+
+215
+00:11:44,640 --> 00:11:48,960
+there's this guy who--what was this?
+
+216
+00:11:48,960 --> 00:11:51,320
+I forget the name of this site--
+
+217
+00:11:51,320 --> 00:11:54,480
+was complaining about Anthropic crawling them,
+
+218
+00:11:54,480 --> 00:11:56,080
+hitting their servers a million times
+
+219
+00:11:56,080 --> 00:11:59,960
+in 24 hours, which was not good.
+
+220
+00:11:59,960 --> 00:12:02,100
+And then Read the Docs was also getting hammered.
+
+221
+00:12:02,100 --> 00:12:04,280
+So there was a period where, which I think probably
+
+222
+00:12:04,280 --> 00:12:07,560
+has hopefully been corrected by now, that crawlers
+
+223
+00:12:07,560 --> 00:12:12,420
+were hammering websites.
+
+224
+00:12:12,420 --> 00:12:16,840
+And there the-- here, this is interesting,
+
+225
+00:12:16,840 --> 00:12:19,560
+is like even before talking about copyright issues,
+
+226
+00:12:19,560 --> 00:12:24,120
+there's, I think, problems with crawling either violating
+
+227
+00:12:24,120 --> 00:12:31,600
+terms of service, or robots.txt, or just low up-down,
+
+228
+00:12:31,600 --> 00:12:34,280
+generating a lot of server load, which this costs money
+
+229
+00:12:34,280 --> 00:12:37,080
+for the person hosting it and also degrades service
+
+230
+00:12:37,080 --> 00:12:39,520
+for everyone else trying to use it.
+
+231
+00:12:39,520 --> 00:12:42,885
+So there are issues with crawling.
+
+232
+00:12:42,885 --> 00:12:44,510
+And then, of course, there's copyright,
+
+233
+00:12:44,510 --> 00:12:46,830
+which we'll talk about soon.
+
+234
+00:12:46,830 --> 00:12:50,970
+That's a whole other complex can of worms.
+
+235
+00:12:50,970 --> 00:12:55,090
+And then finally, there's these things called shadow libraries,
+
+236
+00:12:55,090 --> 00:12:58,010
+which are also part of the web.
+
+237
+00:12:58,010 --> 00:13:03,010
+So examples are LibGen, or Anna's Archive.
+
+238
+00:13:03,010 --> 00:13:07,150
+And these completely disregard copyright and bypass paywalls.
+
+239
+00:13:07,150 --> 00:13:11,690
+So someone has collected a ton of data-- usually
+
+240
+00:13:11,690 --> 00:13:14,190
+books and articles that are all copyrighted,
+
+241
+00:13:14,190 --> 00:13:16,130
+and people have to pay for these--
+
+242
+00:13:16,130 --> 00:13:20,530
+and have made them available for free.
+
+243
+00:13:20,530 --> 00:13:23,910
+And there have been a lot of takedown orders, lawsuits,
+
+244
+00:13:23,910 --> 00:13:26,410
+and these are blocked, but usually these
+
+245
+00:13:26,410 --> 00:13:30,090
+are circumvented because they just make
+
+246
+00:13:30,090 --> 00:13:32,490
+servers in other countries.
+
+247
+00:13:32,490 --> 00:13:37,010
+And the people doing this argue that this is making free
+
+248
+00:13:37,010 --> 00:13:39,850
+what's freely available, what should have been freed,
+
+249
+00:13:39,850 --> 00:13:42,290
+but generally from a legal perspective,
+
+250
+00:13:42,290 --> 00:13:45,270
+this is piracy and copyright infringement.
+
+251
+00:13:45,270 --> 00:13:47,390
+And we'll come back to this point later.
+
+252
+00:13:47,390 --> 00:13:52,530
+So there are a lot of books and papers on these shadow
+
+253
+00:13:52,530 --> 00:13:54,850
+libraries.
+
+254
+00:13:54,850 --> 00:13:57,850
+So the summary so far, the internet
+
+255
+00:13:57,850 --> 00:14:03,010
+is a huge and messy and scary place,
+
+256
+00:14:03,010 --> 00:14:06,850
+and you can't actually get all of it.
+
+257
+00:14:06,850 --> 00:14:08,510
+There are technical restrictions,
+
+258
+00:14:08,510 --> 00:14:12,730
+there's legal restrictions on what data one can access.
+
+259
+00:14:12,730 --> 00:14:16,070
+So now next time someone says, I trained on the internet,
+
+260
+00:14:16,070 --> 00:14:20,090
+you can tell them all these things you learned.
+
+261
+00:14:20,090 --> 00:14:28,450
+So now let's go to the second part of what data can we use,
+
+262
+00:14:28,450 --> 00:14:31,370
+and this has to do with copyright.
+
+263
+00:14:31,370 --> 00:14:35,610
+So suppose you were able to obey the terms of service,
+
+264
+00:14:35,610 --> 00:14:38,610
+and you are really a good citizen,
+
+265
+00:14:38,610 --> 00:14:41,620
+and you obey the rate limits.
+
+266
+00:14:41,620 --> 00:14:43,380
+Now, there's still a question of are you
+
+267
+00:14:43,380 --> 00:14:46,500
+allowed to train on this data?
+
+268
+00:14:46,500 --> 00:14:50,580
+And this is a ongoing question that
+
+269
+00:14:50,580 --> 00:14:53,260
+has not been fully resolved, but there
+
+270
+00:14:53,260 --> 00:14:57,020
+has been a bunch of developments in the last year.
+
+271
+00:14:57,020 --> 00:15:00,260
+So the legal context for thinking about this question
+
+272
+00:15:00,260 --> 00:15:03,260
+falls into intellectual property law,
+
+273
+00:15:03,260 --> 00:15:08,500
+and this is a system that is trying
+
+274
+00:15:08,500 --> 00:15:11,360
+to incentivize the creation of intellectual goods.
+
+275
+00:15:11,360 --> 00:15:15,780
+So I think it's--remember, the spirit of the law is
+
+276
+00:15:15,780 --> 00:15:20,800
+to not just technically say no to everything,
+
+277
+00:15:20,800 --> 00:15:24,860
+but to incentivize the creation of intellectual goods.
+
+278
+00:15:24,860 --> 00:15:27,620
+And there's many forms of intellectual property
+
+279
+00:15:27,620 --> 00:15:29,180
+that are covered.
+
+280
+00:15:29,180 --> 00:15:33,660
+There's copyrights, patents, trademarks and secrets-- sorry,
+
+281
+00:15:33,660 --> 00:15:36,620
+trademarks, and trade secrets.
+
+282
+00:15:36,620 --> 00:15:41,140
+The thing that is most relevant for language model data
+
+283
+00:15:41,140 --> 00:15:43,220
+is copyright law.
+
+284
+00:15:43,220 --> 00:15:46,980
+So copyright law has a fairly long history going back
+
+285
+00:15:46,980 --> 00:15:49,820
+to the 1700s in England.
+
+286
+00:15:49,820 --> 00:15:53,460
+And so 1709 was the first time that governments and courts
+
+287
+00:15:53,460 --> 00:15:56,340
+started actually regulating copyright
+
+288
+00:15:56,340 --> 00:16:01,740
+for this goal of incentivizing innovation and creation.
+
+289
+00:16:01,740 --> 00:16:05,580
+And in the US, more recently, the Copyright Act of 1976
+
+290
+00:16:05,580 --> 00:16:10,020
+is what I think defines a lot of modern copyright.
+
+291
+00:16:10,020 --> 00:16:13,620
+So copyright protection applies to original works
+
+292
+00:16:13,620 --> 00:16:18,580
+of authorship fixed in any tangible medium of expression,
+
+293
+00:16:18,580 --> 00:16:19,900
+yada, yada, yada.
+
+294
+00:16:19,900 --> 00:16:23,920
+So a few notes.
+
+295
+00:16:23,920 --> 00:16:26,820
+So not everything is copyrightable.
+
+296
+00:16:26,820 --> 00:16:31,220
+In particular, collections are not copyrightable.
+
+297
+00:16:31,220 --> 00:16:36,900
+So for example, if you have a telephone directory,
+
+298
+00:16:36,900 --> 00:16:41,540
+unless there is some creativity in how you arrange things,
+
+299
+00:16:41,540 --> 00:16:45,220
+this is not really copyrightable.
+
+300
+00:16:45,220 --> 00:16:48,460
+And furthermore, copyright applies to the expression, not
+
+301
+00:16:48,460 --> 00:16:49,860
+the idea.
+
+302
+00:16:49,860 --> 00:16:53,180
+So you can't copyright an idea, like you can't copyright
+
+303
+00:16:53,180 --> 00:16:55,360
+the quick-sort algorithm.
+
+304
+00:16:55,360 --> 00:16:57,380
+You can copyright the implementation
+
+305
+00:16:57,380 --> 00:17:01,740
+of a quick-sort algorithm, but not the quicksort algorithm.
+
+306
+00:17:01,740 --> 00:17:04,339
+So one thing that happened in 1976
+
+307
+00:17:04,339 --> 00:17:10,359
+is that the barrier to getting a copyright was relaxed a lot.
+
+308
+00:17:10,359 --> 00:17:11,640
+So more things are copyright.
+
+309
+00:17:11,640 --> 00:17:14,300
+So it used to be that you had to publish something
+
+310
+00:17:14,300 --> 00:17:15,760
+to have something copyright.
+
+311
+00:17:15,760 --> 00:17:19,260
+Now things just have to be fixed.
+
+312
+00:17:19,260 --> 00:17:22,780
+And what that means is that registration of any sort
+
+313
+00:17:22,780 --> 00:17:26,388
+is not required for copyright protection.
+
+314
+00:17:26,388 --> 00:17:27,680
+This is in contrast to patents.
+
+315
+00:17:27,680 --> 00:17:31,060
+Patents you have to go pay a lot of money to get a patent,
+
+316
+00:17:31,060 --> 00:17:32,980
+and you have to file a patent.
+
+317
+00:17:32,980 --> 00:17:36,190
+But the threshold for copyright is very low.
+
+318
+00:17:36,190 --> 00:17:38,470
+For example, you put something on your website,
+
+319
+00:17:38,470 --> 00:17:40,550
+it's copyrighted.
+
+320
+00:17:40,550 --> 00:17:42,670
+That's it.
+
+321
+00:17:42,670 --> 00:17:45,990
+Now if you want to sue someone, you
+
+322
+00:17:45,990 --> 00:17:50,670
+have to go get it registered, but it only costs $65.
+
+323
+00:17:50,670 --> 00:17:53,310
+Which is much smaller than the lawyer fees
+
+324
+00:17:53,310 --> 00:17:56,190
+that you'll probably pay, so it's really
+
+325
+00:17:56,190 --> 00:17:59,670
+still a very low bar.
+
+326
+00:17:59,670 --> 00:18:01,350
+So one thing to know about copyright
+
+327
+00:18:01,350 --> 00:18:07,330
+is that it lasts 75 years, and then the copyright expires.
+
+328
+00:18:07,330 --> 00:18:11,230
+And whatever that content gets released into the public domain,
+
+329
+00:18:11,230 --> 00:18:15,550
+and this is now--everyone can use it freely.
+
+330
+00:18:15,550 --> 00:18:21,070
+So a lot of people who have lived in the past,
+
+331
+00:18:21,070 --> 00:18:23,250
+all their great works are in the public domain,
+
+332
+00:18:23,250 --> 00:18:24,990
+which is great for everyone.
+
+333
+00:18:24,990 --> 00:18:28,950
+So the rationale here is that you're incentivizing innovation.
+
+334
+00:18:28,950 --> 00:18:33,870
+So when an artist or a creator creates something,
+
+335
+00:18:33,870 --> 00:18:36,470
+you want to protect their--
+
+336
+00:18:36,470 --> 00:18:38,590
+you don't want someone else to just take it,
+
+337
+00:18:38,590 --> 00:18:40,010
+so you protect them for a while.
+
+338
+00:18:40,010 --> 00:18:43,790
+But after 75 years, presumably, it's not worth protecting,
+
+339
+00:18:43,790 --> 00:18:45,650
+or they're passed away, or something.
+
+340
+00:18:45,650 --> 00:18:50,830
+So it doesn't make sense to keep things copyrighted anymore.
+
+341
+00:18:50,830 --> 00:18:57,670
+So basically, everything on the internet is copyrighted.
+
+342
+00:18:57,670 --> 00:19:00,150
+So you're saying, wait a minute.
+
+343
+00:19:00,150 --> 00:19:03,170
+So that means is everything-- if I train on anything,
+
+344
+00:19:03,170 --> 00:19:04,730
+that's a copyright violation?
+
+345
+00:19:04,730 --> 00:19:07,030
+Well, not necessarily.
+
+346
+00:19:07,030 --> 00:19:09,350
+So everything is copyrighted, but you
+
+347
+00:19:09,350 --> 00:19:10,850
+can use copyrighted works.
+
+348
+00:19:10,850 --> 00:19:16,190
+And the way you do it is A, you either get a license for it,
+
+349
+00:19:16,190 --> 00:19:20,750
+or B, you appeal to the fair use clause.
+
+350
+00:19:20,750 --> 00:19:25,470
+So a license from contract law is something
+
+351
+00:19:25,470 --> 00:19:28,050
+that a licensor grants to a licensee.
+
+352
+00:19:28,050 --> 00:19:30,230
+It basically says, don't sue me.
+
+353
+00:19:33,310 --> 00:19:38,790
+You can use this work in the ways that the license permits.
+
+354
+00:19:38,790 --> 00:19:44,790
+So there's a really nice license called Creative Commons,
+
+355
+00:19:44,790 --> 00:19:48,150
+which allows something to act like it
+
+356
+00:19:48,150 --> 00:19:50,150
+was in the public domain.
+
+357
+00:19:50,150 --> 00:19:52,570
+It enables free distribution of copyrighted work.
+
+358
+00:19:52,570 --> 00:19:58,690
+So examples include Wikipedia, Open CourseWare, Khan Academy,
+
+359
+00:19:58,690 --> 00:20:00,390
+all these things.
+
+360
+00:20:00,390 --> 00:20:04,510
+It was created in 2001 to essentially bridge
+
+361
+00:20:04,510 --> 00:20:06,330
+public domain and existing copyright,
+
+362
+00:20:06,330 --> 00:20:09,790
+because otherwise you have to wait 75 years.
+
+363
+00:20:09,790 --> 00:20:13,930
+But what if the creator says, I actually want people to use it.
+
+364
+00:20:13,930 --> 00:20:16,810
+They can now have a means, a legal means of saying,
+
+365
+00:20:16,810 --> 00:20:19,250
+I put a Creative Commons license on it.
+
+366
+00:20:19,250 --> 00:20:22,430
+It's going to act like it's in the public domain,
+
+367
+00:20:22,430 --> 00:20:27,430
+and everyone can use it.
+
+368
+00:20:27,430 --> 00:20:29,590
+So, so far, things in the public domain
+
+369
+00:20:29,590 --> 00:20:34,240
+and things that have Creative Commons licenses are permissive.
+
+370
+00:20:34,240 --> 00:20:37,040
+You can use it.
+
+371
+00:20:37,040 --> 00:20:42,000
+But there are many other times where
+
+372
+00:20:42,000 --> 00:20:44,860
+you don't have-- it's not a Creative Commons license,
+
+373
+00:20:44,860 --> 00:20:47,540
+it's not in the public domain, you have to get a license.
+
+374
+00:20:47,540 --> 00:20:51,960
+So if you have money, you can pay someone
+
+375
+00:20:51,960 --> 00:20:53,140
+to give you a license.
+
+376
+00:20:53,140 --> 00:20:55,920
+So there's a bunch of deals between model developers
+
+377
+00:20:55,920 --> 00:21:01,040
+and content, I guess, platforms, that
+
+378
+00:21:01,040 --> 00:21:04,600
+allow the model developers to license the data for training
+
+379
+00:21:04,600 --> 00:21:06,360
+foundation models.
+
+380
+00:21:06,360 --> 00:21:07,860
+OK, so that's the first thing.
+
+381
+00:21:07,860 --> 00:21:09,960
+You can get a license-- either Creative Commons,
+
+382
+00:21:09,960 --> 00:21:12,800
+or you can pay someone for a license.
+
+383
+00:21:12,800 --> 00:21:14,820
+Now if you don't want to pay, you
+
+384
+00:21:14,820 --> 00:21:21,320
+can appeal to fair use, which is a more complicated matter.
+
+385
+00:21:21,320 --> 00:21:24,600
+So this is section 107 of the Copyright Act.
+
+386
+00:21:24,600 --> 00:21:30,080
+And there are-- basically fair use says, I can use this anyway,
+
+387
+00:21:30,080 --> 00:21:33,480
+even if I don't have a license, and these four factors determine
+
+388
+00:21:33,480 --> 00:21:36,240
+whether fair use applies.
+
+389
+00:21:36,240 --> 00:21:40,300
+So the first one is the purpose or character of the use.
+
+390
+00:21:40,300 --> 00:21:42,120
+What are you trying to do with it?
+
+391
+00:21:42,120 --> 00:21:45,980
+And none of these are hard rules.
+
+392
+00:21:45,980 --> 00:21:48,200
+They're just tendencies which have
+
+393
+00:21:48,200 --> 00:21:51,040
+to be weighed in court if it comes to that.
+
+394
+00:21:51,040 --> 00:21:53,120
+So, for example, if you're trying to do something
+
+395
+00:21:53,120 --> 00:21:55,282
+for education, it is more likely to be
+
+396
+00:21:55,282 --> 00:21:57,240
+fair use than if you're trying to sell and make
+
+397
+00:21:57,240 --> 00:21:58,980
+money off of it.
+
+398
+00:21:58,980 --> 00:22:01,800
+If you're trying to-- if you transform something,
+
+399
+00:22:01,800 --> 00:22:03,520
+then that's going to be more favored
+
+400
+00:22:03,520 --> 00:22:07,800
+than if you just literally host the identical copy.
+
+401
+00:22:07,800 --> 00:22:12,080
+The nature of the actual copyrighted work is also important.
+
+402
+00:22:12,080 --> 00:22:14,240
+So things that are more factual are
+
+403
+00:22:14,240 --> 00:22:17,640
+more likely to be fair use than fictional works.
+
+404
+00:22:17,640 --> 00:22:21,840
+Because if you write a summary of World War--
+
+405
+00:22:21,840 --> 00:22:25,680
+a page about facts about World War II,
+
+406
+00:22:25,680 --> 00:22:35,120
+there's less protection over my really creative poem.
+
+407
+00:22:35,120 --> 00:22:39,820
+And then the amount or portion of the original work.
+
+408
+00:22:39,820 --> 00:22:43,545
+So using a snippet is favored over the whole work.
+
+409
+00:22:43,545 --> 00:22:44,920
+So if you just take a little bit,
+
+410
+00:22:44,920 --> 00:22:46,740
+that's not as bad as taking everything.
+
+411
+00:22:46,740 --> 00:22:48,480
+So that's fairly straightforward.
+
+412
+00:22:48,480 --> 00:22:53,760
+And the final thing is related to original motivation.
+
+413
+00:22:53,760 --> 00:22:54,960
+It was like, why are you--
+
+414
+00:22:54,960 --> 00:22:58,440
+why copyright at all is to protect and align
+
+415
+00:22:58,440 --> 00:23:00,080
+the economic incentives.
+
+416
+00:23:00,080 --> 00:23:03,720
+So the effect that what the use has
+
+417
+00:23:03,720 --> 00:23:06,440
+on the market for the original work.
+
+418
+00:23:06,440 --> 00:23:12,400
+So if you take an author's work and you provide an alternative,
+
+419
+00:23:12,400 --> 00:23:16,720
+and that decreases the amount that the original author could
+
+420
+00:23:16,720 --> 00:23:20,260
+monetize their work, that is seen as potentially bad.
+
+421
+00:23:20,260 --> 00:23:24,480
+But if you're transforming it in a way and going to a new market,
+
+422
+00:23:24,480 --> 00:23:26,490
+or doing something else with it, then that's
+
+423
+00:23:26,490 --> 00:23:30,250
+going to be treated more favorably.
+
+424
+00:23:30,250 --> 00:23:32,710
+So here are some examples of fair use.
+
+425
+00:23:32,710 --> 00:23:35,350
+You can watch a movie and write a summary of it.
+
+426
+00:23:35,350 --> 00:23:40,290
+You can re-implement an idea, like an algorithm--
+
+427
+00:23:40,290 --> 00:23:42,410
+not copy the code.
+
+428
+00:23:42,410 --> 00:23:48,810
+And then there was this famous lawsuit between Authors Guild
+
+429
+00:23:48,810 --> 00:23:50,650
+and Google.
+
+430
+00:23:50,650 --> 00:23:52,610
+So if you go to Google Books, you
+
+431
+00:23:52,610 --> 00:23:57,490
+can see snippets of various books which are copyrighted.
+
+432
+00:23:57,490 --> 00:24:04,610
+So there was a huge deal about whether this
+
+433
+00:24:04,610 --> 00:24:08,570
+was deemed fair use, because you are redistributing
+
+434
+00:24:08,570 --> 00:24:14,890
+other copyrighted work, and eventually--
+
+435
+00:24:14,890 --> 00:24:16,870
+eventually meaning after 11 years--
+
+436
+00:24:16,870 --> 00:24:19,890
+this lawsuit was settled in favor of Google,
+
+437
+00:24:19,890 --> 00:24:23,010
+which is why this thing exists.
+
+438
+00:24:23,010 --> 00:24:26,530
+And this has set some precedent for thinking about
+
+439
+00:24:26,530 --> 00:24:33,290
+whether language model training is fair use.
+
+440
+00:24:33,290 --> 00:24:36,170
+One thing to note is that copyright is not
+
+441
+00:24:36,170 --> 00:24:39,050
+about verbatim memorization.
+
+442
+00:24:39,050 --> 00:24:41,870
+So this might be, I think, for an ML audience,
+
+443
+00:24:41,870 --> 00:24:44,890
+this might be a little bit new because a lot of papers
+
+444
+00:24:44,890 --> 00:24:47,370
+are focused on verbatim memorization.
+
+445
+00:24:47,370 --> 00:24:51,210
+That's one way you can violate copyright, but not the only one.
+
+446
+00:24:51,210 --> 00:24:55,490
+So for example, plots and characters can be copyrightable.
+
+447
+00:24:55,490 --> 00:24:57,090
+So you can copyright Harry Potter
+
+448
+00:24:57,090 --> 00:25:02,770
+the character, not any particular book, or anything.
+
+449
+00:25:02,770 --> 00:25:04,870
+But there are some exceptions.
+
+450
+00:25:04,870 --> 00:25:08,090
+For example, if you're parodying something--
+
+451
+00:25:08,090 --> 00:25:11,390
+and so you're creating something that looks like a derivative,
+
+452
+00:25:11,390 --> 00:25:13,270
+but as long as you're making fun of it,
+
+453
+00:25:13,270 --> 00:25:16,570
+it's actually more likely to be fair use.
+
+454
+00:25:16,570 --> 00:25:18,450
+So, yeah.
+
+455
+00:25:18,450 --> 00:25:20,710
+So a lot of copyright is about semantics.
+
+456
+00:25:20,710 --> 00:25:23,170
+It's definitely not about N-gram overlap,
+
+457
+00:25:23,170 --> 00:25:27,340
+and also about the economics.
+
+458
+00:25:27,340 --> 00:25:30,660
+So what is the implication for language models?
+
+459
+00:25:30,660 --> 00:25:36,340
+So first off, copying data.
+
+460
+00:25:36,340 --> 00:25:40,660
+Even if you're not training, even the mere fact of copying--
+
+461
+00:25:40,660 --> 00:25:43,180
+which is in the word copyright--
+
+462
+00:25:43,180 --> 00:25:45,840
+is potentially a violation already,
+
+463
+00:25:45,840 --> 00:25:47,720
+even if you don't do anything with it.
+
+464
+00:25:50,500 --> 00:25:53,340
+Training a model--
+
+465
+00:25:53,340 --> 00:25:58,640
+I guess this is not really a-- let's see, how do I take that?
+
+466
+00:25:58,640 --> 00:26:03,540
+This is not necessarily a fact, but intuitively
+
+467
+00:26:03,540 --> 00:26:05,920
+has a transformative flavor.
+
+468
+00:26:05,920 --> 00:26:07,460
+Because it's certainly not--
+
+469
+00:26:07,460 --> 00:26:09,900
+it certainly seems different than just
+
+470
+00:26:09,900 --> 00:26:12,580
+rehosting another work.
+
+471
+00:26:12,580 --> 00:26:17,420
+It's doing something transformative.
+
+472
+00:26:17,420 --> 00:26:21,740
+And in some sense, the models are really
+
+473
+00:26:21,740 --> 00:26:25,080
+trained on this data as a means to an end.
+
+474
+00:26:25,080 --> 00:26:26,960
+You are trying to extract the general idea,
+
+475
+00:26:26,960 --> 00:26:29,560
+learn about the world and how it works,
+
+476
+00:26:29,560 --> 00:26:34,940
+rather than only just the concrete expression.
+
+477
+00:26:34,940 --> 00:26:39,200
+And the other thing is that regardless of copyright,
+
+478
+00:26:39,200 --> 00:26:43,400
+language models can definitely affect the market.
+
+479
+00:26:43,400 --> 00:26:46,180
+So I think this is also-- remember, that's
+
+480
+00:26:46,180 --> 00:26:49,500
+the fourth item for fair use.
+
+481
+00:26:49,500 --> 00:26:51,260
+So by negatively affecting the market,
+
+482
+00:26:51,260 --> 00:26:54,860
+you are more likely to be ruled not fair use.
+
+483
+00:26:58,160 --> 00:27:03,540
+So fair use is a little bit slippery.
+
+484
+00:27:03,540 --> 00:27:07,340
+Suppose you have fair use, or you have a license.
+
+485
+00:27:07,340 --> 00:27:11,260
+Remember that there's still terms of service that allow
+
+486
+00:27:11,260 --> 00:27:15,200
+or prevent you from actually just getting a piece of work.
+
+487
+00:27:15,200 --> 00:27:20,460
+For example, YouTube has all these videos which are licensed,
+
+488
+00:27:20,460 --> 00:27:24,460
+but the terms of service prohibits
+
+489
+00:27:24,460 --> 00:27:30,100
+just downloading the videos using a bot, like scraping,
+
+490
+00:27:30,100 --> 00:27:31,280
+which is another layer.
+
+491
+00:27:31,280 --> 00:27:35,900
+So there's multiple layers of restrictions here.
+
+492
+00:27:35,900 --> 00:27:38,380
+So let me talk a little bit about where things
+
+493
+00:27:38,380 --> 00:27:40,400
+are on the legal landscape.
+
+494
+00:27:40,400 --> 00:27:44,080
+So back in 2023, New York Times filed suit against OpenAI,
+
+495
+00:27:44,080 --> 00:27:47,520
+saying you train on our news articles, and look,
+
+496
+00:27:47,520 --> 00:27:48,240
+here's evidence.
+
+497
+00:27:48,240 --> 00:27:52,540
+We were able to actually prompt ChatGPT to generate a news
+
+498
+00:27:52,540 --> 00:27:55,020
+article almost verbatim.
+
+499
+00:27:55,020 --> 00:27:57,780
+I don't think this is still pending.
+
+500
+00:27:57,780 --> 00:28:02,780
+There's a case against Anthropic where the allegation was
+
+501
+00:28:02,780 --> 00:28:06,100
+you pirated millions of books, and you trained on these books
+
+502
+00:28:06,100 --> 00:28:08,700
+to make Claude.
+
+503
+00:28:08,700 --> 00:28:14,220
+Just last year, this was a landmark ruling
+
+504
+00:28:14,220 --> 00:28:17,900
+that said, actually, this particular instance of training
+
+505
+00:28:17,900 --> 00:28:20,670
+is fair use.
+
+506
+00:28:20,670 --> 00:28:23,350
+However, Anthropic, you're still in trouble
+
+507
+00:28:23,350 --> 00:28:29,310
+because you pirated all these books, and that is a no-no.
+
+508
+00:28:29,310 --> 00:28:33,230
+So notice that this has nothing to do with training, just
+
+509
+00:28:33,230 --> 00:28:35,650
+the mere fact of pirating--
+
+510
+00:28:35,650 --> 00:28:43,110
+I mean, which is not a new thing--is illegal.
+
+511
+00:28:43,110 --> 00:28:45,250
+Anthropic actually, interestingly,
+
+512
+00:28:45,250 --> 00:28:48,790
+had bought and scanned all the books,
+
+513
+00:28:48,790 --> 00:28:50,170
+which is actually fair use.
+
+514
+00:28:50,170 --> 00:28:52,430
+The Court said you're allowed to scan.
+
+515
+00:28:52,430 --> 00:28:54,690
+You buy a bunch of books, rip off the bindings,
+
+516
+00:28:54,690 --> 00:28:56,730
+scan it, and digitize it for your own use.
+
+517
+00:28:56,730 --> 00:28:58,030
+That's fair use.
+
+518
+00:28:58,030 --> 00:29:02,610
+But that doesn't absolve you of your sin of pirating.
+
+519
+00:29:02,610 --> 00:29:06,270
+So you can't pirate and then buy it and say, actually, never
+
+520
+00:29:06,270 --> 00:29:10,030
+mind what I just did first.
+
+521
+00:29:10,030 --> 00:29:12,750
+所以结果是 Anthropic 支付了 15 亿美元
+
+522
+00:29:12,750 --> 00:29:14,330
+与作者们达成和解。
+
+523
+00:29:14,330 --> 00:29:18,510
+所以这大约是每本书 3000 美元。
+
+524
+00:29:18,510 --> 00:29:22,750
+所以还有一起针对 Meta 的诉讼。
+
+525
+00:29:22,750 --> 00:29:25,830
+指控是你们用我们的书进行了训练——
+
+526
+00:29:25,830 --> 00:29:29,170
+抱歉——这正如我们后面会看到的，
+
+527
+00:29:29,170 --> 00:29:31,710
+实际上在 Llama 论文中被披露了。
+
+528
+00:29:31,710 --> 00:29:36,250
+而紧随 Anthropic 之后的判决是，是的，
+
+529
+00:29:36,250 --> 00:29:39,270
+训练属于合理使用。
+
+530
+00:29:39,270 --> 00:29:41,650
+然后他们还通过 BT 下载了一些书，
+
+531
+00:29:41,650 --> 00:29:42,890
+所以那件事仍然悬而未决。
+
+532
+00:29:42,890 --> 00:29:47,050
+所以那很可能——如果判例成立的话，
+
+533
+00:29:47,050 --> 00:29:52,350
+这对 Meta 也不利。
+
+534
+00:29:52,350 --> 00:30:00,430
+所以到目前为止的总结是，可以说，训练
+
+535
+00:30:00,430 --> 00:30:03,390
+已被认定为合理使用，或者至少
+
+536
+00:30:03,390 --> 00:30:07,950
+尚未被认定为非合理使用。
+
+537
+00:30:07,950 --> 00:30:10,610
+这些裁决到目前为止范围都很窄。
+
+538
+00:30:10,610 --> 00:30:13,550
+这并不是说对任何受版权保护
+
+539
+00:30:13,550 --> 00:30:19,030
+内容的任何训练都属于合理使用，但在这些案例中，没问题。
+
+540
+00:30:19,030 --> 00:30:21,590
+盗版书籍显然是违法的。
+
+541
+00:30:21,590 --> 00:30:23,190
+我想我们早就知道这一点了。
+
+542
+00:30:23,190 --> 00:30:28,250
+但这仍然是一个非常活跃且不断发展的领域。
+
+543
+00:30:31,070 --> 00:30:36,510
+关于数据来源有什么问题吗？
+
+544
+00:30:36,510 --> 00:30:38,570
+我想，在我们进入实际的数据集之前，
+
+545
+00:30:38,570 --> 00:30:43,830
+我只想先用这个更
+
+546
+00:30:43,830 --> 00:30:46,530
+宏观的社会背景来铺垫一下。
+
+547
+00:30:51,690 --> 00:30:52,190
+是吗？
+
+548
+00:30:52,190 --> 00:30:55,530
+[听不清]
+
+549
+00:30:56,030 --> 00:30:59,430
+问题是，我怎么看待语音数据和 ElevenLabs？
+
+550
+00:30:59,430 --> 00:31:04,810
+我对那方面了解不多，所以我们可以线下聊。
+
+551
+00:31:04,810 --> 00:31:05,310
+是吗？
+
+552
+00:31:05,310 --> 00:31:07,510
+[听不清]
+
+553
+00:31:07,510 --> 00:31:11,790
+——因为我猜如果我拥有某项资产，我有理由
+
+554
+00:31:11,790 --> 00:31:14,190
+去[听不清]。
+
+555
+00:31:14,190 --> 00:31:17,180
+我是否可以——通常是 Creative Commons，
+
+556
+00:31:17,180 --> 00:31:21,960
+但我能否之后更新我的许可来阻止某些使用？
+
+557
+00:31:21,960 --> 00:31:24,320
+那么，时间在这里扮演什么角色
+
+558
+00:31:24,320 --> 00:31:29,280
+呢，比如我之后用更
+
+559
+00:31:29,280 --> 00:31:32,000
+更宽松的许可来训练旧版本，如果创作者把它
+
+560
+00:31:32,000 --> 00:31:33,918
+改成更严格的许可？
+
+561
+00:31:33,918 --> 00:31:35,960
+Yeah, so the question is, what happens with time?
+
+562
+00:31:35,960 --> 00:31:40,220
+If you have one license and then it gets changed, what happens?
+
+563
+00:31:40,220 --> 00:31:42,840
+So first, I'm not a lawyer.
+
+564
+00:31:42,840 --> 00:31:46,840
+But second, so this--
+
+565
+00:31:46,840 --> 00:31:49,880
+So the first license, I believe you're still
+
+566
+00:31:49,880 --> 00:31:51,820
+allowed to train on it.
+
+567
+00:31:51,820 --> 00:31:54,840
+But what happens is that the license usually
+
+568
+00:31:54,840 --> 00:31:58,227
+applies to not just, let's say, a fixed set of documents--
+
+569
+00:31:58,227 --> 00:31:59,060
+for example, Reddit.
+
+570
+00:31:59,060 --> 00:32:01,800
+There's constantly new content being created,
+
+571
+00:32:01,800 --> 00:32:03,680
+and the license being changed means
+
+572
+00:32:03,680 --> 00:32:07,160
+that you wouldn't be able to train on the later things.
+
+573
+00:32:12,240 --> 00:32:17,760
+OK, so let's look at various sources of data.
+
+574
+00:32:17,760 --> 00:32:20,880
+So let's go back to crawling.
+
+575
+00:32:20,880 --> 00:32:25,360
+So most model developers have their own crawler,
+
+576
+00:32:25,360 --> 00:32:31,920
+because they want to have full control over what the data is.
+
+577
+00:32:31,920 --> 00:32:33,640
+Fortunately for the rest of us, if you
+
+578
+00:32:33,640 --> 00:32:37,160
+don't want to build your own crawler,
+
+579
+00:32:37,160 --> 00:32:39,840
+there's something called Common Crawl, which has been around
+
+580
+00:32:39,840 --> 00:32:43,640
+for quite some time, since 2007.
+
+581
+00:32:43,640 --> 00:32:47,610
+And every month they run a web crawl, gets about three
+
+582
+00:32:47,610 --> 00:32:50,000
+to five billion web pages.
+
+583
+00:32:50,000 --> 00:32:53,300
+Each crawl has some overlap with the previous crawl,
+
+584
+00:32:53,300 --> 00:32:56,360
+but they try to diversify and get new pages.
+
+585
+00:32:56,360 --> 00:33:00,680
+So there's 300 billion pages so far, which seems--
+
+586
+00:33:00,680 --> 00:33:01,852
+this was from their website.
+
+587
+00:33:01,852 --> 00:33:03,560
+It seems a little bit big, because if you
+
+588
+00:33:03,560 --> 00:33:08,220
+multiply this number by 20, you don't quite get 300 billion.
+
+589
+00:33:08,220 --> 00:33:11,280
+But that's what they say.
+
+590
+00:33:11,280 --> 00:33:14,150
+So how many URLs are out there?
+
+591
+00:33:14,150 --> 00:33:16,070
+That's really hard to estimate.
+
+592
+00:33:16,070 --> 00:33:21,650
+So the Google search index is at least 100 petabytes,
+
+593
+00:33:21,650 --> 00:33:23,130
+according to them.
+
+594
+00:33:23,130 --> 00:33:32,350
+And each Common Crawl dump has about 2 billion web pages.
+
+595
+00:33:32,350 --> 00:33:35,490
+So that's about 372TB.
+
+596
+00:33:35,490 --> 00:33:37,150
+And this is not including images,
+
+597
+00:33:37,150 --> 00:33:41,170
+this is just mostly focused on the text.
+
+598
+00:33:41,170 --> 00:33:44,630
+So crawling is conceptually straightforward,
+
+599
+00:33:44,630 --> 00:33:48,370
+but all the gory details are in the implementation.
+
+600
+00:33:48,370 --> 00:33:53,190
+You start with a bunch of URLs, and then you iterate.
+
+601
+00:33:53,190 --> 00:33:54,590
+It's basically graph traversal.
+
+602
+00:33:54,590 --> 00:33:56,630
+You pop a URL from a queue, you download it,
+
+603
+00:33:56,630 --> 00:33:59,390
+and then you look at all the hyperlinks in that page,
+
+604
+00:33:59,390 --> 00:34:01,090
+and then you add them to the queue.
+
+605
+00:34:01,090 --> 00:34:06,410
+And generally this is done in parallel over many machines.
+
+606
+00:34:06,410 --> 00:34:10,130
+And there's many decisions here--
+
+607
+00:34:10,130 --> 00:34:16,610
+which pages to download, you have to respect robots.txt,
+
+608
+00:34:16,610 --> 00:34:19,210
+don't overload the server.
+
+609
+00:34:19,210 --> 00:34:24,530
+Sometimes the websites change, and so you
+
+610
+00:34:24,530 --> 00:34:30,489
+want a policy that will download frequently changed pages,
+
+611
+00:34:30,489 --> 00:34:33,929
+but not spend time downloading pages that don't change.
+
+612
+00:34:33,929 --> 00:34:35,830
+So there's some policy around that.
+
+613
+00:34:35,830 --> 00:34:38,310
+And I mentioned before, URLs are dynamic,
+
+614
+00:34:38,310 --> 00:34:43,370
+so sometimes the same URL leads to different content
+
+615
+00:34:43,370 --> 00:34:46,290
+depending on some state of the browser.
+
+616
+00:34:46,290 --> 00:34:49,949
+But also, many URLs might lead to the same content,
+
+617
+00:34:49,949 --> 00:34:52,409
+so there's a lot of duplication that
+
+618
+00:34:52,409 --> 00:34:55,290
+happens if you're not careful.
+
+619
+00:34:55,290 --> 00:35:00,170
+In particular, mirror sites explicitly is about duplication.
+
+620
+00:35:00,170 --> 00:35:02,770
+So Common Crawl releases their dumps in two formats.
+
+621
+00:35:02,770 --> 00:35:04,810
+One is a WARC file.
+
+622
+00:35:04,810 --> 00:35:07,950
+So this is the raw HTTP response.
+
+623
+00:35:07,950 --> 00:35:10,530
+So remember, HTTP protocol is that you
+
+624
+00:35:10,530 --> 00:35:20,470
+send a get, here's a URL, and then out comes a HTTP response,
+
+625
+00:35:20,470 --> 00:35:25,170
+and the WARC file is that response.
+
+626
+00:35:25,170 --> 00:35:26,790
+They also do some processing.
+
+627
+00:35:26,790 --> 00:35:29,850
+They convert to a WET file, which is necessarily
+
+628
+00:35:29,850 --> 00:35:32,490
+a lossy process.
+
+629
+00:35:32,490 --> 00:35:35,730
+It turns out that this is not necessarily the best way
+
+630
+00:35:35,730 --> 00:35:38,970
+to use the web.
+
+631
+00:35:38,970 --> 00:35:42,370
+The HTML to text, there's many tools
+
+632
+00:35:42,370 --> 00:35:45,610
+for this, including trafilatura and resiliparse,
+
+633
+00:35:45,610 --> 00:35:48,870
+and the way you convert actually does matter.
+
+634
+00:35:48,870 --> 00:35:51,610
+So this is from the DataComp LLM paper, which
+
+635
+00:35:51,610 --> 00:35:53,070
+we'll talk a little bit about.
+
+636
+00:35:53,070 --> 00:35:55,730
+Data is an ablation, where you look at the web files
+
+637
+00:35:55,730 --> 00:36:01,450
+that Common Crawl releases versus these other tools,
+
+638
+00:36:01,450 --> 00:36:06,310
+and it seems like trafilatura and resiliparse are better.
+
+639
+00:36:08,900 --> 00:36:14,300
+So one thing you can do is just rely on general web crawls.
+
+640
+00:36:14,300 --> 00:36:17,600
+But often, the web is not a uniform place.
+
+641
+00:36:17,600 --> 00:36:20,260
+It's not like there's a bunch of websites,
+
+642
+00:36:20,260 --> 00:36:22,920
+and you just get some random fraction of them,
+
+643
+00:36:22,920 --> 00:36:25,020
+and that's your dataset.
+
+644
+00:36:25,020 --> 00:36:28,540
+There are specific pockets of really interesting, high quality
+
+645
+00:36:28,540 --> 00:36:30,700
+content, and I'll talk about three of those--
+
+646
+00:36:30,700 --> 00:36:32,240
+Wikipedia, GitHub, and arXiv.
+
+647
+00:36:32,240 --> 00:36:36,980
+So Wikipedia, all of you know about.
+
+648
+00:36:36,980 --> 00:36:40,580
+It's been around since 2001, and now there's
+
+649
+00:36:40,580 --> 00:36:46,220
+67 million articles around all these different languages.
+
+650
+00:36:46,220 --> 00:36:53,380
+And Wikipedia is not all content by any means.
+
+651
+00:36:53,380 --> 00:36:59,420
+You can't have original thought in it,
+
+652
+00:36:59,420 --> 00:37:03,780
+because everything has to be referenced and cited.
+
+653
+00:37:03,780 --> 00:37:06,700
+So in some sense you could argue that Wikipedia
+
+654
+00:37:06,700 --> 00:37:12,200
+doesn't contain anything that's not already on the web.
+
+655
+00:37:12,200 --> 00:37:14,820
+Well actually, that's not true, because they can also
+
+656
+00:37:14,820 --> 00:37:18,580
+cite books, which are-- obviously you can't easily get
+
+657
+00:37:18,580 --> 00:37:21,500
+them, so, Wikipedia is so good.
+
+658
+00:37:21,500 --> 00:37:27,260
+And also, there's articles based on notability,
+
+659
+00:37:27,260 --> 00:37:36,020
+so not everyone can get a Wikipedia article about them.
+
+660
+00:37:36,020 --> 00:37:40,140
+So anyone on the internet can write this content.
+
+661
+00:37:40,140 --> 00:37:45,040
+This was the radical thing about wikis, and it's still a miracle,
+
+662
+00:37:45,040 --> 00:37:48,140
+I think, to me that this actually works.
+
+663
+00:37:48,140 --> 00:37:49,820
+It just happens that any vandalism
+
+664
+00:37:49,820 --> 00:37:53,820
+gets reverted by administrators, or bots, I guess, these days.
+
+665
+00:37:56,660 --> 00:37:59,580
+There's a small number of Wikipedians-- as any peer
+
+666
+00:37:59,580 --> 00:38:01,460
+production system, there's a small set
+
+667
+00:38:01,460 --> 00:38:04,420
+of people who do most of the work.
+
+668
+00:38:04,420 --> 00:38:09,660
+And for example, this guy has 5 million edits.
+
+669
+00:38:09,660 --> 00:38:12,680
+And one thing about Wikipedia is that every few weeks,
+
+670
+00:38:12,680 --> 00:38:14,155
+they do a periodic dump.
+
+671
+00:38:14,155 --> 00:38:15,780
+So basically they take all of Wikipedia
+
+672
+00:38:15,780 --> 00:38:19,780
+packaged into a nice TAR file, and then you
+
+673
+00:38:19,780 --> 00:38:21,580
+can just download that.
+
+674
+00:38:21,580 --> 00:38:24,840
+So this is important because you don't need to crawl Wikipedia.
+
+675
+00:38:24,840 --> 00:38:26,840
+In fact, they don't want you to crawl Wikipedia.
+
+676
+00:38:26,840 --> 00:38:29,382
+They just want you to download this if you're going to crawl,
+
+677
+00:38:29,382 --> 00:38:32,100
+and this is much better than crawling.
+
+678
+00:38:32,100 --> 00:38:35,540
+Just a fun aside, or good to know,
+
+679
+00:38:35,540 --> 00:38:40,980
+is that there's this paper that says you can actually
+
+680
+00:38:40,980 --> 00:38:43,500
+poison Wikipedia.
+
+681
+00:38:43,500 --> 00:38:47,560
+So you might think that this vandalism gets reverted.
+
+682
+00:38:47,560 --> 00:38:50,340
+So if you do-- attacker tries to do something fishy,
+
+683
+00:38:50,340 --> 00:38:52,140
+you'll just get it rolled back.
+
+684
+00:38:52,140 --> 00:38:58,340
+But what Carlini realized is that these periodic dumps
+
+685
+00:38:58,340 --> 00:39:00,820
+happen at a regular cadence.
+
+686
+00:39:00,820 --> 00:39:04,230
+And so, what you can do is you can go in
+
+687
+00:39:04,230 --> 00:39:08,070
+and you can just edit it right before the dump happens.
+
+688
+00:39:08,070 --> 00:39:12,810
+And then the dump happens, and then the edits get rolled back,
+
+689
+00:39:12,810 --> 00:39:14,890
+but the dump still has the malicious content.
+
+690
+00:39:17,790 --> 00:39:21,490
+If you're able to inject things into web pages,
+
+691
+00:39:21,490 --> 00:39:23,590
+that means you can cause--
+
+692
+00:39:23,590 --> 00:39:28,510
+there's works that show that you can cause the model to, let's
+
+693
+00:39:28,510 --> 00:39:32,310
+say, ascribe negative sentiment to any trigger phrase,
+
+694
+00:39:32,310 --> 00:39:34,190
+like the iPhone.
+
+695
+00:39:34,190 --> 00:39:39,490
+So one takeaway here is that if you consider adversaries,
+
+696
+00:39:39,490 --> 00:39:41,750
+even so-called high quality contents might
+
+697
+00:39:41,750 --> 00:39:44,910
+contain bad things in them.
+
+698
+00:39:44,910 --> 00:39:50,310
+I think this has been fixed since then.
+
+699
+00:39:50,310 --> 00:39:53,690
+OK, so GitHub is a good place for code,
+
+700
+00:39:53,690 --> 00:39:56,550
+and code is important not just for
+
+701
+00:39:56,550 --> 00:39:59,410
+if you want coding capabilities for your language model,
+
+702
+00:39:59,410 --> 00:40:03,630
+but if you want general reasoning.
+
+703
+00:40:03,630 --> 00:40:06,670
+So GitHub all of you know.
+
+704
+00:40:06,670 --> 00:40:10,430
+Again, it's a live service for hosting code repositories.
+
+705
+00:40:10,430 --> 00:40:15,870
+Been around since 2008, about the same age as Common Crawl.
+
+706
+00:40:15,870 --> 00:40:22,470
+It has 420 million repositories, 28 million are public.
+
+707
+00:40:22,470 --> 00:40:26,790
+Each repository contains-- it's not a file, as you know,
+
+708
+00:40:26,790 --> 00:40:29,770
+it's a directory with commit history, issues, pull requests,
+
+709
+00:40:29,770 --> 00:40:31,470
+and comments.
+
+710
+00:40:31,470 --> 00:40:35,230
+Code has generally a lot of duplicates,
+
+711
+00:40:35,230 --> 00:40:42,150
+and it's just because either copying code, or forking code.
+
+712
+00:40:42,150 --> 00:40:46,430
+And GitHub has deemed it-- you're
+
+713
+00:40:46,430 --> 00:40:49,390
+allowed to train on any public repository
+
+714
+00:40:49,390 --> 00:40:52,430
+with a permissive license.
+
+715
+00:40:52,430 --> 00:40:56,110
+So MIT or Apache licenses are fine.
+
+716
+00:40:56,110 --> 00:40:58,345
+So remember, there's two types of data
+
+717
+00:40:58,345 --> 00:40:59,470
+when you talk about GitHub.
+
+718
+00:40:59,470 --> 00:41:01,880
+There's the repository data, which
+
+719
+00:41:01,880 --> 00:41:07,160
+you can just go and download through the GitHub Git protocol.
+
+720
+00:41:07,160 --> 00:41:10,440
+And again, you shouldn't scrape GitHub,
+
+721
+00:41:10,440 --> 00:41:12,640
+you should just download the repository.
+
+722
+00:41:12,640 --> 00:41:16,120
+And then the metadata associated with each repository-- issues
+
+723
+00:41:16,120 --> 00:41:17,700
+and pull requests, and so on.
+
+724
+00:41:17,700 --> 00:41:20,600
+These are made actually via the GitHub Archive, which gives you
+
+725
+00:41:20,600 --> 00:41:23,720
+hourly snapshots of this event stream, which I think
+
+726
+00:41:23,720 --> 00:41:25,380
+is really interesting data.
+
+727
+00:41:25,380 --> 00:41:33,360
+It's basically every single comment, or star, or action on GitHub that gets recorded.
+
+728
+00:41:33,360 --> 00:41:36,720
+There's this Software Heritage Foundation
+
+729
+00:41:36,720 --> 00:41:41,440
+that is focused on the repository, not the metadata,
+
+730
+00:41:41,440 --> 00:41:44,218
+and they aggregate GitHub.
+
+731
+00:41:44,218 --> 00:41:46,260
+GitHub is not the only place where code shows up.
+
+732
+00:41:46,260 --> 00:41:50,540
+There's also smaller entities like GitLab, Bitbucket,
+
+733
+00:41:50,540 --> 00:41:51,360
+and so on.
+
+734
+00:41:51,360 --> 00:41:56,740
+And they aggregate all that, those repositories
+
+735
+00:41:56,740 --> 00:42:01,280
+So arXiv, just very briefly-- everyone knows arXiv.
+
+736
+00:42:01,280 --> 00:42:04,360
+This has been around as a site that allows people
+
+737
+00:42:04,360 --> 00:42:06,340
+to share papers since 1991.
+
+738
+00:42:06,340 --> 00:42:12,560
+Started with physics, and now has a lot of other areas in it.
+
+739
+00:42:12,560 --> 00:42:15,760
+Each of the three million submissions
+
+740
+00:42:15,760 --> 00:42:21,640
+has the metadata, a PDF, and optional LaTeX source.
+
+741
+00:42:21,640 --> 00:42:24,300
+So already you should be thinking, well,
+
+742
+00:42:24,300 --> 00:42:26,040
+what does it mean to train on arXiv?
+
+743
+00:42:26,040 --> 00:42:29,400
+It's not clear, because this is, well,
+
+744
+00:42:29,400 --> 00:42:31,300
+you have to convert the PDF into text,
+
+745
+00:42:31,300 --> 00:42:36,560
+or you can use the LaTeX source, which is a bunch of files.
+
+746
+00:42:36,560 --> 00:42:39,800
+It's not peer-reviewed, but there is some approval process,
+
+747
+00:42:39,800 --> 00:42:44,440
+and authors can choose to maintain the rights,
+
+748
+00:42:44,440 --> 00:42:47,720
+or put in the Creative Commons, which--
+
+749
+00:42:47,720 --> 00:42:51,440
+so everything is actually very clearly licensed.
+
+750
+00:42:51,440 --> 00:42:53,660
+All the metadata is under permissive license
+
+751
+00:42:53,660 --> 00:42:56,240
+so you can use that regardless, and then you can go
+
+752
+00:42:56,240 --> 00:42:58,120
+and you look at all the papers that
+
+753
+00:42:58,120 --> 00:42:59,380
+are Creative Commons license.
+
+754
+00:42:59,380 --> 00:43:01,480
+You download those, and you can use them.
+
+755
+00:43:01,480 --> 00:43:08,160
+And I think most arXiv papers are Creative Commons.
+
+756
+00:43:08,160 --> 00:43:10,460
+And then again, this is available.
+
+757
+00:43:10,460 --> 00:43:14,120
+You don't crawl arXiv, you just go down to bulk
+
+758
+00:43:14,120 --> 00:43:18,640
+download it from some website.
+
+759
+00:43:18,640 --> 00:43:22,500
+So any questions about sources of data?
+
+760
+00:43:22,500 --> 00:43:23,300
+Yeah?
+
+761
+00:43:23,300 --> 00:43:26,600
+Are there any restrictions on usage of data,
+
+762
+00:43:26,600 --> 00:43:29,760
+which is generated by models?
+
+763
+00:43:29,760 --> 00:43:31,720
+Are there restrictions on data?
+
+764
+00:43:31,720 --> 00:43:34,140
+Generated by models.
+
+765
+00:43:34,140 --> 00:43:34,640
+Yeah.
+
+766
+00:43:34,640 --> 00:43:36,400
+I mean, synthetic data models.
+
+767
+00:43:36,400 --> 00:43:37,760
+Oh, I see.
+
+768
+00:43:37,760 --> 00:43:39,802
+We'll talk about that a little bit later.
+
+769
+00:43:39,802 --> 00:43:41,760
+So the question is, what about model-generated,
+
+770
+00:43:41,760 --> 00:43:43,100
+like synthetic data?
+
+771
+00:43:43,100 --> 00:43:45,680
+Are you allowed to use it?
+
+772
+00:43:45,680 --> 00:43:49,340
+The short answer is probably yes.
+
+773
+00:43:49,340 --> 00:43:49,840
+Yeah?
+
+774
+00:43:49,840 --> 00:43:52,760
+When using crawlers like Common Crawl
+
+775
+00:43:52,760 --> 00:43:57,770
+and stuff like that, I guess—because you mentioned earlier
+
+776
+00:43:57,770 --> 00:43:59,890
+that there are websites that have
+
+777
+00:43:59,890 --> 00:44:02,130
+a lot of pirated books on it.
+
+778
+00:44:02,130 --> 00:44:06,050
+How do you ensure that those types of websites
+
+779
+00:44:06,050 --> 00:44:08,750
+don't show up in your crawl?
+
+780
+00:44:08,750 --> 00:44:09,250
+Yeah.
+
+781
+00:44:09,250 --> 00:44:11,290
+So the question is, there's a lot
+
+782
+00:44:11,290 --> 00:44:12,710
+of websites with pirated books.
+
+783
+00:44:12,710 --> 00:44:14,252
+So if you're just doing a web crawl,
+
+784
+00:44:14,252 --> 00:44:15,710
+you can't look at all the websites.
+
+785
+00:44:15,710 --> 00:44:18,010
+So how do you make sure that everything is kosher?
+
+786
+00:44:18,010 --> 00:44:20,930
+And that's part of the difficulty is, you can't.
+
+787
+00:44:20,930 --> 00:44:25,710
+And so, there's—most likely in Common Crawl,
+
+788
+00:44:25,710 --> 00:44:30,090
+there are copyrighted books and content that you are not
+
+789
+00:44:30,090 --> 00:44:35,110
+supposed to train on, and you can—will appeal to fair use.
+
+790
+00:44:35,110 --> 00:44:36,527
+Remember, everything is copyright.
+
+791
+00:44:36,527 --> 00:44:41,890
+Books are not remarkably different from your website,
+
+792
+00:44:41,890 --> 00:44:44,670
+for example. Both are copyrighted.
+
+793
+00:44:44,670 --> 00:44:48,680
+Probably, a book author has more of a—
+
+794
+00:44:48,680 --> 00:44:50,330
+if they want to go into court, they'll
+
+795
+00:44:50,330 --> 00:44:52,913
+probably be able to protect that better because it's published
+
+796
+00:44:52,913 --> 00:44:58,410
+than your website, but still.
+
+797
+00:44:58,410 --> 00:45:00,710
+And I'll talk a little bit about later.
+
+798
+00:45:00,710 --> 00:45:02,610
+If you really, really want to be careful,
+
+799
+00:45:02,610 --> 00:45:07,290
+you can do something I'll show later.
+
+800
+00:45:07,290 --> 00:45:10,690
+So what I'm going to do now is to now talk
+
+801
+00:45:10,690 --> 00:45:13,810
+about the various datasets that are actually
+
+802
+00:45:13,810 --> 00:45:17,830
+used in building models, starting all the way back to 2019.
+
+803
+00:45:17,830 --> 00:45:20,590
+So we've talked about the origin of data and source of data,
+
+804
+00:45:20,590 --> 00:45:26,810
+so you have a feeling for just the general data landscape.
+
+805
+00:45:26,810 --> 00:45:29,050
+And so, let's start with BERT.
+
+806
+00:45:29,050 --> 00:45:34,730
+So BERT was from 2018, and they trained-- back in the day,
+
+807
+00:45:34,730 --> 00:45:37,090
+they just trained on Wikipedia and books.
+
+808
+00:45:37,090 --> 00:45:39,450
+So what is this books?
+
+809
+00:45:39,450 --> 00:45:41,750
+So there's this website called Smashwords.
+
+810
+00:45:41,750 --> 00:45:47,170
+It was created that allow anyone to just put an ebook up
+
+811
+00:45:47,170 --> 00:45:53,050
+to publish, and they had about half a million books in 2024.
+
+812
+00:45:53,050 --> 00:46:02,330
+So in 2015, there was this paper who just scraped Smashwords--
+
+813
+00:46:02,330 --> 00:46:08,770
+sorry, took the books that were free, and just made a corpus.
+
+814
+00:46:08,770 --> 00:46:10,290
+This was back in the innocent days
+
+815
+00:46:10,290 --> 00:46:12,390
+when no one was paying attention to any of this.
+
+816
+00:46:12,390 --> 00:46:15,530
+So this books corpus was around for many years
+
+817
+00:46:15,530 --> 00:46:20,890
+in the academic community.
+
+818
+00:46:20,890 --> 00:46:22,890
+Since then, it has been taken down
+
+819
+00:46:22,890 --> 00:46:26,210
+because it violated the terms of service.
+
+820
+00:46:26,210 --> 00:46:29,970
+Just because it was free and you can get it, doesn't mean it
+
+821
+00:46:29,970 --> 00:46:33,890
+was legally allowed.
+
+822
+00:46:33,890 --> 00:46:37,530
+So one thing to note about Bert is
+
+823
+00:46:37,530 --> 00:46:43,153
+that the sequences were documents rather than sentences.
+
+824
+00:46:43,153 --> 00:46:44,570
+All the language modeling research
+
+825
+00:46:44,570 --> 00:46:50,210
+before that was focused on sentences.
+
+826
+00:46:50,210 --> 00:46:54,000
+So in 2019, GPT-2 came around.
+
+827
+00:46:54,000 --> 00:46:56,300
+And so what did they do?
+
+828
+00:46:56,300 --> 00:47:02,020
+So they wanted to get high quality web content.
+
+829
+00:47:02,020 --> 00:47:05,620
+And at that time, people knew about Common Crawl,
+
+830
+00:47:05,620 --> 00:47:09,060
+but somehow the Common Crawl data was too messy.
+
+831
+00:47:09,060 --> 00:47:11,500
+So what they did was came up with this clever idea
+
+832
+00:47:11,500 --> 00:47:13,820
+where you can take--
+
+833
+00:47:13,820 --> 00:47:17,900
+you look at pages that are outgoing links from Reddit posts
+
+834
+00:47:17,900 --> 00:47:20,580
+with greater than three karma.
+
+835
+00:47:20,580 --> 00:47:24,640
+So a good post must link to good websites.
+
+836
+00:47:24,640 --> 00:47:30,940
+So you grab those pages, and you get a 40 gigabytes
+
+837
+00:47:30,940 --> 00:47:34,100
+of text, 8 million pages.
+
+838
+00:47:34,100 --> 00:47:36,820
+They never released this data, but there
+
+839
+00:47:36,820 --> 00:47:39,620
+was an open replication of webtext,
+
+840
+00:47:39,620 --> 00:47:42,320
+which people used quite a bit.
+
+841
+00:47:47,700 --> 00:47:49,320
+所以这就是 GPT-2。
+
+842
+00:47:49,320 --> 00:47:54,700
+所以当你在学习这些内容时，我想你可以同时思考——
+
+843
+00:47:54,700 --> 00:47:58,000
+有很多过滤和收集数据的方法，
+
+844
+00:47:58,000 --> 00:48:03,480
+观察这些设计选择很有意思，而且。
+
+845
+00:48:03,480 --> 00:48:08,340
+所以 CCNET 是由当时的 Facebook 开发的。
+
+846
+00:48:08,340 --> 00:48:12,100
+所以目标是创建大规模高质量的数据
+
+847
+00:48:12,100 --> 00:48:13,360
+集用于预训练。
+
+848
+00:48:13,360 --> 00:48:14,860
+他们特别感兴趣的是
+
+849
+00:48:14,860 --> 00:48:18,660
+低资源语言。
+
+850
+00:48:18,660 --> 00:48:21,700
+所以他们不想要某种非常手工化的流程
+
+851
+00:48:21,700 --> 00:48:25,020
+只适用于英语。
+
+852
+00:48:25,020 --> 00:48:26,840
+所以他们做了很多事情。
+
+853
+00:48:26,840 --> 00:48:32,340
+他们做了去重，以及语言识别
+
+854
+00:48:32,340 --> 00:48:36,740
+来训练一个分类器检测语言，
+
+855
+00:48:36,740 --> 00:48:42,420
+只保留你正在寻找的语言。
+
+856
+00:48:42,420 --> 00:48:47,340
+对于质量过滤，他们的想法是
+
+857
+00:48:47,340 --> 00:48:50,620
+他们想保留看起来像维基百科的文档。
+
+858
+00:48:50,620 --> 00:48:54,780
+所以维基百科当时被认为是有价值的、高质量的
+
+859
+00:48:54,780 --> 00:48:57,285
+内容，他们使用了一个语言模型，
+
+860
+00:48:57,285 --> 00:48:58,660
+该模型是在维基百科上训练的，你
+
+861
+00:48:58,660 --> 00:49:02,180
+为一个新文档在该语言模型下打分得到概率
+
+862
+00:49:02,180 --> 00:49:06,300
+来衡量它有多像维基百科。
+
+863
+00:49:06,300 --> 00:49:08,520
+所以他们没有用指向 Reddit 的外链，
+
+864
+00:49:08,520 --> 00:49:11,740
+而是在维基百科上使用语言模型。
+
+865
+00:49:11,740 --> 00:49:16,840
+他们表明，因为你可以获得多得多的数据，
+
+866
+00:49:16,840 --> 00:49:22,340
+你实际上可以超越仅在维基百科上训练的效果。
+
+867
+00:49:22,340 --> 00:49:25,300
+这是一个之后会
+
+868
+00:49:25,300 --> 00:49:29,020
+出现在其他一些论文中的工具。
+
+869
+00:49:29,020 --> 00:49:32,880
+所以这里是另一项工作。
+
+870
+00:49:32,880 --> 00:49:37,420
+这是来自 Google 2019 年的工作。
+
+871
+00:49:37,420 --> 00:49:39,940
+所以这被称为 C4。
+
+872
+00:49:39,940 --> 00:49:45,780
+这篇论文实际上更出名的是 T5 模型，
+
+873
+00:49:45,780 --> 00:49:47,670
+它推动了这样一个理念：你应该把
+
+874
+00:49:47,670 --> 00:49:52,030
+世界上所有的 NLP 任务都视为文本到文本。
+
+875
+00:49:52,030 --> 00:49:54,250
+但实际上，这篇论文的一大贡献，
+
+876
+00:49:54,250 --> 00:49:58,030
+这是一份非常长的报告，就是 C4 数据集。
+
+877
+00:49:58,030 --> 00:50:03,230
+以及这个观察，在当时非常清楚，
+
+878
+00:50:03,230 --> 00:50:08,230
+就是 Common Crawl 对于自然语言来说大多没什么用。
+
+879
+00:50:08,230 --> 00:50:12,030
+当时有这样一种想法：你有这些小数据集，
+
+880
+00:50:12,030 --> 00:50:14,510
+它们质量很高，或者你有
+
+881
+00:50:14,510 --> 00:50:17,030
+Common Crawl 一团糟。
+
+882
+00:50:17,030 --> 00:50:19,390
+任何试图在 Common Crawl 上训练的做法，都只会带来
+
+883
+00:50:19,390 --> 00:50:20,295
+垃圾结果。
+
+884
+00:50:20,295 --> 00:50:21,670
+所以人们在想，怎么
+
+885
+00:50:21,670 --> 00:50:26,110
+才能从 Common Crawl 中获取更大但高质量的子集？
+
+886
+00:50:26,110 --> 00:50:32,670
+于是我们看到了 Reddit 的思路，也看到了类似 Wikipedia 的语言模型思路。
+
+887
+00:50:34,670 --> 00:50:41,430
+C4 用了不同的思路，它说，我们干脆定义一堆规则，结果这些规则
+
+888
+00:50:41,430 --> 00:50:42,890
+相当有效。
+
+889
+00:50:42,890 --> 00:50:46,950
+基本上，他们保留
+
+890
+00:50:46,950 --> 00:50:49,850
+以标点结尾、且包含五个以上单词的行，
+
+891
+00:50:49,850 --> 00:50:53,150
+删除少于三个句子的页面，
+
+892
+00:50:53,150 --> 00:50:57,510
+删除包含任何脏词的页面。
+
+893
+00:50:57,510 --> 00:51:02,550
+删除诸如使用条款、样板文字之类的内容。
+
+894
+00:51:02,550 --> 00:51:04,690
+有趣的是，删除花括号，
+
+895
+00:51:04,690 --> 00:51:08,930
+这过滤掉了很多代码——所以显然在当时，
+
+896
+00:51:08,930 --> 00:51:11,830
+他们并没有考虑代码模型——
+
+897
+00:51:11,830 --> 00:51:17,270
+并且他们过滤掉了所有非英语内容。
+
+898
+00:51:17,270 --> 00:51:21,730
+最终结果是，你有 1560 亿个 token，
+
+899
+00:51:21,730 --> 00:51:25,090
+也就是 800GB 文本。
+
+900
+00:51:25,090 --> 00:51:27,910
+所以这比 GPT-2 数据集大得多，后者
+
+901
+00:51:27,910 --> 00:51:32,710
+只有 40GB 文本。
+
+902
+00:51:32,710 --> 00:51:36,870
+稍后有人在 C4 上做了一些分析，结果显示——
+
+903
+00:51:36,870 --> 00:51:39,170
+这里是当时所涵盖的网站。
+
+904
+00:51:39,170 --> 00:51:41,670
+所以你有一堆 Wikipedia，
+
+905
+00:51:41,670 --> 00:51:46,800
+专利也是很常见的内容。
+
+906
+00:51:46,800 --> 00:51:49,340
+他们还发布了一个类似 WebText 的文档。
+
+907
+00:51:49,340 --> 00:51:53,200
+他们还使用了 Reddit 帖子中链接的思路——
+
+908
+00:51:56,880 --> 00:51:59,920
+来自 karma 大于三的 Reddit 帖子，
+
+909
+00:51:59,920 --> 00:52:04,160
+并过滤到那些页面。
+
+910
+00:52:04,160 --> 00:52:08,520
+所以他们用这种方法能够获得，
+
+911
+00:52:08,520 --> 00:52:14,280
+使用 12 个 Common Crawl 转储得到 17GB 文本。
+
+912
+00:52:14,280 --> 00:52:16,960
+记住，WebText 是 40GB，
+
+913
+00:52:16,960 --> 00:52:22,960
+这意味着 Common Crawl 可能是不完整的，或者并不
+
+914
+00:52:22,960 --> 00:52:25,160
+包含所有内容，因为如果它包含所有内容，
+
+915
+00:52:25,160 --> 00:52:28,320
+你应该能达到 40GB。
+
+916
+00:52:28,320 --> 00:52:30,380
+他们展示了在当时，
+
+917
+00:52:30,380 --> 00:52:31,960
+你可以用这些数据来提升
+
+918
+00:52:31,960 --> 00:52:36,480
+一系列 NLP 基准的表现。
+
+919
+00:52:36,480 --> 00:52:40,360
+所以我们看到了使用规则，这些东西
+
+920
+00:52:40,360 --> 00:52:44,000
+that look like Wikipedia, Reddit links, and now let's
+
+921
+00:52:44,000 --> 00:52:46,240
+talk about GPT-3.
+
+922
+00:52:46,240 --> 00:52:50,280
+So GPT-3, the dataset was--
+
+923
+00:52:50,280 --> 00:52:53,280
+they used Common Crawl, they did their own processing.
+
+924
+00:52:53,280 --> 00:52:57,160
+There is this WebText, which was essentially the GPT-2 dataset,
+
+925
+00:52:57,160 --> 00:52:59,160
+but expanded.
+
+926
+00:52:59,160 --> 00:53:00,580
+Notice that there's some overlap.
+
+927
+00:53:00,580 --> 00:53:02,600
+Common Crawl does overlap with this,
+
+928
+00:53:02,600 --> 00:53:08,120
+but this is, in some sense, a more targeted distribution.
+
+929
+00:53:08,120 --> 00:53:10,560
+There is this-- in the paper, it's
+
+930
+00:53:10,560 --> 00:53:16,400
+described as Books1 and Books2, which is internet-based books
+
+931
+00:53:16,400 --> 00:53:21,840
+corpora, so this remains a mystery exactly what it is,
+
+932
+00:53:21,840 --> 00:53:24,560
+and Wikipedia.
+
+933
+00:53:24,560 --> 00:53:30,460
+So the result was about 500 gigabytes
+
+934
+00:53:30,460 --> 00:53:34,720
+of text, 400 billion tokens.
+
+935
+00:53:34,720 --> 00:53:38,200
+And to do the Common Crawl processing,
+
+936
+00:53:38,200 --> 00:53:41,640
+they trained a quality classifier to distinguish things
+
+937
+00:53:41,640 --> 00:53:45,400
+they deemed to be high quality from the rest,
+
+938
+00:53:45,400 --> 00:53:47,840
+and they did some fuzzy deduplication
+
+939
+00:53:47,840 --> 00:53:54,720
+because WebText and Common Crawl had dupes.
+
+940
+00:53:54,720 --> 00:54:01,360
+So this paper followed the idea of using a classifier
+
+941
+00:54:01,360 --> 00:54:05,720
+to do quality classification.
+
+942
+00:54:05,720 --> 00:54:09,060
+So after GPT-3 came out, this was, I think, a big event.
+
+943
+00:54:09,060 --> 00:54:10,800
+And there were a number of efforts
+
+944
+00:54:10,800 --> 00:54:12,500
+to try to do things in the open.
+
+945
+00:54:12,500 --> 00:54:14,960
+So one of the initial efforts was
+
+946
+00:54:14,960 --> 00:54:23,080
+The Pile, which is a grassroots effort from EleutherAI, where
+
+947
+00:54:23,080 --> 00:54:29,800
+they had a bunch of people in this Discord just jamming
+
+948
+00:54:29,800 --> 00:54:31,700
+and figuring out high quality sources.
+
+949
+00:54:31,700 --> 00:54:34,480
+And they came up with this list in the end.
+
+950
+00:54:34,480 --> 00:54:38,140
+And today, this is still pretty interesting and diverse.
+
+951
+00:54:38,140 --> 00:54:43,170
+It has Common Crawl, it has PubMed.
+
+952
+00:54:43,170 --> 00:54:47,130
+This has this thing called Books3, which we'll talk about.
+
+953
+00:54:47,130 --> 00:54:51,450
+ArXiv, GitHub, which we talked about.
+
+954
+00:54:51,450 --> 00:54:56,770
+Wikipedia, IRC, another BooksCorpus, Philosophy Papers,
+
+955
+00:54:56,770 --> 00:54:57,670
+and so on.
+
+956
+00:55:04,090 --> 00:55:06,990
+They included this Enron Emails dataset.
+
+957
+00:55:06,990 --> 00:55:13,690
+So Enron went bust in 2002 and all the emails were released,
+
+958
+00:55:13,690 --> 00:55:16,850
+and this is one of the few email datasets we have,
+
+959
+00:55:16,850 --> 00:55:20,070
+which is a weird distribution, I think, for email.
+
+960
+00:55:20,070 --> 00:55:23,050
+But that's what you get.
+
+961
+00:55:23,050 --> 00:55:25,170
+So Project Gutenberg was--
+
+962
+00:55:25,170 --> 00:55:28,490
+So let's talk about books a little bit.
+
+963
+00:55:28,490 --> 00:55:34,730
+So Project Gutenberg was started in 1971,
+
+964
+00:55:34,730 --> 00:55:39,890
+and it only includes books that received copyright clearance.
+
+965
+00:55:39,890 --> 00:55:42,030
+So mostly books in the public domain.
+
+966
+00:55:45,210 --> 00:55:48,310
+There's this packaging of Gutenberg into PG-19,
+
+967
+00:55:48,310 --> 00:55:54,290
+which is Gutenberg before 2019.
+
+968
+00:55:54,290 --> 00:55:57,250
+Which is, I guess, most of them, because for them
+
+969
+00:55:57,250 --> 00:56:01,610
+to be in public domain, you have to wait 75 years.
+
+970
+00:56:01,610 --> 00:56:08,970
+So Books3, which is this interesting dataset that
+
+971
+00:56:08,970 --> 00:56:11,090
+appeared in The Pile.
+
+972
+00:56:11,090 --> 00:56:18,610
+So this is described actually as 200k books from a shadow library
+
+973
+00:56:18,610 --> 00:56:23,730
+called Bibliotik that contains all books from your favorite
+
+974
+00:56:23,730 --> 00:56:25,530
+authors.
+
+975
+00:56:25,530 --> 00:56:29,170
+And at that time-- again, 2020, no one was paying attention.
+
+976
+00:56:29,170 --> 00:56:35,930
+People used it to train models, and since then, it
+
+977
+00:56:35,930 --> 00:56:37,230
+has been taken down.
+
+978
+00:56:37,230 --> 00:56:42,970
+So you cannot use, or should not use Books3 anymore.
+
+979
+00:56:42,970 --> 00:56:45,370
+We'll come back to Books3 again.
+
+980
+00:56:45,370 --> 00:56:53,150
+So Stack Exchange you've probably used quite a bit,
+
+981
+00:56:53,150 --> 00:56:59,125
+although I guess these days maybe less so because of AI.
+
+982
+00:56:59,125 --> 00:57:01,000
+There's a bunch of user-contributed questions
+
+983
+00:57:01,000 --> 00:57:03,570
+and answers, started in 2008.
+
+984
+00:57:03,570 --> 00:57:07,770
+And one thing that is interesting about this dataset
+
+985
+00:57:07,770 --> 00:57:12,610
+is that it's a Q&A format, and this is quite
+
+986
+00:57:12,610 --> 00:57:16,850
+close to a real application.
+
+987
+00:57:16,850 --> 00:57:20,090
+So normally, you think about pre-training data as here's
+
+988
+00:57:20,090 --> 00:57:23,250
+Wikipedia articles, just like raw text.
+
+989
+00:57:23,250 --> 00:57:26,250
+But some parts of the web are actually--
+
+990
+00:57:26,250 --> 00:57:29,650
+look supervised, like what you would want
+
+991
+00:57:29,650 --> 00:57:31,610
+to ask your language model.
+
+992
+00:57:31,610 --> 00:57:37,140
+Which I think, maybe, helps the model
+
+993
+00:57:37,140 --> 00:57:40,740
+learn certain types of question answering behaviors.
+
+994
+00:57:40,740 --> 00:57:43,320
+So not everything is super magically emergent.
+
+995
+00:57:43,320 --> 00:57:46,120
+It's like, well, this type of data does exist on the web.
+
+996
+00:57:48,860 --> 00:57:52,880
+So there's also-- this data has metadata,
+
+997
+00:57:52,880 --> 00:57:54,340
+which is like the number of votes
+
+998
+00:57:54,340 --> 00:57:56,380
+which are useful for filtering.
+
+999
+00:57:56,380 --> 00:58:02,120
+And again, this data is released in data dumps
+
+1000
+00:58:02,120 --> 00:58:05,900
+that allows you to just download without crawling it.
+
+1001
+00:58:05,900 --> 00:58:08,860
+So now we're in 2021.
+
+1002
+00:58:08,860 --> 00:58:11,700
+There was another paper from DeepMind.
+
+1003
+00:58:11,700 --> 00:58:13,240
+They trained a model called Gopher,
+
+1004
+00:58:13,240 --> 00:58:17,100
+which was never released, and actually
+
+1005
+00:58:17,100 --> 00:58:20,932
+was subsumed by Chinchilla.
+
+1006
+00:58:20,932 --> 00:58:22,640
+But the description of the data, I think,
+
+1007
+00:58:22,640 --> 00:58:23,560
+is actually really good.
+
+1008
+00:58:23,560 --> 00:58:24,620
+You should read this paper, because I
+
+1009
+00:58:24,620 --> 00:58:26,500
+think it's very thorough in the way
+
+1010
+00:58:26,500 --> 00:58:29,660
+that they describe the data processing.
+
+1011
+00:58:29,660 --> 00:58:31,900
+Well, except for the parts where they don't tell you
+
+1012
+00:58:31,900 --> 00:58:33,860
+what's in the data.
+
+1013
+00:58:33,860 --> 00:58:38,660
+So they created this massive web,
+
+1014
+00:58:38,660 --> 00:58:42,260
+and they had C4, which remember, was the dataset
+
+1015
+00:58:42,260 --> 00:58:44,700
+that we looked at before from Google.
+
+1016
+00:58:44,700 --> 00:58:46,840
+They train on books, news, GitHub, and Wikipedia.
+
+1017
+00:58:46,840 --> 00:58:50,860
+They don't say anything about how they got that.
+
+1018
+00:58:50,860 --> 00:58:57,940
+So for the MassiveWeb, they kept English, deduped,
+
+1019
+00:58:57,940 --> 00:59:03,260
+and their quality filtering was also based on manual rules.
+
+1020
+00:59:03,260 --> 00:59:07,260
+And part of the reason for this is that they
+
+1021
+00:59:07,260 --> 00:59:08,760
+had more control over that.
+
+1022
+00:59:08,760 --> 00:59:12,460
+So I think, as you can see, there
+
+1023
+00:59:12,460 --> 00:59:20,860
+is this division between people who wanted to use rules,
+
+1024
+00:59:20,860 --> 00:59:25,580
+and people who wanted to use classifiers.
+
+1025
+00:59:25,580 --> 00:59:29,120
+So they got, as the name suggests,
+
+1026
+00:59:29,120 --> 00:59:33,180
+a massive amount of text, but their model
+
+1027
+00:59:33,180 --> 00:59:37,630
+was only trained on a very small fraction of this dataset.
+
+1028
+00:59:40,630 --> 00:59:48,870
+So in 2022 Llama 1 came out, and the dataset here-- this
+
+1029
+00:59:48,870 --> 00:59:54,150
+was actually a very nice paper in that it detailed their data
+
+1030
+00:59:54,150 --> 00:59:54,970
+processing.
+
+1031
+00:59:54,970 --> 00:59:59,070
+So this is probably one of the last non-open,
+
+1032
+00:59:59,070 --> 01:00:01,750
+fully open models that actually talk about their data
+
+1033
+01:00:01,750 --> 01:00:02,870
+processing.
+
+1034
+01:00:02,870 --> 01:00:05,970
+So they have Common Crawl processed with CCNET,
+
+1035
+01:00:05,970 --> 01:00:09,910
+which you know about.
+
+1036
+01:00:09,910 --> 01:00:14,230
+The classification, though, was whether the page
+
+1037
+01:00:14,230 --> 01:00:16,990
+was a reference of Wikipedia, not whether it is actually
+
+1038
+01:00:16,990 --> 01:00:19,830
+a Wikipedia article.
+
+1039
+01:00:19,830 --> 01:00:22,550
+So the idea is that well, maybe Wikipedia articles
+
+1040
+01:00:22,550 --> 01:00:24,950
+are too stylized.
+
+1041
+01:00:24,950 --> 01:00:26,990
+And we know that Wikipedia articles references
+
+1042
+01:00:26,990 --> 01:00:29,250
+a bunch of other articles which are presumably good,
+
+1043
+01:00:29,250 --> 01:00:32,990
+so let's call those the good websites.
+
+1044
+01:00:32,990 --> 01:00:37,870
+They had C4, they did a bunch of processing
+
+1045
+01:00:37,870 --> 01:00:42,670
+on GitHub to keep permissive licenses, Wikipedia.
+
+1046
+01:00:42,670 --> 01:00:47,910
+They trained on Books3 and Project Gutenberg.
+
+1047
+01:00:47,910 --> 01:00:50,950
+So Books3 really got them in a lot of trouble
+
+1048
+01:00:50,950 --> 01:00:53,030
+because they're just announcing to the world that
+
+1049
+01:00:53,030 --> 01:00:54,450
+hey, I trained on this dataset.
+
+1050
+01:00:54,450 --> 01:00:55,908
+And if you look back, oh, this came
+
+1051
+01:00:55,908 --> 01:00:57,158
+from-- where did it come from?
+
+1052
+01:00:57,158 --> 01:00:58,130
+It came from The Pile.
+
+1053
+01:00:58,130 --> 01:01:00,010
+Oh, it came from a shadow library.
+
+1054
+01:01:00,010 --> 01:01:04,430
+So that's why people don't want to talk about their data
+
+1055
+01:01:04,430 --> 01:01:06,510
+anymore.
+
+1056
+01:01:06,510 --> 01:01:11,750
+So they looked at arXiv, and actually used
+
+1057
+01:01:11,750 --> 01:01:15,490
+the LaTeX to do the processing, Stack Exchange,
+
+1058
+01:01:15,490 --> 01:01:17,740
+and they got 1.2 trillion tokens.
+
+1059
+01:01:17,740 --> 01:01:19,490
+They didn't actually release this dataset,
+
+1060
+01:01:19,490 --> 01:01:22,870
+but they had enough of a description in their processing
+
+1061
+01:01:22,870 --> 01:01:27,910
+that this was reproduced by Together's RedPajama V1
+
+1062
+01:01:27,910 --> 01:01:33,030
+dataset, which was then used in other sources.
+
+1063
+01:01:33,030 --> 01:01:36,230
+So as you can see here, RedPajama V1
+
+1064
+01:01:36,230 --> 01:01:43,790
+initially also contained Books3, which has now been stripped out.
+
+1065
+01:01:43,790 --> 01:01:48,110
+So various decisions made early on about copyright actually
+
+1066
+01:01:48,110 --> 01:01:53,350
+influence-- have a fairly big watershed.
+
+1067
+01:01:53,350 --> 01:01:55,890
+So let's talk about RefinedWeb.
+
+1068
+01:01:55,890 --> 01:02:03,630
+So this is a paper that tried to make a point that web data is
+
+1069
+01:02:03,630 --> 01:02:05,130
+all you need.
+
+1070
+01:02:05,130 --> 01:02:07,593
+So the web, in some sense, is everything.
+
+1071
+01:02:07,593 --> 01:02:09,510
+And then we talked about all these specialized
+
+1072
+01:02:09,510 --> 01:02:14,230
+sources, like there's GitHub and arXiv, and Stack Exchange.
+
+1073
+01:02:14,230 --> 01:02:16,030
+And they said, well, what happens
+
+1074
+01:02:16,030 --> 01:02:19,710
+if we just stick with the web?
+
+1075
+01:02:19,710 --> 01:02:23,630
+So they did a good job of doing the transformation from HTML
+
+1076
+01:02:23,630 --> 01:02:24,750
+to text.
+
+1077
+01:02:24,750 --> 01:02:30,320
+They filtered using the Gopher rules, which is basically keep
+
+1078
+01:02:30,320 --> 01:02:32,600
+things that look like English.
+
+1079
+01:02:32,600 --> 01:02:34,480
+They explicitly, at that time, still
+
+1080
+01:02:34,480 --> 01:02:38,600
+said avoid ML-based filtering to avoid biases.
+
+1081
+01:02:38,600 --> 01:02:43,640
+I don't want to find an overly narrow subset of the web.
+
+1082
+01:02:43,640 --> 01:02:47,700
+They did some deduplication, and they had five trillion tokens.
+
+1083
+01:02:47,700 --> 01:02:51,960
+They released about 600 billion of them.
+
+1084
+01:02:51,960 --> 01:02:58,900
+So FineWeb from Hugging Face was a replication of RefinedWeb,
+
+1085
+01:02:58,900 --> 01:03:00,180
+but improved it.
+
+1086
+01:03:00,180 --> 01:03:03,080
+So they took all the Common Crawl dumps at that time,
+
+1087
+01:03:03,080 --> 01:03:05,240
+did some filtering--
+
+1088
+01:03:05,240 --> 01:03:09,960
+again, using manual rules to not inject biases--
+
+1089
+01:03:09,960 --> 01:03:16,060
+deduped, did PII removal, and got 15 trillion tokens.
+
+1090
+01:03:16,060 --> 01:03:19,520
+So you can see that the size of these datasets
+
+1091
+01:03:19,520 --> 01:03:22,020
+is growing quite a bit.
+
+1092
+01:03:26,840 --> 01:03:31,320
+So then there is this Dolma dataset from AI2,
+
+1093
+01:03:31,320 --> 01:03:36,560
+and this is a dataset that includes their own processing
+
+1094
+01:03:36,560 --> 01:03:39,560
+of Common Crawl, The Stack, which we'll talk about,
+
+1095
+01:03:39,560 --> 01:03:44,640
+before C4, which you know about, and a bunch of other things.
+
+1096
+01:03:44,640 --> 01:03:53,200
+And the Reddit dataset was from this project called PushShift.
+
+1097
+01:03:53,200 --> 01:03:55,760
+And at that time, you could still get this data,
+
+1098
+01:03:55,760 --> 01:04:01,360
+and you can train on it before things got locked down.
+
+1099
+01:04:01,360 --> 01:04:06,480
+AI2 has their own crawl of academic papers called
+
+1100
+01:04:06,480 --> 01:04:10,400
+Semantic Scholar, so they derived a dataset based on that.
+
+1101
+01:04:10,400 --> 01:04:13,960
+So let's look at their Common Crawl processing.
+
+1102
+01:04:13,960 --> 01:04:19,180
+So they use language identification.
+
+1103
+01:04:19,180 --> 01:04:23,360
+So this was model-based, but quality filtering still
+
+1104
+01:04:23,360 --> 01:04:27,200
+avoid model-based filtering.
+
+1105
+01:04:27,200 --> 01:04:34,280
+And then they removed toxicity using rules and a classifier.
+
+1106
+01:04:34,280 --> 01:04:37,720
+And they got three trillion tokens out of that.
+
+1107
+01:04:37,720 --> 01:04:40,360
+So DCLM, I think, was maybe a point
+
+1108
+01:04:40,360 --> 01:04:45,160
+where this idea of model-based quality filtering
+
+1109
+01:04:45,160 --> 01:04:51,040
+started to really become the norm here.
+
+1110
+01:04:51,040 --> 01:04:54,280
+So DataComp, the initial motivation
+
+1111
+01:04:54,280 --> 01:04:56,800
+was to define some sort of pipeline
+
+1112
+01:04:56,800 --> 01:05:02,600
+so that people can try different data methods in a standard way,
+
+1113
+01:05:02,600 --> 01:05:04,240
+and show results.
+
+1114
+01:05:04,240 --> 01:05:06,600
+But I think the main way that I think
+
+1115
+01:05:06,600 --> 01:05:10,280
+people use this is just using their dataset that they released
+
+1116
+01:05:10,280 --> 01:05:14,200
+to train models and do other things.
+
+1117
+01:05:14,200 --> 01:05:19,660
+So they processed Common Crawl to produce DCLM-pool.
+
+1118
+01:05:19,660 --> 01:05:21,238
+So this is completely unfiltered.
+
+1119
+01:05:21,238 --> 01:05:23,280
+And if you look at this dataset, this is massive.
+
+1120
+01:05:23,280 --> 01:05:27,210
+240 trillion tokens.
+
+1121
+01:05:27,210 --> 01:05:29,290
+This is probably more than the number of tokens
+
+1122
+01:05:29,290 --> 01:05:31,190
+that anyone really trains on.
+
+1123
+01:05:31,190 --> 01:05:34,190
+But a lot of this is fairly low quality,
+
+1124
+01:05:34,190 --> 01:05:39,190
+so then they had a pipeline where all that gets filtered.
+
+1125
+01:05:39,190 --> 01:05:42,330
+If you only keep English, you have
+
+1126
+01:05:42,330 --> 01:05:45,030
+some rules to really narrow it down.
+
+1127
+01:05:45,030 --> 01:05:49,130
+You do dedupe, and then you do this model-based filtering,
+
+1128
+01:05:49,130 --> 01:05:52,630
+and you end up with something that's 1.4%.
+
+1129
+01:05:52,630 --> 01:05:57,290
+And this is the dataset that we'll see actually works
+
+1130
+01:05:57,290 --> 01:05:58,570
+pretty well.
+
+1131
+01:05:58,570 --> 01:06:04,490
+So the model-based filtering-- and this was strangely good.
+
+1132
+01:06:04,490 --> 01:06:11,970
+So to train a classifier, they took OpenHermes,
+
+1133
+01:06:11,970 --> 01:06:15,170
+which is essentially instruction data that
+
+1134
+01:06:15,170 --> 01:06:19,470
+was generated by GPT-4, and ELI5,
+
+1135
+01:06:19,470 --> 01:06:23,790
+which is a subreddit with various questions and answers.
+
+1136
+01:06:23,790 --> 01:06:28,370
+So this is-- let's see.
+
+1137
+01:06:28,370 --> 01:06:32,110
+These are the type of questions that are in ELI5.
+
+1138
+01:06:35,570 --> 01:06:39,330
+So anyway, you get the idea.
+
+1139
+01:06:39,330 --> 01:06:44,910
+So it's kind of weird, but somehow this works.
+
+1140
+01:06:44,910 --> 01:06:47,410
+So the negative examples are anything from RefinedWeb, which
+
+1141
+01:06:47,410 --> 01:06:52,010
+is, remember, it's just a very loosely filtered version
+
+1142
+01:06:52,010 --> 01:06:52,510
+of the web.
+
+1143
+01:06:52,510 --> 01:06:56,570
+It's basically the web, and it got 3.8 trillion tokens.
+
+1144
+01:06:56,570 --> 01:06:59,050
+They train a fastText classifier-- think about it just
+
+1145
+01:06:59,050 --> 01:07:01,370
+as a linear classifier.
+
+1146
+01:07:01,370 --> 01:07:06,090
+And then they show that this magical classifier, quality
+
+1147
+01:07:06,090 --> 01:07:14,410
+classifier, outperforms a bunch of other things that they tried.
+
+1148
+01:07:14,410 --> 01:07:16,210
+So, DCLM.
+
+1149
+01:07:16,210 --> 01:07:20,230
+This became, for a while, at least in the open community,
+
+1150
+01:07:20,230 --> 01:07:26,130
+a bit of a gold standard for quality filtering.
+
+1151
+01:07:26,130 --> 01:07:28,270
+Let's move on to Nemotron.
+
+1152
+01:07:28,270 --> 01:07:31,690
+So Nemotron-- this is from NVIDIA--
+
+1153
+01:07:31,690 --> 01:07:35,510
+they said that well, DCLM filters too aggressively.
+
+1154
+01:07:35,510 --> 01:07:39,250
+It's removing most of the data.
+
+1155
+01:07:39,250 --> 01:07:48,090
+And remember, they only got--how many-- 3.8 trillion tokens.
+
+1156
+01:07:48,090 --> 01:07:50,170
+So we need more tokens.
+
+1157
+01:07:50,170 --> 01:07:51,410
+So what do we do?
+
+1158
+01:07:51,410 --> 01:07:59,290
+We are going to do something more, I guess, elaborate.
+
+1159
+01:07:59,290 --> 01:08:01,130
+We're going to prompt our existing
+
+1160
+01:08:01,130 --> 01:08:07,287
+用模型根据教育价值对 FineWeb 文档打分。
+
+1161
+01:08:07,287 --> 01:08:09,370
+所以我们会提示一个语言模型，问：
+
+1162
+01:08:09,370 --> 01:08:11,170
+这是否有教育价值？
+
+1163
+01:08:11,170 --> 01:08:14,410
+去加一堆标注，训练一个 fastText 模型。
+
+1164
+01:08:14,410 --> 01:08:16,830
+这就是一个分类器。
+
+1165
+01:08:16,830 --> 01:08:20,380
+另一个分类器就是直接用 DCLM 分类器。
+
+1166
+01:08:20,380 --> 01:08:23,540
+所以我们会用这些分类器。
+
+1167
+01:08:23,540 --> 01:08:26,479
+我们还会使用合成数据。
+
+1168
+01:08:26,479 --> 01:08:31,183
+所以这大概是其中之一——
+
+1169
+01:08:31,183 --> 01:08:33,100
+我不知道是不是——它可能不是第一个，
+
+1170
+01:08:33,100 --> 01:08:36,779
+但它是真正
+
+1171
+01:08:36,779 --> 01:08:41,380
+倾向于用合成数据进行预训练的主要数据集之一。
+
+1172
+01:08:41,380 --> 01:08:43,580
+所以对于低质量数据，
+
+1173
+01:08:43,580 --> 01:08:45,819
+按照这些分类器的判定，
+
+1174
+01:08:45,819 --> 01:08:49,300
+你用一个语言模型改写它，让它更——
+
+1175
+01:08:49,300 --> 01:08:51,460
+看起来像 Wikipedia。
+
+1176
+01:08:51,460 --> 01:08:54,420
+对于高质量数据，我们用一个语言模型
+
+1177
+01:08:54,420 --> 01:08:56,439
+生成各种任务。
+
+1178
+01:08:56,439 --> 01:08:58,518
+例如，给定一篇 Wikipedia 文章，
+
+1179
+01:08:58,518 --> 01:09:00,060
+我可以生成问答，或者我
+
+1180
+01:09:00,060 --> 01:09:04,740
+可以生成比如：请总结这份文档，
+
+1181
+01:09:04,740 --> 01:09:08,060
+从中提取关键信息，等等。
+
+1182
+01:09:08,060 --> 01:09:14,140
+所以他们构建出了一个包含 6 万亿 token 的数据集。
+
+1183
+01:09:14,140 --> 01:09:20,340
+所以这比 DCLM 大得多。
+
+1184
+01:09:20,340 --> 01:09:25,899
+作为参考，这在某种程度上
+
+1185
+01:09:25,899 --> 01:09:30,000
+按某些标准来看仍然很小。
+
+1186
+01:09:30,000 --> 01:09:32,899
+Llama 3 是在 15 万亿 token 上训练的，
+
+1187
+01:09:32,899 --> 01:09:35,340
+Qwen3 是在 36 万亿 token 上训练的。
+
+1188
+01:09:35,340 --> 01:09:38,660
+虽然有这个——
+
+1189
+01:09:38,660 --> 01:09:41,180
+不清楚这些去重后的 token 有多大，
+
+1190
+01:09:41,180 --> 01:09:44,620
+因为当你查看语言
+
+1191
+01:09:44,620 --> 01:09:47,200
+建模论文中的 [INAUDIBLE] 计数时，其中一些是重复的。
+
+1192
+01:09:47,200 --> 01:09:49,420
+比如如果你跑两个 epoch，那就是
+
+1193
+01:09:49,420 --> 01:09:53,340
+token 数量的两倍，所以你看这些数字时
+
+1194
+01:09:53,340 --> 01:09:55,740
+必须小心。
+
+1195
+01:09:55,740 --> 01:10:00,380
+他们表明这个数据集更好。
+
+1196
+01:10:00,380 --> 01:10:07,760
+他们的高质量子集超越了之前的数据集。
+
+1197
+01:10:07,760 --> 01:10:13,900
+到目前为止，我们已经看到了各种不同的
+
+1198
+01:10:13,900 --> 01:10:15,920
+过滤方法。
+
+1199
+01:10:15,920 --> 01:10:20,810
+我觉得所有这些在某种程度上看起来都很相似。
+
+1200
+01:10:20,810 --> 01:10:23,190
+你进行一次网络爬虫，你可以选择
+
+1201
+01:10:23,190 --> 01:10:24,610
+我要用规则来过滤，
+
+1202
+01:10:24,610 --> 01:10:25,690
+或者我要用模型。
+
+1203
+01:10:25,690 --> 01:10:27,148
+如果我要用模型，那么我
+
+1204
+01:10:27,148 --> 01:10:29,390
+必须判断什么样的数据看起来是好的，
+
+1205
+01:10:29,390 --> 01:10:31,910
+然后尝试训练一个分类器，
+
+1206
+01:10:31,910 --> 01:10:35,130
+并对我所有的文档进行分类，然后筛选。
+
+1207
+01:10:35,130 --> 01:10:36,710
+似乎存在一种权衡：
+
+1208
+01:10:36,710 --> 01:10:39,170
+你可以使用大量的Common Crawl——
+
+1209
+01:10:39,170 --> 01:10:44,650
+如果你想要的话，可以得到240万亿个token，
+
+1210
+01:10:44,650 --> 01:10:47,310
+但那可能会是非常低质量的数据。
+
+1211
+01:10:47,310 --> 01:10:49,650
+或者你可以得到一万亿个token，
+
+1212
+01:10:49,650 --> 01:10:55,230
+两者之间存在某个最佳平衡点。
+
+1213
+01:10:55,230 --> 01:11:00,990
+让我谈谈最后两件事。
+
+1214
+01:11:00,990 --> 01:11:05,990
+那么代码，回到许可这个问题。
+
+1215
+01:11:05,990 --> 01:11:09,270
+The Stack是一个非常不错的项目，
+
+1216
+01:11:09,270 --> 01:11:14,150
+它试图构建一个非常好的代码数据集，因为
+
+1217
+01:11:14,150 --> 01:11:17,150
+到2022年已经很清楚，代码
+
+1218
+01:11:17,150 --> 01:11:19,550
+将变得非常重要。
+
+1219
+01:11:19,550 --> 01:11:21,910
+他们在最初版本中所做的是
+
+1220
+01:11:21,910 --> 01:11:27,310
+克隆了137个仓库。
+
+1221
+01:11:27,310 --> 01:11:30,270
+他们保留了那些采用宽松许可证的仓库，
+
+1222
+01:11:30,270 --> 01:11:36,530
+移除了近似重复的内容，最终得到——抱歉，
+
+1223
+01:11:36,530 --> 01:11:38,630
+3TB的代码。
+
+1224
+01:11:38,630 --> 01:11:42,390
+然后在2024年，他们进行了更新。
+
+1225
+01:11:42,390 --> 01:11:46,490
+在这里他们更多地利用了元数据，
+
+1226
+01:11:46,490 --> 01:11:50,370
+比如GitHub上的issue、评论和PR，
+
+1227
+01:11:50,370 --> 01:11:52,630
+以及来自Software Heritage的仓库，
+
+1228
+01:11:52,630 --> 01:11:54,230
+我们之前讨论过这个。
+
+1229
+01:11:54,230 --> 01:11:57,750
+他们还从各种网站抓取文档，
+
+1230
+01:11:57,750 --> 01:11:59,950
+通过爬取这些网站。
+
+1231
+01:11:59,950 --> 01:12:01,690
+他们做了大量处理。
+
+1232
+01:12:01,690 --> 01:12:05,732
+在GitHub仓库中，有二进制文件，你可能
+
+1233
+01:12:05,732 --> 01:12:06,690
+不想用它们来训练。
+
+1234
+01:12:06,690 --> 01:12:09,350
+其中有恶意软件，你要把它们清除掉。
+
+1235
+01:12:09,350 --> 01:12:12,770
+GitHub上很多内容，尤其是这些PR，是机器人，
+
+1236
+01:12:12,770 --> 01:12:14,270
+所以你必须过滤掉这些。
+
+1237
+01:12:14,270 --> 01:12:17,670
+去重，做PII脱敏。
+
+1238
+01:12:17,670 --> 01:12:20,810
+有大量的pull request之类的东西，
+
+1239
+01:12:20,810 --> 01:12:24,590
+他们基本上进行子采样以保持代表性。
+
+1240
+01:12:24,590 --> 01:12:27,110
+and the dataset manageable.
+
+1241
+01:12:27,110 --> 01:12:30,730
+They also did this thing, which was I thought was nice,
+
+1242
+01:12:30,730 --> 01:12:35,110
+which is that there's many programming languages out there.
+
+1243
+01:12:35,110 --> 01:12:38,350
+There's a lot of Python, a lot of C,
+
+1244
+01:12:38,350 --> 01:12:42,690
+but low resource languages like Nim-- which I hadn't even heard
+
+1245
+01:12:42,690 --> 01:12:46,690
+of-- they're not that common.
+
+1246
+01:12:46,690 --> 01:12:50,190
+So what they do is they compile this code
+
+1247
+01:12:50,190 --> 01:12:52,410
+into a low-level intermediate language,
+
+1248
+01:12:52,410 --> 01:12:56,730
+LLVM, which everything, like C Compiler, can compile into this,
+
+1249
+01:12:56,730 --> 01:12:59,510
+and they have juxtaposed the low resource
+
+1250
+01:12:59,510 --> 01:13:01,910
+language and the intermediate representation.
+
+1251
+01:13:01,910 --> 01:13:05,390
+So then the language model can actually
+
+1252
+01:13:05,390 --> 01:13:10,290
+learn the mapping between the shared low level representation,
+
+1253
+01:13:10,290 --> 01:13:13,400
+which has a lot of data on, and the thing that it does
+
+1254
+01:13:13,400 --> 01:13:16,160
+has less data on.
+
+1255
+01:13:16,160 --> 01:13:21,880
+And just for fun, you add in all the other good stuff
+
+1256
+01:13:21,880 --> 01:13:22,740
+that you can.
+
+1257
+01:13:22,740 --> 01:13:26,200
+So Stack V2 is mostly code, and then
+
+1258
+01:13:26,200 --> 01:13:32,960
+plus other things that were used to train their coding models.
+
+1259
+01:13:32,960 --> 01:13:36,240
+And one thing about pull requests
+
+1260
+01:13:36,240 --> 01:13:42,100
+is that pull requests and all the metadata is not,
+
+1261
+01:13:42,100 --> 01:13:44,660
+by its nature, a linearized sequence.
+
+1262
+01:13:44,660 --> 01:13:48,520
+So there has to be some steps taken to linearize it.
+
+1263
+01:13:48,520 --> 01:13:50,440
+So one important thing you have to decide
+
+1264
+01:13:50,440 --> 01:13:52,660
+is how much context to provide.
+
+1265
+01:13:52,660 --> 01:13:55,240
+So for example, an event might just be,
+
+1266
+01:13:55,240 --> 01:13:56,960
+I change one line of code.
+
+1267
+01:13:56,960 --> 01:13:59,440
+And that could just be one line, but presumably
+
+1268
+01:13:59,440 --> 01:14:03,520
+to learn that, you want to provide some context, maybe
+
+1269
+01:14:03,520 --> 01:14:06,360
+a few lines around it, or maybe the entire file surrounding
+
+1270
+01:14:06,360 --> 01:14:07,120
+that diff.
+
+1271
+01:14:07,120 --> 01:14:08,600
+And these are some design decisions
+
+1272
+01:14:08,600 --> 01:14:12,960
+that you have to make for linearization.
+
+1273
+01:14:12,960 --> 01:14:16,240
+And so at the end of the day, the tokens that they train on
+
+1274
+01:14:16,240 --> 01:14:18,320
+look something like this, where it's
+
+1275
+01:14:18,320 --> 01:14:23,920
+this XML-like structured data, where you have the PR,
+
+1276
+01:14:23,920 --> 01:14:26,360
+and then you have a bunch of diffs.
+
+1277
+01:14:26,360 --> 01:14:29,400
+And then for comments, you have basically the events
+
+1278
+01:14:29,400 --> 01:14:35,600
+of a comment was posted, what the review state of that PR was
+
+1279
+01:14:35,600 --> 01:14:37,200
+and so on and so forth.
+
+1280
+01:14:37,200 --> 01:14:39,640
+So it's not just learning how to generate
+
+1281
+01:14:39,640 --> 01:14:44,800
+code, but also the software development process around code.
+
+1282
+01:14:44,800 --> 01:14:49,760
+So finally, I'll talk about the Common Pile.
+
+1283
+01:14:49,760 --> 01:14:52,640
+So recall that almost all the data on the internet
+
+1284
+01:14:52,640 --> 01:14:55,160
+is copyrighted.
+
+1285
+01:14:55,160 --> 01:14:57,160
+Some of it is permissively licensed, some of it
+
+1286
+01:14:57,160 --> 01:14:59,920
+is even in the public domain.
+
+1287
+01:14:59,920 --> 01:15:03,740
+And while you can appeal to fair use and say,
+
+1288
+01:15:03,740 --> 01:15:08,920
+I'm going to train on it anyway, this is not quite settled.
+
+1289
+01:15:08,920 --> 01:15:11,200
+So if you're very, very risk-averse,
+
+1290
+01:15:11,200 --> 01:15:18,140
+then you say, well, if I don't know whether it is OK,
+
+1291
+01:15:18,140 --> 01:15:19,200
+that's a no.
+
+1292
+01:15:19,200 --> 01:15:23,240
+If you take that attitude, then that's what Common Pile did.
+
+1293
+01:15:23,240 --> 01:15:27,760
+So can you train a good model with only permissively licensed
+
+1294
+01:15:27,760 --> 01:15:28,380
+data?
+
+1295
+01:15:30,960 --> 01:15:33,640
+Or rather, how far can you get?
+
+1296
+01:15:33,640 --> 01:15:41,600
+So this was a project that went and scoured the internet
+
+1297
+01:15:41,600 --> 01:15:44,160
+for all the different types of data
+
+1298
+01:15:44,160 --> 01:15:47,740
+that they could possibly find that was worth training on,
+
+1299
+01:15:47,740 --> 01:15:49,520
+that was permissively licensed.
+
+1300
+01:15:49,520 --> 01:15:54,360
+It includes Stack V2 in code.
+
+1301
+01:15:54,360 --> 01:15:56,560
+It turns out that a lot of government proceedings
+
+1302
+01:15:56,560 --> 01:16:01,040
+are actually permissively licensed,
+
+1303
+01:16:01,040 --> 01:16:08,690
+wikis, some things on the web-- some news sites are actually
+
+1304
+01:16:08,690 --> 01:16:14,690
+permissively licensed, academic papers, online forums,
+
+1305
+01:16:14,690 --> 01:16:18,670
+things that are in the public domain, educational resources,
+
+1306
+01:16:18,670 --> 01:16:20,010
+and so on.
+
+1307
+01:16:20,010 --> 01:16:22,210
+So in the end, there were 8 terabytes
+
+1308
+01:16:22,210 --> 01:16:24,810
+of data, which is actually pretty
+
+1309
+01:16:24,810 --> 01:16:29,450
+good for permissively licensed data.
+
+1310
+01:16:29,450 --> 01:16:32,970
+Doing this project is actually much harder
+
+1311
+01:16:32,970 --> 01:16:35,565
+than maybe it sounds at first glance.
+
+1312
+01:16:35,565 --> 01:16:37,690
+It's not just as simple oh, you look at the license
+
+1313
+01:16:37,690 --> 01:16:42,490
+and it's like, oh yep, Apache, or CC, good.
+
+1314
+01:16:42,490 --> 01:16:48,050
+There's some subtleties, versus license laundering.
+
+1315
+01:16:48,050 --> 01:16:51,350
+So people are sloppy with licenses.
+
+1316
+01:16:51,350 --> 01:16:53,490
+So people might take some copyrighted work
+
+1317
+01:16:53,490 --> 01:16:56,730
+and just slap a CC BY on it.
+
+1318
+01:16:56,730 --> 01:16:58,430
+Anyone can write this on the internet,
+
+1319
+01:16:58,430 --> 01:17:06,370
+and it's hard to tell whether this is real or not.
+
+1320
+01:17:06,370 --> 01:17:10,150
+还有一种常见的做法，比如，
+
+1321
+01:17:10,150 --> 01:17:14,510
+Dolma是宽松许可的。
+
+1322
+01:17:14,510 --> 01:17:17,730
+记住，Dolma是AI2的集合。
+
+1323
+01:17:17,730 --> 01:17:22,250
+但集合许可证并不延伸到单个作品。
+
+1324
+01:17:22,250 --> 01:17:26,103
+所以这个集合是——
+
+1325
+01:17:26,103 --> 01:17:27,770
+我的意思是，首先，有一个问题
+
+1326
+01:17:27,770 --> 01:17:28,885
+就是集合是否——
+
+1327
+01:17:28,885 --> 01:17:30,510
+我认为集合可以受版权保护，
+
+1328
+01:17:30,510 --> 01:17:34,650
+但我想你可以给任何东西加许可证。
+
+1329
+01:17:34,650 --> 01:17:41,270
+但单个作品不一定没问题。
+
+1330
+01:17:41,270 --> 01:17:43,810
+所以你不能只看Hugging Face上的数据集，
+
+1331
+01:17:43,810 --> 01:17:46,018
+而且你——你在Hugging Face上看到的许多数据集，
+
+1332
+01:17:46,018 --> 01:17:47,310
+它们有宽松许可证。
+
+1333
+01:17:47,310 --> 01:17:49,170
+但如果你深入挖掘，实际上
+
+1334
+01:17:49,170 --> 01:17:52,850
+在单个层面上并不是宽松许可的。
+
+1335
+01:17:52,850 --> 01:17:56,210
+而且他们还决定放弃训练
+
+1336
+01:17:56,210 --> 01:18:00,570
+任何合成数据，因为在未授权数据上训练语言模型
+
+1337
+01:18:00,570 --> 01:18:04,690
+是不明确的。
+
+1338
+01:18:04,690 --> 01:18:12,740
+所以可能没问题，因为从技术上讲，这些
+
+1339
+01:18:12,740 --> 01:18:15,460
+是MIT许可证的开放权重模型。
+
+1340
+01:18:15,460 --> 01:18:19,340
+你可以做任何事。
+
+1341
+01:18:19,340 --> 01:18:21,040
+你可以随心所欲地使用它们，
+
+1342
+01:18:21,040 --> 01:18:25,900
+但这些语言模型想必也是训练过的
+
+1343
+01:18:25,900 --> 01:18:27,120
+在未授权数据上。
+
+1344
+01:18:27,120 --> 01:18:29,900
+所以这有点像数据洗白
+
+1345
+01:18:29,900 --> 01:18:33,040
+如果你真的诚实的话。
+
+1346
+01:18:36,100 --> 01:18:39,780
+所以用这些数据，他们将其比较
+
+1347
+01:18:39,780 --> 01:18:46,980
+与一堆其他模型，比如第一个Llama、MPT，
+
+1348
+01:18:46,980 --> 01:18:48,180
+和Qwen。
+
+1349
+01:18:48,180 --> 01:18:52,800
+在一堆基准测试上，他们表明这还不错。
+
+1350
+01:18:52,800 --> 01:18:58,360
+我会说它肯定不如Qwen模型，
+
+1351
+01:18:58,360 --> 01:19:04,670
+但它肯定胜过那些非常老的——
+
+1352
+01:19:04,670 --> 01:19:09,100
+这是2023年的，我猜。
+
+1353
+01:19:09,100 --> 01:19:11,460
+所以相当老的模型。
+
+1354
+01:19:11,460 --> 01:19:13,700
+所以我会说，这里的结论
+
+1355
+01:19:13,700 --> 01:19:16,740
+是你可以做得相当不错，但我
+
+1356
+01:19:16,740 --> 01:19:19,060
+认为不做更多token仍然很难竞争
+
+1357
+01:19:19,060 --> 01:19:21,400
+。
+
+1358
+01:19:21,400 --> 01:19:23,600
+但我不认为这是最终定论，
+
+1359
+01:19:23,600 --> 01:19:26,220
+而且我认为你可能可以从公开数据中榨取更多
+
+1360
+01:19:26,220 --> 01:19:29,900
+permissive licenses if you try.
+
+1361
+01:19:29,900 --> 01:19:34,100
+OK, so to summarize this lecture here.
+
+1362
+01:19:34,100 --> 01:19:38,640
+So maybe hopefully now I've given you some appreciation
+
+1363
+01:19:38,640 --> 01:19:40,800
+that data is a very rich topic.
+
+1364
+01:19:40,800 --> 01:19:42,980
+It's not that data just falls from the sky,
+
+1365
+01:19:42,980 --> 01:19:47,740
+or you just go on Hugging Face and you download a dataset.
+
+1366
+01:19:47,740 --> 01:19:49,920
+Data has to come from somewhere.
+
+1367
+01:19:49,920 --> 01:19:53,460
+And there's also a technical but also social context
+
+1368
+01:19:53,460 --> 01:19:59,540
+in which data comes, because at the top,
+
+1369
+01:19:59,540 --> 01:20:03,420
+the internet is a bunch of live services.
+
+1370
+01:20:03,420 --> 01:20:06,142
+Someone has to do the work of producing raw data,
+
+1371
+01:20:06,142 --> 01:20:08,100
+whether it be the website that gives you dumps,
+
+1372
+01:20:08,100 --> 01:20:11,580
+or someone has to build a crawler, or something.
+
+1373
+01:20:11,580 --> 01:20:14,860
+And then, someone has to make the decision of how to process
+
+1374
+01:20:14,860 --> 01:20:17,580
+it into usable form--
+
+1375
+01:20:17,580 --> 01:20:21,100
+filtering, transformation, deduplication, all these things
+
+1376
+01:20:21,100 --> 01:20:26,420
+have an impact on the quality of your final language model.
+
+1377
+01:20:26,420 --> 01:20:28,580
+And notice that filtering is probably one
+
+1378
+01:20:28,580 --> 01:20:31,000
+of the most important things.
+
+1379
+01:20:31,000 --> 01:20:33,940
+How do you go from 200 trillion tokens
+
+1380
+01:20:33,940 --> 01:20:38,080
+to less than three trillion tokens?
+
+1381
+01:20:38,080 --> 01:20:42,340
+I think that obviously is a huge reduction, which I think
+
+1382
+01:20:42,340 --> 01:20:45,420
+merits a lot of attention.
+
+1383
+01:20:45,420 --> 01:20:48,500
+Data is, in some sense, a key ingredient that
+
+1384
+01:20:48,500 --> 01:20:50,280
+differentiates language models.
+
+1385
+01:20:50,280 --> 01:20:53,700
+A lot of language models are roughly the same kind
+
+1386
+01:20:53,700 --> 01:20:58,420
+of transformer architecture, but data is depending
+
+1387
+01:20:58,420 --> 01:21:00,600
+on how you process it.
+
+1388
+01:21:00,600 --> 01:21:03,470
+It can make a pretty big difference.
+
+1389
+01:21:03,470 --> 01:21:05,310
+There's plenty of legal and ethical issues
+
+1390
+01:21:05,310 --> 01:21:10,070
+around data, more than I can get into this lecture.
+
+1391
+01:21:10,070 --> 01:21:15,270
+And also, this process is very messy.
+
+1392
+01:21:15,270 --> 01:21:19,110
+Unlike some of the other parts of this class where things
+
+1393
+01:21:19,110 --> 01:21:24,310
+are maybe more based on first principles,
+
+1394
+01:21:24,310 --> 01:21:28,110
+data processing is, right now at least, a lot just
+
+1395
+01:21:28,110 --> 01:21:30,150
+based on vibes you set up.
+
+1396
+01:21:30,150 --> 01:21:32,530
+You define this classifier, you define this rule,
+
+1397
+01:21:32,530 --> 01:21:34,390
+you set some threshold.
+
+1398
+01:21:34,390 --> 01:21:36,250
+So there are many opportunities to improve.
+
+1399
+01:21:36,250 --> 01:21:38,510
+So as you do your assignment four,
+
+1400
+01:21:38,510 --> 01:21:41,450
+Maybe think about whether there are better ways to do this,
+
+1401
+01:21:41,450 --> 01:21:45,150
+and this could be maybe a research direction.
+
+1402
+01:21:45,150 --> 01:21:47,090
+OK, so that's it for today.
+
+1403
+01:21:47,090 --> 01:21:49,290
+So next time I'll continue talking about data.
+
+1404
+01:21:49,290 --> 01:21:52,030
+I'll talk a bit about post-training data,
+
+1405
+01:21:52,030 --> 01:21:56,080
+and a bit more about filtering.

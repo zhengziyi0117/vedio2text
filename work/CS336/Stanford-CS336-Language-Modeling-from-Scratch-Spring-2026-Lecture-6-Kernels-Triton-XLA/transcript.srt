@@ -1,0 +1,6107 @@
+1
+00:00:05,240 --> 00:00:07,560
+So welcome back, everyone.
+
+2
+00:00:07,560 --> 00:00:11,200
+So on Monday, Tatsu did an excellent job
+
+3
+00:00:11,200 --> 00:00:14,440
+of describing a high level overview of GPUs
+
+4
+00:00:14,440 --> 00:00:17,640
+and how to think about performance and all the quirks
+
+5
+00:00:17,640 --> 00:00:19,425
+that come with GPUs.
+
+6
+00:00:19,425 --> 00:00:21,800
+This lecture is going to be a continuation of that, where
+
+7
+00:00:21,800 --> 00:00:25,040
+we're going to dive more deeply into the code,
+
+8
+00:00:25,040 --> 00:00:28,480
+write some Triton kernels, and as well as do some benchmarking
+
+9
+00:00:28,480 --> 00:00:30,520
+and profiling.
+
+10
+00:00:30,520 --> 00:00:33,880
+So just to start, just to refresh
+
+11
+00:00:33,880 --> 00:00:36,960
+what's going on with GPUs, here is
+
+12
+00:00:36,960 --> 00:00:44,520
+a simplified diagram of what a typical GPU looks like.
+
+13
+00:00:44,520 --> 00:00:49,960
+There's memory, and then the actual GPU chip.
+
+14
+00:00:49,960 --> 00:00:53,400
+And just to keep in your head what are
+
+15
+00:00:53,400 --> 00:00:56,200
+the characteristics of a GPU.
+
+16
+00:00:56,200 --> 00:00:58,820
+So of course, we're talking about NVIDIA GPUs,
+
+17
+00:00:58,820 --> 00:01:03,090
+but Tatsu also talked about CPUs, and there's AMD and so on.
+
+18
+00:01:03,090 --> 00:01:05,510
+But focusing on NVIDIA GPUs.
+
+19
+00:01:05,510 --> 00:01:11,570
+We've had multiple generations, from A100s, to H100s, to B200s.
+
+20
+00:01:11,570 --> 00:01:16,390
+And in each generation, you have a GPU.
+
+21
+00:01:16,390 --> 00:01:21,170
+It has a number of Streaming Multiprocessors, or SMs.
+
+22
+00:01:21,170 --> 00:01:27,070
+And the number of SMs is about 100, between 100 and 200.
+
+23
+00:01:27,070 --> 00:01:30,250
+So that hasn't really changed that much.
+
+24
+00:01:30,250 --> 00:01:38,170
+And then within the individual SM, there's a set of registers.
+
+25
+00:01:38,170 --> 00:01:49,170
+So B200s have 65,000 registers for a total of 256K per SM.
+
+26
+00:01:49,170 --> 00:01:52,330
+And this also hasn't changed that much.
+
+27
+00:01:52,330 --> 00:01:57,150
+In addition, there's a L1 cache as well as shared memory.
+
+28
+00:01:57,150 --> 00:01:58,810
+So remember, these are the same memory,
+
+29
+00:01:58,810 --> 00:02:00,060
+shared memory you can control.
+
+30
+00:02:00,060 --> 00:02:01,910
+L1, you can't.
+
+31
+00:02:01,910 --> 00:02:04,110
+This is per SM.
+
+32
+00:02:04,110 --> 00:02:08,710
+And this is in the same order ballpark of size.
+
+33
+00:02:08,710 --> 00:02:12,110
+And then there's L2 cache.
+
+34
+00:02:12,110 --> 00:02:16,030
+And this is not per SM, this is for the whole chip.
+
+35
+00:02:16,030 --> 00:02:17,870
+And this is a bit larger.
+
+36
+00:02:17,870 --> 00:02:21,870
+And then finally, you have a High Bandwidth Memory, or HBM,
+
+37
+00:02:21,870 --> 00:02:22,800
+which is large.
+
+38
+00:02:22,800 --> 00:02:24,550
+And you see that this is the number that's
+
+39
+00:02:24,550 --> 00:02:27,670
+actually going up quite a bit.
+
+40
+00:02:27,670 --> 00:02:28,990
+OK.
+
+41
+00:02:28,990 --> 00:02:32,270
+And then in addition to size, you
+
+42
+00:02:32,270 --> 00:02:35,830
+can think about what's happening with the bandwidth.
+
+43
+00:02:35,830 --> 00:02:40,450
+And essentially, it's inversely correlated.
+
+44
+00:02:40,450 --> 00:02:45,870
+So registers are very fast, L1 is slightly less fast,
+
+45
+00:02:45,870 --> 00:02:50,850
+L2 is less fast, and High Bandwidth Memory is the slowest.
+
+46
+00:02:50,850 --> 00:02:53,070
+Although eight terabytes a second
+
+47
+00:02:53,070 --> 00:02:59,960
+is still not that slow in the grand scheme of things.
+
+48
+00:02:59,960 --> 00:03:03,880
+So this is the main hierarchy you should have in your head.
+
+49
+00:03:03,880 --> 00:03:06,560
+Large memory is slow and far but big.
+
+50
+00:03:06,560 --> 00:03:11,820
+And fast memory like registers and L1 resides on the SM.
+
+51
+00:03:11,820 --> 00:03:14,520
+It's local and it's fast, but small.
+
+52
+00:03:14,520 --> 00:03:18,600
+OK, that's the environment we're dealing with.
+
+53
+00:03:18,600 --> 00:03:20,940
+OK, so then, how do you program a GPU?
+
+54
+00:03:20,940 --> 00:03:24,040
+So the program model is as follows.
+
+55
+00:03:24,040 --> 00:03:26,680
+So there's notions of threads, which
+
+56
+00:03:26,680 --> 00:03:28,760
+each thread executes a piece of code
+
+57
+00:03:28,760 --> 00:03:30,780
+on a small part of the data.
+
+58
+00:03:30,780 --> 00:03:34,760
+So each one of these arrows, you can think about it as a thread.
+
+59
+00:03:34,760 --> 00:03:37,720
+These threads are organized into thread blocks,
+
+60
+00:03:37,720 --> 00:03:40,680
+also known as Concurrent Thread Arrays, or CTAs.
+
+61
+00:03:40,680 --> 00:03:42,300
+And this is a group of threads.
+
+62
+00:03:42,300 --> 00:03:45,160
+And then finally, you have a collection of thread blocks
+
+63
+00:03:45,160 --> 00:03:46,760
+which forms the grid.
+
+64
+00:03:46,760 --> 00:03:49,680
+So when you launch a kernel, you're basically
+
+65
+00:03:49,680 --> 00:03:55,090
+launching a grid of threads and thread blocks to all parallel
+
+66
+00:03:55,090 --> 00:03:59,690
+simultaneously do some computation.
+
+67
+00:03:59,690 --> 00:04:02,350
+OK, so this is simplified.
+
+68
+00:04:02,350 --> 00:04:04,590
+There's some other things that are happening.
+
+69
+00:04:04,590 --> 00:04:07,530
+For example, there's H100s and B200s also
+
+70
+00:04:07,530 --> 00:04:10,090
+have thread block clusters, which
+
+71
+00:04:10,090 --> 00:04:12,650
+are clusters of thread blocks that
+
+72
+00:04:12,650 --> 00:04:16,370
+enable some amount of distribution memory.
+
+73
+00:04:16,370 --> 00:04:18,550
+Also, B200s have tensor memory.
+
+74
+00:04:18,550 --> 00:04:21,329
+Now for tensor cores, which is somewhere between registers
+
+75
+00:04:21,329 --> 00:04:22,650
+and shared memory.
+
+76
+00:04:22,650 --> 00:04:25,030
+Some of these things are invisible to the programmer,
+
+77
+00:04:25,030 --> 00:04:29,370
+but they are in the hardware.
+
+78
+00:04:29,370 --> 00:04:34,490
+But we won't worry about them for this intro lecture.
+
+79
+00:04:34,490 --> 00:04:36,490
+OK, so one thing you might ask about
+
+80
+00:04:36,490 --> 00:04:38,450
+is, why do we have thread blocks?
+
+81
+00:04:38,450 --> 00:04:40,810
+Why can't we just have a grid of threads,
+
+82
+00:04:40,810 --> 00:04:43,450
+and each thread just takes a piece of data
+
+83
+00:04:43,450 --> 00:04:45,330
+and does something?
+
+84
+00:04:45,330 --> 00:04:48,010
+And this would be normally fine if all you want to do
+
+85
+00:04:48,010 --> 00:04:50,110
+is element-wise operations, which we'll see.
+
+86
+00:04:50,110 --> 00:04:52,770
+For example, GeLU is an activation function
+
+87
+00:04:52,770 --> 00:04:54,460
+that applies element-wise.
+
+88
+00:04:54,460 --> 00:04:55,760
+And threads are pretty natural.
+
+89
+00:04:55,760 --> 00:04:58,220
+Each thread processes one element.
+
+90
+00:04:58,220 --> 00:05:05,260
+So it's like for i equals ranging over your data set.
+
+91
+00:05:05,260 --> 00:05:13,580
+But for operations that involve communicating with threads,
+
+92
+00:05:13,580 --> 00:05:16,740
+such as softmax or matrix multiplication,
+
+93
+00:05:16,740 --> 00:05:19,700
+this view isn't really enough.
+
+94
+00:05:19,700 --> 00:05:23,260
+And the reason is that, well, it could be enough
+
+95
+00:05:23,260 --> 00:05:29,300
+if you were willing to pay the cost of writing and reading HBM.
+
+96
+00:05:29,300 --> 00:05:32,400
+Because then you can still have-- for example, in a matrix
+
+97
+00:05:32,400 --> 00:05:35,440
+we'll see later, you can just have every element in a cell.
+
+98
+00:05:35,440 --> 00:05:38,260
+It goes and computes that element of the matrix.
+
+99
+00:05:38,260 --> 00:05:40,940
+And it can just read and write HBM.
+
+100
+00:05:40,940 --> 00:05:45,040
+But as we've noticed, HBM is very slow,
+
+101
+00:05:45,040 --> 00:05:48,620
+so this would not be a good strategy.
+
+102
+00:05:48,620 --> 00:05:53,200
+So instead, what we should do is use shared memory,
+
+103
+00:05:53,200 --> 00:05:56,560
+which is local to SM.
+
+104
+00:05:56,560 --> 00:05:59,620
+And what the thread block allows you to think about
+
+105
+00:05:59,620 --> 00:06:02,120
+is a collection of threads that are all going
+
+106
+00:06:02,120 --> 00:06:05,080
+to access this shared memory.
+
+107
+00:06:05,080 --> 00:06:10,560
+So consequently, you can think about a thread block,
+
+108
+00:06:10,560 --> 00:06:14,880
+one of these thread blocks is being scheduled
+
+109
+00:06:14,880 --> 00:06:17,920
+on one of these semantic--
+
+110
+00:06:17,920 --> 00:06:20,400
+not semantic, streaming multiprocessors.
+
+111
+00:06:20,400 --> 00:06:22,120
+And it does its thing.
+
+112
+00:06:22,120 --> 00:06:23,560
+And what it's going to do is it's
+
+113
+00:06:23,560 --> 00:06:25,920
+going to read a bunch of data from HBM
+
+114
+00:06:25,920 --> 00:06:30,120
+and then process it where the processing might involve
+
+115
+00:06:30,120 --> 00:06:34,860
+communication between the threads via the shared memory,
+
+116
+00:06:34,860 --> 00:06:37,200
+and then writes it back out.
+
+117
+00:06:37,200 --> 00:06:38,400
+OK.
+
+118
+00:06:38,400 --> 00:06:40,920
+So this is a critical piece that comes up.
+
+119
+00:06:40,920 --> 00:06:45,180
+Later, we'll talk about tiling, and that's the whole game here.
+
+120
+00:06:45,180 --> 00:06:49,890
+OK, in Triton, in fact, which we'll see as a primary way
+
+121
+00:06:49,890 --> 00:06:52,110
+that we're going to write kernels these days,
+
+122
+00:06:52,110 --> 00:06:55,050
+we're going to think natively in thread blocks.
+
+123
+00:06:55,050 --> 00:06:58,810
+And I think once you get the hang of thinking
+
+124
+00:06:58,810 --> 00:07:01,090
+of thread blocks, this makes a lot of sense
+
+125
+00:07:01,090 --> 00:07:04,662
+and makes your life a lot easier, as we'll see.
+
+126
+00:07:04,662 --> 00:07:10,530
+OK, so the programming model is fairly simple, I think.
+
+127
+00:07:10,530 --> 00:07:12,590
+There's threads, thread blocks, and grids.
+
+128
+00:07:16,010 --> 00:07:18,970
+I think things get a bit more complicated,
+
+129
+00:07:18,970 --> 00:07:20,810
+is the interaction between the programming
+
+130
+00:07:20,810 --> 00:07:23,210
+model and the hardware.
+
+131
+00:07:23,210 --> 00:07:25,670
+So the programming model is actually very nice.
+
+132
+00:07:25,670 --> 00:07:28,190
+It provides abstraction of the hardware.
+
+133
+00:07:28,190 --> 00:07:32,530
+When you can write a kernel, all you have to know
+
+134
+00:07:32,530 --> 00:07:34,510
+is that there's a bunch of thread blocks.
+
+135
+00:07:34,510 --> 00:07:36,490
+You define them and then define what
+
+136
+00:07:36,490 --> 00:07:42,730
+computations each thread within the block or the thread block
+
+137
+00:07:42,730 --> 00:07:43,690
+has to do.
+
+138
+00:07:43,690 --> 00:07:47,690
+And those are just writing-- it's like writing Python.
+
+139
+00:07:47,690 --> 00:07:49,660
+So that part isn't hard.
+
+140
+00:07:49,660 --> 00:07:51,822
+And in fact, if you don't care about--
+
+141
+00:07:51,822 --> 00:07:53,280
+if you just care about correctness,
+
+142
+00:07:53,280 --> 00:07:55,660
+that's all you need to know.
+
+143
+00:07:55,660 --> 00:07:57,900
+But in practice, the performance is
+
+144
+00:07:57,900 --> 00:08:00,180
+very sensitive to the hardware.
+
+145
+00:08:00,180 --> 00:08:03,340
+And so you need to really deeply understand the hardware
+
+146
+00:08:03,340 --> 00:08:04,722
+to obtain high performance.
+
+147
+00:08:04,722 --> 00:08:06,180
+And in fact, the whole reason we're
+
+148
+00:08:06,180 --> 00:08:08,860
+talking about GPUs and kernels is
+
+149
+00:08:08,860 --> 00:08:11,500
+that you're trying to squeeze out performance.
+
+150
+00:08:11,500 --> 00:08:13,740
+So there's these two levels here where
+
+151
+00:08:13,740 --> 00:08:16,520
+you're trying to understand the computation,
+
+152
+00:08:16,520 --> 00:08:20,520
+and that is only a part of the programming model.
+
+153
+00:08:20,520 --> 00:08:23,540
+But how fast it runs is going to be strongly
+
+154
+00:08:23,540 --> 00:08:26,140
+dependent on the hardware.
+
+155
+00:08:26,140 --> 00:08:29,980
+OK, so I'm going to give you some examples of why this
+
+156
+00:08:29,980 --> 00:08:31,900
+matters, and some of this will be review
+
+157
+00:08:31,900 --> 00:08:34,440
+from what Tatsu talked about.
+
+158
+00:08:34,440 --> 00:08:37,460
+But hopefully it will reinforce some of these concepts.
+
+159
+00:08:37,460 --> 00:08:40,659
+So I think there will be around five different examples.
+
+160
+00:08:40,659 --> 00:08:47,280
+And this is just to give you a flavor of the considerations.
+
+161
+00:08:47,280 --> 00:08:51,560
+So there's something called warps, which I didn't talk about.
+
+162
+00:08:51,560 --> 00:08:54,360
+So in the very simplified view, warps
+
+163
+00:08:54,360 --> 00:08:56,960
+are not really part of this clean picture of the programming
+
+164
+00:08:56,960 --> 00:08:57,460
+model.
+
+165
+00:08:57,460 --> 00:09:01,680
+You have threads and thread blocks or grids.
+
+166
+00:09:01,680 --> 00:09:04,760
+Technically, you can also access the warps,
+
+167
+00:09:04,760 --> 00:09:08,440
+but you don't have to when you're just programming.
+
+168
+00:09:08,440 --> 00:09:09,840
+So what is a warp?
+
+169
+00:09:09,840 --> 00:09:14,100
+So each thread block, remember, is a collection of threads.
+
+170
+00:09:14,100 --> 00:09:17,000
+But these threads are actually grouped into warps.
+
+171
+00:09:17,000 --> 00:09:22,160
+And there's basically 32 threads per warp.
+
+172
+00:09:22,160 --> 00:09:25,180
+So for example, if you have 64 threads in a thread block,
+
+173
+00:09:25,180 --> 00:09:29,840
+there's two warps, the first 32 and the second 32.
+
+174
+00:09:29,840 --> 00:09:31,980
+And as Tatsu mentioned last time,
+
+175
+00:09:31,980 --> 00:09:35,360
+all threads within a warp, all of these T's, must
+
+176
+00:09:35,360 --> 00:09:39,780
+execute the same instruction in lockstep on SM.
+
+177
+00:09:39,780 --> 00:09:42,760
+So every cycle, they have to execute
+
+178
+00:09:42,760 --> 00:09:44,560
+exactly the same instruction.
+
+179
+00:09:44,560 --> 00:09:49,750
+And control divergence is when different threads within a warp
+
+180
+00:09:49,750 --> 00:09:51,750
+need to actually execute different instructions.
+
+181
+00:09:51,750 --> 00:09:55,750
+For example, if you have branching, if something,
+
+182
+00:09:55,750 --> 00:09:57,730
+then A else B.
+
+183
+00:09:57,730 --> 00:10:00,370
+And then what happens is that you can only
+
+184
+00:10:00,370 --> 00:10:04,150
+do the A's in your threads in your warp,
+
+185
+00:10:04,150 --> 00:10:07,450
+and then you do the B. So this gets sequential.
+
+186
+00:10:07,450 --> 00:10:09,810
+So this is bad and inefficient, and that's
+
+187
+00:10:09,810 --> 00:10:14,970
+why branching is something you want to generally avoid.
+
+188
+00:10:14,970 --> 00:10:18,290
+One thing that's, I think, really cool about warps
+
+189
+00:10:18,290 --> 00:10:23,028
+is that an SM actually is running multiple warps.
+
+190
+00:10:23,028 --> 00:10:24,570
+There's a warp scheduler, and there's
+
+191
+00:10:24,570 --> 00:10:29,270
+a bunch of resident warps that are about to run.
+
+192
+00:10:29,270 --> 00:10:33,650
+Each warp has some--threads have registers.
+
+193
+00:10:33,650 --> 00:10:40,610
+And the SM can switch between them with zero cost.
+
+194
+00:10:40,610 --> 00:10:43,880
+Right, this is not true in general, like on a CPU.
+
+195
+00:10:43,880 --> 00:10:48,660
+But this way that it's designed is to hide latency.
+
+196
+00:10:48,660 --> 00:10:51,420
+So this is important, because one
+
+197
+00:10:51,420 --> 00:10:54,440
+of the warps is, for example, reading from HBM,
+
+198
+00:10:54,440 --> 00:10:57,080
+which remember is very expensive,
+
+199
+00:10:57,080 --> 00:10:59,880
+can take 100 cycles or something.
+
+200
+00:10:59,880 --> 00:11:02,380
+You don't want to just sit around waiting for that warp
+
+201
+00:11:02,380 --> 00:11:03,440
+to do nothing.
+
+202
+00:11:03,440 --> 00:11:05,100
+You switch immediately to another warp
+
+203
+00:11:05,100 --> 00:11:09,740
+where it can actually do some tensor core operations.
+
+204
+00:11:09,740 --> 00:11:13,700
+OK, so that's one thing to note about the warp.
+
+205
+00:11:13,700 --> 00:11:17,100
+And another reason why warp comes up
+
+206
+00:11:17,100 --> 00:11:20,020
+is this idea of occupancy.
+
+207
+00:11:20,020 --> 00:11:22,620
+More specifically, warp occupancy.
+
+208
+00:11:22,620 --> 00:11:26,580
+So each thread, just the hardware constraint
+
+209
+00:11:26,580 --> 00:11:31,160
+says that each thread can use at most 255 registers.
+
+210
+00:11:31,160 --> 00:11:35,220
+OK, and so what happens is that the SM has
+
+211
+00:11:35,220 --> 00:11:36,520
+a fixed number of registers.
+
+212
+00:11:36,520 --> 00:11:39,200
+So the more registers each thread is using,
+
+213
+00:11:39,200 --> 00:11:40,520
+the fewer threads you can have.
+
+214
+00:11:40,520 --> 00:11:44,070
+That's just math.
+
+215
+00:11:44,070 --> 00:11:50,710
+And that can reduce your occupancy.
+
+216
+00:11:50,710 --> 00:11:52,790
+But that's not necessarily bad, because if you
+
+217
+00:11:52,790 --> 00:11:54,790
+have fewer threads.
+
+218
+00:11:54,790 --> 00:11:57,930
+But each thread is doing more work, that can actually be good.
+
+219
+00:11:57,930 --> 00:12:01,250
+So occupancy is something that you can measure,
+
+220
+00:12:01,250 --> 00:12:04,750
+but it's not necessarily the larger, the better.
+
+221
+00:12:04,750 --> 00:12:07,310
+Because there are some other tradeoffs here.
+
+222
+00:12:07,310 --> 00:12:10,350
+And in fact, an example where you
+
+223
+00:12:10,350 --> 00:12:15,270
+might want to have fewer threads is this idea
+
+224
+00:12:15,270 --> 00:12:17,310
+of thread coarsening, where let's say
+
+225
+00:12:17,310 --> 00:12:20,630
+you have an element-wise operation
+
+226
+00:12:20,630 --> 00:12:27,630
+and you can have one thread just perform work on one element.
+
+227
+00:12:27,630 --> 00:12:29,490
+OK, so then you have a lot of threads.
+
+228
+00:12:29,490 --> 00:12:33,190
+But you can also say each thread processes multiple elements.
+
+229
+00:12:33,190 --> 00:12:35,550
+Like a constant, maybe eight.
+
+230
+00:12:35,550 --> 00:12:37,830
+So that gives you fewer threads, which
+
+231
+00:12:37,830 --> 00:12:40,050
+makes scheduling and these things easier,
+
+232
+00:12:40,050 --> 00:12:42,493
+but each thread is doing more work.
+
+233
+00:12:42,493 --> 00:12:43,910
+So if your threads are very light,
+
+234
+00:12:43,910 --> 00:12:47,330
+maybe you want to fatten them up a little bit.
+
+235
+00:12:47,330 --> 00:12:49,290
+OK.
+
+236
+00:12:49,290 --> 00:12:53,590
+So just as an example of what might happen here.
+
+237
+00:12:53,590 --> 00:12:56,890
+So suppose you have a block, a thread block
+
+238
+00:12:56,890 --> 00:12:59,450
+with 128 threads in it.
+
+239
+00:12:59,450 --> 00:13:03,450
+And each thread is using 160 registers.
+
+240
+00:13:03,450 --> 00:13:04,250
+OK.
+
+241
+00:13:04,250 --> 00:13:06,270
+So there's a hardware constraint.
+
+242
+00:13:06,270 --> 00:13:13,450
+So the B200s have a maximum of registers of 65,000 per SM.
+
+243
+00:13:13,450 --> 00:13:14,970
+And it also has a constraint that
+
+244
+00:13:14,970 --> 00:13:20,250
+says you can't run more than 64 warps at a time.
+
+245
+00:13:20,250 --> 00:13:22,490
+So then you can go and do some simple math
+
+246
+00:13:22,490 --> 00:13:27,450
+to compute what is the occupancy here.
+
+247
+00:13:27,450 --> 00:13:29,830
+So number of registers per thread.
+
+248
+00:13:29,830 --> 00:13:31,510
+This has to be less than 255.
+
+249
+00:13:31,510 --> 00:13:33,530
+That's fine.
+
+250
+00:13:33,530 --> 00:13:35,953
+The number of registers that you're using per block
+
+251
+00:13:35,953 --> 00:13:37,370
+is the number of threads per block
+
+252
+00:13:37,370 --> 00:13:39,200
+times the number of registers per thread.
+
+253
+00:13:39,200 --> 00:13:40,980
+That's about 20,000.
+
+254
+00:13:40,980 --> 00:13:44,820
+That means you can run at most three blocks on your SM
+
+255
+00:13:44,820 --> 00:13:46,380
+concurrently.
+
+256
+00:13:46,380 --> 00:13:51,220
+And then that corresponds to 12 warps.
+
+257
+00:13:51,220 --> 00:13:55,140
+And because the number of maximum warps is 64,
+
+258
+00:13:55,140 --> 00:13:58,780
+that means you have an occupancy of 18%.
+
+259
+00:13:58,780 --> 00:14:04,680
+So we're only running 18% of the total number of warps you have.
+
+260
+00:14:04,680 --> 00:14:08,280
+And this is because you have a lot of register use per thread.
+
+261
+00:14:08,280 --> 00:14:14,580
+OK, so this is an example of where I guess this is memory
+
+262
+00:14:14,580 --> 00:14:21,420
+constraining you in terms of how much compute you can do.
+
+263
+00:14:21,420 --> 00:14:24,460
+OK, here's another example.
+
+264
+00:14:24,460 --> 00:14:26,200
+Something called bank conflicts.
+
+265
+00:14:26,200 --> 00:14:28,500
+This applies to shared memory.
+
+266
+00:14:28,500 --> 00:14:31,960
+So remember, shared memory is like L1.
+
+267
+00:14:31,960 --> 00:14:33,820
+It's on an SM.
+
+268
+00:14:33,820 --> 00:14:35,940
+And just the way the hardware works
+
+269
+00:14:35,940 --> 00:14:40,550
+is that shared memory is divided into 32 banks, each one four
+
+270
+00:14:40,550 --> 00:14:41,590
+bytes wide.
+
+271
+00:14:41,590 --> 00:14:48,030
+OK, so these are my 32 banks, and this is my memory here.
+
+272
+00:14:48,030 --> 00:14:53,670
+Each bank has many elements here.
+
+273
+00:14:53,670 --> 00:14:58,710
+So there's a constraint that says every clock cycle,
+
+274
+00:14:58,710 --> 00:15:02,990
+each bank can only be accessed by one thread, at most
+
+275
+00:15:02,990 --> 00:15:04,790
+one thread.
+
+276
+00:15:04,790 --> 00:15:06,450
+Assuming that's not a location.
+
+277
+00:15:06,450 --> 00:15:08,990
+So for example, if you can't access
+
+278
+00:15:08,990 --> 00:15:14,390
+this location and this location at the same time.
+
+279
+00:15:14,390 --> 00:15:17,470
+Which means that if you have multiple threads that
+
+280
+00:15:17,470 --> 00:15:20,030
+are trying to access the same bank,
+
+281
+00:15:20,030 --> 00:15:23,430
+the accesses have to be serialized.
+
+282
+00:15:23,430 --> 00:15:25,770
+And this is called a bank conflict.
+
+283
+00:15:25,770 --> 00:15:27,270
+In the worst case example, imagine
+
+284
+00:15:27,270 --> 00:15:30,910
+this were a matrix that was laid out like this.
+
+285
+00:15:30,910 --> 00:15:34,810
+And you had some operation where 32 threads, you think, wow,
+
+286
+00:15:34,810 --> 00:15:36,340
+this 32 is so great.
+
+287
+00:15:36,340 --> 00:15:38,040
+I can massively parallelize this,
+
+288
+00:15:38,040 --> 00:15:40,540
+and you try to all access this first column.
+
+289
+00:15:40,540 --> 00:15:42,880
+They're just going to just wait in line.
+
+290
+00:15:42,880 --> 00:15:45,600
+And this is a 32-way bank conflict,
+
+291
+00:15:45,600 --> 00:15:50,200
+which is the worst possible setting you can be in.
+
+292
+00:15:50,200 --> 00:15:52,460
+Now you could say, well, OK, why did you do that?
+
+293
+00:15:52,460 --> 00:15:54,340
+Just like access rows, of course.
+
+294
+00:15:54,340 --> 00:15:56,740
+But this is unavoidable, because, for example,
+
+295
+00:15:56,740 --> 00:15:58,880
+if you're doing a matmul, you have
+
+296
+00:15:58,880 --> 00:16:02,500
+to access rows of one matrix and columns of another matrix.
+
+297
+00:16:02,500 --> 00:16:05,200
+And sometimes you do transposes, so you can't always
+
+298
+00:16:05,200 --> 00:16:12,480
+just get away with choosing the order in which you go down.
+
+299
+00:16:12,480 --> 00:16:14,260
+For element-wise operations, it's fine.
+
+300
+00:16:14,260 --> 00:16:15,900
+You can go in any order.
+
+301
+00:16:15,900 --> 00:16:17,920
+But if you're doing matmuls, you can't
+
+302
+00:16:17,920 --> 00:16:22,760
+control for every matrix which row major or column
+
+303
+00:16:22,760 --> 00:16:24,350
+major you're doing.
+
+304
+00:16:24,350 --> 00:16:26,600
+There are some solutions here, which I won't get into.
+
+305
+00:16:26,600 --> 00:16:29,800
+Something called swizzling, which arranges your shared
+
+306
+00:16:29,800 --> 00:16:33,440
+memory so that when you're going through,
+
+307
+00:16:33,440 --> 00:16:37,120
+you can avoid bank conflicts.
+
+308
+00:16:37,120 --> 00:16:40,260
+OK, so that's another consideration.
+
+309
+00:16:40,260 --> 00:16:43,760
+And when you're profiling, you can look at the bank conflicts,
+
+310
+00:16:43,760 --> 00:16:45,240
+you can look at occupancy.
+
+311
+00:16:45,240 --> 00:16:49,980
+And you can see what's happening.
+
+312
+00:16:49,980 --> 00:16:53,340
+A final note which--actually, two more things.
+
+313
+00:16:53,340 --> 00:16:55,440
+So memory coalescing, which you talked about.
+
+314
+00:16:55,440 --> 00:16:59,540
+So I'll just really quickly remind people what this is about.
+
+315
+00:16:59,540 --> 00:17:05,619
+So when you have 32 threads in a warp and they try to access HBM,
+
+316
+00:17:05,619 --> 00:17:07,819
+the memory accesses actually get combined
+
+317
+00:17:07,819 --> 00:17:14,200
+into a transaction of 128 bytes, which are called cache lines.
+
+318
+00:17:14,200 --> 00:17:17,619
+And it goes and fetches it all at once.
+
+319
+00:17:17,619 --> 00:17:21,420
+So imagine you have memory laid out like this.
+
+320
+00:17:21,420 --> 00:17:23,920
+This is 32.
+
+321
+00:17:27,819 --> 00:17:34,790
+And in the best case, which is called full coalescing,
+
+322
+00:17:34,790 --> 00:17:37,810
+all the threads are accessing the same cache line.
+
+323
+00:17:37,810 --> 00:17:42,770
+So you have thread 1 accessing M00, thread 2 accessing M01,
+
+324
+00:17:42,770 --> 00:17:43,710
+and so on.
+
+325
+00:17:43,710 --> 00:17:46,390
+Which means that all at once, you're
+
+326
+00:17:46,390 --> 00:17:49,230
+going to grab this entire cache line.
+
+327
+00:17:49,230 --> 00:17:53,390
+Right, and whereas if you go down the columns,
+
+328
+00:17:53,390 --> 00:17:59,070
+then you're going to fetch a lot of memory
+
+329
+00:17:59,070 --> 00:18:01,310
+here, which you're not going to use.
+
+330
+00:18:01,310 --> 00:18:04,670
+Same for the second row and so on.
+
+331
+00:18:04,670 --> 00:18:08,468
+And so this feels similar to bank conflicts,
+
+332
+00:18:08,468 --> 00:18:10,010
+but it's a very different constraint.
+
+333
+00:18:10,010 --> 00:18:13,670
+And this is about shared memory, and this is about HBM.
+
+334
+00:18:13,670 --> 00:18:15,470
+OK.
+
+335
+00:18:15,470 --> 00:18:19,270
+OK, so final thing, block occupancy.
+
+336
+00:18:19,270 --> 00:18:23,550
+So thread blocks are, remember, scheduled onto SMs.
+
+337
+00:18:23,550 --> 00:18:26,670
+But we live in a finite--
+
+338
+00:18:26,670 --> 00:18:29,570
+logically, you can define as many thread blocks as you want.
+
+339
+00:18:29,570 --> 00:18:33,100
+But physically on chip, you only have a certain number of SMs.
+
+340
+00:18:33,100 --> 00:18:35,760
+For example, 148.
+
+341
+00:18:35,760 --> 00:18:39,000
+So if you launch 160 thread blocks,
+
+342
+00:18:39,000 --> 00:18:41,800
+then you can only schedule 148 of them.
+
+343
+00:18:41,800 --> 00:18:43,760
+And then you have to wait until they're done,
+
+344
+00:18:43,760 --> 00:18:45,520
+and then you schedule the 12.
+
+345
+00:18:45,520 --> 00:18:47,800
+But what happens if you schedule 12
+
+346
+00:18:47,800 --> 00:18:52,800
+is that there's a bunch of SMs are just not doing anything.
+
+347
+00:18:52,800 --> 00:18:55,640
+So that's called low occupancy.
+
+348
+00:18:55,640 --> 00:18:58,560
+When the last wave of thread blocks
+
+349
+00:18:58,560 --> 00:19:05,500
+gets fewer than the total maximum number of thread blocks.
+
+350
+00:19:05,500 --> 00:19:08,640
+OK, so in general, maybe it's a good idea
+
+351
+00:19:08,640 --> 00:19:13,800
+to make the number of thread blocks divide the SMs.
+
+352
+00:19:13,800 --> 00:19:18,440
+So maybe just to summarize here, there
+
+353
+00:19:18,440 --> 00:19:20,600
+is a very elegant programming model
+
+354
+00:19:20,600 --> 00:19:23,120
+where you have a grid of thread blocks
+
+355
+00:19:23,120 --> 00:19:28,200
+and the thread blocks have individual threads in them.
+
+356
+00:19:28,200 --> 00:19:31,960
+And in terms of the memory, HBM is global to everyone.
+
+357
+00:19:31,960 --> 00:19:35,460
+Shared memory is local to a thread block.
+
+358
+00:19:35,460 --> 00:19:38,460
+And registers are local to a thread.
+
+359
+00:19:38,460 --> 00:19:42,040
+But again, all the details of the hardware-- warps,
+
+360
+00:19:42,040 --> 00:19:44,540
+bank conflicts, memory coalescing, occupancy--
+
+361
+00:19:44,540 --> 00:19:49,540
+really determine performance.
+
+362
+00:19:49,540 --> 00:19:56,600
+And many of these details are hard to know, because, I mean,
+
+363
+00:19:56,600 --> 00:20:00,320
+the profiling tells you a bunch of information.
+
+364
+00:20:00,320 --> 00:20:04,020
+But you have to know exactly how many SMs there
+
+365
+00:20:04,020 --> 00:20:08,520
+are and exactly the sizing of everything.
+
+366
+00:20:08,520 --> 00:20:10,540
+Sometimes the scheduler does something
+
+367
+00:20:10,540 --> 00:20:14,060
+you don't really have control over what it's doing.
+
+368
+00:20:14,060 --> 00:20:19,980
+So it's a little messier than the programming model.
+
+369
+00:20:19,980 --> 00:20:22,920
+OK, I will stop there for questions.
+
+370
+00:20:22,920 --> 00:20:23,483
+Yeah?
+
+371
+00:20:23,483 --> 00:20:24,400
+Yes, a quick question.
+
+372
+00:20:24,400 --> 00:20:27,420
+So Cam, is there a scenario in which you
+
+373
+00:20:27,420 --> 00:20:31,590
+one can share with them or—like, for example,
+
+374
+00:20:31,590 --> 00:20:35,450
+in the problem that we see 140 SM [INAUDIBLE] blocks, right.
+
+375
+00:20:35,450 --> 00:20:39,470
+And we have to launch into two different ways.
+
+376
+00:20:39,470 --> 00:20:44,150
+Is there no way in which a block can share an SM?
+
+377
+00:20:44,150 --> 00:20:48,830
+Yeah, so the question is, can a block share an SM?
+
+378
+00:20:48,830 --> 00:20:55,510
+I think the issue is if you're doing things right, then the—
+
+379
+00:20:55,510 --> 00:20:57,630
+I guess it depends on the block.
+
+380
+00:20:57,630 --> 00:21:00,330
+If you have a block that's, for example,
+
+381
+00:21:00,330 --> 00:21:03,310
+using most of the tensor cores on the SM,
+
+382
+00:21:03,310 --> 00:21:06,550
+then putting another block there isn't really
+
+383
+00:21:06,550 --> 00:21:09,950
+going to speed things up.
+
+384
+00:21:09,950 --> 00:21:13,550
+I think fundamentally, there is this jagged problem
+
+385
+00:21:13,550 --> 00:21:16,470
+here of unevenness.
+
+386
+00:21:16,470 --> 00:21:18,830
+Because the blocks have to stay together.
+
+387
+00:21:18,830 --> 00:21:21,690
+So you can't take this and spread it out over here.
+
+388
+00:21:25,150 --> 00:21:28,700
+The thing you would do is to change your block size.
+
+389
+00:21:28,700 --> 00:21:30,440
+So you change the number of blocks
+
+390
+00:21:30,440 --> 00:21:33,180
+so you don't get this tail here.
+
+391
+00:21:36,040 --> 00:21:37,140
+Any other questions?
+
+392
+00:21:44,584 --> 00:21:49,480
+OK, so let's move on.
+
+393
+00:21:49,480 --> 00:21:55,680
+Hopefully you guys are getting more comfortable with GPUs now.
+
+394
+00:21:55,680 --> 00:21:59,880
+So now I'm going to talk about benchmarking and profiling.
+
+395
+00:21:59,880 --> 00:22:02,400
+I'm not going to actually maybe say
+
+396
+00:22:02,400 --> 00:22:04,920
+that much in terms of content.
+
+397
+00:22:04,920 --> 00:22:09,200
+But I do want to emphasize the philosophy here, which is,
+
+398
+00:22:09,200 --> 00:22:12,400
+here's a recipe for success.
+
+399
+00:22:12,400 --> 00:22:14,460
+You benchmark and profile your code.
+
+400
+00:22:14,460 --> 00:22:16,980
+You make changes, and you benchmark and profile,
+
+401
+00:22:16,980 --> 00:22:19,200
+your code again.
+
+402
+00:22:19,200 --> 00:22:22,020
+And the reason I'm doing benchmarking and profiling
+
+403
+00:22:22,020 --> 00:22:24,490
+as opposed to teaching you try and earlier
+
+404
+00:22:24,490 --> 00:22:27,370
+is because you should always just measure
+
+405
+00:22:27,370 --> 00:22:31,170
+what's going on in your code and figure out
+
+406
+00:22:31,170 --> 00:22:36,370
+what the bottlenecks are before you start writing kernels.
+
+407
+00:22:36,370 --> 00:22:43,250
+OK, so benchmarking is basically how long things take.
+
+408
+00:22:43,250 --> 00:22:46,370
+And it gives you just this end-to-end time.
+
+409
+00:22:46,370 --> 00:22:49,490
+It doesn't tell you where things are spent.
+
+410
+00:22:49,490 --> 00:22:52,770
+But nonetheless, it's pretty useful, because ultimately,
+
+411
+00:22:52,770 --> 00:22:56,850
+that's the thing that you care about, how long things
+
+412
+00:22:56,850 --> 00:22:58,650
+are running for.
+
+413
+00:22:58,650 --> 00:23:01,005
+And it also gives you, because it distills things
+
+414
+00:23:01,005 --> 00:23:03,630
+into one number, you can see how things are scaling, let's say,
+
+415
+00:23:03,630 --> 00:23:05,610
+with dimension.
+
+416
+00:23:05,610 --> 00:23:09,370
+So there's a nice tool for benchmarking.
+
+417
+00:23:09,370 --> 00:23:12,390
+But because this class is language models from scratch,
+
+418
+00:23:12,390 --> 00:23:14,890
+I'm going to do it from scratch.
+
+419
+00:23:14,890 --> 00:23:19,850
+But I think I'm doing it just to highlight a few gotchas
+
+420
+00:23:19,850 --> 00:23:21,470
+with benchmarking.
+
+421
+00:23:21,470 --> 00:23:28,630
+So let's say we have this operation, matrix multiplication.
+
+422
+00:23:28,630 --> 00:23:32,630
+So run operation 2 is this wrapper that basically
+
+423
+00:23:32,630 --> 00:23:36,070
+instantiates two random square matrices of size dimension
+
+424
+00:23:36,070 --> 00:23:37,270
+by dimension.
+
+425
+00:23:37,270 --> 00:23:39,990
+And then it returns a function to perform the operation.
+
+426
+00:23:39,990 --> 00:23:43,550
+OK, so matmul, if you call this, basically
+
+427
+00:23:43,550 --> 00:23:47,350
+does the matmul of those two random matrices.
+
+428
+00:23:47,350 --> 00:23:49,970
+OK, the random matrices are generated,
+
+429
+00:23:49,970 --> 00:23:53,150
+it's just like multiplying the two.
+
+430
+00:23:53,150 --> 00:23:55,990
+OK, so how do you benchmark?
+
+431
+00:23:55,990 --> 00:24:00,150
+So the naive thing to do is just start time, run it,
+
+432
+00:24:00,150 --> 00:24:01,910
+and then stop time.
+
+433
+00:24:01,910 --> 00:24:04,050
+But there's a few things.
+
+434
+00:24:04,050 --> 00:24:07,090
+One is that always remember to do your warm-up.
+
+435
+00:24:07,090 --> 00:24:11,450
+I think I mentioned this on the second lecture,
+
+436
+00:24:11,450 --> 00:24:15,350
+but I think it's worth emphasizing.
+
+437
+00:24:15,350 --> 00:24:19,350
+And this is because if you have some things are lazily compiled
+
+438
+00:24:19,350 --> 00:24:24,880
+and you want to just make sure that that thing is--
+
+439
+00:24:24,880 --> 00:24:27,023
+that time doesn't factor into.
+
+440
+00:24:27,023 --> 00:24:28,440
+Because most of the time, you care
+
+441
+00:24:28,440 --> 00:24:30,520
+about how fast something is, because you're
+
+442
+00:24:30,520 --> 00:24:32,020
+going to run it over and over again,
+
+443
+00:24:32,020 --> 00:24:35,360
+so the initial conditions don't really matter.
+
+444
+00:24:35,360 --> 00:24:38,400
+And then you often want to time it multiple times
+
+445
+00:24:38,400 --> 00:24:41,440
+because there is some variance.
+
+446
+00:24:41,440 --> 00:24:47,640
+The proper way to time things is to use these CUDA events that--
+
+447
+00:24:47,640 --> 00:24:52,520
+a start event and an end event, which you can call record on.
+
+448
+00:24:52,520 --> 00:24:57,760
+Actually do the computation and then hit the end event record.
+
+449
+00:24:57,760 --> 00:25:01,200
+And then remember to synchronize to wait for the CUDA threads
+
+450
+00:25:01,200 --> 00:25:04,080
+to finish, because everything on the GPU
+
+451
+00:25:04,080 --> 00:25:05,780
+is happening if you have an async.
+
+452
+00:25:05,780 --> 00:25:09,040
+And this is a synchronization barrier.
+
+453
+00:25:09,040 --> 00:25:12,360
+And then you record the time.
+
+454
+00:25:12,360 --> 00:25:17,800
+OK, and then you can do this again, and then again.
+
+455
+00:25:17,800 --> 00:25:21,590
+And then here, we're just taking the average.
+
+456
+00:25:24,250 --> 00:25:26,290
+If you are being very particular,
+
+457
+00:25:26,290 --> 00:25:30,450
+you probably want to maybe look at the whole distribution,
+
+458
+00:25:30,450 --> 00:25:32,430
+the P95 or whatever.
+
+459
+00:25:32,430 --> 00:25:35,690
+But we'll just do the average here.
+
+460
+00:25:35,690 --> 00:25:38,450
+And then one thing that you can do with benchmarking is you can,
+
+461
+00:25:38,450 --> 00:25:42,170
+let's say, scale up your matrices
+
+462
+00:25:42,170 --> 00:25:45,410
+and see how the time changes.
+
+463
+00:25:45,410 --> 00:25:51,730
+And you can see that in this case, matrix multiplication, as
+
+464
+00:25:51,730 --> 00:25:55,090
+expected, it should grow cubically.
+
+465
+00:25:55,090 --> 00:25:58,770
+But notice that there is this flaw where up until you get up
+
+466
+00:25:58,770 --> 00:26:03,350
+to almost 2,000 dimensional matrices,
+
+467
+00:26:03,350 --> 00:26:06,210
+things are basically a constant.
+
+468
+00:26:06,210 --> 00:26:10,010
+Right, and this is because, as we've discussed,
+
+469
+00:26:10,010 --> 00:26:15,450
+the shapes of these GPUs are built for fairly large matrix
+
+470
+00:26:15,450 --> 00:26:16,430
+multiplications.
+
+471
+00:26:16,430 --> 00:26:19,910
+And if you have a 2 by 2 matrix, it's
+
+472
+00:26:19,910 --> 00:26:23,190
+going to be very inefficient.
+
+473
+00:26:23,190 --> 00:26:25,180
+OK.
+
+474
+00:26:25,180 --> 00:26:29,110
+So really quickly on profiling.
+
+475
+00:26:29,110 --> 00:26:31,810
+Profiling tells you where time is actually spent.
+
+476
+00:26:31,810 --> 00:26:34,110
+Hopefully all of you are familiar with profiling
+
+477
+00:26:34,110 --> 00:26:37,190
+and are doing it.
+
+478
+00:26:37,190 --> 00:26:38,870
+Maybe less obviously, profiling, even
+
+479
+00:26:38,870 --> 00:26:40,550
+if you don't care about the time,
+
+480
+00:26:40,550 --> 00:26:43,470
+helps you figure out what's actually
+
+481
+00:26:43,470 --> 00:26:44,690
+happening under the hood.
+
+482
+00:26:44,690 --> 00:26:46,350
+Because especially with these high-level languages,
+
+483
+00:26:46,350 --> 00:26:49,210
+you write some code, and then it runs and you get some result.
+
+484
+00:26:49,210 --> 00:26:51,870
+And sometimes it can be just good to understand
+
+485
+00:26:51,870 --> 00:26:53,670
+what's actually going on.
+
+486
+00:26:53,670 --> 00:26:55,570
+So PyTorch has a built-in profiler.
+
+487
+00:26:55,570 --> 00:26:57,390
+In your assignment, you'll use Nsight,
+
+488
+00:26:57,390 --> 00:27:01,230
+which gives you more details.
+
+489
+00:27:01,230 --> 00:27:05,950
+But we're going to skip that in the interest of time.
+
+490
+00:27:05,950 --> 00:27:13,510
+So let's start with just if you add two numbers and-- or sorry,
+
+491
+00:27:13,510 --> 00:27:17,800
+two tensors in PyTorch, again, a run
+
+492
+00:27:17,800 --> 00:27:21,440
+operation creates two random matrices
+
+493
+00:27:21,440 --> 00:27:24,720
+and applies the operation.
+
+494
+00:27:24,720 --> 00:27:27,120
+So in profiling, I'm warming up.
+
+495
+00:27:27,120 --> 00:27:32,840
+And then I'm just putting this profiling
+
+496
+00:27:32,840 --> 00:27:36,320
+context and doing the run.
+
+497
+00:27:36,320 --> 00:27:41,880
+And then let's look at what the profile looks like for just a
+
+498
+00:27:41,880 --> 00:27:45,600
+plus b in PyTorch.
+
+499
+00:27:45,600 --> 00:27:48,740
+Normally doing PyTorch, you probably don't think about it.
+
+500
+00:27:48,740 --> 00:27:51,780
+It's like, OK, well, these two tensors just get added.
+
+501
+00:27:51,780 --> 00:27:54,480
+So what's actually going on underneath the hood?
+
+502
+00:27:54,480 --> 00:27:57,800
+Right, so if you look at the things that it's calling,
+
+503
+00:27:57,800 --> 00:28:05,640
+there is this long name, kernel at CUDA functor add.
+
+504
+00:28:05,640 --> 00:28:11,740
+So this is basically a kernel that adds two tensors.
+
+505
+00:28:11,740 --> 00:28:14,360
+And the times aren't going to be that interesting,
+
+506
+00:28:14,360 --> 00:28:15,470
+because I'm only adding.
+
+507
+00:28:15,470 --> 00:28:18,010
+So that's going to take 100% of the time.
+
+508
+00:28:18,010 --> 00:28:20,290
+But this tells you that, well, underneath the hood
+
+509
+00:28:20,290 --> 00:28:24,010
+there is this thing called add.
+
+510
+00:28:24,010 --> 00:28:25,270
+What about matmul?
+
+511
+00:28:28,010 --> 00:28:32,210
+In PyTorch, I'm doing a at b.
+
+512
+00:28:32,210 --> 00:28:34,890
+Similarly, there is this long name
+
+513
+00:28:34,890 --> 00:28:39,570
+that describes this particular matmul kernel.
+
+514
+00:28:39,570 --> 00:28:46,730
+Cutlass f32, f32, 64x64x16, and so on.
+
+515
+00:28:46,730 --> 00:28:49,950
+Notice that if you change the dimensions--
+
+516
+00:28:49,950 --> 00:28:53,970
+so now I'm doing a 128 by 128 matmul--
+
+517
+00:28:53,970 --> 00:28:56,450
+you get actually a different one.
+
+518
+00:28:56,450 --> 00:29:02,650
+If you look closely, this is 64x64x16, this is 32x32x16.
+
+519
+00:29:02,650 --> 00:29:07,010
+OK, so underneath the hood, PyTorch,
+
+520
+00:29:07,010 --> 00:29:08,750
+it looks like you're doing just a at b.
+
+521
+00:29:08,750 --> 00:29:10,792
+But underneath the hood, there could be all sorts
+
+522
+00:29:10,792 --> 00:29:13,780
+of things that are happening.
+
+523
+00:29:13,780 --> 00:29:15,658
+So observations.
+
+524
+00:29:15,658 --> 00:29:17,700
+Here, you can see which CUDA kernels are actually
+
+525
+00:29:17,700 --> 00:29:18,520
+being called.
+
+526
+00:29:18,520 --> 00:29:21,640
+These are generally the ones that have the long names.
+
+527
+00:29:21,640 --> 00:29:23,660
+And different CUDA kernels are invoked depending
+
+528
+00:29:23,660 --> 00:29:27,500
+on the tensor dimensions.
+
+529
+00:29:27,500 --> 00:29:29,140
+The name actually tells you something
+
+530
+00:29:29,140 --> 00:29:31,500
+about the implementation as well.
+
+531
+00:29:31,500 --> 00:29:33,620
+So this name.
+
+532
+00:29:33,620 --> 00:29:38,460
+So cutlass is the NVIDIA CUDA library for linear algebra.
+
+533
+00:29:38,460 --> 00:29:42,320
+SM100 corresponds to the Blackwell architecture.
+
+534
+00:29:42,320 --> 00:29:44,020
+So this is a kernel that's specifically
+
+535
+00:29:44,020 --> 00:29:46,500
+designed for Blackwell.
+
+536
+00:29:46,500 --> 00:29:48,700
+This is f32.
+
+537
+00:29:48,700 --> 00:29:54,800
+And then 64x64x16 is the shape of the tile,
+
+538
+00:29:54,800 --> 00:29:57,540
+which we're going to talk about later when we talk about tiling
+
+539
+00:29:57,540 --> 00:30:01,740
+in the context of matmuls.
+
+540
+00:30:01,740 --> 00:30:05,760
+OK, so that's benchmarking profiling.
+
+541
+00:30:05,760 --> 00:30:08,087
+Just remember to do it.
+
+542
+00:30:08,087 --> 00:30:09,920
+I think we make you do it on the assignment,
+
+543
+00:30:09,920 --> 00:30:12,480
+so you have no choice.
+
+544
+00:30:12,480 --> 00:30:14,360
+OK.
+
+545
+00:30:14,360 --> 00:30:21,320
+So let's apply this to another example here on the GeLU.
+
+546
+00:30:21,320 --> 00:30:27,080
+So remember, the GeLU activation function
+
+547
+00:30:27,080 --> 00:30:32,200
+is this function, which is a typical non-linearity that's
+
+548
+00:30:32,200 --> 00:30:32,800
+used.
+
+549
+00:30:32,800 --> 00:30:39,240
+Often, it's approximated with this tanh approximation, which
+
+550
+00:30:39,240 --> 00:30:42,920
+is more computer friendly.
+
+551
+00:30:42,920 --> 00:30:49,320
+OK, so naively, if you implement the GeLU,
+
+552
+00:30:49,320 --> 00:30:53,240
+you can do it in PyTorch just like this.
+
+553
+00:30:53,240 --> 00:30:56,680
+So you take a tensor, you just take this equation
+
+554
+00:30:56,680 --> 00:31:00,040
+and you just put it into PyTorch, OK.
+
+555
+00:31:00,040 --> 00:31:01,440
+That's fine.
+
+556
+00:31:01,440 --> 00:31:03,560
+And you get some number.
+
+557
+00:31:03,560 --> 00:31:05,440
+PyTorch also has a built in.
+
+558
+00:31:05,440 --> 00:31:12,130
+If you call functional GeLU, you can get that version as well.
+
+559
+00:31:12,130 --> 00:31:16,250
+And you can check that they're the same.
+
+560
+00:31:16,250 --> 00:31:21,130
+You can run the two GeLU versions
+
+561
+00:31:21,130 --> 00:31:26,170
+and make sure that the answer is the same for a random input.
+
+562
+00:31:26,170 --> 00:31:31,190
+There's also something that people probably have discovered.
+
+563
+00:31:31,190 --> 00:31:35,770
+If you haven't encountered this, this is an important thing to know.
+
+564
+00:31:35,770 --> 00:31:37,850
+is that you can take any PyTorch function,
+
+565
+00:31:37,850 --> 00:31:40,330
+you call torch.compile on it, and it
+
+566
+00:31:40,330 --> 00:31:44,330
+generates another function.
+
+567
+00:31:44,330 --> 00:31:47,810
+And it does the same thing.
+
+568
+00:31:47,810 --> 00:31:52,610
+OK, so we have three horses in this race.
+
+569
+00:31:52,610 --> 00:31:56,050
+We have the naive implementation.
+
+570
+00:31:56,050 --> 00:31:57,550
+We have the built-in implementation.
+
+571
+00:31:57,550 --> 00:31:59,050
+We have the compiled implementation.
+
+572
+00:31:59,050 --> 00:32:00,650
+So we can benchmark them.
+
+573
+00:32:00,650 --> 00:32:02,870
+Naive takes three.
+
+574
+00:32:05,530 --> 00:32:09,220
+I guess this is 3.75.
+
+575
+00:32:09,220 --> 00:32:12,700
+Built-in is much faster and compiled
+
+576
+00:32:12,700 --> 00:32:16,700
+is much faster as well, but not maybe quite as fast
+
+577
+00:32:16,700 --> 00:32:18,460
+as built-in.
+
+578
+00:32:18,460 --> 00:32:19,380
+OK.
+
+579
+00:32:19,380 --> 00:32:22,940
+So what's happening here?
+
+580
+00:32:22,940 --> 00:32:26,740
+Why are these things different?
+
+581
+00:32:26,740 --> 00:32:29,100
+They all compute the same answer,
+
+582
+00:32:29,100 --> 00:32:33,820
+but they have wildly different performance characteristics.
+
+583
+00:32:33,820 --> 00:32:36,260
+And so here we can pull up the profiler
+
+584
+00:32:36,260 --> 00:32:39,300
+and see what's actually going on underneath the hood.
+
+585
+00:32:39,300 --> 00:32:45,380
+So if you look at the naive GeLU here and just do
+
+586
+00:32:45,380 --> 00:32:48,760
+a profile, this--something's wrong with this view,
+
+587
+00:32:48,760 --> 00:32:51,560
+so I'm going to go to this.
+
+588
+00:32:51,560 --> 00:32:59,300
+So you see that the profile shows how time is being spent.
+
+589
+00:32:59,300 --> 00:33:03,800
+There's a bunch of different kernels on this binary functor
+
+590
+00:33:03,800 --> 00:33:06,580
+unary add.
+
+591
+00:33:06,580 --> 00:33:09,680
+tanh is a kernel here.
+
+592
+00:33:09,680 --> 00:33:13,040
+And this corresponds to the fact that in PyTorch, when
+
+593
+00:33:13,040 --> 00:33:15,080
+we write the PyTorch expression, you
+
+594
+00:33:15,080 --> 00:33:16,880
+look at the computation graph, and
+
+595
+00:33:16,880 --> 00:33:18,840
+each primitive in the computation
+
+596
+00:33:18,840 --> 00:33:21,600
+graph is actually realized in the kernel.
+
+597
+00:33:21,600 --> 00:33:23,410
+Right.
+
+598
+00:33:23,410 --> 00:33:29,080
+And the reason this is slow is that when you launch a kernel,
+
+599
+00:33:29,080 --> 00:33:32,880
+the kernel has to read from HBM.
+
+600
+00:33:32,880 --> 00:33:36,160
+Pull it all the way over to your SM, do the computation,
+
+601
+00:33:36,160 --> 00:33:37,560
+and write it back.
+
+602
+00:33:37,560 --> 00:33:41,040
+And then the kernel picks that up from HBM
+
+603
+00:33:41,040 --> 00:33:43,180
+and then writes it back, and so on and so forth.
+
+604
+00:33:43,180 --> 00:33:46,980
+So you're doing a lot of reads and writes back and forth.
+
+605
+00:33:46,980 --> 00:33:49,200
+Because between kernel invocations,
+
+606
+00:33:49,200 --> 00:33:54,160
+things have to go back to HBM.
+
+607
+00:33:54,160 --> 00:33:58,880
+So if you look at what the built-in is doing,
+
+608
+00:33:58,880 --> 00:34:00,560
+this is actually not that interesting.
+
+609
+00:34:00,560 --> 00:34:02,980
+There's this GeLU CUDA kernel implementation,
+
+610
+00:34:02,980 --> 00:34:05,500
+which is a single kernel that just implements the GeLU.
+
+611
+00:34:05,500 --> 00:34:08,429
+And so why does this exist?
+
+612
+00:34:08,429 --> 00:34:11,778
+Well, because people use GeLU.
+
+613
+00:34:11,778 --> 00:34:13,570
+So someone wrote a kernel for it and put it
+
+614
+00:34:13,570 --> 00:34:15,610
+in the standard library.
+
+615
+00:34:15,610 --> 00:34:21,210
+I mean, there's nothing magical.
+
+616
+00:34:21,210 --> 00:34:24,370
+So compilation is really interesting here.
+
+617
+00:34:24,370 --> 00:34:26,949
+I'm not going to say too much about how it works,
+
+618
+00:34:26,949 --> 00:34:33,050
+but it's really, I think, a fascinating topic where
+
+619
+00:34:33,050 --> 00:34:38,710
+you can take a naive implementation, which, remember,
+
+620
+00:34:38,710 --> 00:34:41,130
+it's in PyTorch, it has a computation graph.
+
+621
+00:34:41,130 --> 00:34:42,850
+And run a compiler.
+
+622
+00:34:42,850 --> 00:34:46,530
+Which basically, if you look at what's underneath the hood,
+
+623
+00:34:46,530 --> 00:34:48,250
+it's just a single kernel.
+
+624
+00:34:48,250 --> 00:34:50,730
+And this is because it's figured out
+
+625
+00:34:50,730 --> 00:34:56,610
+to look at the computation graph and essentially write
+
+626
+00:34:56,610 --> 00:34:59,142
+that kernel in Triton.
+
+627
+00:34:59,142 --> 00:35:01,350
+So you can see that this is actually a Triton kernel.
+
+628
+00:35:03,860 --> 00:35:06,100
+OK, so naive implementation.
+
+629
+00:35:06,100 --> 00:35:08,460
+Multiple kernels requires multiple reads and writes
+
+630
+00:35:08,460 --> 00:35:10,020
+to and from HBM.
+
+631
+00:35:10,020 --> 00:35:12,940
+There's no kernel fusion here.
+
+632
+00:35:12,940 --> 00:35:14,820
+This is slow.
+
+633
+00:35:14,820 --> 00:35:18,100
+The built-in compiler version, there's one kernel.
+
+634
+00:35:18,100 --> 00:35:19,980
+Basically all the operations in the GeLU
+
+635
+00:35:19,980 --> 00:35:22,260
+have been fused together into one kernel.
+
+636
+00:35:22,260 --> 00:35:27,980
+So you read from HBM once, you write to HBM once per element.
+
+637
+00:35:27,980 --> 00:35:31,880
+And you see that the compiled kernel is a Triton kernel.
+
+638
+00:35:34,780 --> 00:35:37,700
+OK, so that maybe is a good segue
+
+639
+00:35:37,700 --> 00:35:41,240
+to talk about what this Triton thing is all about.
+
+640
+00:35:41,240 --> 00:35:41,820
+Yeah?
+
+641
+00:35:51,620 --> 00:35:52,180
+Let's see.
+
+642
+00:35:52,180 --> 00:35:54,880
+I mean, I guess it says CUDA kernel implementation,
+
+643
+00:35:54,880 --> 00:35:57,120
+so I imagine someone wrote it in CUDA.
+
+644
+00:36:03,236 --> 00:36:07,510
+OK, any other questions?
+
+645
+00:36:07,510 --> 00:36:09,190
+Yeah?
+
+646
+00:36:09,190 --> 00:36:15,710
+Why is the Triton kernel faster than this one?
+
+647
+00:36:15,710 --> 00:36:18,650
+So why is the Triton kernel faster?
+
+648
+00:36:18,650 --> 00:36:23,870
+So a Triton kernel is actually not faster in this case.
+
+649
+00:36:23,870 --> 00:36:25,230
+Oh, sorry.
+
+650
+00:36:25,230 --> 00:36:30,930
+The compiled kernel is one Triton kernel,
+
+651
+00:36:30,930 --> 00:36:32,910
+and this is slower than the built-in.
+
+652
+00:36:32,910 --> 00:36:34,470
+Yeah.
+
+653
+00:36:34,470 --> 00:36:38,990
+I think last year when I did this, it was actually closer.
+
+654
+00:36:38,990 --> 00:36:42,990
+But these things change, and it's very hardware dependent.
+
+655
+00:36:42,990 --> 00:36:48,090
+And I think none of this is terribly optimized.
+
+656
+00:36:48,090 --> 00:36:51,750
+This is just giving you the general idea here.
+
+657
+00:36:51,750 --> 00:36:57,190
+OK, so let's write some Triton kernels.
+
+658
+00:36:57,190 --> 00:37:01,130
+So remember our programming model.
+
+659
+00:37:01,130 --> 00:37:04,030
+You have a bunch of threads organized by thread groups,
+
+660
+00:37:04,030 --> 00:37:07,970
+thread blocks, and there's a grid of thread blocks.
+
+661
+00:37:07,970 --> 00:37:13,250
+And if you were to write in CUDA, which was originally
+
+662
+00:37:13,250 --> 00:37:16,290
+developed by NVIDIA, and that's been for years the thing
+
+663
+00:37:16,290 --> 00:37:19,010
+that you do when you write kernels,
+
+664
+00:37:19,010 --> 00:37:22,190
+the mental model is, what does each thread do?
+
+665
+00:37:22,190 --> 00:37:25,450
+So you write a piece of code which essentially
+
+666
+00:37:25,450 --> 00:37:27,530
+has some ID that identifies which
+
+667
+00:37:27,530 --> 00:37:31,410
+thread you're talking about, and it just executes the code.
+
+668
+00:37:31,410 --> 00:37:35,330
+So the nice thing about this is that it's very closely related
+
+669
+00:37:35,330 --> 00:37:40,810
+to what is actually happening underneath the hood.
+
+670
+00:37:40,810 --> 00:37:47,050
+And it's fine-grained, gives you fine-grained control.
+
+671
+00:37:47,050 --> 00:37:50,850
+But there's cons here, which is that, remember,
+
+672
+00:37:50,850 --> 00:37:56,090
+all these threads are in a thread block.
+
+673
+00:37:56,090 --> 00:38:00,580
+And some operations require them to communicate.
+
+674
+00:38:00,580 --> 00:38:05,300
+So what has to happen is that they have to synchronize.
+
+675
+00:38:05,300 --> 00:38:09,480
+And they read from HBM all at once.
+
+676
+00:38:09,480 --> 00:38:13,460
+And they have to synchronize and do the computation.
+
+677
+00:38:13,460 --> 00:38:16,780
+And you have to basically do that bookkeeping.
+
+678
+00:38:16,780 --> 00:38:20,420
+So if you were doing all element-wise operations,
+
+679
+00:38:20,420 --> 00:38:21,800
+this CUDA is just fine.
+
+680
+00:38:21,800 --> 00:38:24,720
+It doesn't really matter.
+
+681
+00:38:24,720 --> 00:38:27,180
+But as you get more complex operations,
+
+682
+00:38:27,180 --> 00:38:32,140
+then try and provide some value of the abstraction.
+
+683
+00:38:32,140 --> 00:38:35,000
+So Triton was developed by OpenAI.
+
+684
+00:38:35,000 --> 00:38:37,780
+I think by now, it's been pretty standard.
+
+685
+00:38:37,780 --> 00:38:42,500
+You basically specify what each thread block does.
+
+686
+00:38:42,500 --> 00:38:45,593
+Generally it's powerful enough, especially for this class
+
+687
+00:38:45,593 --> 00:38:46,760
+that you're getting started.
+
+688
+00:38:46,760 --> 00:38:51,260
+If you really go and want to exploit every single new feature
+
+689
+00:38:51,260 --> 00:38:53,540
+of the latest hardware, it might not
+
+690
+00:38:53,540 --> 00:38:55,120
+give you the full flexibility.
+
+691
+00:38:55,120 --> 00:38:59,550
+But let's not worry about that.
+
+692
+00:38:59,550 --> 00:39:02,150
+And the conceptual framework to think about in Triton
+
+693
+00:39:02,150 --> 00:39:05,830
+is that you're thinking about, what does a block do?
+
+694
+00:39:05,830 --> 00:39:08,650
+A block is going to load data into shared memory,
+
+695
+00:39:08,650 --> 00:39:13,030
+operate on it, and write it back to global memory.
+
+696
+00:39:13,030 --> 00:39:16,030
+So in some sense, these blocks are an intermediate point
+
+697
+00:39:16,030 --> 00:39:19,870
+between thinking about what individual elements are doing
+
+698
+00:39:19,870 --> 00:39:22,570
+as well as thinking about the general operation.
+
+699
+00:39:22,570 --> 00:39:25,310
+And so in PyTorch, you basically define these huge matrices
+
+700
+00:39:25,310 --> 00:39:27,010
+and you say multiply them together.
+
+701
+00:39:27,010 --> 00:39:29,045
+And that's the atomic operation.
+
+702
+00:39:29,045 --> 00:39:30,670
+And a lot of what you're thinking about
+
+703
+00:39:30,670 --> 00:39:34,070
+is, how do I get things into big matmuls?
+
+704
+00:39:34,070 --> 00:39:37,510
+Right, and at some level, Triton is
+
+705
+00:39:37,510 --> 00:39:43,110
+a hybrid between that and the individual elements,
+
+706
+00:39:43,110 --> 00:39:44,350
+as we'll see.
+
+707
+00:39:44,350 --> 00:39:50,590
+OK, so let's start with the GeLU example here.
+
+708
+00:39:50,590 --> 00:39:55,030
+So let's define an 8,000 dimensional vector and start
+
+709
+00:39:55,030 --> 00:39:57,050
+writing some Triton.
+
+710
+00:39:57,050 --> 00:40:03,310
+OK, so Triton is basically going to be you write Python.
+
+711
+00:40:03,310 --> 00:40:06,530
+How many of you have written Triton before?
+
+712
+00:40:06,530 --> 00:40:07,670
+Just a show of hands.
+
+713
+00:40:07,670 --> 00:40:10,130
+OK, OK.
+
+714
+00:40:10,130 --> 00:40:16,090
+Not that many, which is good, because then you won't be bored.
+
+715
+00:40:16,090 --> 00:40:22,090
+OK, so this is normal PyTorch.
+
+716
+00:40:22,090 --> 00:40:23,890
+Right, there's no Triton here.
+
+717
+00:40:23,890 --> 00:40:26,970
+But I'm just preparing.
+
+718
+00:40:26,970 --> 00:40:31,330
+And so what I'm going to do is I take this tensor,
+
+719
+00:40:31,330 --> 00:40:35,890
+and I'm going to allocate an output tensor.
+
+720
+00:40:35,890 --> 00:40:39,990
+OK, because in Triton, we're not thinking functionally anymore.
+
+721
+00:40:39,990 --> 00:40:41,790
+We're just thinking about moving.
+
+722
+00:40:41,790 --> 00:40:44,810
+You have to explicitly read and write.
+
+723
+00:40:44,810 --> 00:40:47,030
+So there's no returning value.
+
+724
+00:40:47,030 --> 00:40:48,610
+So I'm going to allocate the output
+
+725
+00:40:48,610 --> 00:40:52,210
+tensor, which I'm going to-- the kernel's going to write to.
+
+726
+00:40:52,210 --> 00:40:58,780
+And then so this tensor can be arbitrarily big, right.
+
+727
+00:40:58,780 --> 00:41:03,140
+And I can't generally fit this all into one SM,
+
+728
+00:41:03,140 --> 00:41:07,300
+because it's just too big.
+
+729
+00:41:07,300 --> 00:41:10,580
+So I need to break it up into blocks.
+
+730
+00:41:10,580 --> 00:41:16,380
+So what I'm going to do is you can think about this x
+
+731
+00:41:16,380 --> 00:41:18,300
+as being this array.
+
+732
+00:41:18,300 --> 00:41:20,080
+I'm going to chop it up into blocks.
+
+733
+00:41:20,080 --> 00:41:22,900
+So the total number of elements is 8,000.
+
+734
+00:41:22,900 --> 00:41:27,380
+I'm just going to set the blocksize to 1,024 for now.
+
+735
+00:41:27,380 --> 00:41:31,380
+And then I have eight blocks.
+
+736
+00:41:31,380 --> 00:41:34,120
+OK.
+
+737
+00:41:34,120 --> 00:41:42,980
+So then I'm going to use this weird syntax to call the kernel.
+
+738
+00:41:42,980 --> 00:41:45,900
+So Triton GeLU kernel.
+
+739
+00:41:45,900 --> 00:41:53,190
+This basically in brackets tells me essentially the shape
+
+740
+00:41:53,190 --> 00:41:54,630
+of the grid.
+
+741
+00:41:54,630 --> 00:41:59,490
+So basically, this says the grid has num blocks.
+
+742
+00:41:59,490 --> 00:42:01,590
+Blocks.
+
+743
+00:42:01,590 --> 00:42:05,270
+And I'm going to, for every one of these blocks,
+
+744
+00:42:05,270 --> 00:42:08,790
+invoke this function, Triton GeLU kernel, which
+
+745
+00:42:08,790 --> 00:42:10,370
+I'll talk about in a bit.
+
+746
+00:42:10,370 --> 00:42:17,110
+I'm going to pass in an x, y num elements and the blocksize.
+
+747
+00:42:17,110 --> 00:42:18,900
+OK.
+
+748
+00:42:18,900 --> 00:42:21,465
+All right, so unfortunately, I'm not
+
+749
+00:42:21,465 --> 00:42:23,090
+going to be able to trace through this,
+
+750
+00:42:23,090 --> 00:42:28,050
+so I'll just show you what the code looks like here.
+
+751
+00:42:28,050 --> 00:42:30,770
+So let me get rid of that.
+
+752
+00:42:30,770 --> 00:42:37,170
+OK, so this is probably the simplest kernel you can imagine.
+
+753
+00:42:37,170 --> 00:42:41,710
+So when you are looking at the Triton GeLU kernel,
+
+754
+00:42:41,710 --> 00:42:46,950
+now this is before we had x and y.
+
+755
+00:42:46,950 --> 00:42:49,150
+So now these are pointers.
+
+756
+00:42:49,150 --> 00:42:52,660
+Right, you can think about these as just integers,
+
+757
+00:42:52,660 --> 00:42:54,440
+they're addresses.
+
+758
+00:42:54,440 --> 00:42:57,040
+So you have to get comfortable with that.
+
+759
+00:42:57,040 --> 00:43:00,960
+And then we have the number of elements and the blocksize,
+
+760
+00:43:00,960 --> 00:43:09,680
+which are basically actually passed in from here.
+
+761
+00:43:09,680 --> 00:43:14,480
+OK, so the way to think about it is that for every block,
+
+762
+00:43:14,480 --> 00:43:20,240
+we're going to have this function being called.
+
+763
+00:43:20,240 --> 00:43:25,680
+And what happens is the first thing I'm going to do
+
+764
+00:43:25,680 --> 00:43:27,520
+is I'm going to wake up.
+
+765
+00:43:27,520 --> 00:43:30,880
+This block wakes up and says, who am I?
+
+766
+00:43:30,880 --> 00:43:33,760
+Well, the program ID is-- basically
+
+767
+00:43:33,760 --> 00:43:35,860
+the PID is basically identifying the block.
+
+768
+00:43:35,860 --> 00:43:40,600
+So PID would be 0 for this block, 1, 2, and 3 here.
+
+769
+00:43:40,600 --> 00:43:43,360
+OK, so now I have to figure out what data
+
+770
+00:43:43,360 --> 00:43:45,360
+I'm going to operate on.
+
+771
+00:43:45,360 --> 00:43:48,280
+So that's PID times blocksize.
+
+772
+00:43:48,280 --> 00:43:52,580
+So this is the offset into the x pointer.
+
+773
+00:43:52,580 --> 00:43:56,200
+So if PID is 0, then start is 0.
+
+774
+00:43:56,200 --> 00:43:59,360
+If PID is 1, then start is blocksize.
+
+775
+00:43:59,360 --> 00:44:03,520
+If PID is 2, then it's 2 times blocksize, and so on.
+
+776
+00:44:03,520 --> 00:44:04,020
+OK.
+
+777
+00:44:04,020 --> 00:44:09,320
+So now, I'm going to figure out the span I'm operating on.
+
+778
+00:44:09,320 --> 00:44:11,980
+So offsets is start plus.
+
+779
+00:44:11,980 --> 00:44:17,260
+This is the Triton library.
+
+780
+00:44:17,260 --> 00:44:21,100
+A range 0 blocksize, which conceptually gives you
+
+781
+00:44:21,100 --> 00:44:24,780
+the integers 0 through blocksize minus 1.
+
+782
+00:44:24,780 --> 00:44:29,300
+So offsets is going to be essentially
+
+783
+00:44:29,300 --> 00:44:31,220
+for-- let's say block 1, it's going
+
+784
+00:44:31,220 --> 00:44:33,900
+to be blocksize, blocksize plus 1 all the way to blocks
+
+785
+00:44:33,900 --> 00:44:36,760
+2 times blocksize minus 1.
+
+786
+00:44:39,700 --> 00:44:45,440
+OK, so in this case, num elements divides by blocksize.
+
+787
+00:44:45,440 --> 00:44:47,080
+But in general, that's not the case.
+
+788
+00:44:47,080 --> 00:44:49,790
+So you'll often see in Triton code, there's this masking.
+
+789
+00:44:49,790 --> 00:44:54,030
+Which says, well, sometimes if the-- let's say the tensor only
+
+790
+00:44:54,030 --> 00:44:55,350
+goes up to here.
+
+791
+00:44:55,350 --> 00:44:58,350
+Then I'm going to form a mask, which
+
+792
+00:44:58,350 --> 00:45:01,550
+is going to be true up until that point
+
+793
+00:45:01,550 --> 00:45:04,150
+and false after that point.
+
+794
+00:45:04,150 --> 00:45:07,170
+And for blocks that are not the final block,
+
+795
+00:45:07,170 --> 00:45:11,270
+it's going to be just all ones.
+
+796
+00:45:11,270 --> 00:45:13,690
+OK, so now I've done the setup.
+
+797
+00:45:13,690 --> 00:45:15,830
+What I do is I read.
+
+798
+00:45:15,830 --> 00:45:18,230
+And this is basically pointer arithmetic.
+
+799
+00:45:18,230 --> 00:45:20,150
+So x pointer, remember, is the integer
+
+800
+00:45:20,150 --> 00:45:23,190
+that specifies the memory location of where x is.
+
+801
+00:45:23,190 --> 00:45:25,230
+I'm going to add offsets to that,
+
+802
+00:45:25,230 --> 00:45:32,190
+which gives me the first block size number of elements there.
+
+803
+00:45:32,190 --> 00:45:34,350
+According to the mask, if I'm masked out,
+
+804
+00:45:34,350 --> 00:45:38,110
+then I don't read it.
+
+805
+00:45:38,110 --> 00:45:44,670
+And then now I think you can just think about this as a vector.
+
+806
+00:45:44,670 --> 00:45:49,040
+And then you do your normal computation.
+
+807
+00:45:49,040 --> 00:45:52,720
+And then you get y.
+
+808
+00:45:52,720 --> 00:45:55,280
+And y is the same size as x.
+
+809
+00:45:55,280 --> 00:45:58,840
+And then you do tl.store y pointer
+
+810
+00:45:58,840 --> 00:46:02,920
+plus offsets y and the mask.
+
+811
+00:46:02,920 --> 00:46:07,920
+OK, so this load loads from HBM, does some stuff,
+
+812
+00:46:07,920 --> 00:46:09,740
+and then it writes back to HBM.
+
+813
+00:46:12,720 --> 00:46:17,120
+OK, I'm going to stop there and take any questions
+
+814
+00:46:17,120 --> 00:46:22,000
+about this first Triton kernel.
+
+815
+00:46:22,000 --> 00:46:22,800
+Yeah?
+
+816
+00:46:33,220 --> 00:46:33,720
+Yeah.
+
+817
+00:46:33,720 --> 00:46:36,360
+So the difference is, what is the difference between CUDA?
+
+818
+00:46:36,360 --> 00:46:41,200
+And for this element-wise, it looks pretty much the same,
+
+819
+00:46:41,200 --> 00:46:42,000
+right.
+
+820
+00:46:42,000 --> 00:46:45,450
+And in fact, CUDA is even, I think, simpler,
+
+821
+00:46:45,450 --> 00:46:47,270
+because it really is element-wise.
+
+822
+00:46:47,270 --> 00:46:50,870
+You wake up, and you identify the thread.
+
+823
+00:46:50,870 --> 00:46:53,930
+And then you just operate on that element.
+
+824
+00:46:53,930 --> 00:46:55,810
+Now the only thing here is that it's
+
+825
+00:46:55,810 --> 00:47:00,330
+like the vectorized version, where you have a block
+
+826
+00:47:00,330 --> 00:47:03,290
+and you operate on that block.
+
+827
+00:47:03,290 --> 00:47:06,330
+Later, we'll see that operating on blocks
+
+828
+00:47:06,330 --> 00:47:09,650
+is doing more than-- if you do something more
+
+829
+00:47:09,650 --> 00:47:11,570
+than element-wise, then CUDA is going
+
+830
+00:47:11,570 --> 00:47:14,530
+to be a lot more annoying to work with.
+
+831
+00:47:14,530 --> 00:47:15,710
+So a bunch of questions.
+
+832
+00:47:15,710 --> 00:47:17,250
+Yeah, back there.
+
+833
+00:47:17,250 --> 00:47:21,370
+How does this relate to if you wanted to use the tensor units?
+
+834
+00:47:21,370 --> 00:47:25,730
+So how is this related to if you want to use the tensor units?
+
+835
+00:47:25,730 --> 00:47:28,890
+So I'll later show you what this code actually
+
+836
+00:47:28,890 --> 00:47:31,090
+compiles down into.
+
+837
+00:47:31,090 --> 00:47:35,050
+And maybe I'll get back to that.
+
+838
+00:47:35,050 --> 00:47:37,790
+But the short answer is that you don't control that.
+
+839
+00:47:37,790 --> 00:47:43,190
+硬件会决定把东西放在哪里。
+
+840
+00:47:43,190 --> 00:47:44,070
+是吗？
+
+841
+00:47:44,070 --> 00:47:45,670
+你能具体讲一下
+
+842
+00:47:45,670 --> 00:47:51,070
+从 HBM 到 shared memory 再到 register 时到底发生了什么吗？
+
+843
+00:47:51,070 --> 00:47:54,990
+数据实际流动的逐步过程是什么？
+
+844
+00:47:54,990 --> 00:47:57,670
+对，所以问题是，当
+
+845
+00:47:57,670 --> 00:48:02,990
+这条语句执行时，实际发生了什么？
+
+846
+00:48:02,990 --> 00:48:07,270
+简短来说，这在某种意义上是假的。
+
+847
+00:48:07,270 --> 00:48:10,390
+对，并不是 GPU 实际上
+
+848
+00:48:10,390 --> 00:48:13,490
+在 GPU 上调用 Triton 库
+
+849
+00:48:13,490 --> 00:48:15,430
+并且真的在执行这段代码。
+
+850
+00:48:15,430 --> 00:48:18,510
+这基本上是为了让我们
+
+851
+00:48:18,510 --> 00:48:21,310
+指定这个计算。
+
+852
+00:48:21,310 --> 00:48:23,550
+编译器会接收它，我们后面会看到，
+
+853
+00:48:23,550 --> 00:48:25,270
+并把它写成一种叫做 ptx 的东西，
+
+854
+00:48:25,270 --> 00:48:29,130
+然后它才会真正干活。
+
+855
+00:48:32,990 --> 00:48:35,270
+所以从机制上讲就是这么回事，
+
+856
+00:48:35,270 --> 00:48:38,030
+我稍后会讲到。
+
+857
+00:48:38,030 --> 00:48:42,360
+如果你问的是概念上的问题，
+
+858
+00:48:42,360 --> 00:48:49,000
+思考方式是，这个——
+
+859
+00:48:49,000 --> 00:48:55,080
+x 指针是 HBM 中的一个内存位置。
+
+860
+00:48:55,080 --> 00:48:58,900
+这基本上指定了一段内存位置。
+
+861
+00:48:58,900 --> 00:49:00,480
+而 load 会接收那些内存位置
+
+862
+00:49:00,480 --> 00:49:04,560
+并返回与它们关联的数据。
+
+863
+00:49:04,560 --> 00:49:08,160
+这里，我有一个名为 x 的局部变量。
+
+864
+00:49:08,160 --> 00:49:10,960
+在实践中，这通常会
+
+865
+00:49:10,960 --> 00:49:16,360
+是一个 register 或 shared memory。
+
+866
+00:49:16,360 --> 00:49:20,840
+Triton 会决定那里怎么做。
+
+867
+00:49:20,840 --> 00:49:26,040
+在 thread 层级上。
+
+868
+00:49:26,040 --> 00:49:28,220
+当它被调用时，其实并不清楚。
+
+869
+00:49:28,220 --> 00:49:33,620
+我是提前安排好了什么会放在 shared memory
+
+870
+00:49:33,620 --> 00:49:35,820
+什么会放在 register 层级，
+
+871
+00:49:35,820 --> 00:49:39,250
+还是现在才发生，那就太晚了？
+
+872
+00:49:39,250 --> 00:49:41,250
+所以这就是所有 thread
+
+873
+00:49:41,250 --> 00:49:45,870
+都闲置在那里，等待内存刷入的地方。
+
+874
+00:49:48,930 --> 00:49:52,252
+我确信它已经准备好执行了，这样我们就不会
+
+875
+00:49:52,252 --> 00:49:53,710
+干坐在那里无所事事，
+
+876
+00:49:53,710 --> 00:49:55,730
+只是等待数据从 HBM 进来。
+
+877
+00:49:55,730 --> 00:49:56,470
+对，对。
+
+878
+00:49:56,470 --> 00:49:59,110
+所以问题是，这实际上什么时候会被执行，
+
+879
+00:49:59,110 --> 00:50:01,370
+and doesn't this block?
+
+880
+00:50:01,370 --> 00:50:03,370
+Let me try to come back to this question
+
+881
+00:50:03,370 --> 00:50:05,890
+when I show you the PTX, and maybe hopefully it
+
+882
+00:50:05,890 --> 00:50:09,770
+will provide a bit more context on what's happening.
+
+883
+00:50:09,770 --> 00:50:11,270
+OK, any other questions?
+
+884
+00:50:15,490 --> 00:50:19,150
+OK, so all the kernels are going to look something like this.
+
+885
+00:50:19,150 --> 00:50:23,010
+So I do want to make sure people understand
+
+886
+00:50:23,010 --> 00:50:26,370
+just the general form, which is that you have generally
+
+887
+00:50:26,370 --> 00:50:28,250
+your inputs, your outputs.
+
+888
+00:50:28,250 --> 00:50:30,560
+You wake up, you figure out which
+
+889
+00:50:30,560 --> 00:50:31,810
+index you're going to look at.
+
+890
+00:50:31,810 --> 00:50:32,670
+You read.
+
+891
+00:50:32,670 --> 00:50:37,050
+You do some stuff, and then you write to HBM.
+
+892
+00:50:37,050 --> 00:50:41,050
+OK.
+
+893
+00:50:41,050 --> 00:50:48,350
+So let's talk about PTX briefly.
+
+894
+00:50:48,350 --> 00:50:50,550
+So let's see, does this work?
+
+895
+00:50:50,550 --> 00:50:53,070
+Does this link work?
+
+896
+00:50:53,070 --> 00:51:00,790
+OK, so when you write Triton, the compiler
+
+897
+00:51:00,790 --> 00:51:04,350
+generates PTX code, which is this intermediate assembly
+
+898
+00:51:04,350 --> 00:51:08,190
+language for GPUs.
+
+899
+00:51:08,190 --> 00:51:11,290
+I am obviously not going to go through all of this,
+
+900
+00:51:11,290 --> 00:51:17,630
+but just to give you the flavor of what this looks like.
+
+901
+00:51:17,630 --> 00:51:20,970
+Let me actually start with the observation.
+
+902
+00:51:20,970 --> 00:51:22,550
+So a few things.
+
+903
+00:51:22,550 --> 00:51:30,150
+So this is now what a thread is actually doing.
+
+904
+00:51:30,150 --> 00:51:35,710
+Not a thread block, because that's been compiled away.
+
+905
+00:51:35,710 --> 00:51:43,360
+And so if you look at--a few notes here.
+
+906
+00:51:43,360 --> 00:51:50,200
+So this LD global is basically saying load from HBM
+
+907
+00:51:50,200 --> 00:51:51,740
+into some registers.
+
+908
+00:51:51,740 --> 00:51:59,080
+And the registers are denoted as the r are integer registers, fr,
+
+909
+00:51:59,080 --> 00:52:01,760
+floating point registers.
+
+910
+00:52:01,760 --> 00:52:05,860
+And then you have statements like mov 0 into r5,
+
+911
+00:52:05,860 --> 00:52:09,040
+mov 0 into r6, and so on.
+
+912
+00:52:09,040 --> 00:52:10,660
+And then you have multiplication.
+
+913
+00:52:10,660 --> 00:52:14,360
+You're going to multiply this register by this constant
+
+914
+00:52:14,360 --> 00:52:17,840
+and then put it into this.
+
+915
+00:52:17,840 --> 00:52:19,900
+So this code gets executed.
+
+916
+00:52:19,900 --> 00:52:25,060
+And at the bottom, you should see global store.
+
+917
+00:52:25,060 --> 00:52:28,600
+So this is writing back into the HBM.
+
+918
+00:52:28,600 --> 00:52:30,380
+So this gets executed.
+
+919
+00:52:30,380 --> 00:52:36,810
+This is actually the code that gets executed on a thread.
+
+920
+00:52:36,810 --> 00:52:42,690
+And Triton is basically a layer up above that.
+
+921
+00:52:42,690 --> 00:52:47,450
+One other thing to notice is that you see all these blocks
+
+922
+00:52:47,450 --> 00:52:49,410
+and what's going on there.
+
+923
+00:52:49,410 --> 00:52:51,850
+And what's going on there is I alluded
+
+924
+00:52:51,850 --> 00:52:55,170
+to thread coarsening, which is that this is one thread.
+
+925
+00:52:55,170 --> 00:52:57,550
+But rather than processing a single element,
+
+926
+00:52:57,550 --> 00:52:59,630
+it's actually processing eight elements.
+
+927
+00:52:59,630 --> 00:53:02,153
+So the compiler decided that, well, actually, this thread
+
+928
+00:53:02,153 --> 00:53:03,070
+is pretty lightweight.
+
+929
+00:53:03,070 --> 00:53:04,730
+It doesn't do that much, so let's just
+
+930
+00:53:04,730 --> 00:53:07,930
+try to thicken it up a little bit.
+
+931
+00:53:07,930 --> 00:53:14,970
+So looking at PTX can give you some appreciation for what's
+
+932
+00:53:14,970 --> 00:53:18,010
+going on underneath the hood.
+
+933
+00:53:18,010 --> 00:53:18,570
+Yeah?
+
+934
+00:53:18,570 --> 00:53:23,690
+So it makes this for each individual--[INAUDIBLE]
+
+935
+00:53:27,090 --> 00:53:30,670
+So the question is, does it make this for each thread?
+
+936
+00:53:30,670 --> 00:53:33,450
+So this is compiled once.
+
+937
+00:53:33,450 --> 00:53:39,740
+And it's the same piece of code that each thread runs.
+
+938
+00:53:39,740 --> 00:53:42,380
+And the way that the thread distinguishes
+
+939
+00:53:42,380 --> 00:53:45,580
+itself is that this piece of code gets
+
+940
+00:53:45,580 --> 00:53:52,180
+passed basically the thread ID.
+
+941
+00:53:52,180 --> 00:53:56,140
+So here, the CTA.x is the block index,
+
+942
+00:53:56,140 --> 00:53:58,980
+and tid.x is the thread index.
+
+943
+00:53:58,980 --> 00:54:03,300
+So this basically, if this piece of code is running,
+
+944
+00:54:03,300 --> 00:54:07,020
+this tells you which block I'm in.
+
+945
+00:54:07,020 --> 00:54:12,520
+And tid.x tells you which thread inside that block I'm in.
+
+946
+00:54:16,840 --> 00:54:22,500
+OK.
+
+947
+00:54:22,500 --> 00:54:23,560
+Any other questions?
+
+948
+00:54:23,560 --> 00:54:27,240
+And I'm trying to figure out how to--OK.
+
+949
+00:54:32,800 --> 00:54:39,840
+OK, so that's generally a flavor of your first Triton kernel
+
+950
+00:54:39,840 --> 00:54:42,920
+load from HBM, compute, right back to HBM.
+
+951
+00:54:42,920 --> 00:54:50,880
+And then we saw the PTX, which is the grungy what actually
+
+952
+00:54:50,880 --> 00:54:52,840
+happens underneath the hood.
+
+953
+00:54:52,840 --> 00:54:57,480
+There's still a lot of things that are not specified in PTX.
+
+954
+00:54:57,480 --> 00:55:00,800
+Like, for example, which SM things are operating on
+
+955
+00:55:00,800 --> 00:55:03,240
+and the warps and everything.
+
+956
+00:55:03,240 --> 00:55:05,180
+A lot of those are hardware controlled,
+
+957
+00:55:05,180 --> 00:55:07,340
+so you don't even see.
+
+958
+00:55:07,340 --> 00:55:09,040
+Yeah?
+
+959
+00:55:09,040 --> 00:55:13,480
+So PTX code is generated by the compiler, not something
+
+960
+00:55:13,480 --> 00:55:16,760
+that you would normally code?
+
+961
+00:55:16,760 --> 00:55:18,960
+It looks like it's assembly code.
+
+962
+00:55:18,960 --> 00:55:24,180
+Yeah, so the question is, is PTX just generated by the compiler?
+
+963
+00:55:24,180 --> 00:55:27,880
+So there are people who do write PTX
+
+964
+00:55:27,880 --> 00:55:33,850
+if you really think you're better than the compiler.
+
+965
+00:55:33,850 --> 00:55:38,630
+And I think the NVIDIA compilers are generally pretty mature,
+
+966
+00:55:38,630 --> 00:55:42,110
+but some other accelerators that are less developed.
+
+967
+00:55:42,110 --> 00:55:44,210
+I think sometimes you just have to reach in
+
+968
+00:55:44,210 --> 00:55:47,650
+and actually handhold a bit more.
+
+969
+00:55:47,650 --> 00:55:51,870
+But generally, yeah, you shouldn't need to do that.
+
+970
+00:55:51,870 --> 00:55:52,490
+Yeah?
+
+971
+00:55:52,490 --> 00:55:59,050
+My work will get scheduled onto an SM.
+
+972
+00:55:59,050 --> 00:56:01,250
+I'll get to that tf.load and it's almost
+
+973
+00:56:01,250 --> 00:56:03,810
+like a CPU trap call where I'm just waiting
+
+974
+00:56:03,810 --> 00:56:07,430
+for something to happen.
+
+975
+00:56:07,430 --> 00:56:10,330
+And now I am twiddling my thumbs and some other work
+
+976
+00:56:10,330 --> 00:56:12,430
+will get scheduled over me.
+
+977
+00:56:12,430 --> 00:56:14,250
+And then it will do operations.
+
+978
+00:56:14,250 --> 00:56:15,850
+Now that the upload is done,
+
+979
+00:56:15,850 --> 00:56:20,150
+then I'll reschedule that work and then I'll continue on.
+
+980
+00:56:20,150 --> 00:56:22,350
+Is that—Yeah, that's right.
+
+981
+00:56:22,350 --> 00:56:27,370
+So just to repeat the question or the comment.
+
+982
+00:56:27,370 --> 00:56:30,700
+So if you look at this triangle code,
+
+983
+00:56:30,700 --> 00:56:34,300
+these statements, this load, is going
+
+984
+00:56:34,300 --> 00:56:36,700
+to block for some number of cycles.
+
+985
+00:56:36,700 --> 00:56:38,760
+And then so this is running on some thread
+
+986
+00:56:38,760 --> 00:56:40,500
+on some warp on some SM.
+
+987
+00:56:40,500 --> 00:56:43,920
+And remember, the SM is running multiple warps at the same time.
+
+988
+00:56:43,920 --> 00:56:47,340
+So when you get to that point, it
+
+989
+00:56:47,340 --> 00:56:50,583
+can just find another warp to run.
+
+990
+00:56:50,583 --> 00:56:52,500
+And then when this is done, the warp scheduler
+
+991
+00:56:52,500 --> 00:56:55,780
+comes back and takes over.
+
+992
+00:56:55,780 --> 00:56:57,520
+Why do you?
+
+993
+00:56:59,060 --> 00:56:59,900
+Sorry.
+
+994
+00:56:59,900 --> 00:57:01,140
+Oh, sorry.
+
+995
+00:57:01,140 --> 00:57:03,020
+I recall from.
+
+996
+00:57:06,620 --> 00:57:09,800
+Yeah, so the question is, why four warp schedulers?
+
+997
+00:57:09,800 --> 00:57:12,760
+I don't exactly know the reason behind that.
+
+998
+00:57:15,660 --> 00:57:19,200
+OK, so now let's go through some other examples.
+
+999
+00:57:19,200 --> 00:57:21,680
+Maybe just as a quick preview.
+
+1000
+00:57:21,680 --> 00:57:23,860
+We're going to do three more examples.
+
+1001
+00:57:23,860 --> 00:57:28,060
+GeLU is the simplest form.
+
+1002
+00:57:28,060 --> 00:57:32,620
+Even though the computation has a lot of messiness.
+
+1003
+00:57:32,620 --> 00:57:33,740
+It's just element-wise.
+
+1004
+00:57:33,740 --> 00:57:38,120
+So conceptually, in the context of this lecture,
+
+1005
+00:57:38,120 --> 00:57:40,120
+is actually very simple.
+
+1006
+00:57:40,120 --> 00:57:44,280
+Now we're going to look at softmax, where now you're
+
+1007
+00:57:44,280 --> 00:57:46,312
+going to have to do reduction.
+
+1008
+00:57:46,312 --> 00:57:48,520
+But in this case, we're going to think about the case
+
+1009
+00:57:48,520 --> 00:57:50,160
+where a row fits on a block.
+
+1010
+00:57:50,160 --> 00:57:53,130
+And then we're going to consider the case where
+
+1011
+00:57:53,130 --> 00:57:54,880
+a row doesn't fit on a block, and then we're
+
+1012
+00:57:54,880 --> 00:57:57,280
+going to go up to matmul.
+
+1013
+00:57:57,280 --> 00:57:59,173
+And then hopefully by that point,
+
+1014
+00:57:59,173 --> 00:58:00,840
+you'll have all the ingredients that you
+
+1015
+00:58:00,840 --> 00:58:04,960
+need to do the assignment and implement flash attention.
+
+1016
+00:58:04,960 --> 00:58:06,200
+OK.
+
+1017
+00:58:06,200 --> 00:58:10,680
+So so far, we looked at element-wise operations.
+
+1018
+00:58:10,680 --> 00:58:12,880
+Now let's think about other operations
+
+1019
+00:58:12,880 --> 00:58:16,200
+that aggregate over multiple values.
+
+1020
+00:58:16,200 --> 00:58:18,180
+So remember what softmax does.
+
+1021
+00:58:21,480 --> 00:58:23,720
+Let's just think of it as a matrix.
+
+1022
+00:58:23,720 --> 00:58:29,210
+You exponentiate and normalize each row of a matrix.
+
+1023
+00:58:29,210 --> 00:58:33,890
+OK, so this is used in attention and used in generating output
+
+1024
+00:58:33,890 --> 00:58:35,410
+probabilities.
+
+1025
+00:58:35,410 --> 00:58:39,410
+Generally a good thing to do.
+
+1026
+00:58:39,410 --> 00:58:43,890
+So let's just start with a naive implementation
+
+1027
+00:58:43,890 --> 00:58:46,550
+and just keep track of what's happening.
+
+1028
+00:58:46,550 --> 00:58:49,650
+So here, I'm defining this tensor.
+
+1029
+00:58:49,650 --> 00:58:55,370
+And here's the naive implementation.
+
+1030
+00:58:55,370 --> 00:58:59,210
+Actually, I think this is on assignment one.
+
+1031
+00:58:59,210 --> 00:59:00,550
+OK, anyway.
+
+1032
+00:59:00,550 --> 00:59:04,530
+So here, I have an M by N matrix.
+
+1033
+00:59:04,530 --> 00:59:10,690
+And so I need to, for every row, compute the--
+
+1034
+00:59:10,690 --> 00:59:13,530
+I'm going to compute the max of each row.
+
+1035
+00:59:13,530 --> 00:59:15,570
+And this is for numerical stability.
+
+1036
+00:59:15,570 --> 00:59:19,250
+I'm going to subtract off the max.
+
+1037
+00:59:19,250 --> 00:59:23,590
+And then I'm going to exponentiate element-wise.
+
+1038
+00:59:23,590 --> 00:59:27,300
+And I'm going to sum and compute the normalization.
+
+1039
+00:59:27,300 --> 00:59:31,380
+constant for every row.
+
+1040
+00:59:31,380 --> 00:59:34,900
+And I'm going to divide.
+
+1041
+00:59:34,900 --> 00:59:38,660
+And then that's it.
+
+1042
+00:59:38,660 --> 00:59:40,660
+OK.
+
+1043
+00:59:40,660 --> 00:59:45,460
+So if you count the number of reads and writes, remember,
+
+1044
+00:59:45,460 --> 00:59:47,180
+this is just plain PyTorch.
+
+1045
+00:59:47,180 --> 00:59:48,520
+So this is a different kernel.
+
+1046
+00:59:48,520 --> 00:59:49,700
+This is a different kernel.
+
+1047
+00:59:49,700 --> 00:59:51,900
+And unless you call torch.compile,
+
+1048
+00:59:51,900 --> 00:59:54,660
+these are going to be different operations.
+
+1049
+00:59:54,660 --> 00:59:57,580
+And each operation is going to read and write, read
+
+1050
+00:59:57,580 --> 00:59:59,100
+and write from HBM.
+
+1051
+00:59:59,100 --> 01:00:06,660
+OK, so you have five MN reads, three MN writes.
+
+1052
+01:00:06,660 --> 01:00:13,992
+And in principle, you should really only have much fewer.
+
+1053
+01:00:13,992 --> 01:00:17,340
+OK, so this is a piece of code.
+
+1054
+01:00:17,340 --> 01:00:18,080
+Makes sense.
+
+1055
+01:00:18,080 --> 01:00:21,140
+Everyone should be familiar with what the softmax is doing.
+
+1056
+01:00:21,140 --> 01:00:23,350
+OK.
+
+1057
+01:00:23,350 --> 01:00:28,230
+So let's write down the Triton kernel.
+
+1058
+01:00:28,230 --> 01:00:34,030
+And in some sense, the form is going to be very similar.
+
+1059
+01:00:34,030 --> 01:00:35,470
+Just like in the GeLU.
+
+1060
+01:00:35,470 --> 01:00:37,030
+Right, once you do the scaffolding,
+
+1061
+01:00:37,030 --> 01:00:42,430
+the core computation looks very much like the naive version.
+
+1062
+01:00:42,430 --> 01:00:44,590
+So what we're going to do is we're going
+
+1063
+01:00:44,590 --> 01:00:47,910
+to say each row is a block.
+
+1064
+01:00:47,910 --> 01:00:48,590
+OK.
+
+1065
+01:00:48,590 --> 01:00:51,110
+And why do I make each row a block?
+
+1066
+01:00:51,110 --> 01:00:53,310
+Well, because now, remember, each row,
+
+1067
+01:00:53,310 --> 01:00:55,010
+I have to normalize and sum.
+
+1068
+01:00:55,010 --> 01:00:56,490
+So it's not element-wise.
+
+1069
+01:00:56,490 --> 01:00:58,310
+So softmax is not element-wise.
+
+1070
+01:00:58,310 --> 01:01:00,390
+But it is row-wise.
+
+1071
+01:01:00,390 --> 01:01:03,470
+So the blocks don't interact.
+
+1072
+01:01:03,470 --> 01:01:08,150
+And the blocks don't have shared memory, so that's fine.
+
+1073
+01:01:08,150 --> 01:01:11,030
+There's no shared memory across blocks.
+
+1074
+01:01:11,030 --> 01:01:16,590
+So then within each row, I'm just going to do some stuff.
+
+1075
+01:01:16,590 --> 01:01:19,750
+OK, so let's see what happens.
+
+1076
+01:01:19,750 --> 01:01:22,230
+So again, I'm going to, in Python,
+
+1077
+01:01:22,230 --> 01:01:24,810
+I'm going to allocate my output tensor.
+
+1078
+01:01:24,810 --> 01:01:28,890
+I have this M by N matrix.
+
+1079
+01:01:28,890 --> 01:01:35,210
+I'm going to define the block size as basically
+
+1080
+01:01:35,210 --> 01:01:37,490
+the number of columns.
+
+1081
+01:01:37,490 --> 01:01:41,050
+Go to the next power of 2 for good luck.
+
+1082
+01:01:41,050 --> 01:01:45,850
+And then the number of blocks is just the number of rows.
+
+1083
+01:01:45,850 --> 01:01:48,730
+OK, and I'm going to call this kernel.
+
+1084
+01:01:48,730 --> 01:01:51,876
+So how many blocks are there?
+
+1085
+01:01:51,876 --> 01:01:52,376
+M.
+
+1086
+01:01:52,376 --> 01:01:54,530
+Right, one for each row.
+
+1087
+01:01:54,530 --> 01:01:57,930
+And each block, I'm going to pass the input pointer,
+
+1088
+01:01:57,930 --> 01:01:59,890
+the output pointer.
+
+1089
+01:01:59,890 --> 01:02:06,210
+And then I'm going to also pass these strides which
+
+1090
+01:02:06,210 --> 01:02:09,210
+tell me how far to move down.
+
+1091
+01:02:14,210 --> 01:02:20,940
+OK, let me actually go and show you that softmax kernel, OK.
+
+1092
+01:02:23,860 --> 01:02:28,860
+OK, so what does this look like here?
+
+1093
+01:02:28,860 --> 01:02:31,140
+So I wake up.
+
+1094
+01:02:31,140 --> 01:02:33,940
+I'm on a particular row, OK.
+
+1095
+01:02:33,940 --> 01:02:38,180
+And this is going to give me all the columns from 0
+
+1096
+01:02:38,180 --> 01:02:41,060
+to the number of block size, which I'm assuming
+
+1097
+01:02:41,060 --> 01:02:43,860
+that's all the columns.
+
+1098
+01:02:43,860 --> 01:02:48,820
+I'm going to read.
+
+1099
+01:02:48,820 --> 01:02:53,200
+So basically, I need to figure out where to read from memory,
+
+1100
+01:02:53,200 --> 01:02:55,780
+and that's going to be the start of my data.
+
+1101
+01:02:55,780 --> 01:02:59,060
+Plus which row.
+
+1102
+01:02:59,060 --> 01:03:01,460
+And the row stride basically gives me
+
+1103
+01:03:01,460 --> 01:03:06,660
+every row is-- basically, this is the number of columns,
+
+1104
+01:03:06,660 --> 01:03:07,500
+essentially.
+
+1105
+01:03:07,500 --> 01:03:11,220
+It's going to tell me where how far to go down.
+
+1106
+01:03:11,220 --> 01:03:14,020
+And then this x pointers is basically the addresses
+
+1107
+01:03:14,020 --> 01:03:15,660
+of all the data I need to load.
+
+1108
+01:03:15,660 --> 01:03:18,670
+I load them up.
+
+1109
+01:03:18,670 --> 01:03:23,190
+And here, I do this thing where if it's masked out, then
+
+1110
+01:03:23,190 --> 01:03:26,990
+I put minus infinity, because that's
+
+1111
+01:03:26,990 --> 01:03:33,110
+going to be the equivalent of a 0 for the softmax operation.
+
+1112
+01:03:33,110 --> 01:03:35,310
+And then this part is essentially the same
+
+1113
+01:03:35,310 --> 01:03:37,210
+as the naive softmax.
+
+1114
+01:03:37,210 --> 01:03:39,690
+I'm just going to compute the max,
+
+1115
+01:03:39,690 --> 01:03:44,070
+subtract it off, exponentiate, sum, and divide.
+
+1116
+01:03:44,070 --> 01:03:45,330
+And then I write it back.
+
+1117
+01:03:48,950 --> 01:03:50,230
+OK.
+
+1118
+01:03:50,230 --> 01:03:51,110
+Yeah.
+
+1119
+01:03:58,590 --> 01:04:03,310
+Yeah, so this is the version where each block can just
+
+1120
+01:04:03,310 --> 01:04:07,030
+span the entire row.
+
+1121
+01:04:07,030 --> 01:04:13,090
+And you can see that Triton makes this very easy, right?
+
+1122
+01:04:13,090 --> 01:04:16,650
+Because this is as if you were just writing normal
+
+1123
+01:04:16,650 --> 01:04:17,710
+PyTorch code.
+
+1124
+01:04:20,570 --> 01:04:23,630
+So if everything fits in a block, you basically—
+
+1125
+01:04:23,630 --> 01:04:25,990
+The thing is, if you can fit it into a block,
+
+1126
+01:04:25,990 --> 01:04:29,330
+you can just write normal PyTorch, almost.
+
+1127
+01:04:29,330 --> 01:04:30,490
+Yeah?
+
+1128
+01:04:30,490 --> 01:04:34,290
+What if my number of columns, the number of rows,
+
+1129
+01:04:34,290 --> 01:04:37,865
+are bigger than blocksize?
+
+1130
+01:04:37,865 --> 01:04:38,990
+Yeah, so we'll get to that.
+
+1131
+01:04:38,990 --> 01:04:41,150
+Now the number of columns, rows, in general,
+
+1132
+01:04:41,150 --> 01:04:43,150
+it's going to be much larger than the blocksize.
+
+1133
+01:04:43,150 --> 01:04:44,525
+So we'll come back to that, yeah.
+
+1134
+01:04:44,525 --> 01:04:47,610
+So if you wanted to do a softmax per column,
+
+1135
+01:04:52,530 --> 01:04:56,490
+So the question is if you want to do softmax by column.
+
+1136
+01:04:56,490 --> 01:04:59,890
+I think that should be fine, because here, we're
+
+1137
+01:04:59,890 --> 01:05:01,350
+tracking these pointers, right.
+
+1138
+01:05:01,350 --> 01:05:05,258
+So the pointers can be anything.
+
+1139
+01:05:05,258 --> 01:05:07,050
+Basically, I think all you would have to do
+
+1140
+01:05:07,050 --> 01:05:12,265
+is change the stride here to basically access the columns.
+
+1141
+01:05:12,265 --> 01:05:13,390
+Actually, it would be here.
+
+1142
+01:05:13,390 --> 01:05:18,060
+The column offsets, you would just multiply this
+
+1143
+01:05:18,060 --> 01:05:21,620
+by the row stride, I think.
+
+1144
+01:05:21,620 --> 01:05:23,780
+OK, let's move on.
+
+1145
+01:05:23,780 --> 01:05:30,500
+All right, so now, warming up to the matmul.
+
+1146
+01:05:30,500 --> 01:05:34,060
+Suppose that your row doesn't fit into a block.
+
+1147
+01:05:34,060 --> 01:05:36,700
+OK, so what do you do in this case?
+
+1148
+01:05:36,700 --> 01:05:39,420
+So for example, if you have, let's say,
+
+1149
+01:05:39,420 --> 01:05:46,420
+a row that's 4,000 columns, but the blocksize is only 1,024.
+
+1150
+01:05:46,420 --> 01:05:50,660
+So you have to do something here.
+
+1151
+01:05:50,660 --> 01:05:52,700
+So here's the strategy.
+
+1152
+01:05:52,700 --> 01:05:56,060
+We're going to break up the row into tiles.
+
+1153
+01:05:56,060 --> 01:05:58,860
+So in this case, there's going to be four tiles.
+
+1154
+01:05:58,860 --> 01:06:02,780
+And each thread is going to iterate over the tiles
+
+1155
+01:06:02,780 --> 01:06:04,860
+and accumulate a sum.
+
+1156
+01:06:04,860 --> 01:06:07,260
+And then finally at the end, we're
+
+1157
+01:06:07,260 --> 01:06:15,910
+going to do the reduction by summing everything
+
+1158
+01:06:15,910 --> 01:06:17,530
+that each thread produced.
+
+1159
+01:06:17,530 --> 01:06:19,770
+So I'll show you an example of this.
+
+1160
+01:06:19,770 --> 01:06:21,990
+And now I'm switching from softmax
+
+1161
+01:06:21,990 --> 01:06:27,050
+to row sum because it's just easier to think about.
+
+1162
+01:06:27,050 --> 01:06:32,770
+OK, so here, well, this is not very interesting.
+
+1163
+01:06:32,770 --> 01:06:37,350
+The built-in row sum does what you would expect.
+
+1164
+01:06:37,350 --> 01:06:42,470
+So the row sum operation just basically takes a matrix
+
+1165
+01:06:42,470 --> 01:06:45,310
+and then computes the sum of each row, OK.
+
+1166
+01:06:45,310 --> 01:06:48,630
+So just no surprises there.
+
+1167
+01:06:48,630 --> 01:06:53,470
+OK, so conceptually what we're going to do here is as follows.
+
+1168
+01:06:53,470 --> 01:06:57,030
+OK, so each block is still in charge of one row.
+
+1169
+01:06:57,030 --> 01:06:58,950
+So that part hasn't changed.
+
+1170
+01:06:58,950 --> 01:07:01,750
+So suppose block one, row one.
+
+1171
+01:07:01,750 --> 01:07:03,790
+I wake up, and what do I do?
+
+1172
+01:07:03,790 --> 01:07:05,890
+I'm going to remember, now, there's tiles.
+
+1173
+01:07:05,890 --> 01:07:08,930
+And suppose tile 0 is columns 0 through 3,
+
+1174
+01:07:08,930 --> 01:07:12,060
+tile 1 is columns 4 through 7.
+
+1175
+01:07:12,060 --> 01:07:15,720
+And then tile 2 is columns 8 through 11.
+
+1176
+01:07:15,720 --> 01:07:18,440
+OK, so what I'm going to do here is
+
+1177
+01:07:18,440 --> 01:07:20,980
+that I'm going to iterate now.
+
+1178
+01:07:20,980 --> 01:07:26,500
+So first, I basically process this, all the threads.
+
+1179
+01:07:26,500 --> 01:07:29,040
+Basically, each thread keeps a kind of accumulator
+
+1180
+01:07:29,040 --> 01:07:32,040
+and processes the first tile.
+
+1181
+01:07:32,040 --> 01:07:34,520
+And it's going to move on to the next tile,
+
+1182
+01:07:34,520 --> 01:07:39,420
+and it's going to add the current element to the accumulator.
+
+1183
+01:07:39,420 --> 01:07:43,040
+So here, I'm putting 3, 1, 4, 1.
+
+1184
+01:07:43,040 --> 01:07:47,700
+And then the second loop iteration,
+
+1185
+01:07:47,700 --> 01:07:49,240
+I'm going to add 5 to this.
+
+1186
+01:07:49,240 --> 01:07:50,120
+I get 8.
+
+1187
+01:07:50,120 --> 01:07:51,920
+I add 9 to this, I get 10.
+
+1188
+01:07:51,920 --> 01:07:54,460
+2 to 4, and 6 to 1, right.
+
+1189
+01:07:54,460 --> 01:07:56,360
+So each of these four threads is going
+
+1190
+01:07:56,360 --> 01:08:00,160
+to be accumulating its own thing.
+
+1191
+01:08:00,160 --> 01:08:03,920
+And then at the end, I do another for tile 2.
+
+1192
+01:08:03,920 --> 01:08:08,520
+I add 5 and 3 to the respective accumulators.
+
+1193
+01:08:08,520 --> 01:08:13,800
+So at the end of the day, I have this, a vector of accumulators.
+
+1194
+01:08:13,800 --> 01:08:21,000
+And then that is actually--that, I can just sum up.
+
+1195
+01:08:21,000 --> 01:08:25,500
+OK, so let's see what the code looks like here.
+
+1196
+01:08:25,500 --> 01:08:28,899
+So I'm just going to call the row sum kernel.
+
+1197
+01:08:28,899 --> 01:08:32,913
+And let's see.
+
+1198
+01:08:32,913 --> 01:08:35,700
+OK, so here's what it looks like.
+
+1199
+01:08:35,700 --> 01:08:36,540
+So wake up.
+
+1200
+01:08:36,540 --> 01:08:38,660
+I am on a particular row.
+
+1201
+01:08:38,660 --> 01:08:42,819
+And this is what one row looks like.
+
+1202
+01:08:42,819 --> 01:08:46,399
+There's one tile, a second tile, a third tile, and so on.
+
+1203
+01:08:46,399 --> 01:08:50,660
+So n is the number of elements of that row.
+
+1204
+01:08:50,660 --> 01:08:58,340
+And block size is the size of this tile.
+
+1205
+01:08:58,340 --> 01:08:59,260
+OK.
+
+1206
+01:08:59,260 --> 01:09:01,500
+So remember, block size is the number of threads.
+
+1207
+01:09:01,500 --> 01:09:04,880
+I'm processing more data than the larger than the block size.
+
+1208
+01:09:04,880 --> 01:09:07,340
+I just have to do it iteratively now.
+
+1209
+01:09:07,340 --> 01:09:10,790
+So I'm going to loop over all of the tiles.
+
+1210
+01:09:10,790 --> 01:09:14,630
+So start is going to go from 0 to block size
+
+1211
+01:09:14,630 --> 01:09:18,310
+to 2 times block size, and so on and so forth.
+
+1212
+01:09:18,310 --> 01:09:26,830
+So each time I'm jumping across, I am doing calls.
+
+1213
+01:09:26,830 --> 01:09:35,750
+Basically get the offsets at the particular tile.
+
+1214
+01:09:35,750 --> 01:09:40,149
+And then I'm going to load the data from HBM,
+
+1215
+01:09:40,149 --> 01:09:42,609
+and I'm going to add it to the accumulation.
+
+1216
+01:09:42,609 --> 01:09:46,350
+So this accumulation is going to be either in registers or shared
+
+1217
+01:09:46,350 --> 01:09:48,069
+memory.
+
+1218
+01:09:48,069 --> 01:09:49,308
+OK.
+
+1219
+01:09:49,308 --> 01:09:51,350
+And then finally after I loop over all the tiles,
+
+1220
+01:09:51,350 --> 01:09:54,189
+I process the whole row, I get basically--
+
+1221
+01:09:54,189 --> 01:09:57,270
+for every thread I have accumulator of what
+
+1222
+01:09:57,270 --> 01:09:59,170
+that thread has picked up.
+
+1223
+01:09:59,170 --> 01:10:03,290
+And I can just do a sum to get a scalar, and I write it out.
+
+1224
+01:10:05,865 --> 01:10:08,240
+OK, so this is a little bit more complicated than before,
+
+1225
+01:10:08,240 --> 01:10:10,560
+because now we have a for loop within a thread.
+
+1226
+01:10:10,560 --> 01:10:15,260
+And this is necessary when your data doesn't fit within a block.
+
+1227
+01:10:18,320 --> 01:10:19,220
+Yeah?
+
+1228
+01:10:19,220 --> 01:10:22,013
+[INAUDIBLE]
+
+1229
+01:10:25,520 --> 01:10:29,140
+Just in case we don't have enough registers.
+
+1230
+01:10:29,140 --> 01:10:30,600
+We have to put it in--
+
+1231
+01:10:30,600 --> 01:10:33,120
+Yeah, so the question is I think if you can control
+
+1232
+01:10:33,120 --> 01:10:35,320
+where the accumulator resides.
+
+1233
+01:10:35,320 --> 01:10:39,520
+At least in this Triton program, you don't explicitly say.
+
+1234
+01:10:39,520 --> 01:10:42,560
+And this is up to the Triton compiler
+
+1235
+01:10:42,560 --> 01:10:45,340
+to figure out where to put it.
+
+1236
+01:10:47,978 --> 01:10:50,020
+But in general, if the block size is large enough,
+
+1237
+01:10:50,020 --> 01:10:52,660
+it has to go in shared memory.
+
+1238
+01:10:55,480 --> 01:10:56,980
+OK.
+
+1239
+01:10:56,980 --> 01:10:59,540
+All right, does this make sense?
+
+1240
+01:11:02,320 --> 01:11:06,320
+Just to, I think, make sure people are on the same page.
+
+1241
+01:11:06,320 --> 01:11:09,340
+Remember when GeLU, we also split a row
+
+1242
+01:11:09,340 --> 01:11:11,660
+into a bunch of pieces.
+
+1243
+01:11:11,660 --> 01:11:13,580
+But those were blocks.
+
+1244
+01:11:13,580 --> 01:11:15,260
+Right, and so each of those pieces
+
+1245
+01:11:15,260 --> 01:11:18,060
+was a block that was processed independently.
+
+1246
+01:11:18,060 --> 01:11:19,120
+These are not blocks.
+
+1247
+01:11:19,120 --> 01:11:21,220
+These are tiles.
+
+1248
+01:11:21,220 --> 01:11:24,820
+The block corresponds to this whole row.
+
+1249
+01:11:24,820 --> 01:11:28,560
+And the block has to basically process all the tiles.
+
+1250
+01:11:28,560 --> 01:11:32,780
+And so this is where it starts to not look like PyTorch,
+
+1251
+01:11:32,780 --> 01:11:35,460
+because you're not able to process all
+
+1252
+01:11:35,460 --> 01:11:37,740
+your data in one nice kind of--
+
+1253
+01:11:37,740 --> 01:11:40,060
+not everything fits into shared memory.
+
+1254
+01:11:40,060 --> 01:11:40,820
+Yeah?
+
+1255
+01:11:40,820 --> 01:11:44,460
+also stored in shared memory?
+
+1256
+01:11:44,460 --> 01:11:45,580
+Yeah.
+
+1257
+01:11:45,580 --> 01:11:48,120
+Let's say the accumulator is stored in shared memory.
+
+1258
+01:11:48,120 --> 01:11:48,620
+Yeah.
+
+1259
+01:11:51,460 --> 01:11:53,380
+OK.
+
+1260
+01:11:53,380 --> 01:11:57,620
+All right, so let's now maybe go on
+
+1261
+01:11:57,620 --> 01:12:00,720
+to our finale, which is matmul.
+
+1262
+01:12:00,720 --> 01:12:03,870
+OK, so matmul, of course, is the bread and butter
+
+1263
+01:12:03,870 --> 01:12:04,930
+of deep learning.
+
+1264
+01:12:04,930 --> 01:12:07,750
+It's been optimized to death.
+
+1265
+01:12:07,750 --> 01:12:14,330
+And it's, in some sense, very fundamental operation.
+
+1266
+01:12:14,330 --> 01:12:16,530
+So you take two matrices, you multiply them.
+
+1267
+01:12:16,530 --> 01:12:19,270
+I'm going to add a little bit of a twist here.
+
+1268
+01:12:19,270 --> 01:12:21,950
+I'm going to do a matmul followed by a ReLU,
+
+1269
+01:12:21,950 --> 01:12:24,190
+just because, just for kicks.
+
+1270
+01:12:24,190 --> 01:12:26,510
+OK.
+
+1271
+01:12:26,510 --> 01:12:28,010
+Well, this happens, right.
+
+1272
+01:12:28,010 --> 01:12:31,410
+Because if you have one linear layer, it's a matmul.
+
+1273
+01:12:31,410 --> 01:12:34,490
+And then you apply a ReLU activation.
+
+1274
+01:12:34,490 --> 01:12:37,750
+So this is not completely out of nowhere.
+
+1275
+01:12:37,750 --> 01:12:41,350
+But I'll show you later why I did this.
+
+1276
+01:12:41,350 --> 01:12:44,510
+OK, so how do you build a matmul kernel?
+
+1277
+01:12:44,510 --> 01:12:48,630
+All right, so here's a naive approach.
+
+1278
+01:12:48,630 --> 01:12:51,070
+OK, so here's my, let's say, a matrix.
+
+1279
+01:12:51,070 --> 01:12:54,950
+I'm multiplying A times B. And I'm
+
+1280
+01:12:54,950 --> 01:13:01,330
+trying to write out the matrix C. And A is M by K, B is K by N.
+
+1281
+01:13:01,330 --> 01:13:05,400
+So C is M by N. OK, so what I'm going to do
+
+1282
+01:13:05,400 --> 01:13:09,700
+is I'm going to fix one of these elements.
+
+1283
+01:13:09,700 --> 01:13:12,340
+Let's say M equals 1, N equals 2.
+
+1284
+01:13:12,340 --> 01:13:16,200
+OK, so I'm processing-- actually, let's do M equals 1,
+
+1285
+01:13:16,200 --> 01:13:16,820
+N equals 1.
+
+1286
+01:13:16,820 --> 01:13:18,560
+So I'm doing C5.
+
+1287
+01:13:18,560 --> 01:13:28,120
+And then, basically for every k, so I'm going to, yeah,
+
+1288
+01:13:28,120 --> 01:13:32,920
+I'm going to iterate over the k, the rows of A
+
+1289
+01:13:32,920 --> 01:13:37,040
+and the columns of B. I'm going to read from HBM.
+
+1290
+01:13:37,040 --> 01:13:39,580
+I'm going to multiply them, accumulate that.
+
+1291
+01:13:39,580 --> 01:13:41,440
+And at the end, I'm going to write out
+
+1292
+01:13:41,440 --> 01:13:44,280
+to this and this element.
+
+1293
+01:13:44,280 --> 01:13:47,880
+So that is a valid matmul kernel.
+
+1294
+01:13:47,880 --> 01:13:49,200
+OK.
+
+1295
+01:13:49,200 --> 01:13:51,300
+So what's wrong with it?
+
+1296
+01:13:57,720 --> 01:13:58,760
+It's correct.
+
+1297
+01:13:58,760 --> 01:14:03,170
+But if you look at how many reads and writes it's doing,
+
+1298
+01:14:03,170 --> 01:14:04,490
+this is not good.
+
+1299
+01:14:04,490 --> 01:14:08,530
+Right, so basically for every M and N and K,
+
+1300
+01:14:08,530 --> 01:14:10,230
+I have to read from HBM.
+
+1301
+01:14:10,230 --> 01:14:14,002
+So it's on the order of M times K times N reads.
+
+1302
+01:14:14,002 --> 01:14:14,710
+Number of writes.
+
+1303
+01:14:14,710 --> 01:14:18,650
+I mean, it doesn't matter, but this is the bottleneck, right.
+
+1304
+01:14:18,650 --> 01:14:22,850
+And if you remember from the second lecture,
+
+1305
+01:14:22,850 --> 01:14:25,410
+if you look at the number of operations
+
+1306
+01:14:25,410 --> 01:14:27,730
+you're doing divided by the number of bytes that
+
+1307
+01:14:27,730 --> 01:14:30,250
+were transferred, that's the arithmetic intensity
+
+1308
+01:14:30,250 --> 01:14:32,210
+which you want to be high.
+
+1309
+01:14:32,210 --> 01:14:36,890
+So the number of operations is M times K times N order.
+
+1310
+01:14:36,890 --> 01:14:38,870
+And then the number of reads is also the same.
+
+1311
+01:14:38,870 --> 01:14:43,530
+So arithmetic intensity is a constant, which is not good.
+
+1312
+01:14:43,530 --> 01:14:47,210
+OK, so if you look carefully, you
+
+1313
+01:14:47,210 --> 01:14:49,310
+notice that there is a lot of redundant reads.
+
+1314
+01:14:49,310 --> 01:14:52,810
+So imagine computing C4.
+
+1315
+01:14:52,810 --> 01:14:56,450
+You needed to read A4, A5, and A6.
+
+1316
+01:14:56,450 --> 01:14:58,650
+And if you compute C5, you're going
+
+1317
+01:14:58,650 --> 01:15:02,030
+to have to read those over again as well.
+
+1318
+01:15:02,030 --> 01:15:07,270
+So if you can just read those once,
+
+1319
+01:15:07,270 --> 01:15:10,170
+then you really save on reads, and that's great.
+
+1320
+01:15:10,170 --> 01:15:14,670
+So let's try to use shared memory to do that.
+
+1321
+01:15:14,670 --> 01:15:17,950
+So here's the idealized approach.
+
+1322
+01:15:17,950 --> 01:15:21,430
+I'm going to load all of A and B into shared memory.
+
+1323
+01:15:21,430 --> 01:15:25,390
+And then I'm going to just compute C. So
+
+1324
+01:15:25,390 --> 01:15:28,510
+if I can do that, then I get--
+
+1325
+01:15:28,510 --> 01:15:30,450
+now I don't have this cubic number of reads,
+
+1326
+01:15:30,450 --> 01:15:32,870
+I only get quadratic number of reads,
+
+1327
+01:15:32,870 --> 01:15:37,550
+which means I get the arithmetic intensity of order n, which
+
+1328
+01:15:37,550 --> 01:15:42,270
+in the second lecture, I said was a kind of ideal thing
+
+1329
+01:15:42,270 --> 01:15:45,550
+you could hope for.
+
+1330
+01:15:45,550 --> 01:15:47,990
+OK, so if you can do that, that's
+
+1331
+01:15:47,990 --> 01:15:50,670
+great, because you basically-- there's no redundant reads.
+
+1332
+01:15:50,670 --> 01:15:52,650
+You read everything once into shared memory.
+
+1333
+01:15:52,650 --> 01:15:55,510
+You do the computation and you write it back.
+
+1334
+01:15:55,510 --> 01:15:58,380
+OK, but what's the problem with this idealized approach?
+
+1335
+01:16:03,280 --> 01:16:05,520
+The problem is that A and B are usually
+
+1336
+01:16:05,520 --> 01:16:09,166
+too large to fit into shared memory.
+
+1337
+01:16:09,166 --> 01:16:10,440
+Right.
+
+1338
+01:16:10,440 --> 01:16:14,280
+So then, what do you have to do now?
+
+1339
+01:16:14,280 --> 01:16:19,640
+OK, so the idea here is this very classic idea of tiling.
+
+1340
+01:16:19,640 --> 01:16:23,520
+And the idea basically is to, well, fit as much
+
+1341
+01:16:23,520 --> 01:16:26,680
+as you can to shared memory as you can, essentially.
+
+1342
+01:16:26,680 --> 01:16:29,440
+So in some sense, it's going to look
+
+1343
+01:16:29,440 --> 01:16:32,585
+like the naive-- it's going to globally look like the naive
+
+1344
+01:16:32,585 --> 01:16:34,960
+approach, but locally it looks like the idealized approach
+
+1345
+01:16:34,960 --> 01:16:38,320
+is the way to think about it.
+
+1346
+01:16:38,320 --> 01:16:41,480
+So here's the picture.
+
+1347
+01:16:41,480 --> 01:16:43,463
+I think Tatsu showed this as well.
+
+1348
+01:16:43,463 --> 01:16:44,880
+So what we're going to do is we're
+
+1349
+01:16:44,880 --> 01:16:48,240
+going to take this matrix C, and instead-- remember,
+
+1350
+01:16:48,240 --> 01:16:50,400
+the naive approach just said for every element,
+
+1351
+01:16:50,400 --> 01:16:52,180
+I'm going to compute it.
+
+1352
+01:16:52,180 --> 01:16:55,990
+But now I'm going to say for every tile, I'm going to do it.
+
+1353
+01:16:55,990 --> 01:16:58,890
+So I break it up into tiles.
+
+1354
+01:16:58,890 --> 01:17:02,610
+And each of these tiles is going to be a thread block.
+
+1355
+01:17:02,610 --> 01:17:04,610
+And I'm going to have a bunch of threads that is
+
+1356
+01:17:04,610 --> 01:17:07,450
+responsible for computing this.
+
+1357
+01:17:07,450 --> 01:17:09,410
+Now a different tile is going to be
+
+1358
+01:17:09,410 --> 01:17:14,090
+computed completely separately by another thread block.
+
+1359
+01:17:14,090 --> 01:17:17,910
+OK, so I'm going to--imagine I'm in Triton.
+
+1360
+01:17:17,910 --> 01:17:19,850
+I wake up.
+
+1361
+01:17:19,850 --> 01:17:21,690
+I'm looking at this thread block.
+
+1362
+01:17:21,690 --> 01:17:23,290
+So what do I have to do?
+
+1363
+01:17:23,290 --> 01:17:24,730
+Well, in some sense, it's the same
+
+1364
+01:17:24,730 --> 01:17:32,450
+as the naive approach where, for every row tile of A,
+
+1365
+01:17:32,450 --> 01:17:35,010
+I'm going to go scan across the rows.
+
+1366
+01:17:35,010 --> 01:17:38,210
+And for every column tile of B, I'm
+
+1367
+01:17:38,210 --> 01:17:43,250
+going to load the corresponding tile A and the corresponding--
+
+1368
+01:17:43,250 --> 01:17:45,850
+so say I'm here-- and the corresponding tile
+
+1369
+01:17:45,850 --> 01:17:48,650
+from B into shared memory.
+
+1370
+01:17:48,650 --> 01:17:51,450
+I'm going to multiply these two together.
+
+1371
+01:17:51,450 --> 01:17:58,400
+And that's going to be like the idealized approach.
+
+1372
+01:17:58,400 --> 01:18:02,400
+And I'm going to accumulate that in the partial sum.
+
+1373
+01:18:02,400 --> 01:18:04,140
+And this is all sitting in shared memory.
+
+1374
+01:18:04,140 --> 01:18:07,660
+And then after I finish all the sweep of the row and the column
+
+1375
+01:18:07,660 --> 01:18:11,080
+here, then I can finally write this output tile to HBM.
+
+1376
+01:18:15,340 --> 01:18:20,380
+OK, so that's conceptually what's happening.
+
+1377
+01:18:20,380 --> 01:18:22,180
+And then the arithmetic intensity here
+
+1378
+01:18:22,180 --> 01:18:24,900
+now goes up to order tile size.
+
+1379
+01:18:24,900 --> 01:18:27,700
+So you can generally not reach order n,
+
+1380
+01:18:27,700 --> 01:18:29,940
+because that would require you to fit everything
+
+1381
+01:18:29,940 --> 01:18:31,120
+into shared memory.
+
+1382
+01:18:31,120 --> 01:18:36,860
+But if your tiles are big, then that's still not too bad.
+
+1383
+01:18:36,860 --> 01:18:39,100
+OK, so just as a bonus.
+
+1384
+01:18:39,100 --> 01:18:43,260
+While you're doing all writing a kernel for this
+
+1385
+01:18:43,260 --> 01:18:47,300
+anyway, sometimes if you want to apply an element-wise activation
+
+1386
+01:18:47,300 --> 01:18:51,500
+function, it's very easy to just put it on at the end.
+
+1387
+01:18:51,500 --> 01:18:53,540
+And this is kernel fusion.
+
+1388
+01:18:53,540 --> 01:18:58,680
+OK, so very quickly, the implementation here.
+
+1389
+01:18:58,680 --> 01:19:03,720
+So-- oops.
+
+1390
+01:19:03,720 --> 01:19:09,120
+OK, so just a reminder about strides since this is going to show up.
+
+1391
+01:19:09,120 --> 01:19:14,200
+So a tensor is a multidimensional array.
+
+1392
+01:19:14,200 --> 01:19:16,800
+But in memory, it's linearized.
+
+1393
+01:19:16,800 --> 01:19:19,640
+And strides of a tensor tells you basically
+
+1394
+01:19:19,640 --> 01:19:22,400
+how to map from a multidimensional index
+
+1395
+01:19:22,400 --> 01:19:26,900
+such as a row, a column, into an actual index.
+
+1396
+01:19:26,900 --> 01:19:28,840
+And basically what you do is multiply the row
+
+1397
+01:19:28,840 --> 01:19:30,960
+by the stride, plus the column
+
+1398
+01:19:30,960 --> 01:19:33,320
+by the stride of the column.
+
+1399
+01:19:33,320 --> 01:19:37,220
+OK, so in this case, every time you advance to the next row,
+
+1400
+01:19:37,220 --> 01:19:40,260
+you go four positions in your memory.
+
+1401
+01:19:40,260 --> 01:19:42,600
+And every time you advance a column, you go one.
+
+1402
+01:19:42,600 --> 01:19:46,560
+And if it were to transpose, it would be flipped.
+
+1403
+01:19:46,560 --> 01:19:50,540
+OK, so what does this kernel look like here?
+
+1404
+01:19:54,810 --> 01:19:57,610
+OK, so the launch is not interesting.
+
+1405
+01:19:57,610 --> 01:20:02,350
+So you wake up and you are on tile M and N.
+
+1406
+01:20:02,350 --> 01:20:07,590
+So it's like OK, I'm responsible for computing the C matrix,
+
+1407
+01:20:07,590 --> 01:20:11,930
+but for the M comma N tile there's
+
+1408
+01:20:11,930 --> 01:20:15,410
+a bunch of index manipulation which you can--
+
+1409
+01:20:15,410 --> 01:20:19,690
+I'll just gloss through, but it's straightforward
+
+1410
+01:20:19,690 --> 01:20:20,530
+but a little bit.
+
+1411
+01:20:20,530 --> 01:20:24,610
+You just have to track the indices.
+
+1412
+01:20:24,610 --> 01:20:29,530
+So this basically tells you which rows of A, the matrix A,
+
+1413
+01:20:29,530 --> 01:20:30,570
+I'm looking at.
+
+1414
+01:20:30,570 --> 01:20:34,310
+Which rows of-- oh sorry, which columns of B I'm looking at.
+
+1415
+01:20:34,310 --> 01:20:38,370
+And then this is just the numbers 1 through K.
+
+1416
+01:20:38,370 --> 01:20:42,970
+Then I'm going to get the pointers into A and B
+
+1417
+01:20:42,970 --> 01:20:46,330
+at my tile location.
+
+1418
+01:20:46,330 --> 01:20:48,750
+And then I'm going to set up this accumulator matrix.
+
+1419
+01:20:48,750 --> 01:20:51,500
+This is going to be in shared memory.
+
+1420
+01:20:51,500 --> 01:20:53,660
+It's M by N. And then this is going
+
+1421
+01:20:53,660 --> 01:20:57,320
+to look like the row reduction, right.
+
+1422
+01:20:57,320 --> 01:21:01,780
+You have this sum over all the tiles.
+
+1423
+01:21:01,780 --> 01:21:04,180
+But instead of just going across the tiles,
+
+1424
+01:21:04,180 --> 01:21:06,860
+I'm now going across the row tiles
+
+1425
+01:21:06,860 --> 01:21:08,860
+and also simultaneously down the column
+
+1426
+01:21:08,860 --> 01:21:13,820
+tiles of B. I load A, the small matrix, I load B, the small B
+
+1427
+01:21:13,820 --> 01:21:14,540
+tile.
+
+1428
+01:21:14,540 --> 01:21:16,397
+And then I perform this dot.
+
+1429
+01:21:16,397 --> 01:21:18,480
+So remember, whenever things are in shared memory,
+
+1430
+01:21:18,480 --> 01:21:21,220
+things look like PyTorch and I can just say, matmul it,
+
+1431
+01:21:21,220 --> 01:21:23,940
+and it will do the thing.
+
+1432
+01:21:23,940 --> 01:21:29,300
+And then I advance to the next row tile of A
+
+1433
+01:21:29,300 --> 01:21:34,540
+and the next column tile of B.
+
+1434
+01:21:34,540 --> 01:21:37,620
+The bonus is that if I wanted to apply
+
+1435
+01:21:37,620 --> 01:21:42,580
+element-wise non-linearity, I might as well do that here.
+
+1436
+01:21:42,580 --> 01:21:47,480
+Before I write it out to HBM, I can do any operation on it.
+
+1437
+01:21:47,480 --> 01:21:51,120
+And then finally, I just write it out.
+
+1438
+01:21:51,120 --> 01:21:55,060
+OK, so there are some indices that you have to pay attention to.
+
+1439
+01:21:55,060 --> 01:21:59,540
+But hopefully, the form of the algorithm is clear.
+
+1440
+01:22:06,260 --> 01:22:06,760
+OK.
+
+1441
+01:22:06,760 --> 01:22:09,020
+Any questions about that?
+
+1442
+01:22:12,200 --> 01:22:12,700
+All right.
+
+1443
+01:22:12,700 --> 01:22:15,100
+Maybe I'll just summarize, and you can ask me later.
+
+1444
+01:22:15,100 --> 01:22:18,360
+So today, we talked about there's
+
+1445
+01:22:18,360 --> 01:22:20,520
+a programming model, which is you're
+
+1446
+01:22:20,520 --> 01:22:25,720
+talking about either PyTorch or Triton or PTX.
+
+1447
+01:22:25,720 --> 01:22:32,000
+This is what the kind of programmer can control.
+
+1448
+01:22:32,000 --> 01:22:33,160
+Right, and even PTX.
+
+1449
+01:22:33,160 --> 01:22:36,600
+You can write PTX and you can control every-- specialize
+
+1450
+01:22:36,600 --> 01:22:38,560
+however you want.
+
+1451
+01:22:38,560 --> 01:22:40,900
+But this is not the full picture,
+
+1452
+01:22:40,900 --> 01:22:45,480
+because the reality is that your code has to run on hardware,
+
+1453
+01:22:45,480 --> 01:22:48,770
+and there's only a finite number of SMs,
+
+1454
+01:22:48,770 --> 01:22:54,470
+a finite number of banks, and sizing of memory and registers.
+
+1455
+01:22:54,470 --> 01:22:55,650
+All are finite.
+
+1456
+01:22:55,650 --> 01:22:58,370
+So you come in with your big matrix and transformer,
+
+1457
+01:22:58,370 --> 01:23:01,730
+and want to-- it has to fit in with the constraints
+
+1458
+01:23:01,730 --> 01:23:04,810
+of the hardware.
+
+1459
+01:23:04,810 --> 01:23:07,570
+So that's why benchmarking and profiling
+
+1460
+01:23:07,570 --> 01:23:09,970
+are really important to understand
+
+1461
+01:23:09,970 --> 01:23:16,250
+how the messiness of the hardware translates to performance.
+
+1462
+01:23:16,250 --> 01:23:18,510
+We talked about Triton, which is,
+
+1463
+01:23:18,510 --> 01:23:21,410
+I think, a pretty nice, neat language to think
+
+1464
+01:23:21,410 --> 01:23:23,650
+about thread blocks.
+
+1465
+01:23:23,650 --> 01:23:25,610
+Hopefully by now you can appreciate
+
+1466
+01:23:25,610 --> 01:23:30,730
+that things are easier to think about thread blocks
+
+1467
+01:23:30,730 --> 01:23:33,170
+than individual threads, because you don't have
+
+1468
+01:23:33,170 --> 01:23:37,170
+to think about explicitly synchronizing threads or doing
+
+1469
+01:23:37,170 --> 01:23:38,490
+shared memory.
+
+1470
+01:23:38,490 --> 01:23:41,330
+And the way to think about it is that you figure out-- you
+
+1471
+01:23:41,330 --> 01:23:42,310
+have your computation.
+
+1472
+01:23:42,310 --> 01:23:44,700
+You break it down into the thread
+
+1473
+01:23:44,700 --> 01:23:47,200
+blocks where you just need to read from shared memory.
+
+1474
+01:23:47,200 --> 01:23:50,380
+Do some stuff, and write it back into HBM.
+
+1475
+01:23:50,380 --> 01:23:53,360
+And then we saw some examples of increasing difficulty.
+
+1476
+01:23:53,360 --> 01:23:55,080
+Element wise is the easiest.
+
+1477
+01:23:55,080 --> 01:23:57,660
+And then reduction over a row.
+
+1478
+01:23:57,660 --> 01:24:00,760
+Reduction where it doesn't fit into a row.
+
+1479
+01:24:00,760 --> 01:24:04,660
+And we introduced the baby tiling.
+
+1480
+01:24:04,660 --> 01:24:08,540
+And then matmul is the canonical example
+
+1481
+01:24:08,540 --> 01:24:10,660
+where you actually do tiling.
+
+1482
+01:24:10,660 --> 01:24:13,860
+OK, so that's all I'm going to say about how
+
+1483
+01:24:13,860 --> 01:24:15,040
+to program a single GPU.
+
+1484
+01:24:15,040 --> 01:24:18,220
+Next time, we're going to go to more GPU and talk
+
+1485
+01:24:18,220 --> 01:24:21,540
+about multi-GPU programming.
+
+1486
+01:24:21,540 --> 01:24:22,980
+Yeah, question.
+
+1487
+01:24:22,980 --> 01:24:24,717
+So if I want to write down kernels,
+
+1488
+01:24:24,717 --> 01:24:25,800
+what are the alternatives?
+
+1489
+01:24:25,800 --> 01:24:27,860
+Do I have to try them and--
+
+1490
+01:24:27,860 --> 01:24:29,700
+for each of my choices that I have,
+
+1491
+01:24:29,700 --> 01:24:33,300
+how close can I get to the optimal level?
+
+1492
+01:24:33,300 --> 01:24:39,580
+So the question is, what are alternatives to Triton?
+
+1493
+01:24:39,580 --> 01:24:42,870
+So there's a trade-off between--
+
+1494
+01:24:42,870 --> 01:24:47,070
+Every language has an inductive bias, right.
+
+1495
+01:24:47,070 --> 01:24:50,310
+That makes certain things easier and certain things harder.
+
+1496
+01:24:50,310 --> 01:24:51,870
+So most of what we do--
+
+1497
+01:24:51,870 --> 01:24:56,350
+Triton was built by people who train transformers.
+
+1498
+01:24:56,350 --> 01:24:59,450
+So anything involving transformers,
+
+1499
+01:24:59,450 --> 01:25:04,322
+I think it's going to be relatively easy there.
+
+1500
+01:25:04,322 --> 01:25:06,030
+Of course, in the extreme, you can always
+
+1501
+01:25:06,030 --> 01:25:08,090
+go to PTX and write that.
+
+1502
+01:25:08,090 --> 01:25:10,410
+But I wouldn't advise that as a first step.
+
+1503
+01:25:10,410 --> 01:25:14,070
+There are a bunch of other libraries.
+
+1504
+01:25:14,070 --> 01:25:15,770
+There's ThunderKittens.
+
+1505
+01:25:15,770 --> 01:25:19,310
+There's CUTE, various DSLs that
+
+1506
+01:25:19,310 --> 01:25:24,710
+allow you to give you-- they're not necessarily comparable
+
+1507
+01:25:24,710 --> 01:25:26,050
+either up or down the stack.
+
+1508
+01:25:26,050 --> 01:25:30,630
+They just give you different characteristics.
+
+1509
+01:25:30,630 --> 01:25:31,630
+Yeah?
+
+1510
+01:25:31,630 --> 01:25:35,170
+Do you have a high dimensional tensor magnification
+
+1511
+01:25:35,170 --> 01:25:40,150
+or high dimensional tensor processing?
+
+1512
+01:25:40,150 --> 01:25:42,570
+What is the best approach?
+
+1513
+01:25:42,570 --> 01:25:49,250
+What I'm thinking is can I load unload the whole tensor, both
+
+1514
+01:25:49,250 --> 01:25:53,450
+of the tensors on bunch of threads or thread blocks
+
+1515
+01:25:53,450 --> 01:25:57,330
+on my GPU at the same time and compute them?
+
+1516
+01:25:57,330 --> 01:26:03,490
+Or would it be better to take each element,
+
+1517
+01:26:03,490 --> 01:26:06,210
+just what we did here, right.
+
+1518
+01:26:06,210 --> 01:26:09,210
+A particular component of my sensor,
+
+1519
+01:26:09,210 --> 01:26:12,730
+then process it and then write it back in the end.
+
+1520
+01:26:12,730 --> 01:26:15,570
+Yeah, so briefly, the question-- and we should probably wrap up--
+
+1521
+01:26:15,570 --> 01:26:19,450
+is, is it better to read all at once
+
+1522
+01:26:19,450 --> 01:26:24,388
+or maybe process individual elements at a time?
+
+1523
+01:26:24,388 --> 01:26:26,430
+I think it's hard to answer this in the abstract.
+
+1524
+01:26:26,430 --> 01:26:30,930
+It depends on the nature of the computation.
+
+1525
+01:26:30,930 --> 01:26:33,490
+Maybe we can talk offline about that.
+
+1526
+01:26:33,490 --> 01:26:34,630
+OK, all right.
+
+1527
+01:26:34,630 --> 01:26:36,600
+See you next time.

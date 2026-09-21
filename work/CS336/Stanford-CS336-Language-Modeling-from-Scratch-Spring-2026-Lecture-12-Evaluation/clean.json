@@ -1,0 +1,6767 @@
+[
+ {
+  "start": 5.72,
+  "end": 9.28,
+  "text": "So today, we're going to talk about evaluation."
+ },
+ {
+  "start": 9.28,
+  "end": 13.4,
+  "text": "So far in this class we've done everything we"
+ },
+ {
+  "start": 13.4,
+  "end": 15.68,
+  "text": "need to train a language model."
+ },
+ {
+  "start": 15.68,
+  "end": 19.92,
+  "text": "We defined the architecture, the optimizer, the main training"
+ },
+ {
+  "start": 19.92,
+  "end": 20.54,
+  "text": "loop."
+ },
+ {
+  "start": 20.54,
+  "end": 25.16,
+  "text": "We showed how to make the training fast with kernels,"
+ },
+ {
+  "start": 25.16,
+  "end": 26.84,
+  "text": "parallelism."
+ },
+ {
+  "start": 26.84,
+  "end": 29.24,
+  "text": "And then we saw scaling laws."
+ },
+ {
+  "start": 29.24,
+  "end": 33.56,
+  "text": "We saw a little bit of how to make inference fast as well."
+ },
+ {
+  "start": 33.56,
+  "end": 36.84,
+  "text": "So the only missing piece now is talking about the data"
+ },
+ {
+  "start": 36.84,
+  "end": 38.88,
+  "text": "that you train on."
+ },
+ {
+  "start": 38.88,
+  "end": 43.36,
+  "text": "So we're going to spend next week talking about that."
+ },
+ {
+  "start": 43.36,
+  "end": 46.64,
+  "text": "And data is going to shape the model behavior."
+ },
+ {
+  "start": 46.64,
+  "end": 49.52,
+  "text": "If you train on code, then presumably"
+ },
+ {
+  "start": 49.52,
+  "end": 51.38,
+  "text": "your model is going to be good at code."
+ },
+ {
+  "start": 51.38,
+  "end": 53.24,
+  "text": "If you train only on DNA sequences,"
+ },
+ {
+  "start": 53.24,
+  "end": 56.32,
+  "text": "it probably can't speak English."
+ },
+ {
+  "start": 56.32,
+  "end": 58.92,
+  "text": "But before we even get to data, we"
+ },
+ {
+  "start": 58.92,
+  "end": 62.17,
+  "text": "need to talk about what behavior we want from a model,"
+ },
+ {
+  "start": 62.17,
+  "end": 65.489,
+  "text": "and that's going to be the topic of evaluation."
+ },
+ {
+  "start": 65.489,
+  "end": 68.28999999999999,
+  "text": "So evaluation asks a very simple question--"
+ },
+ {
+  "start": 68.28999999999999,
+  "end": 73.25,
+  "text": "given the model that we've trained, how good is it?"
+ },
+ {
+  "start": 73.25,
+  "end": 74.89,
+  "text": "So what is good?"
+ },
+ {
+  "start": 74.89,
+  "end": 79.77,
+  "text": "So evaluation might seem like a fairly mechanical process."
+ },
+ {
+  "start": 79.77,
+  "end": 81.28999999999999,
+  "text": "You define some prompts, you send"
+ },
+ {
+  "start": 81.28999999999999,
+  "end": 83.87,
+  "text": "these prompts to your model, you get back some responses,"
+ },
+ {
+  "start": 83.87,
+  "end": 85.47,
+  "text": "and then you compute the accuracy."
+ },
+ {
+  "start": 85.47,
+  "end": 89.01,
+  "text": "So why do we have a whole lecture on evaluation?"
+ },
+ {
+  "start": 89.01,
+  "end": 92.11,
+  "text": "But actually, evaluation is a very deep topic,"
+ },
+ {
+  "start": 92.11,
+  "end": 94.69,
+  "text": "and it's also very important because evaluation is what"
+ },
+ {
+  "start": 94.69,
+  "end": 96.65,
+  "text": "shapes the development of AI."
+ },
+ {
+  "start": 96.65,
+  "end": 101.05,
+  "text": "Evaluation sets North Stars and model developers--"
+ },
+ {
+  "start": 101.05,
+  "end": 104.69,
+  "text": "open, closed-- everyone looks at evaluation"
+ },
+ {
+  "start": 104.69,
+  "end": 109.28999999999999,
+  "text": "as a measure of progress."
+ },
+ {
+  "start": 109.28999999999999,
+  "end": 112.21000000000001,
+  "text": "So by thinking carefully about your evaluation,"
+ },
+ {
+  "start": 112.21000000000001,
+  "end": 114.61,
+  "text": "you implicitly shape the development"
+ },
+ {
+  "start": 114.61,
+  "end": 117.78999999999999,
+  "text": "of what your model is going to be able to do."
+ },
+ {
+  "start": 117.78999999999999,
+  "end": 121.35,
+  "text": "So what's hard about evaluation is the following."
+ },
+ {
+  "start": 121.35,
+  "end": 125.19,
+  "text": "So often, you start it with an abstract construct of what"
+ },
+ {
+  "start": 125.19,
+  "end": 127.15,
+  "text": "do I want my model to do?"
+ },
+ {
+  "start": 127.15,
+  "end": 131.63,
+  "text": "Maybe I want my model to be good at conversation"
+ },
+ {
+  "start": 131.63,
+  "end": 133.75,
+  "text": "or good at reasoning."
+ },
+ {
+  "start": 133.75,
+  "end": 134.25,
+  "text": "OK."
+ },
+ {
+  "start": 134.25,
+  "end": 136.23,
+  "text": "So those are abstract concepts."
+ },
+ {
+  "start": 136.23,
+  "end": 138.47,
+  "text": "And then evaluation is really the process"
+ },
+ {
+  "start": 138.47,
+  "end": 143.03,
+  "text": "of turning that into a concrete metric powered by, presumably,"
+ },
+ {
+  "start": 143.03,
+  "end": 146.67000000000002,
+  "text": "some concrete prompts or environments."
+ },
+ {
+  "start": 146.67000000000002,
+  "end": 149.93,
+  "text": "So this is going to be the core challenge,"
+ },
+ {
+  "start": 149.93,
+  "end": 152.27,
+  "text": "and we'll see many examples of how"
+ },
+ {
+  "start": 152.27,
+  "end": 158.07,
+  "text": "this process of abstract construct, concrete metric shows up."
+ },
+ {
+  "start": 158.07,
+  "end": 162.07,
+  "text": "So let's go back to a question of what makes a model good."
+ },
+ {
+  "start": 162.07,
+  "end": 164.43,
+  "text": "Just kind of superficially."
+ },
+ {
+  "start": 164.43,
+  "end": 167.29,
+  "text": "Maybe a model is good if it does well on benchmarks."
+ },
+ {
+  "start": 167.29,
+  "end": 169.89,
+  "text": "So there's this website, Artificial Analysis,"
+ },
+ {
+  "start": 169.89,
+  "end": 174.67000000000002,
+  "text": "which has become a bit of a standard for thinking about"
+ },
+ {
+  "start": 174.67000000000002,
+  "end": 177.2,
+  "text": "quote unquote, \"intelligence of models.\""
+ },
+ {
+  "start": 177.2,
+  "end": 179.84,
+  "text": "So if you go to Artificial Analysis AI,"
+ },
+ {
+  "start": 179.84,
+  "end": 183.92,
+  "text": "you can see a ranking of different models from GPT-5.5,"
+ },
+ {
+  "start": 183.92,
+  "end": 187.24,
+  "text": "all the way down-- well, there's many more models after this"
+ },
+ {
+  "start": 187.24,
+  "end": 189.64,
+  "text": "point."
+ },
+ {
+  "start": 189.64,
+  "end": 193.11,
+  "text": "And so this is a measure."
+ },
+ {
+  "start": 193.11,
+  "end": 196.0,
+  "text": "It includes a bunch of different data sets, some of which"
+ },
+ {
+  "start": 196.0,
+  "end": 198.36,
+  "text": "we'll talk about."
+ },
+ {
+  "start": 198.36,
+  "end": 200.96,
+  "text": "Or maybe a model is good if it does well on benchmark"
+ },
+ {
+  "start": 200.96,
+  "end": 206.16,
+  "text": "and is also cheap to run, because cost should matter."
+ },
+ {
+  "start": 206.16,
+  "end": 210.44,
+  "text": "And this plot shows both the intelligence index"
+ },
+ {
+  "start": 210.44,
+  "end": 213.52,
+  "text": "from before, but against how much money"
+ },
+ {
+  "start": 213.52,
+  "end": 218.07999999999998,
+  "text": "it costs to run a particular model based on inference cost."
+ },
+ {
+  "start": 218.07999999999998,
+  "end": 221.56,
+  "text": "And you can see, of course, as you might expect,"
+ },
+ {
+  "start": 221.56,
+  "end": 223.82,
+  "text": "that the two are correlated."
+ },
+ {
+  "start": 223.82,
+  "end": 227.86,
+  "text": "The more you pay to run, the higher the intelligence index,"
+ },
+ {
+  "start": 227.86,
+  "end": 232.8,
+  "text": "but it's not exactly aligned."
+ },
+ {
+  "start": 232.8,
+  "end": 237.77,
+  "text": "But maybe a model is good if people just prefer it."
+ },
+ {
+  "start": 237.77,
+  "end": 240.15,
+  "text": "Later we'll also go a little bit more into depth."
+ },
+ {
+  "start": 240.15,
+  "end": 244.01,
+  "text": "So this is the take that Arena AI, formerly known"
+ },
+ {
+  "start": 244.01,
+  "end": 246.29,
+  "text": "as Chatbot Arena, takes."
+ },
+ {
+  "start": 246.29,
+  "end": 248.57,
+  "text": "And you can form a ranking based on models,"
+ },
+ {
+  "start": 248.57,
+  "end": 251.33,
+  "text": "based on whether people like it or not."
+ },
+ {
+  "start": 251.33,
+  "end": 254.69,
+  "text": "Or maybe a model is good if people simply"
+ },
+ {
+  "start": 254.69,
+  "end": 257.87,
+  "text": "choose to use it, and therefore, pay for it."
+ },
+ {
+  "start": 257.87,
+  "end": 262.01,
+  "text": "So OpenRouter is this service that"
+ },
+ {
+  "start": 262.01,
+  "end": 265.01,
+  "text": "allows one to use multiple different models"
+ },
+ {
+  "start": 265.01,
+  "end": 268.952,
+  "text": "through a central endpoint."
+ },
+ {
+  "start": 268.952,
+  "end": 270.41,
+  "text": "And as a result, they collect a lot"
+ },
+ {
+  "start": 270.41,
+  "end": 274.40999999999997,
+  "text": "of statistics of what models people are using."
+ },
+ {
+  "start": 274.40999999999997,
+  "end": 277.81,
+  "text": "And they publish statistics, which"
+ },
+ {
+  "start": 277.81,
+  "end": 279.33,
+  "text": "is really interesting to look at,"
+ },
+ {
+  "start": 279.33,
+  "end": 283.21,
+  "text": "the top models that are used through OpenRouter."
+ },
+ {
+  "start": 283.21,
+  "end": 285.65,
+  "text": "So now, this is not representative of all model"
+ },
+ {
+  "start": 285.65,
+  "end": 290.40999999999997,
+  "text": "usage, but it gives you a sense of what people on OpenRouter"
+ },
+ {
+  "start": 290.40999999999997,
+  "end": 291.45,
+  "text": "are doing."
+ },
+ {
+  "start": 291.45,
+  "end": 293.84000000000003,
+  "text": "And so this is kind of more of an economic lens."
+ },
+ {
+  "start": 293.84000000000003,
+  "end": 298.0,
+  "text": "I don't know what good is, but if people are paying for it,"
+ },
+ {
+  "start": 298.0,
+  "end": 301.66,
+  "text": "it must be good."
+ },
+ {
+  "start": 301.66,
+  "end": 302.24,
+  "text": "OK."
+ },
+ {
+  "start": 302.24,
+  "end": 307.2,
+  "text": "So none of those are necessarily the correct answer."
+ },
+ {
+  "start": 307.2,
+  "end": 309.76,
+  "text": "I don't know if there is a correct answer,"
+ },
+ {
+  "start": 309.76,
+  "end": 312.82,
+  "text": "but I'm just trying to get you to think about different ways"
+ },
+ {
+  "start": 312.82,
+  "end": 316.06,
+  "text": "of thinking about what good is."
+ },
+ {
+  "start": 316.06,
+  "end": 321.18,
+  "text": "So let's start now by looking at different ways, concrete ways,"
+ },
+ {
+  "start": 321.18,
+  "end": 323.3,
+  "text": "of evaluating language models."
+ },
+ {
+  "start": 323.3,
+  "end": 326.46,
+  "text": "And there's no better place to start than going back"
+ },
+ {
+  "start": 326.46,
+  "end": 330.86,
+  "text": "to the core idea of a language model, which"
+ },
+ {
+  "start": 330.86,
+  "end": 336.18,
+  "text": "is that it's a distribution P of x over sequences of tokens."
+ },
+ {
+  "start": 336.18,
+  "end": 338.62,
+  "text": "And through that lens, there's a very natural way"
+ },
+ {
+  "start": 338.62,
+  "end": 341.26,
+  "text": "to evaluate a distribution, which"
+ },
+ {
+  "start": 341.26,
+  "end": 346.54,
+  "text": "is perplexity, or likelihood or log loss."
+ },
+ {
+  "start": 346.54,
+  "end": 349.54,
+  "text": "Those are all kind of related concepts."
+ },
+ {
+  "start": 349.54,
+  "end": 354.24,
+  "text": "And it basically says, I have a test data set d,"
+ },
+ {
+  "start": 354.24,
+  "end": 358.68,
+  "text": "and I'm going to see how much probability mass my language"
+ },
+ {
+  "start": 358.68,
+  "end": 360.92,
+  "text": "model assigns to that d."
+ },
+ {
+  "start": 360.92,
+  "end": 363.36,
+  "text": "And I normalize it and divide so that the numbers"
+ },
+ {
+  "start": 363.36,
+  "end": 365.84,
+  "text": "are more interpretable."
+ },
+ {
+  "start": 365.84,
+  "end": 367.42,
+  "text": "But that's basically it."
+ },
+ {
+  "start": 367.42,
+  "end": 371.72,
+  "text": "How much mass does my probability language model"
+ },
+ {
+  "start": 371.72,
+  "end": 374.44,
+  "text": "assign to a data set."
+ },
+ {
+  "start": 374.44,
+  "end": 376.1,
+  "text": "OK, so this is fairly natural."
+ },
+ {
+  "start": 376.1,
+  "end": 379.04,
+  "text": "In fact, when we were doing training,"
+ },
+ {
+  "start": 379.04,
+  "end": 382.6,
+  "text": "we minimized the perplexity on the training set."
+ },
+ {
+  "start": 382.6,
+  "end": 385.4,
+  "text": "So the obvious thing to do is measure the perplexity"
+ },
+ {
+  "start": 385.4,
+  "end": 388.32,
+  "text": "on the test set, and this is what people traditionally did"
+ },
+ {
+  "start": 388.32,
+  "end": 391.28,
+  "text": "in language modeling research for many years throughout"
+ },
+ {
+  "start": 391.28,
+  "end": 393.24,
+  "text": "the 2010s."
+ },
+ {
+  "start": 393.24,
+  "end": 395.38,
+  "text": "If you pick up a language modeling paper,"
+ },
+ {
+  "start": 395.38,
+  "end": 396.64,
+  "text": "this is what they did."
+ },
+ {
+  "start": 396.64,
+  "end": 399.84000000000003,
+  "text": "And back then, standard data sets"
+ },
+ {
+  "start": 399.84000000000003,
+  "end": 404.32,
+  "text": "included the Penn Treebank, WikiText-103."
+ },
+ {
+  "start": 404.32,
+  "end": 407.2,
+  "text": "There was also this One Billion Word Benchmark,"
+ },
+ {
+  "start": 407.2,
+  "end": 413.33,
+  "text": "which was taken from machine translation sources."
+ },
+ {
+  "start": 413.33,
+  "end": 416.65,
+  "text": "And this is all in the classic paradigm, which is"
+ },
+ {
+  "start": 416.65,
+  "end": 418.75,
+  "text": "in-distribution evaluation."
+ },
+ {
+  "start": 418.75,
+  "end": 422.11,
+  "text": "You train on some train split of that data set,"
+ },
+ {
+  "start": 422.11,
+  "end": 427.09,
+  "text": "and then you evaluate on some test split of that data set."
+ },
+ {
+  "start": 427.09,
+  "end": 431.49,
+  "text": "And people actually made a lot of progress,"
+ },
+ {
+  "start": 431.49,
+  "end": 434.45,
+  "text": "which was just measured in perplexity reduction."
+ },
+ {
+  "start": 434.45,
+  "end": 436.49,
+  "text": "So for example, there's this famous paper"
+ },
+ {
+  "start": 436.49,
+  "end": 442.49,
+  "text": "from 2016, which showed that you could"
+ },
+ {
+  "start": 442.49,
+  "end": 447.45,
+  "text": "apply CNNs and LSTMs to this One Billion Word Benchmark"
+ },
+ {
+  "start": 447.45,
+  "end": 451.09,
+  "text": "and get a huge perplexity reduction."
+ },
+ {
+  "start": 451.09,
+  "end": 453.11,
+  "text": "And bear in mind, around that time,"
+ },
+ {
+  "start": 453.11,
+  "end": 455.49,
+  "text": "people were talking still about n-gram models and maybe"
+ },
+ {
+  "start": 455.49,
+  "end": 457.65,
+  "text": "hybrid models."
+ },
+ {
+  "start": 457.65,
+  "end": 460.89,
+  "text": "And this was the first definitive result"
+ },
+ {
+  "start": 460.89,
+  "end": 466.05,
+  "text": "that showed just pure neural is clearly the way to go."
+ },
+ {
+  "start": 466.05,
+  "end": 468.28,
+  "text": "OK, so life was very simple back then."
+ },
+ {
+  "start": 468.28,
+  "end": 469.64,
+  "text": "You train on the train split."
+ },
+ {
+  "start": 469.64,
+  "end": 472.9,
+  "text": "You test on a test split for perplexity."
+ },
+ {
+  "start": 472.9,
+  "end": 478.38,
+  "text": "So then when GPT-2 came around in 2019 from OpenAI,"
+ },
+ {
+  "start": 478.38,
+  "end": 481.54,
+  "text": "they trained on the data set called"
+ },
+ {
+  "start": 481.54,
+  "end": 484.62,
+  "text": "WebText, which was 40 gigabytes of text websites"
+ },
+ {
+  "start": 484.62,
+  "end": 487.14,
+  "text": "that were linked from Reddit."
+ },
+ {
+  "start": 487.14,
+  "end": 490.92,
+  "text": "And the way they evaluated was actually different."
+ },
+ {
+  "start": 490.92,
+  "end": 496.06,
+  "text": "They evaluated zero-shot on standard data sets"
+ },
+ {
+  "start": 496.06,
+  "end": 499.38,
+  "text": "that everyone else was evaluating on."
+ },
+ {
+  "start": 499.38,
+  "end": 501.84,
+  "text": "So this is out-of-distribution evaluation."
+ },
+ {
+  "start": 501.84,
+  "end": 505.82,
+  "text": "So this is a table from their paper, which shows that as they"
+ },
+ {
+  "start": 505.82,
+  "end": 507.4,
+  "text": "train different models."
+ },
+ {
+  "start": 507.4,
+  "end": 510.7,
+  "text": "So the biggest model is 1.5 billion parameters."
+ },
+ {
+  "start": 510.7,
+  "end": 516.46,
+  "text": "And they were able to show quite a bit of improvement,"
+ },
+ {
+  "start": 516.46,
+  "end": 519.44,
+  "text": "especially on the small data sets."
+ },
+ {
+  "start": 519.44,
+  "end": 522.78,
+  "text": "So for example, PTB, which is a tiny dataset."
+ },
+ {
+  "start": 522.78,
+  "end": 526.48,
+  "text": "They were getting 35 perplexity compared to the state"
+ },
+ {
+  "start": 526.48,
+  "end": 528.4,
+  "text": "of the art, which is 46."
+ },
+ {
+  "start": 528.4,
+  "end": 530.82,
+  "text": "Now, if you have enough in-distribution data,"
+ },
+ {
+  "start": 530.82,
+  "end": 533.96,
+  "text": "you don't quite do as well as the SOTA."
+ },
+ {
+  "start": 533.96,
+  "end": 538.12,
+  "text": "But nonetheless, this is kind of impressive,"
+ },
+ {
+  "start": 538.12,
+  "end": 542.2,
+  "text": "given that this model was not trained on One Billion Word's"
+ },
+ {
+  "start": 542.2,
+  "end": 544.48,
+  "text": "dataset at all."
+ },
+ {
+  "start": 544.48,
+  "end": 545.12,
+  "text": "I don't know."
+ },
+ {
+  "start": 545.12,
+  "end": 547.04,
+  "text": "Maybe there was some overlap, because I"
+ },
+ {
+  "start": 547.04,
+  "end": 554.32,
+  "text": "don't know if they did a careful train-test decontamination."
+ },
+ {
+  "start": 554.32,
+  "end": 560.44,
+  "text": "And so it ushered in a new paradigm"
+ },
+ {
+  "start": 560.44,
+  "end": 562.92,
+  "text": "of thinking about language models as not just"
+ },
+ {
+  "start": 562.92,
+  "end": 567.04,
+  "text": "the in-distribution setting, but how"
+ },
+ {
+  "start": 567.04,
+  "end": 571.48,
+  "text": "we wanted to train on a large dataset"
+ },
+ {
+  "start": 571.48,
+  "end": 574.56,
+  "text": "and evaluate on standard benchmarks, which nowadays I"
+ },
+ {
+  "start": 574.56,
+  "end": 577.3,
+  "text": "think has been very common standard."
+ },
+ {
+  "start": 577.3,
+  "end": 581.62,
+  "text": "But back then, it was seen as a bit of a novelty."
+ },
+ {
+  "start": 586.53,
+  "end": 589.89,
+  "text": "I will also argue, since we're talking about perplexity, that"
+ },
+ {
+  "start": 589.89,
+  "end": 593.05,
+  "text": "perplexity is all you need."
+ },
+ {
+  "start": 593.05,
+  "end": 594.99,
+  "text": "I wouldn't take this too seriously,"
+ },
+ {
+  "start": 594.99,
+  "end": 597.25,
+  "text": "but I think it is a mindset, I think,"
+ },
+ {
+  "start": 597.25,
+  "end": 601.13,
+  "text": "that drives a lot of language modeling research."
+ },
+ {
+  "start": 601.13,
+  "end": 603.81,
+  "text": "And the basic argument goes like this."
+ },
+ {
+  "start": 603.81,
+  "end": 605.83,
+  "text": "So there's some true distribution out there--"
+ },
+ {
+  "start": 605.83,
+  "end": 609.97,
+  "text": "let's call it t--and you're training this model p."
+ },
+ {
+  "start": 609.97,
+  "end": 614.21,
+  "text": "So what is the best perplexity you could obtain?"
+ },
+ {
+  "start": 614.21,
+  "end": 617.89,
+  "text": "Well, the best perplexity is the entropy"
+ },
+ {
+  "start": 617.89,
+  "end": 621.85,
+  "text": "of that true distribution, and that"
+ },
+ {
+  "start": 621.85,
+  "end": 626.13,
+  "text": "is realized when p equals t."
+ },
+ {
+  "start": 626.13,
+  "end": 630.29,
+  "text": "So by minimizing perplexity, you're basically"
+ },
+ {
+  "start": 630.29,
+  "end": 635.13,
+  "text": "pushing down the perplexity."
+ },
+ {
+  "start": 635.13,
+  "end": 638.61,
+  "text": "And the only unique minimizer is when you actually"
+ },
+ {
+  "start": 638.61,
+  "end": 640.78,
+  "text": "get the true distribution."
+ },
+ {
+  "start": 640.78,
+  "end": 644.88,
+  "text": "And when you have the true distribution, you're done."
+ },
+ {
+  "start": 644.88,
+  "end": 646.066,
+  "text": "You just model everything."
+ },
+ {
+  "start": 646.066,
+  "end": 648.06,
+  "text": "You can solve all the problems, and you"
+ },
+ {
+  "start": 648.06,
+  "end": 650.78,
+  "text": "can do things like condition on the problem,"
+ },
+ {
+  "start": 650.78,
+  "end": 652.0,
+  "text": "generate a solution."
+ },
+ {
+  "start": 652.0,
+  "end": 655.74,
+  "text": "You can condition on a question, generate the answer."
+ },
+ {
+  "start": 655.74,
+  "end": 659.14,
+  "text": "所以通过降低困惑度，"
+ },
+ {
+  "start": 659.14,
+  "end": 663.78,
+  "text": "我们最终会达到AGI，这就是那个论点。"
+ },
+ {
+  "start": 663.78,
+  "end": 665.5,
+  "text": "我的意思是，这听起来可能，我不知道，"
+ },
+ {
+  "start": 665.5,
+  "end": 668.1,
+  "text": "要么有点天方夜谭。"
+ },
+ {
+  "start": 668.1,
+  "end": 670.9,
+  "text": "但从某种意义上说，这确实是，"
+ },
+ {
+  "start": 670.9,
+  "end": 673.26,
+  "text": "我认为，是许多人强有力的驱动力，"
+ },
+ {
+  "start": 673.26,
+  "end": 676.98,
+  "text": "他们在不断扩展语言模型，"
+ },
+ {
+  "start": 676.98,
+  "end": 682.62,
+  "text": "在那个收益也许不那么明显的时期。"
+ },
+ {
+  "start": 682.62,
+  "end": 684.5,
+  "text": "在GPT-3之前，我认为并不清楚"
+ },
+ {
+  "start": 684.5,
+  "end": 689.18,
+  "text": "语言模型会产生如此巨大的影响。"
+ },
+ {
+  "start": 689.18,
+  "end": 693.02,
+  "text": "而正是这种信念，如果你把困惑度"
+ },
+ {
+  "start": 693.02,
+  "end": 696.94,
+  "text": "降下来，好事就会发生。"
+ },
+ {
+  "start": 696.94,
+  "end": 703.76,
+  "text": "所以当然，困惑度也许并不是全部。"
+ },
+ {
+  "start": 703.76,
+  "end": 707.76,
+  "text": "而一种框架方式是，困惑度也许比"
+ },
+ {
+  "start": 707.76,
+  "end": 709.025,
+  "text": "你需要的更多。"
+ },
+ {
+  "start": 709.025,
+  "end": 711.4,
+  "text": "所以例如，如果你有一个句子像“Stanford was"
+ },
+ {
+  "start": 711.4,
+  "end": 715.36,
+  "text": "founded in 1885，”困惑度会说，"
+ },
+ {
+  "start": 715.36,
+  "end": 719.4,
+  "text": "惩罚所有token上的预测。"
+ },
+ {
+  "start": 719.4,
+  "end": 723.64,
+  "text": "所以特别是，它会说，1885的概率是多少，"
+ },
+ {
+  "start": 723.64,
+  "end": 724.92,
+  "text": "给定其余部分？"
+ },
+ {
+  "start": 724.92,
+  "end": 727.98,
+  "text": "而那个token可能相当有用。"
+ },
+ {
+  "start": 727.98,
+  "end": 733.96,
+  "text": "它基本上是一个问答例子，以句子补全的形式表达。"
+ },
+ {
+  "start": 733.96,
+  "end": 737.48,
+  "text": "所以它捕捉了关于世界的知识。"
+ },
+ {
+  "start": 737.48,
+  "end": 742.18,
+  "text": "但其他的——例如，句子的第一个词，"
+ },
+ {
+  "start": 742.18,
+  "end": 749.56,
+  "text": "甚至“founded”——也许没那么有趣，我认为。"
+ },
+ {
+  "start": 749.56,
+  "end": 751.34,
+  "text": "而困惑度并不在意。"
+ },
+ {
+  "start": 751.34,
+  "end": 758.25,
+  "text": "它会为每一点偏差向你收取比特，"
+ },
+ {
+  "start": 758.25,
+  "end": 761.49,
+  "text": "偏离真实分布。"
+ },
+ {
+  "start": 761.49,
+  "end": 764.15,
+  "text": "所以这里有一点解决方案，"
+ },
+ {
+  "start": 764.15,
+  "end": 767.19,
+  "text": "就是你可以总是测量条件困惑度。"
+ },
+ {
+  "start": 767.19,
+  "end": 768.71,
+  "text": "你可以以某个提示词为条件，"
+ },
+ {
+  "start": 768.71,
+  "end": 773.53,
+  "text": "然后你可以测量其余部分的困惑度"
+ },
+ {
+  "start": 773.53,
+  "end": 774.45,
+  "text": "响应。"
+ },
+ {
+  "start": 774.45,
+  "end": 776.41,
+  "text": "所以这允许你，一般来说，"
+ },
+ {
+  "start": 776.41,
+  "end": 778.69,
+  "text": "专注于某些你相信"
+ },
+ {
+  "start": 778.69,
+  "end": 782.73,
+  "text": "相关的token，而较少关注其他"
+ },
+ {
+  "start": 782.73,
+  "end": 786.59,
+  "text": "那些是附带性的。"
+ },
+ {
+  "start": 786.59,
+  "end": 788.916,
+  "text": "好的。"
+ },
+ {
+  "start": 788.916,
+  "end": 791.57,
+  "text": "而且，重要的是要记住"
+ },
+ {
+  "start": 791.57,
+  "end": 795.57,
+  "text": "一些基准测试，即使它们没有明确"
+ },
+ {
+  "start": 795.57,
+  "end": 797.13,
+  "text": "a perplexity measure, are actually"
+ },
+ {
+  "start": 797.13,
+  "end": 798.93,
+  "text": "just perplexity in disguise."
+ },
+ {
+  "start": 798.93,
+  "end": 802.11,
+  "text": "So, for example, if you think about closed tasks."
+ },
+ {
+  "start": 802.11,
+  "end": 806.11,
+  "text": "There's this LAMBADA paper from, actually, a while ago,"
+ },
+ {
+  "start": 806.11,
+  "end": 809.65,
+  "text": "2016, which is basically fill in the blank."
+ },
+ {
+  "start": 809.65,
+  "end": 813.29,
+  "text": "And you have a context, you have a sentence."
+ },
+ {
+  "start": 813.29,
+  "end": 816.38,
+  "text": "\"Do you honestly think I will want you to have a blank.\""
+ },
+ {
+  "start": 816.38,
+  "end": 820.26,
+  "text": "And the goal is to figure out that word."
+ },
+ {
+  "start": 820.26,
+  "end": 824.32,
+  "text": "And even though this is measured in terms of accuracy,"
+ },
+ {
+  "start": 824.32,
+  "end": 828.9,
+  "text": "it is really a next-token prediction problem."
+ },
+ {
+  "start": 828.9,
+  "end": 832.68,
+  "text": "And here, it's not perplexity of all the words,"
+ },
+ {
+  "start": 832.68,
+  "end": 834.0,
+  "text": "it's carefully chosen."
+ },
+ {
+  "start": 834.0,
+  "end": 836.94,
+  "text": "If you read this paper, it's really carefully chosen"
+ },
+ {
+  "start": 836.94,
+  "end": 840.06,
+  "text": "to be words, such that you actually need"
+ },
+ {
+  "start": 840.06,
+  "end": 843.78,
+  "text": "a bunch of long contexts to resolve."
+ },
+ {
+  "start": 843.78,
+  "end": 848.98,
+  "text": "So this is actually something that the early GPT papers really"
+ },
+ {
+  "start": 848.98,
+  "end": 854.82,
+  "text": "latched on to because they were interested in long-context"
+ },
+ {
+  "start": 854.82,
+  "end": 857.98,
+  "text": "modeling, thinking that that was a key to unlocking"
+ },
+ {
+  "start": 857.98,
+  "end": 860.9,
+  "text": "reasoning and all these things."
+ },
+ {
+  "start": 860.9,
+  "end": 864.62,
+  "text": "And really, by focusing on positions"
+ },
+ {
+  "start": 864.62,
+  "end": 869.3,
+  "text": "where, to resolve that, it requires"
+ },
+ {
+  "start": 869.3,
+  "end": 874.87,
+  "text": "long-distance dependencies, is a way"
+ },
+ {
+  "start": 874.87,
+  "end": 879.35,
+  "text": "to sharpen the perplexity to some phenomenon"
+ },
+ {
+  "start": 879.35,
+  "end": 881.91,
+  "text": "that you care about."
+ },
+ {
+  "start": 881.91,
+  "end": 884.27,
+  "text": "Here's another popular classic data"
+ },
+ {
+  "start": 884.27,
+  "end": 886.89,
+  "text": "set that you see in some language modeling vowels."
+ },
+ {
+  "start": 886.89,
+  "end": 887.99,
+  "text": "HellaSwag."
+ },
+ {
+  "start": 887.99,
+  "end": 889.17,
+  "text": "So what is HellaSwag?"
+ },
+ {
+  "start": 889.17,
+  "end": 892.95,
+  "text": "They went to various different data sets and sources,"
+ },
+ {
+  "start": 892.95,
+  "end": 896.03,
+  "text": "and came up with-- it's multiple choice,"
+ },
+ {
+  "start": 896.03,
+  "end": 897.85,
+  "text": "but it's really sentence completion."
+ },
+ {
+  "start": 897.85,
+  "end": 900.13,
+  "text": "And at some level, it's perplexity."
+ },
+ {
+  "start": 900.13,
+  "end": 901.55,
+  "text": "So here's a sentence."
+ },
+ {
+  "start": 901.55,
+  "end": 903.41,
+  "text": "\"A woman is outside with a bucket and a dog."
+ },
+ {
+  "start": 903.41,
+  "end": 904.69,
+  "text": "The dog is running around."
+ },
+ {
+  "start": 904.69,
+  "end": 905.805,
+  "text": "She blank.\""
+ },
+ {
+  "start": 905.805,
+  "end": 907.43,
+  "text": "And then you're trying to fill in which"
+ },
+ {
+  "start": 907.43,
+  "end": 910.15,
+  "text": "sentence completes it the best."
+ },
+ {
+  "start": 910.15,
+  "end": 912.65,
+  "text": "So it's not exactly perplexity, it's multiple choice."
+ },
+ {
+  "start": 912.65,
+  "end": 918.91,
+  "text": "But in some ways, it's perplexity."
+ },
+ {
+  "start": 918.91,
+  "end": 920.97,
+  "text": "So one word of warning."
+ },
+ {
+  "start": 920.97,
+  "end": 925.67,
+  "text": "If you ever decide that you're sold on perplexity"
+ },
+ {
+  "start": 925.67,
+  "end": 929.07,
+  "text": "as, really, the measure, and you're"
+ },
+ {
+  "start": 929.07,
+  "end": 932.17,
+  "text": "going to launch a leaderboard and have people compete"
+ },
+ {
+  "start": 932.17,
+  "end": 935.89,
+  "text": "against perplexity, just a word of caution"
+ },
+ {
+  "start": 935.89,
+  "end": 939.81,
+  "text": "is that, what does a perplexity leaderboard look like?"
+ },
+ {
+  "start": 939.81,
+  "end": 943.13,
+  "text": "So people are going to submit a language model to you,"
+ },
+ {
+  "start": 943.13,
+  "end": 947.23,
+  "text": "and you have to compute a logprob."
+ },
+ {
+  "start": 947.23,
+  "end": 951.05,
+  "text": "You send them the test data, and they give you back a logprob."
+ },
+ {
+  "start": 951.05,
+  "end": 953.13,
+  "text": "Well, you look at that and say, hmm,"
+ },
+ {
+  "start": 953.13,
+  "end": 958.13,
+  "text": "that might be a little bit fishy because you"
+ },
+ {
+  "start": 958.13,
+  "end": 961.65,
+  "text": "need to trust that the probabilities they hand back"
+ },
+ {
+  "start": 961.65,
+  "end": 966.39,
+  "text": "to you are valid and that they sum to 1."
+ },
+ {
+  "start": 966.39,
+  "end": 968.49,
+  "text": "Otherwise, I could just implement LM,"
+ },
+ {
+  "start": 968.49,
+  "end": 974.41,
+  "text": "and it always returns 1 or, I guess, logprob 0."
+ },
+ {
+  "start": 974.41,
+  "end": 977.27,
+  "text": "And I would get very good perplexity,"
+ },
+ {
+  "start": 977.27,
+  "end": 982.53,
+  "text": "but clearly, that's not a valid distribution."
+ },
+ {
+  "start": 982.53,
+  "end": 984.21,
+  "text": "And so with this contract, it's not"
+ },
+ {
+  "start": 984.21,
+  "end": 987.65,
+  "text": "really easy to check that someone is actually"
+ },
+ {
+  "start": 987.65,
+  "end": 990.52,
+  "text": "internally having a log probability, so there's some trust."
+ },
+ {
+  "start": 990.52,
+  "end": 993.86,
+  "text": "Maybe you have to look at the code or something."
+ },
+ {
+  "start": 993.86,
+  "end": 999.06,
+  "text": "For downstream tasks, this is much more straightforward"
+ },
+ {
+  "start": 999.06,
+  "end": 1000.707,
+  "text": "because you can have a black box LM."
+ },
+ {
+  "start": 1000.707,
+  "end": 1002.54,
+  "text": "I give you a prompt, you give me a response,"
+ },
+ {
+  "start": 1002.54,
+  "end": 1006.26,
+  "text": "and I can just use that response and calculate some accuracy."
+ },
+ {
+  "start": 1006.26,
+  "end": 1008.14,
+  "text": "So perplexity is fundamentally different"
+ },
+ {
+  "start": 1008.14,
+  "end": 1010.08,
+  "text": "because it deals with distributions,"
+ },
+ {
+  "start": 1010.08,
+  "end": 1012.66,
+  "text": "and you have to be a bit careful."
+ },
+ {
+  "start": 1012.66,
+  "end": 1015.98,
+  "text": "And not to mention, there's lots of problems"
+ },
+ {
+  "start": 1015.98,
+  "end": 1017.2,
+  "text": "with autoregressive models."
+ },
+ {
+  "start": 1017.2,
+  "end": 1021.18,
+  "text": "But if you have VAEs or there's some models where you can't even"
+ },
+ {
+  "start": 1021.18,
+  "end": 1024.78,
+  "text": "compute the distribution—you can compute only a bound—"
+ },
+ {
+  "start": 1024.78,
+  "end": 1031.06,
+  "text": "then you have to really actually trust the math as well that this is actually a valid bound."
+ },
+ {
+  "start": 1031.06,
+  "end": 1032.56,
+  "text": "OK."
+ },
+ {
+  "start": 1032.56,
+  "end": 1036.42,
+  "text": "So the summary of perplexity is that it is actually"
+ },
+ {
+  "start": 1036.42,
+  "end": 1042.819,
+  "text": "still used quite heavily in language model development."
+ },
+ {
+  "start": 1042.819,
+  "end": 1044.28,
+  "text": "It has some nice properties."
+ },
+ {
+  "start": 1044.28,
+  "end": 1047.619,
+  "text": "We saw that it's generally used for scaling laws"
+ },
+ {
+  "start": 1047.619,
+  "end": 1050.91,
+  "text": "because it's also smoothly varying"
+ },
+ {
+  "start": 1050.91,
+  "end": 1055.51,
+  "text": "with scale, which is important for getting scaling laws."
+ },
+ {
+  "start": 1055.51,
+  "end": 1060.19,
+  "text": "But, at the end of the day, especially if you're not"
+ },
+ {
+  "start": 1060.19,
+  "end": 1066.99,
+  "text": "a believer, then you need some benchmarks to really capture real world situations, to convince people"
+ },
+ {
+  "start": 1066.99,
+  "end": 1068.99,
+  "text": "that your language model is good."
+ },
+ {
+  "start": 1068.99,
+  "end": 1073.09,
+  "text": "For the believers, if I show you a remarkably low perplexity,"
+ },
+ {
+  "start": 1073.09,
+  "end": 1076.27,
+  "text": "they'll be convinced."
+ },
+ {
+  "start": 1076.27,
+  "end": 1078.53,
+  "text": "OK, any questions about perplexity?"
+ },
+ {
+  "start": 1090.37,
+  "end": 1090.87,
+  "text": "OK."
+ },
+ {
+  "start": 1090.87,
+  "end": 1094.55,
+  "text": "Hopefully, everyone's a believer now."
+ },
+ {
+  "start": 1094.55,
+  "end": 1098.59,
+  "text": "OK, so let's talk about exam benchmarks."
+ },
+ {
+  "start": 1098.59,
+  "end": 1101.83,
+  "text": "So exams, as all of you students know,"
+ },
+ {
+  "start": 1101.83,
+  "end": 1106.13,
+  "text": "is a way that we use to test humans."
+ },
+ {
+  "start": 1106.13,
+  "end": 1108.33,
+  "text": "And so you can adopt the same mentality"
+ },
+ {
+  "start": 1108.33,
+  "end": 1110.73,
+  "text": "to test language models."
+ },
+ {
+  "start": 1110.73,
+  "end": 1112.37,
+  "text": "The nice thing about exams is that you"
+ },
+ {
+  "start": 1112.37,
+  "end": 1115.57,
+  "text": "have a very careful control over the subject,"
+ },
+ {
+  "start": 1115.57,
+  "end": 1118.41,
+  "text": "over the difficulty."
+ },
+ {
+  "start": 1118.41,
+  "end": 1122.51,
+  "text": "You can design them to have unambiguous correct answers,"
+ },
+ {
+  "start": 1122.51,
+  "end": 1124.65,
+  "text": "which makes them easy to grade."
+ },
+ {
+  "start": 1124.65,
+  "end": 1127.93,
+  "text": "So there's a lot of nice properties about exams."
+ },
+ {
+  "start": 1127.93,
+  "end": 1132.41,
+  "text": "And so, for this reason, a lot of LM benchmarking culture"
+ },
+ {
+  "start": 1132.41,
+  "end": 1136.21,
+  "text": "was based on just this idea of exams."
+ },
+ {
+  "start": 1136.21,
+  "end": 1139.783,
+  "text": "So obviously, there's been a lot of benchmarks,"
+ },
+ {
+  "start": 1139.783,
+  "end": 1141.45,
+  "text": "but I'll just highlight some of the ones"
+ },
+ {
+  "start": 1141.45,
+  "end": 1144.85,
+  "text": "that I think have been influential"
+ },
+ {
+  "start": 1144.85,
+  "end": 1147.29,
+  "text": "in the development of language models."
+ },
+ {
+  "start": 1147.29,
+  "end": 1151.45,
+  "text": "So this one is MMLU, or Massive Multitask Language Understanding"
+ },
+ {
+  "start": 1151.45,
+  "end": 1155.77,
+  "text": "from Hendrycks et al, 2020."
+ },
+ {
+  "start": 1155.77,
+  "end": 1159.01,
+  "text": "And at that time, it wasn't clear"
+ },
+ {
+  "start": 1159.01,
+  "end": 1163.69,
+  "text": "that language models were really like general purpose task"
+ },
+ {
+  "start": 1163.69,
+  "end": 1164.19,
+  "text": "solvers."
+ },
+ {
+  "start": 1164.19,
+  "end": 1169.46,
+  "text": "This was around the time when GPT-3 came out."
+ },
+ {
+  "start": 1169.46,
+  "end": 1171.78,
+  "text": "Many people, I think, still thought of language models"
+ },
+ {
+  "start": 1171.78,
+  "end": 1173.8,
+  "text": "as, well, language models."
+ },
+ {
+  "start": 1173.8,
+  "end": 1176.34,
+  "text": "You generate fluent English."
+ },
+ {
+  "start": 1176.34,
+  "end": 1178.94,
+  "text": "But they had this idea that, well,"
+ },
+ {
+  "start": 1178.94,
+  "end": 1181.88,
+  "text": "let's just try to be ahead of the curve here."
+ },
+ {
+  "start": 1181.88,
+  "end": 1186.04,
+  "text": "We're going to go through 57 subjects,"
+ },
+ {
+  "start": 1186.04,
+  "end": 1190.14,
+  "text": "we're going to have a team of students"
+ },
+ {
+  "start": 1190.14,
+  "end": 1192.9,
+  "text": "scour the internet for different sources,"
+ },
+ {
+  "start": 1192.9,
+  "end": 1200.02,
+  "text": "and really put together this very comprehensive data set."
+ },
+ {
+  "start": 1200.02,
+  "end": 1203.42,
+  "text": "And despite the name MMLU, which has the word Language"
+ },
+ {
+  "start": 1203.42,
+  "end": 1205.18,
+  "text": "Understanding, it's really about testing"
+ },
+ {
+  "start": 1205.18,
+  "end": 1207.58,
+  "text": "knowledge and reasoning and less so just"
+ },
+ {
+  "start": 1207.58,
+  "end": 1209.66,
+  "text": "pure language understanding."
+ },
+ {
+  "start": 1209.66,
+  "end": 1214.02,
+  "text": "And the way they evaluated it was with GPT-3,"
+ },
+ {
+  "start": 1214.02,
+  "end": 1215.72,
+  "text": "using few-shot prompting."
+ },
+ {
+  "start": 1215.72,
+  "end": 1222.14,
+  "text": "So they essentially said, I have formed this prompt."
+ },
+ {
+  "start": 1222.14,
+  "end": 1224.89,
+  "text": "The following are questions about high school mathematics."
+ },
+ {
+  "start": 1224.89,
+  "end": 1228.39,
+  "text": "Some in-context examples of question, answer, question,"
+ },
+ {
+  "start": 1228.39,
+  "end": 1231.51,
+  "text": "answer, and then the final question, and then the model"
+ },
+ {
+  "start": 1231.51,
+  "end": 1233.83,
+  "text": "has to predict the answer."
+ },
+ {
+  "start": 1233.83,
+  "end": 1235.65,
+  "text": "So this seems very mundane."
+ },
+ {
+  "start": 1235.65,
+  "end": 1238.07,
+  "text": "But at that time it was, I think,"
+ },
+ {
+  "start": 1238.07,
+  "end": 1241.63,
+  "text": "pretty radical that you would construct"
+ },
+ {
+  "start": 1241.63,
+  "end": 1246.27,
+  "text": "this fairly complicated question and with in-context examples"
+ },
+ {
+  "start": 1246.27,
+  "end": 1248.07,
+  "text": "and everything, and expect a language"
+ },
+ {
+  "start": 1248.07,
+  "end": 1251.83,
+  "text": "model to actually do something reasonable."
+ },
+ {
+  "start": 1251.83,
+  "end": 1257.97,
+  "text": "And sure enough, at the outset, the models were not great,"
+ },
+ {
+  "start": 1257.97,
+  "end": 1258.55,
+  "text": "I would say."
+ },
+ {
+  "start": 1261.43,
+  "end": 1264.89,
+  "text": "Some of the small models were barely above chance."
+ },
+ {
+  "start": 1264.89,
+  "end": 1267.47,
+  "text": "And the larger model-- this GPT-3--"
+ },
+ {
+  "start": 1267.47,
+  "end": 1273.91,
+  "text": "was actually well above chance, so this was kind of encouraging."
+ },
+ {
+  "start": 1273.91,
+  "end": 1281.93,
+  "text": "And then over the years, as we know,"
+ },
+ {
+  "start": 1281.93,
+  "end": 1286.03,
+  "text": "this benchmark has essentially saturated."
+ },
+ {
+  "start": 1286.03,
+  "end": 1289.55,
+  "text": "So this is a site I don't think this has all the data in it,"
+ },
+ {
+  "start": 1289.55,
+  "end": 1292.11,
+  "text": "but about 3.5 Turbo."
+ },
+ {
+  "start": 1292.11,
+  "end": 1295.29,
+  "text": "This was like--"
+ },
+ {
+  "start": 1295.29,
+  "end": 1301.09,
+  "text": "I guess, beginning of 2024-- oh, '23 actually--to GPT-4."
+ },
+ {
+  "start": 1301.09,
+  "end": 1308.03,
+  "text": "And then, now it's in the 90s."
+ },
+ {
+  "start": 1308.03,
+  "end": 1312.25,
+  "text": "So there's also a link you can follow up"
+ },
+ {
+  "start": 1312.25,
+  "end": 1314.21,
+  "text": "later on, where you can actually browse some"
+ },
+ {
+  "start": 1314.21,
+  "end": 1317.61,
+  "text": "of the predictions of these models, which is always"
+ },
+ {
+  "start": 1317.61,
+  "end": 1320.69,
+  "text": "fun to see what models actually goof up on"
+ },
+ {
+  "start": 1320.69,
+  "end": 1323.85,
+  "text": "and what they get right."
+ },
+ {
+  "start": 1323.85,
+  "end": 1326.355,
+  "text": "OK."
+ },
+ {
+  "start": 1326.355,
+  "end": 1330.93,
+  "text": "So around 2024, when it seemed like MMLU, there"
+ },
+ {
+  "start": 1330.93,
+  "end": 1333.757,
+  "text": "was a lot of progress made, it was like, OK--"
+ },
+ {
+  "start": 1333.757,
+  "end": 1335.34,
+  "text": "you're going to see this theme again--"
+ },
+ {
+  "start": 1335.34,
+  "end": 1338.57,
+  "text": "OK, this benchmark is getting too easy."
+ },
+ {
+  "start": 1338.57,
+  "end": 1342.525,
+  "text": "Let's try to make it harder."
+ },
+ {
+  "start": 1342.525,
+  "end": 1343.9,
+  "text": "Well, first of all, they actually"
+ },
+ {
+  "start": 1343.9,
+  "end": 1346.32,
+  "text": "noticed that there were some noisy and trivial problems,"
+ },
+ {
+  "start": 1346.32,
+  "end": 1347.9,
+  "text": "so let's get rid of them."
+ },
+ {
+  "start": 1347.9,
+  "end": 1350.96,
+  "text": "Four choices might be a little bit too easy,"
+ },
+ {
+  "start": 1350.96,
+  "end": 1354.3,
+  "text": "so let's expand that to 10."
+ },
+ {
+  "start": 1354.3,
+  "end": 1358.82,
+  "text": "At that point, it was much more in vogue to use chain of thought"
+ },
+ {
+  "start": 1358.82,
+  "end": 1362.74,
+  "text": "to solve these benchmarks, whereas when GPT-3 came out,"
+ },
+ {
+  "start": 1362.74,
+  "end": 1366.3,
+  "text": "that wasn't really a thing."
+ },
+ {
+  "start": 1366.3,
+  "end": 1368.82,
+  "text": "And it's clear that some of these questions"
+ },
+ {
+  "start": 1368.82,
+  "end": 1372.06,
+  "text": "could benefit from a few reasoning steps."
+ },
+ {
+  "start": 1372.06,
+  "end": 1375.74,
+  "text": "So this new benchmark was harder."
+ },
+ {
+  "start": 1375.74,
+  "end": 1379.82,
+  "text": "So now the accuracy of the model is back at 33."
+ },
+ {
+  "start": 1379.82,
+  "end": 1384.14,
+  "text": "But as you can maybe see from the progress"
+ },
+ {
+  "start": 1384.14,
+  "end": 1387.6,
+  "text": "so far it started low."
+ },
+ {
+  "start": 1387.6,
+  "end": 1393.2,
+  "text": "And now it's back to, I guess it's like 88, almost 90, OK."
+ },
+ {
+  "start": 1393.2,
+  "end": 1398.35,
+  "text": "So this benchmark might be a little bit too easy as well."
+ },
+ {
+  "start": 1398.35,
+  "end": 1400.83,
+  "text": "OK, so there's another benchmark called"
+ },
+ {
+  "start": 1400.83,
+  "end": 1406.79,
+  "text": "GPQA, which stands for Google-Proof QA."
+ },
+ {
+  "start": 1406.79,
+  "end": 1411.95,
+  "text": "And the idea here is that, OK, how can we"
+ },
+ {
+  "start": 1411.95,
+  "end": 1415.93,
+  "text": "get a really good benchmark?"
+ },
+ {
+  "start": 1415.93,
+  "end": 1418.27,
+  "text": "And the idea is that, well, if you can solve a problem"
+ },
+ {
+  "start": 1418.27,
+  "end": 1419.71,
+  "text": "by looking at Google."
+ },
+ {
+  "start": 1419.71,
+  "end": 1422.23,
+  "text": "Google has the internet and a language model"
+ },
+ {
+  "start": 1422.23,
+  "end": 1423.37,
+  "text": "is trained on the internet."
+ },
+ {
+  "start": 1423.37,
+  "end": 1426.41,
+  "text": "So if you can just solve it, then that's probably too easy."
+ },
+ {
+  "start": 1426.41,
+  "end": 1429.97,
+  "text": "So they got some now PhD level."
+ },
+ {
+  "start": 1429.97,
+  "end": 1435.91,
+  "text": "So I think MMLU was thought about as actually--"
+ },
+ {
+  "start": 1435.91,
+  "end": 1440.05,
+  "text": "maybe some of these were like undergrad but maybe grad level."
+ },
+ {
+  "start": 1440.05,
+  "end": 1443.11,
+  "text": "But now, it's more explicitly about questions that"
+ },
+ {
+  "start": 1443.11,
+  "end": 1446.31,
+  "text": "are meant to be pretty hard."
+ },
+ {
+  "start": 1446.31,
+  "end": 1448.897,
+  "text": "And at this point now you say, OK,"
+ },
+ {
+  "start": 1448.897,
+  "end": 1450.73,
+  "text": "how do I come up with really hard questions?"
+ },
+ {
+  "start": 1450.73,
+  "end": 1453.79,
+  "text": "You actually have to go through quite a bit of human labor"
+ },
+ {
+  "start": 1453.79,
+  "end": 1455.96,
+  "text": "to get really hard questions."
+ },
+ {
+  "start": 1455.96,
+  "end": 1459.92,
+  "text": "So this was 61 PhD contractors from Upwork."
+ },
+ {
+  "start": 1459.92,
+  "end": 1461.68,
+  "text": "Someone writes a question."
+ },
+ {
+  "start": 1461.68,
+  "end": 1464.68,
+  "text": "It goes through an expert validation which then provides"
+ },
+ {
+  "start": 1464.68,
+  "end": 1466.92,
+  "text": "feedback on the questions."
+ },
+ {
+  "start": 1466.92,
+  "end": 1469.74,
+  "text": "And then the question writer goes and revises the question."
+ },
+ {
+  "start": 1469.74,
+  "end": 1472.36,
+  "text": "And another expert looks at the question."
+ },
+ {
+  "start": 1472.36,
+  "end": 1476.34,
+  "text": "And then you have the question."
+ },
+ {
+  "start": 1476.34,
+  "end": 1478.36,
+  "text": "And then you send it to some non-experts"
+ },
+ {
+  "start": 1478.36,
+  "end": 1481.22,
+  "text": "who are given Google access."
+ },
+ {
+  "start": 1481.22,
+  "end": 1484.12,
+  "text": "And then you see if they can solve the question."
+ },
+ {
+  "start": 1484.12,
+  "end": 1487.32,
+  "text": "So there's a subset of these questions called the DIAMOND set"
+ },
+ {
+  "start": 1487.32,
+  "end": 1491.8,
+  "text": "that you might see in people's leaderboards"
+ },
+ {
+  "start": 1491.8,
+  "end": 1496.0,
+  "text": "where if the two experts agree and one of the non-experts"
+ },
+ {
+  "start": 1496.0,
+  "end": 1499.28,
+  "text": "is able to answer the question, then that's deemed a good kind"
+ },
+ {
+  "start": 1499.28,
+  "end": 1501.24,
+  "text": "of DIAMOND question."
+ },
+ {
+  "start": 1501.24,
+  "end": 1505.16,
+  "text": "So this is a pretty rigorous review process."
+ },
+ {
+  "start": 1505.16,
+  "end": 1512.3,
+  "text": "And PhD experts were only able to get 65%."
+ },
+ {
+  "start": 1512.3,
+  "end": 1515.68,
+  "text": "So this is I think mostly four-way multiple choice."
+ },
+ {
+  "start": 1515.68,
+  "end": 1518.28,
+  "text": "So this is above random."
+ },
+ {
+  "start": 1518.28,
+  "end": 1525.26,
+  "text": "But this is not a good grade if you're getting 65% on an exam."
+ },
+ {
+  "start": 1525.26,
+  "end": 1528.9,
+  "text": "And it's not experts, even if they had 30 minutes with access"
+ },
+ {
+  "start": 1528.9,
+  "end": 1533.86,
+  "text": "to Google, they were getting a bit over chance, but not much."
+ },
+ {
+  "start": 1533.86,
+  "end": 1537.82,
+  "text": "And at that point GPT-4 was like 39%,"
+ },
+ {
+  "start": 1537.82,
+  "end": 1540.96,
+  "text": "and let's see how it's doing now."
+ },
+ {
+  "start": 1545.14,
+  "end": 1554.0,
+  "text": "So GPQA is now again 94."
+ },
+ {
+  "start": 1554.0,
+  "end": 1561.692,
+  "text": "So these benchmarks have a shelf life of not too high I guess."
+ },
+ {
+  "start": 1561.692,
+  "end": 1563.4,
+  "text": "I will say that some of these benchmarks,"
+ },
+ {
+  "start": 1563.4,
+  "end": 1565.52,
+  "text": "even though they saturate the larger models,"
+ },
+ {
+  "start": 1565.52,
+  "end": 1567.06,
+  "text": "they're still useful for developing"
+ },
+ {
+  "start": 1567.06,
+  "end": 1570.94,
+  "text": "smaller models or fitting scaling laws and so on."
+ },
+ {
+  "start": 1570.94,
+  "end": 1574.95,
+  "text": "So then, yeah."
+ },
+ {
+  "start": 1574.95,
+  "end": 1578.67,
+  "text": "How do you know that when these tests are"
+ },
+ {
+  "start": 1578.67,
+  "end": 1582.39,
+  "text": "being used for training and actually your models"
+ },
+ {
+  "start": 1582.39,
+  "end": 1584.27,
+  "text": "are communicating with these?"
+ },
+ {
+  "start": 1584.27,
+  "end": 1586.69,
+  "text": "Yeah, so this is a very important question."
+ },
+ {
+  "start": 1586.69,
+  "end": 1589.75,
+  "text": "So how do you know that these questions aren't"
+ },
+ {
+  "start": 1589.75,
+  "end": 1592.39,
+  "text": "just in the training set?"
+ },
+ {
+  "start": 1592.39,
+  "end": 1595.27,
+  "text": "So the short answer is we don't know because I don't know"
+ },
+ {
+  "start": 1595.27,
+  "end": 1597.15,
+  "text": "what's in the training set."
+ },
+ {
+  "start": 1597.15,
+  "end": 1599.03,
+  "text": "I'll come back to this contamination"
+ },
+ {
+  "start": 1599.03,
+  "end": 1602.53,
+  "text": "point a little bit later and ways of addressing it."
+ },
+ {
+  "start": 1602.53,
+  "end": 1605.33,
+  "text": "But you should always--I'm glad you asked this."
+ },
+ {
+  "start": 1605.33,
+  "end": 1606.99,
+  "text": "You should always take these numbers"
+ },
+ {
+  "start": 1606.99,
+  "end": 1611.17,
+  "text": "with a little bit of a grain of salt, because it's only trust."
+ },
+ {
+  "start": 1614.59,
+  "end": 1615.97,
+  "text": "Maybe just to say one more."
+ },
+ {
+  "start": 1615.97,
+  "end": 1619.87,
+  "text": "I think train contamination is a little bit subtle."
+ },
+ {
+  "start": 1619.87,
+  "end": 1621.83,
+  "text": "Because it's probably not the case that"
+ },
+ {
+  "start": 1621.83,
+  "end": 1624.31,
+  "text": "they literally train on the set."
+ },
+ {
+  "start": 1624.31,
+  "end": 1628.05,
+  "text": "But questions can be derived from other sources."
+ },
+ {
+  "start": 1628.05,
+  "end": 1629.76,
+  "text": "And those sources could be trained on."
+ },
+ {
+  "start": 1629.76,
+  "end": 1634.72,
+  "text": "So often contamination is a much more subtle process"
+ },
+ {
+  "start": 1634.72,
+  "end": 1639.44,
+  "text": "than literally accidentally training on the test."
+ },
+ {
+  "start": 1639.44,
+  "end": 1640.7,
+  "text": "Was there another question?"
+ },
+ {
+  "start": 1640.7,
+  "end": 1641.48,
+  "text": "Same question."
+ },
+ {
+  "start": 1641.48,
+  "end": 1643.28,
+  "text": "OK, great."
+ },
+ {
+  "start": 1643.28,
+  "end": 1645.8,
+  "text": "Good, always good to be skeptical."
+ },
+ {
+  "start": 1645.8,
+  "end": 1649.32,
+  "text": "OK, so the final exam benchmark I'll talk about"
+ },
+ {
+  "start": 1649.32,
+  "end": 1654.4,
+  "text": "is something ominously called Humanity's Last Exam."
+ },
+ {
+  "start": 1654.4,
+  "end": 1656.48,
+  "text": "This is from last year."
+ },
+ {
+  "start": 1656.48,
+  "end": 1658.32,
+  "text": "And they were saying, OK, well these models"
+ },
+ {
+  "start": 1658.32,
+  "end": 1659.5,
+  "text": "are getting so good."
+ },
+ {
+  "start": 1659.5,
+  "end": 1661.56,
+  "text": "Let's just give it all we can to create"
+ },
+ {
+  "start": 1661.56,
+  "end": 1664.08,
+  "text": "something that's really tough."
+ },
+ {
+  "start": 1664.08,
+  "end": 1666.46,
+  "text": "So this is multimodal, many subjects."
+ },
+ {
+  "start": 1666.46,
+  "end": 1667.62,
+  "text": "It's still multiple choice."
+ },
+ {
+  "start": 1667.62,
+  "end": 1670.2,
+  "text": "And I guess some short answer."
+ },
+ {
+  "start": 1670.2,
+  "end": 1673.34,
+  "text": "So this was crowdsourced."
+ },
+ {
+  "start": 1673.34,
+  "end": 1679.12,
+  "text": "They had some money to incentivize people who were"
+ },
+ {
+  "start": 1679.12,
+  "end": 1681.46,
+  "text": "into money to create questions."
+ },
+ {
+  "start": 1681.46,
+  "end": 1683.24,
+  "text": "They also incentivize with authorship"
+ },
+ {
+  "start": 1683.24,
+  "end": 1686.16,
+  "text": "for those who are into that."
+ },
+ {
+  "start": 1686.16,
+  "end": 1688.74,
+  "text": "And they went through multiple stages of reviews"
+ },
+ {
+  "start": 1688.74,
+  "end": 1690.86,
+  "text": "filtered by frontier models."
+ },
+ {
+  "start": 1690.86,
+  "end": 1692.54,
+  "text": "There's a whole process."
+ },
+ {
+  "start": 1692.54,
+  "end": 1695.78,
+  "text": "Another answer to your question is that they also held out"
+ },
+ {
+  "start": 1695.78,
+  "end": 1698.48,
+  "text": "a private set that was not released publicly,"
+ },
+ {
+  "start": 1698.48,
+  "end": 1702.34,
+  "text": "so that they could make sure that this did not"
+ },
+ {
+  "start": 1702.34,
+  "end": 1704.26,
+  "text": "enter training."
+ },
+ {
+  "start": 1704.26,
+  "end": 1706.22,
+  "text": "And then you just hope that the APIs"
+ },
+ {
+  "start": 1706.22,
+  "end": 1709.44,
+  "text": "that you-- because you still have to send this to the model,"
+ },
+ {
+  "start": 1709.44,
+  "end": 1712.74,
+  "text": "that those prompts don't end up in the training."
+ },
+ {
+  "start": 1712.74,
+  "end": 1716.74,
+  "text": "But let's hope that's the case."
+ },
+ {
+  "start": 1716.74,
+  "end": 1721.64,
+  "text": "So every data set paper looks like this."
+ },
+ {
+  "start": 1721.64,
+  "end": 1724.64,
+  "text": "Previous benchmarks, look the models are doing so well."
+ },
+ {
+  "start": 1724.64,
+  "end": 1728.46,
+  "text": "My data set, look all the models are doing really poorly."
+ },
+ {
+  "start": 1728.46,
+  "end": 1730.32,
+  "text": "So this is a common pattern."
+ },
+ {
+  "start": 1730.32,
+  "end": 1732.2,
+  "text": "And this was especially in single digits."
+ },
+ {
+  "start": 1732.2,
+  "end": 1735.62,
+  "text": "It's pretty abysmal here."
+ },
+ {
+  "start": 1735.62,
+  "end": 1741.02,
+  "text": "And let's see how we're doing in 2026."
+ },
+ {
+  "start": 1741.02,
+  "end": 1745.68,
+  "text": "So this one is-- it still has some room."
+ },
+ {
+  "start": 1745.68,
+  "end": 1751.67,
+  "text": "So it's only at-- even Mythos is only at 64.7."
+ },
+ {
+  "start": 1751.67,
+  "end": 1756.05,
+  "text": "So this is indeed a pretty-- it seems like a pretty hard exam."
+ },
+ {
+  "start": 1760.55,
+  "end": 1766.23,
+  "text": "OK, so to summarize this section, as you can see,"
+ },
+ {
+  "start": 1766.23,
+  "end": 1768.47,
+  "text": "we've trained it towards harder and harder questions"
+ },
+ {
+  "start": 1768.47,
+  "end": 1773.03,
+  "text": "as the models improve and we saturate existing benchmarks."
+ },
+ {
+  "start": 1773.03,
+  "end": 1777.23,
+  "text": "It's interesting that multiple choice format still survives"
+ },
+ {
+  "start": 1777.23,
+  "end": 1781.47,
+  "text": "because it's-- with multiple choice, I mean, you"
+ },
+ {
+  "start": 1781.47,
+  "end": 1784.03,
+  "text": "can make it as difficult as you want."
+ },
+ {
+  "start": 1784.03,
+  "end": 1787.13,
+  "text": "So some people think, well, multiple choice is too easy."
+ },
+ {
+  "start": 1787.13,
+  "end": 1788.99,
+  "text": "Well, I mean, I can give you a very hard"
+ },
+ {
+  "start": 1788.99,
+  "end": 1791.01,
+  "text": "multiple-choice question."
+ },
+ {
+  "start": 1791.01,
+  "end": 1793.63,
+  "text": "That's not really the point."
+ },
+ {
+  "start": 1793.63,
+  "end": 1796.67,
+  "text": "I think more the point is that multiple choice restricts"
+ },
+ {
+  "start": 1796.67,
+  "end": 1798.79,
+  "text": "the set of questions you can ask."
+ },
+ {
+  "start": 1798.79,
+  "end": 1803.51,
+  "text": "But in terms of difficulty, no problem with multiple choice."
+ },
+ {
+  "start": 1803.51,
+  "end": 1807.88,
+  "text": "The main problem with exam-based questions"
+ },
+ {
+  "start": 1807.88,
+  "end": 1812.4,
+  "text": "is that this does not capture real-world usage."
+ },
+ {
+  "start": 1812.4,
+  "end": 1817.16,
+  "text": "No one asks HLE questions to a language model"
+ },
+ {
+  "start": 1817.16,
+  "end": 1820.44,
+  "text": "except for when you're evaluating on HLE."
+ },
+ {
+  "start": 1820.44,
+  "end": 1824.16,
+  "text": "Most of the time people are asking open-ended questions."
+ },
+ {
+  "start": 1824.16,
+  "end": 1826.62,
+  "text": "They don't even necessarily have a correct answer."
+ },
+ {
+  "start": 1826.62,
+  "end": 1829.8,
+  "text": "They might not be well formed, and these benchmarks"
+ },
+ {
+  "start": 1829.8,
+  "end": 1833.08,
+  "text": "do not capture that."
+ },
+ {
+  "start": 1833.08,
+  "end": 1837.077,
+  "text": "OK, so question."
+ },
+ {
+  "start": 1837.077,
+  "end": 1839.66,
+  "text": "How is the model output compared with the ground truth answer?"
+ },
+ {
+  "start": 1839.66,
+  "end": 1842.52,
+  "text": "So for HLE?"
+ },
+ {
+  "start": 1842.52,
+  "end": 1844.36,
+  "text": "For accuracy, how is the model's output"
+ },
+ {
+  "start": 1844.36,
+  "end": 1847.0,
+  "text": "compared with the ground truth answer,"
+ },
+ {
+  "start": 1847.0,
+  "end": 1848.4,
+  "text": "to calculate the accuracy?"
+ },
+ {
+  "start": 1848.4,
+  "end": 1851.88,
+  "text": "To calculate the accuracy, how is the ground truth"
+ },
+ {
+  "start": 1851.88,
+  "end": 1852.8,
+  "text": "compared?"
+ },
+ {
+  "start": 1852.8,
+  "end": 1856.64,
+  "text": "So for multiple choice, it's just like,"
+ },
+ {
+  "start": 1856.64,
+  "end": 1859.078,
+  "text": "did you get the right answer?"
+ },
+ {
+  "start": 1859.078,
+  "end": 1861.62,
+  "text": "So will we check the probability distribution for each option"
+ },
+ {
+  "start": 1861.62,
+  "end": 1869.33,
+  "text": "or how is-- So the language model generates C."
+ },
+ {
+  "start": 1869.33,
+  "end": 1872.85,
+  "text": "And my answer is either B or C or A or D,"
+ },
+ {
+  "start": 1872.85,
+  "end": 1876.01,
+  "text": "and I just check if they're the same or not."
+ },
+ {
+  "start": 1876.01,
+  "end": 1878.89,
+  "text": "So we are only generating one token?"
+ },
+ {
+  "start": 1878.89,
+  "end": 1879.99,
+  "text": "Yes, well, OK."
+ },
+ {
+  "start": 1879.99,
+  "end": 1882.15,
+  "text": "So then the question is less about evaluation."
+ },
+ {
+  "start": 1882.15,
+  "end": 1885.25,
+  "text": "But how does the model generate an answer?"
+ },
+ {
+  "start": 1885.25,
+  "end": 1887.71,
+  "text": "So there's a few options."
+ },
+ {
+  "start": 1887.71,
+  "end": 1890.01,
+  "text": "One is that you generate--"
+ },
+ {
+  "start": 1890.01,
+  "end": 1892.45,
+  "text": "literally you sample and it generates a letter."
+ },
+ {
+  "start": 1892.45,
+  "end": 1895.67,
+  "text": "Or more commonly now you generate a chain of thought."
+ },
+ {
+  "start": 1895.67,
+  "end": 1898.45,
+  "text": "You generate the answer maybe some explanation."
+ },
+ {
+  "start": 1898.45,
+  "end": 1903.69,
+  "text": "But there is a way of extracting an answer which does matter."
+ },
+ {
+  "start": 1903.69,
+  "end": 1907.15,
+  "text": "And language model evaluations can be very sensitive to that"
+ },
+ {
+  "start": 1907.15,
+  "end": 1909.23,
+  "text": "but I'm not going to talk about that here."
+ },
+ {
+  "start": 1912.37,
+  "end": 1916.89,
+  "text": "So let's talk about a very different class of benchmarks"
+ },
+ {
+  "start": 1916.89,
+  "end": 1920.49,
+  "text": "called chat benchmarks."
+ },
+ {
+  "start": 1920.49,
+  "end": 1923.85,
+  "text": "So far we've talked about multiple-choice tasks."
+ },
+ {
+  "start": 1923.85,
+  "end": 1927.19,
+  "text": "So they're still pretty good at capturing some notion"
+ },
+ {
+  "start": 1927.19,
+  "end": 1929.95,
+  "text": "of intelligence and difficulty."
+ },
+ {
+  "start": 1929.95,
+  "end": 1933.63,
+  "text": "But most people don't ask a multiple-choice exam question"
+ },
+ {
+  "start": 1933.63,
+  "end": 1935.99,
+  "text": "to their AI assistant unless they're"
+ },
+ {
+  "start": 1935.99,
+  "end": 1939.53,
+  "text": "trying to use their AI system to do their exam for them,"
+ },
+ {
+  "start": 1939.53,
+  "end": 1941.27,
+  "text": "which you would never."
+ },
+ {
+  "start": 1941.27,
+  "end": 1943.15,
+  "text": "One does that."
+ },
+ {
+  "start": 1943.15,
+  "end": 1949.15,
+  "text": "OK, so here's an example semi-inspired by a real world"
+ },
+ {
+  "start": 1949.15,
+  "end": 1950.11,
+  "text": "use case."
+ },
+ {
+  "start": 1950.11,
+  "end": 1953.65,
+  "text": "So I might say I want to make a beet salad with cheese."
+ },
+ {
+  "start": 1953.65,
+  "end": 1956.51,
+  "text": "What herbs would work well and what wouldn't work well?"
+ },
+ {
+  "start": 1956.51,
+  "end": 1959.17,
+  "text": "OK, so this is a very open-ended question."
+ },
+ {
+  "start": 1959.17,
+  "end": 1962.81,
+  "text": "And then you get some response, which is, again,"
+ },
+ {
+  "start": 1962.81,
+  "end": 1965.35,
+  "text": "an open-ended response."
+ },
+ {
+  "start": 1965.35,
+  "end": 1968.71,
+  "text": "And then the question is, how do you evaluate this thing?"
+ },
+ {
+  "start": 1968.71,
+  "end": 1971.37,
+  "text": "You can't just check exact match with equality."
+ },
+ {
+  "start": 1971.37,
+  "end": 1974.31,
+  "text": "There's no ground truth even."
+ },
+ {
+  "start": 1974.31,
+  "end": 1976.67,
+  "text": "So there's a few ideas here."
+ },
+ {
+  "start": 1976.67,
+  "end": 1978.39,
+  "text": "We can go through them."
+ },
+ {
+  "start": 1978.39,
+  "end": 1984.84,
+  "text": "So one of the ideas was pioneered by this Chatbot Arena."
+ },
+ {
+  "start": 1984.84,
+  "end": 1989.64,
+  "text": "And the idea is, well, you ask humans, OK."
+ },
+ {
+  "start": 1989.64,
+  "end": 1993.4,
+  "text": "But the way they ask humans, I think is a clever idea."
+ },
+ {
+  "start": 1993.4,
+  "end": 1998.0,
+  "text": "So they basically had this set of this website"
+ },
+ {
+  "start": 1998.0,
+  "end": 2003.68,
+  "text": "where any random person from the internet can go in and chat."
+ },
+ {
+  "start": 2003.68,
+  "end": 2007.08,
+  "text": "And then instead of a normal assistant"
+ },
+ {
+  "start": 2007.08,
+  "end": 2009.44,
+  "text": "in getting one response, you actually"
+ },
+ {
+  "start": 2009.44,
+  "end": 2013.68,
+  "text": "get two responses from two different models"
+ },
+ {
+  "start": 2013.68,
+  "end": 2018.12,
+  "text": "which are anonymized, and then they rate which one is better."
+ },
+ {
+  "start": 2018.12,
+  "end": 2021.0,
+  "text": "So for example, you put in this response,"
+ },
+ {
+  "start": 2021.0,
+  "end": 2025.76,
+  "text": "you get these two, assistant A, assistant B. And then you ask,"
+ },
+ {
+  "start": 2025.76,
+  "end": 2029.92,
+  "text": "A is better, both are good, both are bad, B is better?"
+ },
+ {
+  "start": 2029.92,
+  "end": 2033.84,
+  "text": "So using this process, you can get"
+ },
+ {
+  "start": 2033.84,
+  "end": 2038.93,
+  "text": "a bunch of pairwise comparison data of model A, model B, which"
+ },
+ {
+  "start": 2038.93,
+  "end": 2040.33,
+  "text": "one is better?"
+ },
+ {
+  "start": 2040.33,
+  "end": 2043.73,
+  "text": "And then you can use this to compute ELO rankings"
+ },
+ {
+  "start": 2043.73,
+  "end": 2044.93,
+  "text": "based on this."
+ },
+ {
+  "start": 2044.93,
+  "end": 2047.89,
+  "text": "So I don't know how many of you are familiar with this"
+ },
+ {
+  "start": 2047.89,
+  "end": 2051.69,
+  "text": "but just get everyone on the same page."
+ },
+ {
+  "start": 2051.69,
+  "end": 2057.489,
+  "text": "In these ELO rankings, you define your rating model"
+ },
+ {
+  "start": 2057.489,
+  "end": 2060.61,
+  "text": "as a probability of a particular model being"
+ },
+ {
+  "start": 2060.61,
+  "end": 2067.09,
+  "text": "another [INAUDIBLE] model as some function of the ELO"
+ },
+ {
+  "start": 2067.09,
+  "end": 2074.889,
+  "text": "scores of model B and model A. So the larger the ELO score"
+ },
+ {
+  "start": 2074.889,
+  "end": 2077.59,
+  "text": "of A is, the higher the probability."
+ },
+ {
+  "start": 2077.59,
+  "end": 2079.29,
+  "text": "So it's a smooth mapping."
+ },
+ {
+  "start": 2079.29,
+  "end": 2082.909,
+  "text": "And then you fit this model with the parameters,"
+ },
+ {
+  "start": 2082.909,
+  "end": 2084.85,
+  "text": "which are the ELO ratings, to maximize"
+ },
+ {
+  "start": 2084.85,
+  "end": 2088.35,
+  "text": "the probability of the pairwise comparisons, OK."
+ },
+ {
+  "start": 2088.35,
+  "end": 2089.929,
+  "text": "And then as a result, you basically"
+ },
+ {
+  "start": 2089.929,
+  "end": 2095.949,
+  "text": "get a rating for each of your models."
+ },
+ {
+  "start": 2095.949,
+  "end": 2099.51,
+  "text": "OK, so this is what Chatbot Arena, nowadays known"
+ },
+ {
+  "start": 2099.51,
+  "end": 2102.23,
+  "text": "as Arena AI, did."
+ },
+ {
+  "start": 2102.23,
+  "end": 2106.75,
+  "text": "And you can get this nice ranking."
+ },
+ {
+  "start": 2106.75,
+  "end": 2110.95,
+  "text": "I guess Claude Opus is doing pretty well here"
+ },
+ {
+  "start": 2110.95,
+  "end": 2114.71,
+  "text": "but some other models are on the list as well."
+ },
+ {
+  "start": 2114.71,
+  "end": 2115.95,
+  "text": "OK."
+ },
+ {
+  "start": 2115.95,
+  "end": 2120.01,
+  "text": "So there's a few things that are nice about this setup."
+ },
+ {
+  "start": 2120.01,
+  "end": 2124.31,
+  "text": "One is that you have real-world prompts."
+ },
+ {
+  "start": 2124.31,
+  "end": 2127.148,
+  "text": "So the idea is that anyone can come to the site,"
+ },
+ {
+  "start": 2127.148,
+  "end": 2129.19,
+  "text": "and the incentive for someone to come to the site"
+ },
+ {
+  "start": 2129.19,
+  "end": 2132.43,
+  "text": "is that they get free access to a language model."
+ },
+ {
+  "start": 2132.43,
+  "end": 2135.31,
+  "text": "And so there's this implicit assumption"
+ },
+ {
+  "start": 2135.31,
+  "end": 2139.33,
+  "text": "that they're actually trying to use it to do something useful."
+ },
+ {
+  "start": 2139.33,
+  "end": 2147.63,
+  "text": "And therefore you get a real-world prompt."
+ },
+ {
+  "start": 2147.63,
+  "end": 2152.11,
+  "text": "But one thing you should keep in mind is, who are these people?"
+ },
+ {
+  "start": 2152.11,
+  "end": 2154.24,
+  "text": "Random person on the internet is--"
+ },
+ {
+  "start": 2154.24,
+  "end": 2156.86,
+  "text": "I don't know what that distribution."
+ },
+ {
+  "start": 2156.86,
+  "end": 2159.12,
+  "text": "Random person on the internet who comes to La Marina."
+ },
+ {
+  "start": 2159.12,
+  "end": 2161.46,
+  "text": "I don't know what that distribution looks like."
+ },
+ {
+  "start": 2161.46,
+  "end": 2163.9,
+  "text": "I think in their paper, they have some demographics,"
+ },
+ {
+  "start": 2163.9,
+  "end": 2167.32,
+  "text": "but demographics don't tell the whole story."
+ },
+ {
+  "start": 2167.32,
+  "end": 2169.56,
+  "text": "You could worry about different biases coming"
+ },
+ {
+  "start": 2169.56,
+  "end": 2172.82,
+  "text": "from the different models."
+ },
+ {
+  "start": 2172.82,
+  "end": 2173.86,
+  "text": "Maybe spammers."
+ },
+ {
+  "start": 2173.86,
+  "end": 2179.52,
+  "text": "People are trying to game, who maybe even submitted a model"
+ },
+ {
+  "start": 2179.52,
+  "end": 2184.04,
+  "text": "and they want their model to look good."
+ },
+ {
+  "start": 2184.04,
+  "end": 2185.46,
+  "text": "You just don't know."
+ },
+ {
+  "start": 2185.46,
+  "end": 2189.08,
+  "text": "It's a little bit of a Wild West."
+ },
+ {
+  "start": 2189.08,
+  "end": 2192.76,
+  "text": "There's another issue which is that the binary preference,"
+ },
+ {
+  "start": 2192.76,
+  "end": 2195.88,
+  "text": "which is better, A or B is very nice and simple"
+ },
+ {
+  "start": 2195.88,
+  "end": 2201.16,
+  "text": "and feeds into this rating, but does conflate style"
+ },
+ {
+  "start": 2201.16,
+  "end": 2203.16,
+  "text": "and correctness."
+ },
+ {
+  "start": 2203.16,
+  "end": 2205.1,
+  "text": "So ELO ratings for chess makes a lot of sense,"
+ },
+ {
+  "start": 2205.1,
+  "end": 2207.36,
+  "text": "because the only thing that matters is, did you win?"
+ },
+ {
+  "start": 2207.36,
+  "end": 2214.81,
+  "text": "But which one is better is much less clear cut."
+ },
+ {
+  "start": 2214.81,
+  "end": 2220.31,
+  "text": "And there's questions of the human is the judge here."
+ },
+ {
+  "start": 2220.31,
+  "end": 2223.99,
+  "text": "The person who puts in the prompt is answering the question."
+ },
+ {
+  "start": 2223.99,
+  "end": 2226.23,
+  "text": "And this is good because in some level,"
+ },
+ {
+  "start": 2226.23,
+  "end": 2230.81,
+  "text": "because the person has some intent"
+ },
+ {
+  "start": 2230.81,
+  "end": 2235.33,
+  "text": "and they can declare whether their intent was met."
+ },
+ {
+  "start": 2235.33,
+  "end": 2236.938,
+  "text": "To some extent, except for they're"
+ },
+ {
+  "start": 2236.938,
+  "end": 2238.73,
+  "text": "presumably asking the question because they"
+ },
+ {
+  "start": 2238.73,
+  "end": 2239.67,
+  "text": "don't know the answer."
+ },
+ {
+  "start": 2239.67,
+  "end": 2242.01,
+  "text": "So if I give you two answers, how"
+ },
+ {
+  "start": 2242.01,
+  "end": 2245.09,
+  "text": "are they to judge which one is correct?"
+ },
+ {
+  "start": 2245.09,
+  "end": 2247.63,
+  "text": "And then there's also the problem of sycophancy,"
+ },
+ {
+  "start": 2247.63,
+  "end": 2251.21,
+  "text": "where maybe more pleasing answers"
+ },
+ {
+  "start": 2251.21,
+  "end": 2254.57,
+  "text": "are going to be upweighted highly compared"
+ },
+ {
+  "start": 2254.57,
+  "end": 2257.77,
+  "text": "to correct but honest answers."
+ },
+ {
+  "start": 2257.77,
+  "end": 2262.81,
+  "text": "So there's a lot of potential issues here."
+ },
+ {
+  "start": 2262.81,
+  "end": 2265.37,
+  "text": "But the nice thing about this method, which"
+ },
+ {
+  "start": 2265.37,
+  "end": 2267.69,
+  "text": "is that you don't need to feed the same"
+ },
+ {
+  "start": 2267.69,
+  "end": 2270.755,
+  "text": "prompts to all the models, and this is the beauty of ELO."
+ },
+ {
+  "start": 2270.755,
+  "end": 2272.13,
+  "text": "In chess, you don't have to play."
+ },
+ {
+  "start": 2272.13,
+  "end": 2274.43,
+  "text": "Everyone plays everyone else."
+ },
+ {
+  "start": 2274.43,
+  "end": 2277.05,
+  "text": "It can just be some sparse sample of that."
+ },
+ {
+  "start": 2277.05,
+  "end": 2279.23,
+  "text": "And you can still derive rankings as long"
+ },
+ {
+  "start": 2279.23,
+  "end": 2282.27,
+  "text": "as the graph is connected."
+ },
+ {
+  "start": 2282.27,
+  "end": 2284.55,
+  "text": "And this is important because a human is rating"
+ },
+ {
+  "start": 2284.55,
+  "end": 2286.95,
+  "text": "and you can't expect a human to rate all the models"
+ },
+ {
+  "start": 2286.95,
+  "end": 2290.31,
+  "text": "or even more than two models."
+ },
+ {
+  "start": 2290.31,
+  "end": 2292.43,
+  "text": "And the nice thing as well is that"
+ },
+ {
+  "start": 2292.43,
+  "end": 2294.45,
+  "text": "as new prompts and new models come in,"
+ },
+ {
+  "start": 2294.45,
+  "end": 2301.03,
+  "text": "there's a natural story for making this updating over time."
+ },
+ {
+  "start": 2301.03,
+  "end": 2306.79,
+  "text": "So let me talk about a different approach."
+ },
+ {
+  "start": 2306.79,
+  "end": 2310.71,
+  "text": "So this is AlpacaEval from 2023."
+ },
+ {
+  "start": 2310.71,
+  "end": 2317.27,
+  "text": "There were some instructions derived from various sources."
+ },
+ {
+  "start": 2317.27,
+  "end": 2324.13,
+  "text": "And the metric here is the win rate against a baseline model."
+ },
+ {
+  "start": 2324.13,
+  "end": 2327.03,
+  "text": "So you have a model, AlpacaEval says,"
+ },
+ {
+  "start": 2327.03,
+  "end": 2329.16,
+  "text": "I'm going to generate it for a prompt,"
+ },
+ {
+  "start": 2329.16,
+  "end": 2332.24,
+  "text": "generate using let's say baseline model GPT-4"
+ },
+ {
+  "start": 2332.24,
+  "end": 2337.64,
+  "text": "preview at that time and then judge using GPT preview, which"
+ },
+ {
+  "start": 2337.64,
+  "end": 2339.0,
+  "text": "one is better?"
+ },
+ {
+  "start": 2339.0,
+  "end": 2343.96,
+  "text": "So immediately, this raises a question of potential bias."
+ },
+ {
+  "start": 2343.96,
+  "end": 2346.92,
+  "text": "But let's put that aside for now."
+ },
+ {
+  "start": 2346.92,
+  "end": 2349.16,
+  "text": "So this is basically an instantiation"
+ },
+ {
+  "start": 2349.16,
+  "end": 2352.92,
+  "text": "of LLM as a judge, which is very popular these days"
+ },
+ {
+  "start": 2352.92,
+  "end": 2356.2,
+  "text": "for evaluating language models."
+ },
+ {
+  "start": 2356.2,
+  "end": 2358.12,
+  "text": "And you can mitigate this bias by having"
+ },
+ {
+  "start": 2358.12,
+  "end": 2361.72,
+  "text": "multiple judges and ensembling and so on and so forth."
+ },
+ {
+  "start": 2361.72,
+  "end": 2364.04,
+  "text": "So one problem with initial AlpacaEval"
+ },
+ {
+  "start": 2364.04,
+  "end": 2369.04,
+  "text": "is that LLM judges favor long responses."
+ },
+ {
+  "start": 2369.04,
+  "end": 2371.4,
+  "text": "And this led to a bunch of leaderboard gaming"
+ },
+ {
+  "start": 2371.4,
+  "end": 2374.8,
+  "text": "where a bunch of models that were fine-tuned were submitted"
+ },
+ {
+  "start": 2374.8,
+  "end": 2378.52,
+  "text": "and they got really high LLM AlpacaEval"
+ },
+ {
+  "start": 2378.52,
+  "end": 2381.3,
+  "text": "performance just because the responses were longer."
+ },
+ {
+  "start": 2381.3,
+  "end": 2385.56,
+  "text": "So this got fixed in a subsequent paper where"
+ },
+ {
+  "start": 2385.56,
+  "end": 2391.49,
+  "text": "they use a very simple regression method to de-bias the metric."
+ },
+ {
+  "start": 2391.49,
+  "end": 2397.37,
+  "text": "OK, but this raises a more general question here,"
+ },
+ {
+  "start": 2397.37,
+  "end": 2400.61,
+  "text": "which is not necessarily specific to AlpacaEval which is,"
+ },
+ {
+  "start": 2400.61,
+  "end": 2402.89,
+  "text": "how do you evaluate a metric?"
+ },
+ {
+  "start": 2402.89,
+  "end": 2406.63,
+  "text": "So we've been talking about evaluation of models."
+ },
+ {
+  "start": 2406.63,
+  "end": 2409.39,
+  "text": "And if I have a metric, how you can evaluate a model."
+ },
+ {
+  "start": 2409.39,
+  "end": 2411.45,
+  "text": "But if I'm coming up with a metric,"
+ },
+ {
+  "start": 2411.45,
+  "end": 2414.37,
+  "text": "how is this metric any good?"
+ },
+ {
+  "start": 2414.37,
+  "end": 2417.03,
+  "text": "So this is a hard problem."
+ },
+ {
+  "start": 2417.03,
+  "end": 2420.89,
+  "text": "And there's no answer here."
+ },
+ {
+  "start": 2420.89,
+  "end": 2424.73,
+  "text": "One thing you can do is more of a sanity check"
+ },
+ {
+  "start": 2424.73,
+  "end": 2427.21,
+  "text": "is you can look at correlation with other metrics"
+ },
+ {
+  "start": 2427.21,
+  "end": 2433.81,
+  "text": "with the idea that higher isn't necessarily better in all cases"
+ },
+ {
+  "start": 2433.81,
+  "end": 2436.19,
+  "text": "unless you are trying to mimic this other metric."
+ },
+ {
+  "start": 2436.19,
+  "end": 2441.61,
+  "text": "So AlpacaEval correlation with Chatbot Arena"
+ },
+ {
+  "start": 2441.61,
+  "end": 2446.26,
+  "text": "is 0.98 which is quite high."
+ },
+ {
+  "start": 2446.26,
+  "end": 2450.82,
+  "text": "So which suggests that you could--"
+ },
+ {
+  "start": 2450.82,
+  "end": 2456.8,
+  "text": "let's say you wanted to evaluate on a Chatbot Arena,"
+ },
+ {
+  "start": 2456.8,
+  "end": 2459.62,
+  "text": "but you're too shy to put your model"
+ },
+ {
+  "start": 2459.62,
+  "end": 2461.88,
+  "text": "or you don't want to wait for humans or whatever,"
+ },
+ {
+  "start": 2461.88,
+  "end": 2467.98,
+  "text": "you can use AlpacaEval to evaluate instead."
+ },
+ {
+  "start": 2467.98,
+  "end": 2469.52,
+  "text": "Now, this correlation, of course,"
+ },
+ {
+  "start": 2469.52,
+  "end": 2473.7,
+  "text": "is with respect to a certain set of models."
+ },
+ {
+  "start": 2473.7,
+  "end": 2477.22,
+  "text": "And so this might not hold for models"
+ },
+ {
+  "start": 2477.22,
+  "end": 2482.86,
+  "text": "that let's say are stronger than GPT-4 preview."
+ },
+ {
+  "start": 2482.86,
+  "end": 2487.94,
+  "text": "So at this point, this leaderboard I don't think is really--"
+ },
+ {
+  "start": 2487.94,
+  "end": 2494.94,
+  "text": "hasn't been maintained in over a year but this what it looked like at that time."
+ },
+ {
+  "start": 2494.94,
+  "end": 2499.24,
+  "text": "So there's another benchmark I'll talk about,"
+ },
+ {
+  "start": 2499.24,
+  "end": 2505.64,
+  "text": "which is WildBench and this one was sourced a bunch of examples"
+ },
+ {
+  "start": 2505.64,
+  "end": 2508.7,
+  "text": "from human-chatbot conversations."
+ },
+ {
+  "start": 2508.7,
+  "end": 2513.4,
+  "text": "So like Chatbot Arena, they also put up a free service"
+ },
+ {
+  "start": 2513.4,
+  "end": 2514.96,
+  "text": "where people could chat with this bot"
+ },
+ {
+  "start": 2514.96,
+  "end": 2520.04,
+  "text": "and they collected the queries."
+ },
+ {
+  "start": 2520.04,
+  "end": 2529.4,
+  "text": "And then like AlpacaEval, they used LLM as a judge"
+ },
+ {
+  "start": 2529.4,
+  "end": 2534.48,
+  "text": "to evaluate the model."
+ },
+ {
+  "start": 2534.48,
+  "end": 2537.76,
+  "text": "The main innovation here is the use"
+ },
+ {
+  "start": 2537.76,
+  "end": 2541.6,
+  "text": "of a checklist, which is generated"
+ },
+ {
+  "start": 2541.6,
+  "end": 2546.68,
+  "text": "and specific to a particular prompt or task."
+ },
+ {
+  "start": 2546.68,
+  "end": 2548.88,
+  "text": "And the idea here is that if you just"
+ },
+ {
+  "start": 2548.88,
+  "end": 2554.76,
+  "text": "ask a language model to judge whether this response is good"
+ },
+ {
+  "start": 2554.76,
+  "end": 2555.88,
+  "text": "or not."
+ },
+ {
+  "start": 2555.88,
+  "end": 2559.4,
+  "text": "This is in some sense a very ill-defined task."
+ },
+ {
+  "start": 2559.4,
+  "end": 2561.97,
+  "text": "I don't know what depends on what you care about."
+ },
+ {
+  "start": 2561.97,
+  "end": 2564.85,
+  "text": "And so the idea here is that by having a checklist or some"
+ },
+ {
+  "start": 2564.85,
+  "end": 2570.25,
+  "text": "of rubric, this greatly scopes and makes the task evaluation"
+ },
+ {
+  "start": 2570.25,
+  "end": 2573.53,
+  "text": "task more well-defined."
+ },
+ {
+  "start": 2573.53,
+  "end": 2577.25,
+  "text": "So they did this, also, they showed correlation"
+ },
+ {
+  "start": 2577.25,
+  "end": 2580.41,
+  "text": "with Chatbot Arena which admittedly"
+ },
+ {
+  "start": 2580.41,
+  "end": 2584.29,
+  "text": "is a little bit circular because then you can ask why, well,"
+ },
+ {
+  "start": 2584.29,
+  "end": 2586.85,
+  "text": "is Chatbot Arena really the ground truth?"
+ },
+ {
+  "start": 2586.85,
+  "end": 2591.41,
+  "text": "But at least we're all in the same boat together."
+ },
+ {
+  "start": 2591.41,
+  "end": 2596.05,
+  "text": "OK, so to conclude this section, how do you"
+ },
+ {
+  "start": 2596.05,
+  "end": 2600.57,
+  "text": "evaluate open-ended responses?"
+ },
+ {
+  "start": 2600.57,
+  "end": 2604.73,
+  "text": "There's no clear solution here but there's some ideas."
+ },
+ {
+  "start": 2604.73,
+  "end": 2611.93,
+  "text": "Pairwise comparisons between a reference and a model response"
+ },
+ {
+  "start": 2611.93,
+  "end": 2615.37,
+  "text": "is generally a good idea because especially"
+ },
+ {
+  "start": 2615.37,
+  "end": 2617.37,
+  "text": "for very similar responses, you can"
+ },
+ {
+  "start": 2617.37,
+  "end": 2618.888,
+  "text": "give directional information."
+ },
+ {
+  "start": 2618.888,
+  "end": 2620.68,
+  "text": "Well, this one's slightly better than this."
+ },
+ {
+  "start": 2620.68,
+  "end": 2623.9,
+  "text": "But in terms of absolute ranking like is this a 7 out of 10"
+ },
+ {
+  "start": 2623.9,
+  "end": 2625.16,
+  "text": "or an 8 out of 10?"
+ },
+ {
+  "start": 2625.16,
+  "end": 2628.98,
+  "text": "That tends to be a lot less high signal."
+ },
+ {
+  "start": 2628.98,
+  "end": 2631.3,
+  "text": "One should always be aware of biases"
+ },
+ {
+  "start": 2631.3,
+  "end": 2635.58,
+  "text": "both in terms of humans or LLM judges."
+ },
+ {
+  "start": 2635.58,
+  "end": 2638.86,
+  "text": "They have different biases, but nonetheless that's"
+ },
+ {
+  "start": 2638.86,
+  "end": 2643.18,
+  "text": "something important to pay attention to."
+ },
+ {
+  "start": 2643.18,
+  "end": 2645.78,
+  "text": "Perhaps the only thing you might be able to do"
+ },
+ {
+  "start": 2645.78,
+  "end": 2650.38,
+  "text": "is you evaluate over multiple judges, humans,"
+ },
+ {
+  "start": 2650.38,
+  "end": 2653.18,
+  "text": "and judges of all everything is saying"
+ },
+ {
+  "start": 2653.18,
+  "end": 2657.22,
+  "text": "your model is better than--maybe your model is better."
+ },
+ {
+  "start": 2657.22,
+  "end": 2661.3,
+  "text": "And finally, the evaluation problem here"
+ },
+ {
+  "start": 2661.3,
+  "end": 2663.3,
+  "text": "of open-ended response."
+ },
+ {
+  "start": 2663.3,
+  "end": 2666.7,
+  "text": "I would emphasize is not really well-defined."
+ },
+ {
+  "start": 2666.7,
+  "end": 2669.46,
+  "text": "And so increasingly, I think it's"
+ },
+ {
+  "start": 2669.46,
+  "end": 2674.98,
+  "text": "important to define rubrics or checklists to improve"
+ },
+ {
+  "start": 2674.98,
+  "end": 2682.46,
+  "text": "the reliability or well-definedness of an actual evaluation."
+ },
+ {
+  "start": 2682.46,
+  "end": 2684.98,
+  "text": "And this is true regardless of a human and a judge."
+ },
+ {
+  "start": 2684.98,
+  "end": 2686.68,
+  "text": "So anyone who's done crowdsourcing"
+ },
+ {
+  "start": 2686.68,
+  "end": 2689.44,
+  "text": "knows that if you just ask a human to rate"
+ },
+ {
+  "start": 2689.44,
+  "end": 2691.7,
+  "text": "something without giving some of rubric,"
+ },
+ {
+  "start": 2691.7,
+  "end": 2695.34,
+  "text": "you're probably going to get very nonsensical results."
+ },
+ {
+  "start": 2698.4,
+  "end": 2704.8,
+  "text": "OK, so let's move on to the agentic world."
+ },
+ {
+  "start": 2704.8,
+  "end": 2706.48,
+  "text": "So you can think about what we've"
+ },
+ {
+  "start": 2706.48,
+  "end": 2711.52,
+  "text": "been doing so far is evaluate what language models say,"
+ },
+ {
+  "start": 2711.52,
+  "end": 2712.38,
+  "text": "and that's chat."
+ },
+ {
+  "start": 2712.38,
+  "end": 2717.2,
+  "text": "And now, we're going to evaluate what LLMs do, which is agents."
+ },
+ {
+  "start": 2717.2,
+  "end": 2724.24,
+  "text": "And so for anyone who's following AI hype,"
+ },
+ {
+  "start": 2724.24,
+  "end": 2726.34,
+  "text": "agents are everywhere."
+ },
+ {
+  "start": 2726.34,
+  "end": 2730.44,
+  "text": "And these are definitely, I think,"
+ },
+ {
+  "start": 2730.44,
+  "end": 2734.96,
+  "text": "going to transform the way that we think about language models."
+ },
+ {
+  "start": 2734.96,
+  "end": 2737.29,
+  "text": "So an agent is basically a language model"
+ },
+ {
+  "start": 2737.29,
+  "end": 2741.05,
+  "text": "plus some scaffold, which is a logic for deciding"
+ },
+ {
+  "start": 2741.05,
+  "end": 2745.65,
+  "text": "how the language model is going to be called"
+ },
+ {
+  "start": 2745.65,
+  "end": 2751.97,
+  "text": "and what tools it can have access to and so on and so forth."
+ },
+ {
+  "start": 2751.97,
+  "end": 2756.13,
+  "text": "So there are a few benchmarks I want to just point out"
+ },
+ {
+  "start": 2756.13,
+  "end": 2757.89,
+  "text": "that are authentic."
+ },
+ {
+  "start": 2757.89,
+  "end": 2761.87,
+  "text": "So one is very popular."
+ },
+ {
+  "start": 2761.87,
+  "end": 2763.35,
+  "text": "It's just called SWE-bench."
+ },
+ {
+  "start": 2766.05,
+  "end": 2767.97,
+  "text": "Basically, the task is you're given"
+ },
+ {
+  "start": 2767.97,
+  "end": 2772.09,
+  "text": "a codebase and a description of a GitHub issue, submit a PR."
+ },
+ {
+  "start": 2772.09,
+  "end": 2778.53,
+  "text": "And the way you evaluate a PR is whether it passes the unit test."
+ },
+ {
+  "start": 2778.53,
+  "end": 2782.77,
+  "text": "So these tests are designed so that before you submit a PR,"
+ },
+ {
+  "start": 2782.77,
+  "end": 2784.71,
+  "text": "certain unit tests don't pass."
+ },
+ {
+  "start": 2784.71,
+  "end": 2786.23,
+  "text": "And then your goal is to fix it."
+ },
+ {
+  "start": 2786.23,
+  "end": 2789.41,
+  "text": "So certain unit tests pass and you don't break anything else."
+ },
+ {
+  "start": 2789.41,
+  "end": 2794.0,
+  "text": "So here's an example of some instructions."
+ },
+ {
+  "start": 2794.0,
+  "end": 2796.26,
+  "text": "Here's the issue."
+ },
+ {
+  "start": 2796.26,
+  "end": 2799.88,
+  "text": "And then some code that is provided in the context."
+ },
+ {
+  "start": 2799.88,
+  "end": 2803.22,
+  "text": "And then your goal is to generate a patch."
+ },
+ {
+  "start": 2803.22,
+  "end": 2806.82,
+  "text": "And given a patch you are evaluated on"
+ },
+ {
+  "start": 2806.82,
+  "end": 2808.98,
+  "text": "whether you pass or not."
+ },
+ {
+  "start": 2808.98,
+  "end": 2811.58,
+  "text": "So the good thing about this is that the evaluation"
+ },
+ {
+  "start": 2811.58,
+  "end": 2814.1,
+  "text": "is very straightforward."
+ },
+ {
+  "start": 2814.1,
+  "end": 2820.62,
+  "text": "And let's see how we're doing on SWE-bench."
+ },
+ {
+  "start": 2820.62,
+  "end": 2823.42,
+  "text": "Actually, this is going to be SWE-bench Verified, which"
+ },
+ {
+  "start": 2823.42,
+  "end": 2828.5,
+  "text": "later I'll show you, tell you why this happened."
+ },
+ {
+  "start": 2828.5,
+  "end": 2832.82,
+  "text": "So SWE-bench in-- this was only, I"
+ },
+ {
+  "start": 2832.82,
+  "end": 2842.86,
+  "text": "guess 2024, was still around 16% and now it's up to 93."
+ },
+ {
+  "start": 2842.86,
+  "end": 2844.04,
+  "text": "Good job, Mythos."
+ },
+ {
+  "start": 2851.28,
+  "end": 2856.62,
+  "text": "So this is a very canonical generic benchmark,"
+ },
+ {
+  "start": 2856.62,
+  "end": 2859.52,
+  "text": "as a lot of the attention on agents"
+ },
+ {
+  "start": 2859.52,
+  "end": 2862.42,
+  "text": "has been invested in coding abilities."
+ },
+ {
+  "start": 2862.42,
+  "end": 2865.92,
+  "text": "So SWE-bench really pioneered this way"
+ },
+ {
+  "start": 2865.92,
+  "end": 2868.76,
+  "text": "of thinking about how to assess an agent's ability"
+ },
+ {
+  "start": 2868.76,
+  "end": 2873.8,
+  "text": "to write and code in a realistic environment."
+ },
+ {
+  "start": 2873.8,
+  "end": 2878.24,
+  "text": "So here's another project called Terminal-Bench."
+ },
+ {
+  "start": 2878.24,
+  "end": 2881.88,
+  "text": "And here the idea is that this is going"
+ },
+ {
+  "start": 2881.88,
+  "end": 2883.54,
+  "text": "to be more general purpose."
+ },
+ {
+  "start": 2883.54,
+  "end": 2886.88,
+  "text": "And we're going to basically have the environment be"
+ },
+ {
+  "start": 2886.88,
+  "end": 2888.6,
+  "text": "a computer terminal."
+ },
+ {
+  "start": 2888.6,
+  "end": 2891.64,
+  "text": "And we're going to define a bunch of tasks"
+ },
+ {
+  "start": 2891.64,
+  "end": 2893.64,
+  "text": "that can be done in a computer terminal"
+ },
+ {
+  "start": 2893.64,
+  "end": 2896.612,
+  "text": "by typing in a bunch of commands."
+ },
+ {
+  "start": 2896.612,
+  "end": 2898.32,
+  "text": "And the nice thing about this environment"
+ },
+ {
+  "start": 2898.32,
+  "end": 2903.0,
+  "text": "is it's very simple and universal."
+ },
+ {
+  "start": 2903.0,
+  "end": 2910.97,
+  "text": "And these tasks were crowdsourced from 93 people"
+ },
+ {
+  "start": 2910.97,
+  "end": 2915.21,
+  "text": "from across the world."
+ },
+ {
+  "start": 2915.21,
+  "end": 2920.93,
+  "text": "89 of these tasks constitute Terminal-Bench 2.0."
+ },
+ {
+  "start": 2920.93,
+  "end": 2927.17,
+  "text": "These tasks generally take ranging from one hour"
+ },
+ {
+  "start": 2927.17,
+  "end": 2929.33,
+  "text": "to over a week, depending on whether you're"
+ },
+ {
+  "start": 2929.33,
+  "end": 2932.25,
+  "text": "an expert or a junior."
+ },
+ {
+  "start": 2932.25,
+  "end": 2937.81,
+  "text": "And then, here's what the leaderboard looks like as of today."
+ },
+ {
+  "start": 2937.81,
+  "end": 2941.37,
+  "text": "So top models are the frontier models."
+ },
+ {
+  "start": 2941.37,
+  "end": 2947.65,
+  "text": "One thing that's interesting is that the agent is also important"
+ },
+ {
+  "start": 2947.65,
+  "end": 2953.37,
+  "text": "here because you can have two agents but the same model"
+ },
+ {
+  "start": 2953.37,
+  "end": 2957.69,
+  "text": "and they have different accuracies."
+ },
+ {
+  "start": 2957.69,
+  "end": 2963.15,
+  "text": "So another benchmark I'll talk about is Cybersecurity."
+ },
+ {
+  "start": 2963.15,
+  "end": 2967.37,
+  "text": "So this is 40 Capture The Flag tasks."
+ },
+ {
+  "start": 2967.37,
+  "end": 2970.42,
+  "text": "And the setting here is that you have"
+ },
+ {
+  "start": 2970.42,
+  "end": 2975.86,
+  "text": "an agent that is given an environment"
+ },
+ {
+  "start": 2975.86,
+  "end": 2981.22,
+  "text": "and it can run various commands like look at the source code."
+ },
+ {
+  "start": 2981.22,
+  "end": 2987.96,
+  "text": "It can access the web server."
+ },
+ {
+  "start": 2987.96,
+  "end": 2990.38,
+  "text": "And the goal is to essentially hack into this server"
+ },
+ {
+  "start": 2990.38,
+  "end": 2993.22,
+  "text": "to extract some flag, which is a unique string that"
+ },
+ {
+  "start": 2993.22,
+  "end": 2996.02,
+  "text": "proves that you've hacked into the server."
+ },
+ {
+  "start": 2996.02,
+  "end": 2999.94,
+  "text": "So these are competitions, cybersecurity exercises that"
+ },
+ {
+  "start": 2999.94,
+  "end": 3002.06,
+  "text": "are done by humans normally."
+ },
+ {
+  "start": 3002.06,
+  "end": 3011.58,
+  "text": "And this is an example of what the agent"
+ },
+ {
+  "start": 3011.58,
+  "end": 3013.88,
+  "text": "scaffold looks like here."
+ },
+ {
+  "start": 3013.88,
+  "end": 3017.06,
+  "text": "This is a very simplistic version where basically you"
+ },
+ {
+  "start": 3017.06,
+  "end": 3019.58,
+  "text": "have one continuous memory."
+ },
+ {
+  "start": 3019.58,
+  "end": 3025.18,
+  "text": "You produce some action, you get environment feedback,"
+ },
+ {
+  "start": 3025.18,
+  "end": 3027.97,
+  "text": "and then you put the results into this buffer"
+ },
+ {
+  "start": 3027.97,
+  "end": 3029.55,
+  "text": "and this is concatenated."
+ },
+ {
+  "start": 3029.55,
+  "end": 3033.59,
+  "text": "As I'll show you later, this history"
+ },
+ {
+  "start": 3033.59,
+  "end": 3035.09,
+  "text": "obviously grows quite a bit."
+ },
+ {
+  "start": 3035.09,
+  "end": 3041.71,
+  "text": "And you'll need to have better ways of managing context."
+ },
+ {
+  "start": 3041.71,
+  "end": 3046.19,
+  "text": "So this is what the leaderboard looks like when it came out."
+ },
+ {
+  "start": 3046.19,
+  "end": 3050.39,
+  "text": "效果最好的模型大约在 10% 左右。"
+ },
+ {
+  "start": 3050.39,
+  "end": 3057.27,
+  "text": "随着时间推移，现在这个问题其实已经完全解决了。"
+ },
+ {
+  "start": 3057.27,
+  "end": 3059.67,
+  "text": "所以这就是 CyBench。"
+ },
+ {
+  "start": 3059.67,
+  "end": 3066.07,
+  "text": "还有另一类问题，属于 MLE 工程。"
+ },
+ {
+  "start": 3066.07,
+  "end": 3071.91,
+  "text": "这个基准测试包含了一系列 Kaggle 竞赛，"
+ },
+ {
+  "start": 3071.91,
+  "end": 3074.55,
+  "text": "涉及处理数据、训练模型，"
+ },
+ {
+  "start": 3074.55,
+  "end": 3076.11,
+  "text": "等等等等。"
+ },
+ {
+  "start": 3076.11,
+  "end": 3080.77,
+  "text": "智能体可以查看数据集、阅读描述，"
+ },
+ {
+  "start": 3080.77,
+  "end": 3086.61,
+  "text": "编写代码、训练模型，最终提交结果，"
+ },
+ {
+  "start": 3086.61,
+  "end": 3088.69,
+  "text": "然后得到一个评分。"
+ },
+ {
+  "start": 3088.69,
+  "end": 3092.69,
+  "text": "这就是目前的排行榜的样子。"
+ },
+ {
+  "start": 3092.69,
+  "end": 3097.01,
+  "text": "同样，你可以看到，其实还是那些老面孔，"
+ },
+ {
+  "start": 3097.01,
+  "end": 3099.21,
+  "text": "在 LLM 这边。"
+ },
+ {
+  "start": 3099.21,
+  "end": 3101.05,
+  "text": "但在不同的智能体脚手架方面，"
+ },
+ {
+  "start": 3101.05,
+  "end": 3105.53,
+  "text": "存在相当大的差异。"
+ },
+ {
+  "start": 3105.53,
+  "end": 3107.69,
+  "text": "有一点需要注意，我要指出，"
+ },
+ {
+  "start": 3107.69,
+  "end": 3113.33,
+  "text": "关于智能体脚手架，它们非常重要。"
+ },
+ {
+  "start": 3113.33,
+  "end": 3118.57,
+  "text": "所以当我说我讲的是语言模型评估时，"
+ },
+ {
+  "start": 3118.57,
+  "end": 3122.01,
+  "text": "这比语言模型评估的范围更广。"
+ },
+ {
+  "start": 3122.01,
+  "end": 3127.69,
+  "text": "原因在于，不像我之前提到的"
+ },
+ {
+  "start": 3127.69,
+  "end": 3131.37,
+  "text": "最早的那个 CyBench 智能体脚手架，现在"
+ },
+ {
+  "start": 3131.37,
+  "end": 3134.17,
+  "text": "你需要复杂得多才能解决"
+ },
+ {
+  "start": 3134.17,
+  "end": 3136.77,
+  "text": "真正复杂的任务。"
+ },
+ {
+  "start": 3136.77,
+  "end": 3140.89,
+  "text": "人们意识到的一件事是，显式规划"
+ },
+ {
+  "start": 3140.89,
+  "end": 3141.95,
+  "text": "是有帮助的。"
+ },
+ {
+  "start": 3141.95,
+  "end": 3143.94,
+  "text": "你不能只是意识流，"
+ },
+ {
+  "start": 3143.94,
+  "end": 3144.96,
+  "text": "思维链这样。"
+ },
+ {
+  "start": 3144.96,
+  "end": 3147.34,
+  "text": "然后你构建起这个上下文，"
+ },
+ {
+  "start": 3147.34,
+  "end": 3151.22,
+  "text": "智能体很容易就迷失了方向。"
+ },
+ {
+  "start": 3151.22,
+  "end": 3155.58,
+  "text": "所以与其维护一个待办清单，把它逐项勾掉。"
+ },
+ {
+  "start": 3155.58,
+  "end": 3160.7,
+  "text": "分层委派，智能体应该调用其他子智能体，"
+ },
+ {
+  "start": 3160.7,
+  "end": 3162.16,
+  "text": "带有一些干净的上下文。"
+ },
+ {
+  "start": 3162.16,
+  "end": 3166.26,
+  "text": "那个智能体做一些事情，只返回结果。"
+ },
+ {
+  "start": 3166.26,
+  "end": 3170.64,
+  "text": "主智能体不需要看到所有血淋淋的细节，"
+ },
+ {
+  "start": 3170.64,
+  "end": 3175.9,
+  "text": "这有助于封装，提供一些封装。"
+ },
+ {
+  "start": 3175.9,
+  "end": 3179.42,
+  "text": "记忆，人们一直在实验"
+ },
+ {
+  "start": 3179.42,
+  "end": 3181.56,
+  "text": "显式地读写文件，"
+ },
+ {
+  "start": 3181.56,
+  "end": 3183.4,
+  "text": "尤其是随着上下文增长。"
+ },
+ {
+  "start": 3183.4,
+  "end": 3188.58,
+  "text": "你不能只是把它存在上下文窗口里。"
+ },
+ {
+  "start": 3188.58,
+  "end": 3193.66,
+  "text": "最后，还有更多上下文工程，采用"
+ },
+ {
+  "start": 3193.66,
+  "end": 3196.26,
+  "text": "of managing the process."
+ },
+ {
+  "start": 3196.26,
+  "end": 3198.58,
+  "text": "When should you delegate to sub-agents?"
+ },
+ {
+  "start": 3198.58,
+  "end": 3203.47,
+  "text": "When to try this strategy versus this other strategy, what"
+ },
+ {
+  "start": 3203.47,
+  "end": 3205.09,
+  "text": "to write persistent memory."
+ },
+ {
+  "start": 3205.09,
+  "end": 3210.71,
+  "text": "And these things are generally optimized"
+ },
+ {
+  "start": 3210.71,
+  "end": 3216.47,
+  "text": "for the particular language model."
+ },
+ {
+  "start": 3216.47,
+  "end": 3220.67,
+  "text": "So agents are exciting because they enhance the capability"
+ },
+ {
+  "start": 3220.67,
+  "end": 3222.49,
+  "text": "surface of language models."
+ },
+ {
+  "start": 3222.49,
+  "end": 3224.13,
+  "text": "Scaffolds are very important."
+ },
+ {
+  "start": 3224.13,
+  "end": 3227.47,
+  "text": "So really, when we talk about evaluating agents,"
+ },
+ {
+  "start": 3227.47,
+  "end": 3229.95,
+  "text": "it's evaluating both the language model"
+ },
+ {
+  "start": 3229.95,
+  "end": 3232.25,
+  "text": "and the agent scaffold."
+ },
+ {
+  "start": 3236.15,
+  "end": 3238.91,
+  "text": "Now, we're going to switch gears a little bit"
+ },
+ {
+  "start": 3238.91,
+  "end": 3243.79,
+  "text": "and talk about this other very different style of benchmarks."
+ },
+ {
+  "start": 3243.79,
+  "end": 3248.39,
+  "text": "I call them pure reasoning for lack of a better term."
+ },
+ {
+  "start": 3248.39,
+  "end": 3251.59,
+  "text": "And the motivation is that all the tasks so far require"
+ },
+ {
+  "start": 3251.59,
+  "end": 3254.63,
+  "text": "some linguistic and world knowledge."
+ },
+ {
+  "start": 3254.63,
+  "end": 3257.07,
+  "text": "And so the question is, can we just"
+ },
+ {
+  "start": 3257.07,
+  "end": 3261.45,
+  "text": "isolate reasoning or pure fluid intelligence"
+ },
+ {
+  "start": 3261.45,
+  "end": 3264.33,
+  "text": "from a knowledge and knowing facts?"
+ },
+ {
+  "start": 3264.33,
+  "end": 3266.73,
+  "text": "And you could argue that this gives you"
+ },
+ {
+  "start": 3266.73,
+  "end": 3271.41,
+  "text": "a form of more pure intelligence."
+ },
+ {
+  "start": 3271.41,
+  "end": 3276.33,
+  "text": "So there was this project, ARC-AGI,"
+ },
+ {
+  "start": 3276.33,
+  "end": 3283.17,
+  "text": "which started back in 2019, where the goal was exactly this."
+ },
+ {
+  "start": 3283.17,
+  "end": 3288.99,
+  "text": "So the task was meant to be 100% solvable by humans,"
+ },
+ {
+  "start": 3288.99,
+  "end": 3290.49,
+  "text": "but challenging for AIs."
+ },
+ {
+  "start": 3290.49,
+  "end": 3295.05,
+  "text": "And every task is a special snowflake or that's the intent."
+ },
+ {
+  "start": 3295.05,
+  "end": 3297.17,
+  "text": "And so memorizing a bunch of facts"
+ },
+ {
+  "start": 3297.17,
+  "end": 3300.89,
+  "text": "or solving previous problems shouldn't really"
+ },
+ {
+  "start": 3300.89,
+  "end": 3302.97,
+  "text": "help you that much."
+ },
+ {
+  "start": 3302.97,
+  "end": 3306.11,
+  "text": "So if you guys are remembering your LLM history,"
+ },
+ {
+  "start": 3306.11,
+  "end": 3309.31,
+  "text": "2019 was pre-LLM."
+ },
+ {
+  "start": 3309.31,
+  "end": 3311.89,
+  "text": "I mean this was GPT-2 era."
+ },
+ {
+  "start": 3311.89,
+  "end": 3315.14,
+  "text": "So this was prescient in that regard."
+ },
+ {
+  "start": 3315.14,
+  "end": 3317.64,
+  "text": "So here's an example of the first iteration of that problem."
+ },
+ {
+  "start": 3317.64,
+  "end": 3320.02,
+  "text": "You're given these pictures and you're"
+ },
+ {
+  "start": 3320.02,
+  "end": 3322.7,
+  "text": "trying to guess what comes next."
+ },
+ {
+  "start": 3322.7,
+  "end": 3327.08,
+  "text": "And if you take 10 seconds, you can probably solve this problem."
+ },
+ {
+  "start": 3330.22,
+  "end": 3333.98,
+  "text": "So you probably guess it's to just fill in the yellow"
+ },
+ {
+  "start": 3333.98,
+  "end": 3336.54,
+  "text": "to form the rectangle."
+ },
+ {
+  "start": 3336.54,
+  "end": 3341.98,
+  "text": "So then last year, there was an updated version"
+ },
+ {
+  "start": 3341.98,
+  "end": 3345.86,
+  "text": "of this task, which was a bit more complicated."
+ },
+ {
+  "start": 3345.86,
+  "end": 3347.36,
+  "text": "And you can take a look at this."
+ },
+ {
+  "start": 3351.22,
+  "end": 3354.64,
+  "text": "So here's the trajectory."
+ },
+ {
+  "start": 3354.64,
+  "end": 3358.18,
+  "text": "So when ARC-AGI-1 came out--"
+ },
+ {
+  "start": 3361.02,
+  "end": 3363.34,
+  "text": "I think this is actually 0."
+ },
+ {
+  "start": 3363.34,
+  "end": 3366.24,
+  "text": "So basically models didn't do anything."
+ },
+ {
+  "start": 3366.24,
+  "end": 3368.1,
+  "text": "So there's GPT-3-- pre-trained model didn't"
+ },
+ {
+  "start": 3368.1,
+  "end": 3370.58,
+  "text": "move the needle at all, right."
+ },
+ {
+  "start": 3370.58,
+  "end": 3374.1,
+  "text": "And this was exactly as the creators had intended."
+ },
+ {
+  "start": 3374.1,
+  "end": 3377.99,
+  "text": "Pre-trained models just learn what"
+ },
+ {
+  "start": 3377.99,
+  "end": 3379.91,
+  "text": "the facts are on the internet and maybe learn"
+ },
+ {
+  "start": 3379.91,
+  "end": 3381.09,
+  "text": "linguistic patterns."
+ },
+ {
+  "start": 3381.09,
+  "end": 3384.57,
+  "text": "But none of that is actually helpful directly,"
+ },
+ {
+  "start": 3384.57,
+  "end": 3388.67,
+  "text": "at least for these ARC-AGI tasks."
+ },
+ {
+  "start": 3388.67,
+  "end": 3393.07,
+  "text": "And then something happened in 2024."
+ },
+ {
+  "start": 3393.07,
+  "end": 3396.61,
+  "text": "And this is when OpenAI released their o1 and o3 models."
+ },
+ {
+  "start": 3396.61,
+  "end": 3400.39,
+  "text": "Then things started taking off pretty abruptly."
+ },
+ {
+  "start": 3400.39,
+  "end": 3406.43,
+  "text": "And now, ARC-AGI-1 is basically solved."
+ },
+ {
+  "start": 3406.43,
+  "end": 3412.99,
+  "text": "And even around 2025 when ARC-AGI-2 came out,"
+ },
+ {
+  "start": 3412.99,
+  "end": 3415.97,
+  "text": "this has also-- it's not quite solved,"
+ },
+ {
+  "start": 3415.97,
+  "end": 3421.55,
+  "text": "but it looks like it's on its way to being solved."
+ },
+ {
+  "start": 3421.55,
+  "end": 3428.67,
+  "text": "So it was really the reasoning capabilities that unlocked this."
+ },
+ {
+  "start": 3428.67,
+  "end": 3434.12,
+  "text": "And now one could wonder whether all the knowledge"
+ },
+ {
+  "start": 3434.12,
+  "end": 3439.78,
+  "text": "of actual pre-training was necessary for this task."
+ },
+ {
+  "start": 3439.78,
+  "end": 3441.8,
+  "text": "And certainly, without pre-training"
+ },
+ {
+  "start": 3441.8,
+  "end": 3444.18,
+  "text": "we wouldn't have this explosion of reasoning models."
+ },
+ {
+  "start": 3444.18,
+  "end": 3447.18,
+  "text": "So arguably it was still important,"
+ },
+ {
+  "start": 3447.18,
+  "end": 3450.2,
+  "text": "but not maybe directly visible for much"
+ },
+ {
+  "start": 3450.2,
+  "end": 3452.8,
+  "text": "of the history of ARC-AGI."
+ },
+ {
+  "start": 3452.8,
+  "end": 3456.1,
+  "text": "So now, just last month, ARC-AGI-3 comes out."
+ },
+ {
+  "start": 3456.1,
+  "end": 3457.72,
+  "text": "So you see this familiar pattern."
+ },
+ {
+  "start": 3457.72,
+  "end": 3459.86,
+  "text": "Our creators look at this and it's like, oh,"
+ },
+ {
+  "start": 3459.86,
+  "end": 3461.96,
+  "text": "time for a new benchmark."
+ },
+ {
+  "start": 3461.96,
+  "end": 3465.88,
+  "text": "So this is now an interactive environment"
+ },
+ {
+  "start": 3465.88,
+  "end": 3469.14,
+  "text": "where you can go online and you can play this game."
+ },
+ {
+  "start": 3469.14,
+  "end": 3470.18,
+  "text": "So again, no language."
+ },
+ {
+  "start": 3470.18,
+  "end": 3473.44,
+  "text": "You're just trying to figure out, based on patterns."
+ },
+ {
+  "start": 3473.44,
+  "end": 3475.32,
+  "text": "It's kind of fun."
+ },
+ {
+  "start": 3475.32,
+  "end": 3477.76,
+  "text": "And now the scores are extremely low."
+ },
+ {
+  "start": 3477.76,
+  "end": 3480.96,
+  "text": "So next year when I teach this class,"
+ },
+ {
+  "start": 3480.96,
+  "end": 3483.38,
+  "text": "I'm sure I'll have to update this slide."
+ },
+ {
+  "start": 3483.38,
+  "end": 3485.4,
+  "text": "But we'll see."
+ },
+ {
+  "start": 3485.4,
+  "end": 3490.72,
+  "text": "So I think this ARC-AGI line is a really interesting"
+ },
+ {
+  "start": 3490.72,
+  "end": 3492.5,
+  "text": "one to think about."
+ },
+ {
+  "start": 3492.5,
+  "end": 3496.38,
+  "text": "The goal is to disentangle reasoning from knowledge."
+ },
+ {
+  "start": 3496.38,
+  "end": 3498.08,
+  "text": "This is really hard to do."
+ },
+ {
+  "start": 3498.08,
+  "end": 3500.197,
+  "text": "And it's not--"
+ },
+ {
+  "start": 3500.197,
+  "end": 3502.28,
+  "text": "I think this is probably the best attempt at this."
+ },
+ {
+  "start": 3502.28,
+  "end": 3507.82,
+  "text": "It's not clear whether you can really fully decouple things."
+ },
+ {
+  "start": 3507.82,
+  "end": 3512.0,
+  "text": "And certainly, if people really cared about this benchmark,"
+ },
+ {
+  "start": 3512.0,
+  "end": 3514.12,
+  "text": "I think people probably could--"
+ },
+ {
+  "start": 3514.12,
+  "end": 3516.66,
+  "text": "people can benchmark I think probably anything."
+ },
+ {
+  "start": 3516.66,
+  "end": 3518.76,
+  "text": "So you could design questions like,"
+ },
+ {
+  "start": 3518.76,
+  "end": 3521.78,
+  "text": "are these-- these still come from some prior"
+ },
+ {
+  "start": 3521.78,
+  "end": 3528.3,
+  "text": "and not sure there's anything as quote unquote pure as reasoning."
+ },
+ {
+  "start": 3528.3,
+  "end": 3530.32,
+  "text": "This is also constrained to human reasoning."
+ },
+ {
+  "start": 3530.32,
+  "end": 3533.46,
+  "text": "The explicit goal is to be 100% human solvable"
+ },
+ {
+  "start": 3533.46,
+  "end": 3535.78,
+  "text": "within some reasonable time."
+ },
+ {
+  "start": 3535.78,
+  "end": 3539.68,
+  "text": "So this doesn't really extend to superhuman reasoning,"
+ },
+ {
+  "start": 3539.68,
+  "end": 3542.22,
+  "text": "for example [INAUDIBLE] winning more gold medals"
+ },
+ {
+  "start": 3542.22,
+  "end": 3545.82,
+  "text": "or solving open math problems, which arguably are still"
+ },
+ {
+  "start": 3545.82,
+  "end": 3547.86,
+  "text": "very useful and important."
+ },
+ {
+  "start": 3547.86,
+  "end": 3551.59,
+  "text": "But clearly this exposes some gaps in the current models."
+ },
+ {
+  "start": 3551.59,
+  "end": 3555.31,
+  "text": "So there is work to do if you think about the goal"
+ },
+ {
+  "start": 3555.31,
+  "end": 3558.81,
+  "text": "as basically being able to solve all the tasks."
+ },
+ {
+  "start": 3562.99,
+  "end": 3566.69,
+  "text": "So this ARC-AGI-3 especially looks quite graphic."
+ },
+ {
+  "start": 3566.69,
+  "end": 3572.87,
+  "text": "So is there some multimodal content involved or encoding"
+ },
+ {
+  "start": 3572.87,
+  "end": 3576.41,
+  "text": "or as a textual representation as well?"
+ },
+ {
+  "start": 3576.41,
+  "end": 3581.35,
+  "text": "Yeah so the question is this looks very graphical."
+ },
+ {
+  "start": 3581.35,
+  "end": 3584.23,
+  "text": "And so what is the input to a language model?"
+ },
+ {
+  "start": 3584.23,
+  "end": 3586.95,
+  "text": "So this is essentially--I don't know what the--"
+ },
+ {
+  "start": 3586.95,
+  "end": 3588.93,
+  "text": "I think it's 64 by 64."
+ },
+ {
+  "start": 3588.93,
+  "end": 3591.59,
+  "text": "So you can provide this image, or you"
+ },
+ {
+  "start": 3591.59,
+  "end": 3598.39,
+  "text": "can provide it in ASCII art or some textual representation."
+ },
+ {
+  "start": 3598.39,
+  "end": 3601.75,
+  "text": "Either way, there is a spatial element here"
+ },
+ {
+  "start": 3601.75,
+  "end": 3605.83,
+  "text": "that the model has to reason about, which is really not"
+ },
+ {
+  "start": 3605.83,
+  "end": 3607.57,
+  "text": "English or natural language."
+ },
+ {
+  "start": 3612.92,
+  "end": 3615.8,
+  "text": "So let's shift gears and talk"
+ },
+ {
+  "start": 3615.8,
+  "end": 3621.04,
+  "text": "about another class of benchmarks which is related to safety."
+ },
+ {
+  "start": 3621.04,
+  "end": 3623.64,
+  "text": "So people have been talking about safety"
+ },
+ {
+  "start": 3623.64,
+  "end": 3625.96,
+  "text": "in language models for a while."
+ },
+ {
+  "start": 3625.96,
+  "end": 3629.52,
+  "text": "And if you think about other areas such as cars,"
+ },
+ {
+  "start": 3629.52,
+  "end": 3632.28,
+  "text": "it's pretty clear what safety means here."
+ },
+ {
+  "start": 3632.28,
+  "end": 3637.34,
+  "text": "These ratings for safety ratings for cars,"
+ },
+ {
+  "start": 3637.34,
+  "end": 3640.44,
+  "text": "which involve testing based on smashing cars"
+ },
+ {
+  "start": 3640.44,
+  "end": 3643.04,
+  "text": "into a wall with an airbag and seeing"
+ },
+ {
+  "start": 3643.04,
+  "end": 3649.52,
+  "text": "how well it does and protects the dummies in the car."
+ },
+ {
+  "start": 3649.52,
+  "end": 3653.44,
+  "text": "And this is with decades of lobbying and figuring out"
+ },
+ {
+  "start": 3653.44,
+  "end": 3655.8,
+  "text": "what safety means for vehicles."
+ },
+ {
+  "start": 3655.8,
+  "end": 3657.76,
+  "text": "So what does it mean for AI?"
+ },
+ {
+  "start": 3657.76,
+  "end": 3661.523,
+  "text": "So I would say that there is not a great answer here,"
+ },
+ {
+  "start": 3661.523,
+  "end": 3663.44,
+  "text": "but I'll give you some examples of what people"
+ },
+ {
+  "start": 3663.44,
+  "end": 3665.08,
+  "text": "have been thinking about."
+ },
+ {
+  "start": 3665.08,
+  "end": 3668.76,
+  "text": "So there's this benchmark called Harm-Bench."
+ },
+ {
+  "start": 3668.76,
+  "end": 3674.14,
+  "text": "And this is really about prompting a model with things"
+ },
+ {
+  "start": 3674.14,
+  "end": 3680.06,
+  "text": "that are meant to be harmful and expecting the model"
+ },
+ {
+  "start": 3680.06,
+  "end": 3682.94,
+  "text": "to essentially refuse."
+ },
+ {
+  "start": 3682.94,
+  "end": 3685.4,
+  "text": "So this is one type of safety."
+ },
+ {
+  "start": 3685.4,
+  "end": 3688.78,
+  "text": "And I think probably the dominant thing"
+ },
+ {
+  "start": 3688.78,
+  "end": 3690.74,
+  "text": "when people think about safety is"
+ },
+ {
+  "start": 3690.74,
+  "end": 3694.02,
+  "text": "that I want to prevent bad actors from doing things"
+ },
+ {
+  "start": 3694.02,
+  "end": 3695.86,
+  "text": "with language models, but it turns out"
+ },
+ {
+  "start": 3695.86,
+  "end": 3698.08,
+  "text": "that's not the only thing that matters."
+ },
+ {
+  "start": 3698.08,
+  "end": 3699.86,
+  "text": "So there's this other work, AIR-Bench,"
+ },
+ {
+  "start": 3699.86,
+  "end": 3704.46,
+  "text": "which tries to think about safety holistically"
+ },
+ {
+  "start": 3704.46,
+  "end": 3709.94,
+  "text": "by looking at all the regulatory frameworks in the EU, China,"
+ },
+ {
+  "start": 3709.94,
+  "end": 3715.14,
+  "text": "and the US company policies and builds"
+ },
+ {
+  "start": 3715.14,
+  "end": 3720.98,
+  "text": "a taxonomy of all the different things that could go wrong."
+ },
+ {
+  "start": 3720.98,
+  "end": 3723.22,
+  "text": "And then using this, constructing"
+ },
+ {
+  "start": 3723.22,
+  "end": 3728.47,
+  "text": "a particular set of prompts and evaluating"
+ },
+ {
+  "start": 3728.47,
+  "end": 3732.03,
+  "text": "and so on and so forth."
+ },
+ {
+  "start": 3732.03,
+  "end": 3735.73,
+  "text": "But one problem with safety is, jailbreaking,"
+ },
+ {
+  "start": 3735.73,
+  "end": 3738.47,
+  "text": "which is its own sub problem, which"
+ },
+ {
+  "start": 3738.47,
+  "end": 3740.99,
+  "text": "is that language models are generally trained"
+ },
+ {
+  "start": 3740.99,
+  "end": 3743.79,
+  "text": "to refuse harmful instructions."
+ },
+ {
+  "start": 3743.79,
+  "end": 3748.59,
+  "text": "But as we know you can get around this if you're clever."
+ },
+ {
+  "start": 3748.59,
+  "end": 3750.91,
+  "text": "And so there's some early work that"
+ },
+ {
+  "start": 3750.91,
+  "end": 3757.63,
+  "text": "uses automatic ways to optimize for prompts to bypass safety"
+ },
+ {
+  "start": 3757.63,
+  "end": 3763.23,
+  "text": "using GCG, which is basically this coordinate"
+ },
+ {
+  "start": 3763.23,
+  "end": 3765.35,
+  "text": "wise optimization algorithm."
+ },
+ {
+  "start": 3765.35,
+  "end": 3769.99,
+  "text": "And remarkably, optimizing on open models"
+ },
+ {
+  "start": 3769.99,
+  "end": 3771.69,
+  "text": "allows us to transfer to models."
+ },
+ {
+  "start": 3771.69,
+  "end": 3775.49,
+  "text": "So I hope this doesn't—these attacks don't work anymore."
+ },
+ {
+  "start": 3775.49,
+  "end": 3779.51,
+  "text": "But at the time, you can generate some basically"
+ },
+ {
+  "start": 3779.51,
+  "end": 3785.18,
+  "text": "gibberish and step by step plan to destroy humanity"
+ },
+ {
+  "start": 3785.18,
+  "end": 3790.24,
+  "text": "and OpenAI's model will comply."
+ },
+ {
+  "start": 3790.24,
+  "end": 3791.86,
+  "text": "Obviously, you could argue, well,"
+ },
+ {
+  "start": 3791.86,
+  "end": 3796.96,
+  "text": "is this actually a harmful plan to destroy humanity?"
+ },
+ {
+  "start": 3796.96,
+  "end": 3799.84,
+  "text": "At least it did not—the expected behavior is that it"
+ },
+ {
+  "start": 3799.84,
+  "end": 3802.24,
+  "text": "should probably refuse that."
+ },
+ {
+  "start": 3802.24,
+  "end": 3808.68,
+  "text": "So this raises a bigger problem which is, what is safety?"
+ },
+ {
+  "start": 3808.68,
+  "end": 3810.72,
+  "text": "And one thing that makes this tricky"
+ },
+ {
+  "start": 3810.72,
+  "end": 3815.24,
+  "text": "is that many aspects of safety are very contextual."
+ },
+ {
+  "start": 3815.24,
+  "end": 3819.94,
+  "text": "So it involves politics, law, social norms."
+ },
+ {
+  "start": 3819.94,
+  "end": 3823.12,
+  "text": "This varies across different countries."
+ },
+ {
+  "start": 3823.12,
+  "end": 3825.58,
+  "text": "And then also, if you think about safety,"
+ },
+ {
+  "start": 3825.58,
+  "end": 3828.68,
+  "text": "you have to think about what are the risks."
+ },
+ {
+  "start": 3828.68,
+  "end": 3833.48,
+  "text": "And the risks are actually quite varied as well"
+ },
+ {
+  "start": 3833.48,
+  "end": 3835.82,
+  "text": "and demand probably different attention."
+ },
+ {
+  "start": 3835.82,
+  "end": 3838.52,
+  "text": "So hallucinations is a risk, especially"
+ },
+ {
+  "start": 3838.52,
+  "end": 3843.18,
+  "text": "let's say in medical or legal or financial settings."
+ },
+ {
+  "start": 3843.18,
+  "end": 3846.72,
+  "text": "But this is also correlated with just capabilities."
+ },
+ {
+  "start": 3846.72,
+  "end": 3849.34,
+  "text": "If you make a model more accurate,"
+ },
+ {
+  "start": 3849.34,
+  "end": 3852.06,
+  "text": "it's correlated with not who is seeing as much."
+ },
+ {
+  "start": 3852.06,
+  "end": 3855.22,
+  "text": "Sycophancy is a problem."
+ },
+ {
+  "start": 3855.22,
+  "end": 3856.92,
+  "text": "Abetting crimes is a problem."
+ },
+ {
+  "start": 3856.92,
+  "end": 3863.5,
+  "text": "But this might be counter to capabilities, inequality."
+ },
+ {
+  "start": 3863.5,
+  "end": 3869.14,
+  "text": "Losing critical thinking might be a risk as well that correlates"
+ },
+ {
+  "start": 3869.14,
+  "end": 3870.04,
+  "text": "with capability."
+ },
+ {
+  "start": 3870.04,
+  "end": 3875.06,
+  "text": "So if you think about the societal impact of language"
+ },
+ {
+  "start": 3875.06,
+  "end": 3879.18,
+  "text": "models on the world and think about safety"
+ },
+ {
+  "start": 3879.18,
+  "end": 3882.68,
+  "text": "as ensuring that AI goes well for people,"
+ },
+ {
+  "start": 3882.68,
+  "end": 3886.58,
+  "text": "this is actually a much more complex topic"
+ },
+ {
+  "start": 3886.58,
+  "end": 3888.8,
+  "text": "than I'll have time to talk about."
+ },
+ {
+  "start": 3888.8,
+  "end": 3893.24,
+  "text": "And finally, there is a dual use aspect of language models."
+ },
+ {
+  "start": 3893.24,
+  "end": 3896.86,
+  "text": "So the cybersecurity agents can be used to hack into a system"
+ },
+ {
+  "start": 3896.86,
+  "end": 3900.63,
+  "text": "or to do penetration testing and make systems more secure, which"
+ },
+ {
+  "start": 3900.63,
+  "end": 3904.63,
+  "text": "makes talking about whether these are safety risks"
+ },
+ {
+  "start": 3904.63,
+  "end": 3909.75,
+  "text": "or actually beneficial a double-edged sword."
+ },
+ {
+  "start": 3909.75,
+  "end": 3914.99,
+  "text": "OK, so let's move on now to talk about some broader"
+ },
+ {
+  "start": 3914.99,
+  "end": 3917.61,
+  "text": "considerations of evaluation."
+ },
+ {
+  "start": 3917.61,
+  "end": 3923.79,
+  "text": "So one thing that I think is an important aspect of evaluation"
+ },
+ {
+  "start": 3923.79,
+  "end": 3927.39,
+  "text": "is realism or ecological validity."
+ },
+ {
+  "start": 3927.39,
+  "end": 3930.39,
+  "text": "How well does evaluation capture real-world use?"
+ },
+ {
+  "start": 3930.39,
+  "end": 3937.23,
+  "text": "So in particular exams are very far away from real-world use."
+ },
+ {
+  "start": 3937.23,
+  "end": 3940.43,
+  "text": "Chatbot Arena are from real people"
+ },
+ {
+  "start": 3940.43,
+  "end": 3944.39,
+  "text": "but one could wonder whether this distribution is"
+ },
+ {
+  "start": 3944.39,
+  "end": 3948.51,
+  "text": "the right distribution of people or use cases or not."
+ },
+ {
+  "start": 3948.51,
+  "end": 3951.03,
+  "text": "There's a few benchmarks I'll mention"
+ },
+ {
+  "start": 3951.03,
+  "end": 3955.17,
+  "text": "that try to get at ecological validity,"
+ },
+ {
+  "start": 3955.17,
+  "end": 3958.14,
+  "text": "and in particular at the use case level,"
+ },
+ {
+  "start": 3958.14,
+  "end": 3960.4,
+  "text": "at least not the individual query level."
+ },
+ {
+  "start": 3960.4,
+  "end": 3965.64,
+  "text": "So OpenAI created benchmark called GDPVal."
+ },
+ {
+  "start": 3965.64,
+  "end": 3968.64,
+  "text": "They looked at all the top nine sectors"
+ },
+ {
+  "start": 3968.64,
+  "end": 3973.08,
+  "text": "according to US GDP, 44 different occupations,"
+ },
+ {
+  "start": 3973.08,
+  "end": 3977.08,
+  "text": "got a bunch of professionals to create tasks."
+ },
+ {
+  "start": 3977.08,
+  "end": 3980.92,
+  "text": "These are professionals with about 14 years of experience."
+ },
+ {
+  "start": 3980.92,
+  "end": 3985.84,
+  "text": "And you can see people who are nurses who work concierge,"
+ },
+ {
+  "start": 3985.84,
+  "end": 3988.96,
+  "text": "real estate agents, film and video editors"
+ },
+ {
+  "start": 3988.96,
+  "end": 3990.6,
+  "text": "and so on and so forth."
+ },
+ {
+  "start": 3990.6,
+  "end": 3995.36,
+  "text": "And they created a bunch of tasks."
+ },
+ {
+  "start": 3995.36,
+  "end": 3997.52,
+  "text": "Here's another example."
+ },
+ {
+  "start": 3997.52,
+  "end": 4002.1,
+  "text": "In the medical domain where up until this point,"
+ },
+ {
+  "start": 4002.1,
+  "end": 4005.64,
+  "text": "a lot of medical benchmarks were based on standardized exams."
+ },
+ {
+  "start": 4005.64,
+  "end": 4010.18,
+  "text": "And in fact, actually for humans, this is also what happens."
+ },
+ {
+  "start": 4010.18,
+  "end": 4011.8,
+  "text": "You take these standardized exams"
+ },
+ {
+  "start": 4011.8,
+  "end": 4016.242,
+  "text": "and you graduate from med school and then you go operate on."
+ },
+ {
+  "start": 4016.242,
+  "end": 4017.95,
+  "text": "Well, actually, there's a longer process."
+ },
+ {
+  "start": 4017.95,
+  "end": 4019.79,
+  "text": "You don't operate on patients directly."
+ },
+ {
+  "start": 4023.81,
+  "end": 4026.47,
+  "text": "But the point is that for a language model,"
+ },
+ {
+  "start": 4026.47,
+  "end": 4029.29,
+  "text": "you should also not just pass medical exams"
+ },
+ {
+  "start": 4029.29,
+  "end": 4031.83,
+  "text": "and deploy them directly."
+ },
+ {
+  "start": 4031.83,
+  "end": 4038.49,
+  "text": "So this was a project where 121 tasks were"
+ },
+ {
+  "start": 4038.49,
+  "end": 4041.61,
+  "text": "sourced from 29 clinicians."
+ },
+ {
+  "start": 4041.61,
+  "end": 4045.41,
+  "text": "And this was meant to represent the type of things"
+ },
+ {
+  "start": 4045.41,
+  "end": 4048.45,
+  "text": "that clinicians would actually ask to a language model, which"
+ },
+ {
+  "start": 4048.45,
+  "end": 4051.49,
+  "text": "are quite different than the multiple choice"
+ },
+ {
+  "start": 4051.49,
+  "end": 4054.41,
+  "text": "type of exam questions."
+ },
+ {
+  "start": 4054.41,
+  "end": 4059.87,
+  "text": "Here's another project which gets at real data."
+ },
+ {
+  "start": 4059.87,
+  "end": 4063.01,
+  "text": "So if you ask, who actually has the data"
+ },
+ {
+  "start": 4063.01,
+  "end": 4064.23,
+  "text": "on what people are doing?"
+ },
+ {
+  "start": 4064.23,
+  "end": 4066.81,
+  "text": "Well, it's the model developers."
+ },
+ {
+  "start": 4066.81,
+  "end": 4068.97,
+  "text": "And so this project is interesting"
+ },
+ {
+  "start": 4068.97,
+  "end": 4075.75,
+  "text": "because it uses language models themselves to analyze real data."
+ },
+ {
+  "start": 4075.75,
+  "end": 4078.49,
+  "text": "So in particular, you do to privacy."
+ },
+ {
+  "start": 4078.49,
+  "end": 4082.37,
+  "text": "You can't literally go and look at people's data,"
+ },
+ {
+  "start": 4082.37,
+  "end": 4084.99,
+  "text": "but you can have language models look at the data"
+ },
+ {
+  "start": 4084.99,
+  "end": 4088.03,
+  "text": "and analyze and summarize general patterns."
+ },
+ {
+  "start": 4088.03,
+  "end": 4090.75,
+  "text": "So then the language models could tell you"
+ },
+ {
+  "start": 4090.75,
+  "end": 4093.99,
+  "text": "about what are the types of people--"
+ },
+ {
+  "start": 4093.99,
+  "end": 4097.45,
+  "text": "what are the types of things that people use Claude for?"
+ },
+ {
+  "start": 4100.47,
+  "end": 4104.35,
+  "text": "And sometimes realism and privacy"
+ },
+ {
+  "start": 4104.35,
+  "end": 4107.109,
+  "text": "are at odds with each other because ideally you"
+ },
+ {
+  "start": 4107.109,
+  "end": 4111.609,
+  "text": "would want actually a sample from the actual query stream."
+ },
+ {
+  "start": 4111.609,
+  "end": 4113.99,
+  "text": "And that would be very valuable to assess"
+ },
+ {
+  "start": 4113.99,
+  "end": 4116.35,
+  "text": "how well a model is working and understand deeply"
+ },
+ {
+  "start": 4116.35,
+  "end": 4117.51,
+  "text": "what the errors are."
+ },
+ {
+  "start": 4117.51,
+  "end": 4123.83,
+  "text": "But then that runs into privacy considerations."
+ },
+ {
+  "start": 4123.83,
+  "end": 4126.67,
+  "text": "OK, so another consideration, which"
+ },
+ {
+  "start": 4126.67,
+  "end": 4131.899,
+  "text": "is another type of validity is just in general,"
+ },
+ {
+  "start": 4131.899,
+  "end": 4135.88,
+  "text": "how do that the evaluations are scientifically valid?"
+ },
+ {
+  "start": 4135.88,
+  "end": 4139.92,
+  "text": "And this was brought up fairly early, train-test overlap"
+ },
+ {
+  "start": 4139.92,
+  "end": 4141.68,
+  "text": "or contamination."
+ },
+ {
+  "start": 4141.68,
+  "end": 4144.319,
+  "text": "So in a machine learning 101, you"
+ },
+ {
+  "start": 4144.319,
+  "end": 4148.96,
+  "text": "learn don't train on your test set hopefully."
+ },
+ {
+  "start": 4148.96,
+  "end": 4151.279,
+  "text": "And before foundation models this"
+ },
+ {
+  "start": 4151.279,
+  "end": 4155.06,
+  "text": "was actually pretty clear right."
+ },
+ {
+  "start": 4155.06,
+  "end": 4159.08,
+  "text": "So with ImageNet and SQuAD and many benchmarks"
+ },
+ {
+  "start": 4159.08,
+  "end": 4161.56,
+  "text": "sorry, data sets, there was always a train split"
+ },
+ {
+  "start": 4161.56,
+  "end": 4164.38,
+  "text": "and a test split and everyone played the same game."
+ },
+ {
+  "start": 4164.38,
+  "end": 4168.68,
+  "text": "You train on your training data, you test on your test data."
+ },
+ {
+  "start": 4168.68,
+  "end": 4170.16,
+  "text": "Life was simple."
+ },
+ {
+  "start": 4170.16,
+  "end": 4172.24,
+  "text": "And now, you have these models that"
+ },
+ {
+  "start": 4172.24,
+  "end": 4174.3,
+  "text": "are trained on the internet."
+ },
+ {
+  "start": 4174.3,
+  "end": 4176.88,
+  "text": "And much more than that."
+ },
+ {
+  "start": 4176.88,
+  "end": 4179.7,
+  "text": "And furthermore, you don't what's in the data."
+ },
+ {
+  "start": 4179.7,
+  "end": 4184.52,
+  "text": "So this makes evaluation quite different I think."
+ },
+ {
+  "start": 4184.52,
+  "end": 4186.96,
+  "text": "So what can you do in this?"
+ },
+ {
+  "start": 4186.96,
+  "end": 4190.81,
+  "text": "So first thing you can do is you can"
+ },
+ {
+  "start": 4190.81,
+  "end": 4196.97,
+  "text": "try to infer whether a model has actually seen the test data."
+ },
+ {
+  "start": 4196.97,
+  "end": 4203.41,
+  "text": "So this is a neat idea from Tatsu's group"
+ },
+ {
+  "start": 4203.41,
+  "end": 4207.89,
+  "text": "where you leverage the fact that the order"
+ },
+ {
+  "start": 4207.89,
+  "end": 4211.65,
+  "text": "in which the questions in the benchmark occur"
+ },
+ {
+  "start": 4211.65,
+  "end": 4214.13,
+  "text": "should be random."
+ },
+ {
+  "start": 4214.13,
+  "end": 4219.21,
+  "text": "But if the model prefers some particular order that's"
+ },
+ {
+  "start": 4219.21,
+  "end": 4222.01,
+  "text": "consistent with the benchmark, that is probably--"
+ },
+ {
+  "start": 4222.01,
+  "end": 4226.97,
+  "text": "it's just trained on that benchmark."
+ },
+ {
+  "start": 4226.97,
+  "end": 4235.77,
+  "text": "Another route is that you can encourage people to report"
+ },
+ {
+  "start": 4235.77,
+  "end": 4238.37,
+  "text": "actual train-test overlap."
+ },
+ {
+  "start": 4238.37,
+  "end": 4241.09,
+  "text": "So this has to do with norms."
+ },
+ {
+  "start": 4241.09,
+  "end": 4244.79,
+  "text": "I think in general, especially maybe less in machine learning,"
+ },
+ {
+  "start": 4244.79,
+  "end": 4247.55,
+  "text": "but more in statistics you always"
+ },
+ {
+  "start": 4247.55,
+  "end": 4250.07,
+  "text": "report confidence intervals."
+ },
+ {
+  "start": 4250.07,
+  "end": 4251.01,
+  "text": "You have an estimate."
+ },
+ {
+  "start": 4251.01,
+  "end": 4253.89,
+  "text": "And I always want to know, how reliable is that estimate?"
+ },
+ {
+  "start": 4253.89,
+  "end": 4255.63,
+  "text": "This is just standard practice."
+ },
+ {
+  "start": 4255.63,
+  "end": 4259.19,
+  "text": "And so the idea of this position paper"
+ },
+ {
+  "start": 4259.19,
+  "end": 4262.01,
+  "text": "is that you should model providers."
+ },
+ {
+  "start": 4262.01,
+  "end": 4266.03,
+  "text": "If you're going to claim some GPQA score,"
+ },
+ {
+  "start": 4266.03,
+  "end": 4269.87,
+  "text": "you should always provide some justification"
+ },
+ {
+  "start": 4269.87,
+  "end": 4273.49,
+  "text": "that you didn't train on the test set."
+ },
+ {
+  "start": 4276.75,
+  "end": 4279.97,
+  "text": "So another route is that where you can just give up."
+ },
+ {
+  "start": 4279.97,
+  "end": 4283.863,
+  "text": "It's like OK, all these evaluations there--"
+ },
+ {
+  "start": 4283.863,
+  "end": 4286.03,
+  "text": "let's just assume that people trained on them, let's"
+ },
+ {
+  "start": 4286.03,
+  "end": 4288.99,
+  "text": "assume the worst case."
+ },
+ {
+  "start": 4288.99,
+  "end": 4291.27,
+  "text": "So the thing that we have on our side"
+ },
+ {
+  "start": 4291.27,
+  "end": 4293.57,
+  "text": "is that you can always define fresh evals."
+ },
+ {
+  "start": 4293.57,
+  "end": 4298.07,
+  "text": "So there's a bunch of ideas, LiveCodeBench, UncheeatableEval,"
+ },
+ {
+  "start": 4298.07,
+  "end": 4300.91,
+  "text": "which basically scrape new web pages or archive"
+ },
+ {
+  "start": 4300.91,
+  "end": 4306.52,
+  "text": "papers or GitHub and defines evaluations populations that"
+ },
+ {
+  "start": 4306.52,
+  "end": 4310.76,
+  "text": "are past the cutoff date of the language models."
+ },
+ {
+  "start": 4310.76,
+  "end": 4314.84,
+  "text": "So this seems pretty robust and good."
+ },
+ {
+  "start": 4314.84,
+  "end": 4317.36,
+  "text": "But one thing to keep in mind is that time stamps"
+ },
+ {
+  "start": 4317.36,
+  "end": 4320.88,
+  "text": "aren't always safe either, because I might"
+ },
+ {
+  "start": 4320.88,
+  "end": 4325.22,
+  "text": "post with code for example."
+ },
+ {
+  "start": 4325.22,
+  "end": 4328.28,
+  "text": "I might put something on GitHub which is actually"
+ },
+ {
+  "start": 4328.28,
+  "end": 4331.32,
+  "text": "derived from some other repo."
+ },
+ {
+  "start": 4331.32,
+  "end": 4334.18,
+  "text": "And so how do that's actually generally fresh?"
+ },
+ {
+  "start": 4337.36,
+  "end": 4341.14,
+  "text": "Route 4 is to use private evaluations."
+ },
+ {
+  "start": 4341.14,
+  "end": 4343.86,
+  "text": "So companies' model developers do this, right."
+ },
+ {
+  "start": 4343.86,
+  "end": 4346.52,
+  "text": "So if you're Google or OpenAI, you have your internal code"
+ },
+ {
+  "start": 4346.52,
+  "end": 4349.34,
+  "text": "base, which you assume is not on the internet,"
+ },
+ {
+  "start": 4349.34,
+  "end": 4354.84,
+  "text": "and you obviously wouldn't train on this data,"
+ },
+ {
+  "start": 4354.84,
+  "end": 4357.0,
+  "text": "so you can use it for evaluation."
+ },
+ {
+  "start": 4357.0,
+  "end": 4360.4,
+  "text": "So this generally is pretty reliable."
+ },
+ {
+  "start": 4360.4,
+  "end": 4364.61,
+  "text": "And if you're not a company, you can use your personal writings."
+ },
+ {
+  "start": 4364.61,
+  "end": 4367.41,
+  "text": "I have a bunch of rejected papers from when"
+ },
+ {
+  "start": 4367.41,
+  "end": 4369.95,
+  "text": "I was in grad school that I never put online,"
+ },
+ {
+  "start": 4369.95,
+  "end": 4372.49,
+  "text": "so I can use those."
+ },
+ {
+  "start": 4372.49,
+  "end": 4376.59,
+  "text": "And this type of evaluation, I think,"
+ },
+ {
+  "start": 4376.59,
+  "end": 4380.13,
+  "text": "is very favorable for perplexity evals,"
+ },
+ {
+  "start": 4380.13,
+  "end": 4381.77,
+  "text": "because all you need in perplexity"
+ },
+ {
+  "start": 4381.77,
+  "end": 4384.97,
+  "text": "is just you need a good data set and you"
+ },
+ {
+  "start": 4384.97,
+  "end": 4389.13,
+  "text": "can evaluate log probabilities."
+ },
+ {
+  "start": 4389.13,
+  "end": 4396.97,
+  "text": "So another concern that I'll mention is data set quality."
+ },
+ {
+  "start": 4396.97,
+  "end": 4402.61,
+  "text": "So remember I showed the leaderboard for SWE-Bench Verified."
+ },
+ {
+  "start": 4402.61,
+  "end": 4406.01,
+  "text": "This is because, well, SWE-Bench had"
+ },
+ {
+  "start": 4406.01,
+  "end": 4410.97,
+  "text": "a bunch of problems or tasks, unit tests that"
+ },
+ {
+  "start": 4410.97,
+  "end": 4416.77,
+  "text": "weren't quite rigorous enough and other things that got fixed."
+ },
+ {
+  "start": 4416.77,
+  "end": 4424.15,
+  "text": "And there are many other benchmarks that have gone"
+ },
+ {
+  "start": 4424.15,
+  "end": 4429.07,
+  "text": "through this process like GSM8K or MMLU,"
+ },
+ {
+  "start": 4429.07,
+  "end": 4434.67,
+  "text": "where people have gone and done a more careful audit and realized"
+ },
+ {
+  "start": 4434.67,
+  "end": 4439.23,
+  "text": "that, wait a minute, this question actually doesn't--"
+ },
+ {
+  "start": 4439.23,
+  "end": 4442.51,
+  "text": "something's broken around this question."
+ },
+ {
+  "start": 4442.51,
+  "end": 4444.09,
+  "text": "So like this one."
+ },
+ {
+  "start": 4444.09,
+  "end": 4447.41,
+  "text": "There's no curve given in this text"
+ },
+ {
+  "start": 4447.41,
+  "end": 4449.21,
+  "text": "so you can't answer this question."
+ },
+ {
+  "start": 4452.19,
+  "end": 4454.31,
+  "text": "Does the baby have socks on?"
+ },
+ {
+  "start": 4454.31,
+  "end": 4456.23,
+  "text": "No, there's no way to tell."
+ },
+ {
+  "start": 4456.23,
+  "end": 4461.623,
+  "text": "And there's also this paper that showed that there's"
+ },
+ {
+  "start": 4461.623,
+  "end": 4463.79,
+  "text": "a lot of problems with the agentic benchmarks, which"
+ },
+ {
+  "start": 4463.79,
+  "end": 4466.79,
+  "text": "arguably are even harder to assess because it's not just"
+ },
+ {
+  "start": 4466.79,
+  "end": 4470.19,
+  "text": "you can look at the question and the possible answers"
+ },
+ {
+  "start": 4470.19,
+  "end": 4474.11,
+  "text": "and you can look at it, but there's a whole environment."
+ },
+ {
+  "start": 4474.11,
+  "end": 4479.19,
+  "text": "And there are cases where with coding you can"
+ },
+ {
+  "start": 4479.19,
+  "end": 4483.34,
+  "text": "it's great to have test cases that either pass or not passed."
+ },
+ {
+  "start": 4483.34,
+  "end": 4486.56,
+  "text": "But as we all test cases can be incomplete."
+ },
+ {
+  "start": 4486.56,
+  "end": 4488.12,
+  "text": "So you might pass all the test cases"
+ },
+ {
+  "start": 4488.12,
+  "end": 4490.96,
+  "text": "but still not have a working solution."
+ },
+ {
+  "start": 4490.96,
+  "end": 4493.52,
+  "text": "There's another case of this TorchBench benchmark"
+ },
+ {
+  "start": 4493.52,
+  "end": 4497.78,
+  "text": "where they show that if an agent just outputs the empty response,"
+ },
+ {
+  "start": 4497.78,
+  "end": 4500.28,
+  "text": "they can get a 38%."
+ },
+ {
+  "start": 4500.28,
+  "end": 4503.6,
+  "text": "So there are some trivialities with these benchmarks"
+ },
+ {
+  "start": 4503.6,
+  "end": 4507.095,
+  "text": "that you want to be very careful to avoid."
+ },
+ {
+  "start": 4507.095,
+  "end": 4508.72,
+  "text": "One thing I'll call out is that there's"
+ },
+ {
+  "start": 4508.72,
+  "end": 4512.88,
+  "text": "this tool called Docent that uses"
+ },
+ {
+  "start": 4512.88,
+  "end": 4517.48,
+  "text": "language models to inspect agent traces to detect problems."
+ },
+ {
+  "start": 4517.48,
+  "end": 4519.6,
+  "text": "So this is a qualitative response"
+ },
+ {
+  "start": 4519.6,
+  "end": 4523.8,
+  "text": "to our very quantitative heavy way of benchmarking."
+ },
+ {
+  "start": 4523.8,
+  "end": 4525.96,
+  "text": "And I would always recommend that whenever"
+ },
+ {
+  "start": 4525.96,
+  "end": 4529.2,
+  "text": "you do a benchmark, either develop a benchmark"
+ },
+ {
+  "start": 4529.2,
+  "end": 4533.68,
+  "text": "or run a model on the benchmark that you always"
+ },
+ {
+  "start": 4533.68,
+  "end": 4536.855,
+  "text": "look at the output and try to audit it to make sure"
+ },
+ {
+  "start": 4536.855,
+  "end": 4538.73,
+  "text": "that you actually think you're measuring what"
+ },
+ {
+  "start": 4538.73,
+  "end": 4541.65,
+  "text": "you think you're measuring."
+ },
+ {
+  "start": 4541.65,
+  "end": 4545.67,
+  "text": "OK, so maybe getting a bit more philosophical."
+ },
+ {
+  "start": 4545.67,
+  "end": 4547.61,
+  "text": "So what's the point of evaluation?"
+ },
+ {
+  "start": 4547.61,
+  "end": 4548.11,
+  "text": "OK."
+ },
+ {
+  "start": 4548.11,
+  "end": 4551.65,
+  "text": "So I've talked a lot about different types of evaluation."
+ },
+ {
+  "start": 4551.65,
+  "end": 4555.67,
+  "text": "And really, there's no one evaluation to rule them all."
+ },
+ {
+  "start": 4555.67,
+  "end": 4558.29,
+  "text": "And I think it's-- when you're thinking about evaluation,"
+ },
+ {
+  "start": 4558.29,
+  "end": 4561.83,
+  "text": "you have to be very clear about what the purpose is."
+ },
+ {
+  "start": 4561.83,
+  "end": 4565.41,
+  "text": "And I think often this is not really stated clearly."
+ },
+ {
+  "start": 4565.41,
+  "end": 4568.59,
+  "text": "So for example, you could be a user,"
+ },
+ {
+  "start": 4568.59,
+  "end": 4571.11,
+  "text": "or a company that's trying to make a purchase decision."
+ },
+ {
+  "start": 4571.11,
+  "end": 4574.85,
+  "text": "Are you going to go with A or B for a particular use case?"
+ },
+ {
+  "start": 4574.85,
+  "end": 4577.01,
+  "text": "Or you're just a researcher and you"
+ },
+ {
+  "start": 4577.01,
+  "end": 4579.73,
+  "text": "have this intuitive notion of intelligence"
+ },
+ {
+  "start": 4579.73,
+  "end": 4582.33,
+  "text": "and you want to measure it somehow."
+ },
+ {
+  "start": 4582.33,
+  "end": 4585.21,
+  "text": "Or you want to understand the benefits and harms for business"
+ },
+ {
+  "start": 4585.21,
+  "end": 4586.65,
+  "text": "or policy reasons."
+ },
+ {
+  "start": 4586.65,
+  "end": 4588.89,
+  "text": "Or you're a developer and you want to get feedback"
+ },
+ {
+  "start": 4588.89,
+  "end": 4590.93,
+  "text": "to improve the model."
+ },
+ {
+  "start": 4590.93,
+  "end": 4593.05,
+  "text": "So each of these goals will lead you"
+ },
+ {
+  "start": 4593.05,
+  "end": 4598.3,
+  "text": "to potentially different benchmarks or some combination"
+ },
+ {
+  "start": 4598.3,
+  "end": 4601.06,
+  "text": "of evaluation strategies."
+ },
+ {
+  "start": 4601.06,
+  "end": 4603.56,
+  "text": "And finally, one thing to address,"
+ },
+ {
+  "start": 4603.56,
+  "end": 4605.38,
+  "text": "which I hinted at briefly, is that"
+ },
+ {
+  "start": 4605.38,
+  "end": 4607.08,
+  "text": "what are we even evaluating?"
+ },
+ {
+  "start": 4607.08,
+  "end": 4611.82,
+  "text": "So before foundation models, researchers evaluated methods"
+ },
+ {
+  "start": 4611.82,
+  "end": 4613.96,
+  "text": "because we have these train test splits."
+ },
+ {
+  "start": 4613.96,
+  "end": 4617.78,
+  "text": "And the only thing that was varying is the actual algorithm."
+ },
+ {
+  "start": 4617.78,
+  "end": 4621.02,
+  "text": "And today, we're mostly evaluating models and systems"
+ },
+ {
+  "start": 4621.02,
+  "end": 4623.3,
+  "text": "where anything goes."
+ },
+ {
+  "start": 4623.3,
+  "end": 4624.8,
+  "text": "There are some exceptions."
+ },
+ {
+  "start": 4624.8,
+  "end": 4628.18,
+  "text": "So the NanoGPT speedrun is deliberately"
+ },
+ {
+  "start": 4628.18,
+  "end": 4632.3,
+  "text": "a way to evaluate an algorithm, in particular, how fast you"
+ },
+ {
+  "start": 4632.3,
+  "end": 4634.0,
+  "text": "can train a model."
+ },
+ {
+  "start": 4634.0,
+  "end": 4637.82,
+  "text": "But most of language model evaluation"
+ },
+ {
+  "start": 4637.82,
+  "end": 4642.18,
+  "text": "is about evaluating the actual end model, which is useful"
+ },
+ {
+  "start": 4642.18,
+  "end": 4645.1,
+  "text": "because that is the thing that is actually going to get shipped"
+ },
+ {
+  "start": 4645.1,
+  "end": 4646.68,
+  "text": "and people are going to use."
+ },
+ {
+  "start": 4646.68,
+  "end": 4649.74,
+  "text": "But I think the punchline is that you should always"
+ },
+ {
+  "start": 4649.74,
+  "end": 4657.48,
+  "text": "be very deliberate about declaring what your goals are."
+ },
+ {
+  "start": 4657.48,
+  "end": 4660.7,
+  "text": "OK, so there's no one true evaluation."
+ },
+ {
+  "start": 4660.7,
+  "end": 4664.48,
+  "text": "Choose what you're trying to measure."
+ },
+ {
+  "start": 4664.48,
+  "end": 4668.68,
+  "text": "And we talked about a bunch of different benchmarks"
+ },
+ {
+  "start": 4668.68,
+  "end": 4673.56,
+  "text": "starting with perplexity, exam based, chat, agentic, reasoning,"
+ },
+ {
+  "start": 4673.56,
+  "end": 4675.44,
+  "text": "and safety."
+ },
+ {
+  "start": 4675.44,
+  "end": 4680.08,
+  "text": "They vary in terms of difficulty, realism,"
+ },
+ {
+  "start": 4680.08,
+  "end": 4681.28,
+  "text": "how valid they are."
+ },
+ {
+  "start": 4681.28,
+  "end": 4682.58,
+  "text": "And there's often trade offs."
+ },
+ {
+  "start": 4682.58,
+  "end": 4687.6,
+  "text": "It's hard to have really real and difficult and ecologically"
+ },
+ {
+  "start": 4687.6,
+  "end": 4688.14,
+  "text": "valid."
+ },
+ {
+  "start": 4688.14,
+  "end": 4690.06,
+  "text": "And no trade tests contamination."
+ },
+ {
+  "start": 4690.06,
+  "end": 4693.3,
+  "text": "So often you have to compromise on one of these factors,"
+ },
+ {
+  "start": 4693.3,
+  "end": 4695.08,
+  "text": "and depending on your goals, you will"
+ },
+ {
+  "start": 4695.08,
+  "end": 4699.2,
+  "text": "have to choose which one you're willing to compromise on."
+ },
+ {
+  "start": 4699.2,
+  "end": 4702.3,
+  "text": "So that is the end of this lecture."
+ },
+ {
+  "start": 4702.3,
+  "end": 4703.76,
+  "text": "So next week, we're going to start"
+ },
+ {
+  "start": 4703.76,
+  "end": 4706.52,
+  "text": "talking about training data."
+ },
+ {
+  "start": 4706.52,
+  "end": 4707.66,
+  "text": "OK, see you next time."
+ }
+]

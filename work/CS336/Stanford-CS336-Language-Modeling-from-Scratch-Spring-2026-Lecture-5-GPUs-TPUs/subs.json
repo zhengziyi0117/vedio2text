@@ -1,0 +1,9502 @@
+[
+ {
+  "start": 5.12,
+  "end": 6.12,
+  "text": "OK."
+ },
+ {
+  "start": 6.12,
+  "end": 8.16,
+  "text": "We will get started."
+ },
+ {
+  "start": 8.16,
+  "end": 11.48,
+  "text": "Now we're going to start the systems portion of the class."
+ },
+ {
+  "start": 11.48,
+  "end": 14.52,
+  "text": "So we've been doing a bunch of neural network stuff"
+ },
+ {
+  "start": 14.52,
+  "end": 16.8,
+  "text": "for the last two lectures."
+ },
+ {
+  "start": 16.8,
+  "end": 19.8,
+  "text": "And now we're going to start getting into GPUs,"
+ },
+ {
+  "start": 19.8,
+  "end": 22.52,
+  "text": "parallelization, and inference."
+ },
+ {
+  "start": 22.52,
+  "end": 25.52,
+  "text": "And systems, I think, is going to be, I think,"
+ },
+ {
+  "start": 25.52,
+  "end": 28.94,
+  "text": "part of the stack that is most reasonable in a way,"
+ },
+ {
+  "start": 28.94,
+  "end": 32.08,
+  "text": "in the sense that you can reason through all the pieces"
+ },
+ {
+  "start": 32.08,
+  "end": 33.83,
+  "text": "and there will be kind of logical steps"
+ },
+ {
+  "start": 33.83,
+  "end": 35.58,
+  "text": "that you can go through to get the result."
+ },
+ {
+  "start": 35.58,
+  "end": 38.72,
+  "text": "So it's very different and satisfying."
+ },
+ {
+  "start": 38.72,
+  "end": 42.04,
+  "text": "But when you first start interacting with GPUs,"
+ },
+ {
+  "start": 42.04,
+  "end": 46.2,
+  "text": "it will feel a little bit like both magic and a very strange"
+ },
+ {
+  "start": 46.2,
+  "end": 48.18,
+  "text": "device that you're interacting with."
+ },
+ {
+  "start": 48.18,
+  "end": 49.3,
+  "text": "I don't really know."
+ },
+ {
+  "start": 49.3,
+  "end": 51.88,
+  "text": "As a kind of class survey, how many of you"
+ },
+ {
+  "start": 51.88,
+  "end": 55.4,
+  "text": "have taken a GPU programming class of any kind?"
+ },
+ {
+  "start": 55.4,
+  "end": 55.9,
+  "text": "OK."
+ },
+ {
+  "start": 55.9,
+  "end": 57.14,
+  "text": "So this is pretty good."
+ },
+ {
+  "start": 57.14,
+  "end": 60.0,
+  "text": "That's a fourth, maybe a little bit less."
+ },
+ {
+  "start": 60.0,
+  "end": 62.25,
+  "text": "But I think when you first interact with these things,"
+ },
+ {
+  "start": 62.25,
+  "end": 63.81,
+  "text": "it's actually a little bit of magic."
+ },
+ {
+  "start": 63.81,
+  "end": 66.39,
+  "text": "So it's good to understand."
+ },
+ {
+  "start": 66.39,
+  "end": 69.53,
+  "text": "And I think deep neural networks feel like magic,"
+ },
+ {
+  "start": 69.53,
+  "end": 72.11,
+  "text": "but also, GPUs can too."
+ },
+ {
+  "start": 72.11,
+  "end": 75.708,
+  "text": "Sometimes people will show you plots like this."
+ },
+ {
+  "start": 75.708,
+  "end": 78.25,
+  "text": "I think my promise to you is that by the end of this lecture,"
+ },
+ {
+  "start": 78.25,
+  "end": 80.27,
+  "text": "you will understand what this plot is"
+ },
+ {
+  "start": 80.27,
+  "end": 82.63,
+  "text": "or why this plot looks the way it does."
+ },
+ {
+  "start": 82.63,
+  "end": 84.71000000000001,
+  "text": "And this is how much throughput you're"
+ },
+ {
+  "start": 84.71000000000001,
+  "end": 86.87,
+  "text": "getting on a matrix multiply where"
+ },
+ {
+  "start": 86.87,
+  "end": 88.45,
+  "text": "the x-axis is your dimension."
+ },
+ {
+  "start": 88.45,
+  "end": 91.342,
+  "text": "And you might think, well, maybe bigger matrix multiplies"
+ },
+ {
+  "start": 91.342,
+  "end": 94.31,
+  "text": "are always more throughput because you have more work to do."
+ },
+ {
+  "start": 94.31,
+  "end": 97.15,
+  "text": "Well, you've got all these kind of crazy patterns happening"
+ },
+ {
+  "start": 97.15,
+  "end": 99.57,
+  "text": "where, at certain sizes, your matmuls are much,"
+ },
+ {
+  "start": 99.57,
+  "end": 100.95,
+  "text": "much slower than others."
+ },
+ {
+  "start": 100.95,
+  "end": 102.17,
+  "text": "Why?"
+ },
+ {
+  "start": 102.17,
+  "end": 103.71000000000001,
+  "text": "You'll need to understand that."
+ },
+ {
+  "start": 103.71000000000001,
+  "end": 105.99000000000001,
+  "text": "You also need to understand some basics of how"
+ },
+ {
+  "start": 105.99000000000001,
+  "end": 110.59,
+  "text": "to mentally think about a GPU in order to build fast algorithms."
+ },
+ {
+  "start": 110.59,
+  "end": 112.37,
+  "text": "And even if you're not a systems person--"
+ },
+ {
+  "start": 112.37,
+  "end": 114.87,
+  "text": "I think probably not all of you, or even a majority of you,"
+ },
+ {
+  "start": 114.87,
+  "end": 116.39,
+  "text": "are systems people."
+ },
+ {
+  "start": 116.39,
+  "end": 118.91,
+  "text": "But if you're thinking about architectures or just generally"
+ },
+ {
+  "start": 118.91,
+  "end": 120.51,
+  "text": "reasoning about these things, you"
+ },
+ {
+  "start": 120.51,
+  "end": 123.75,
+  "text": "need to understand the hardware model of how"
+ },
+ {
+  "start": 123.75,
+  "end": 126.27,
+  "text": "your model is going to execute in order"
+ },
+ {
+  "start": 126.27,
+  "end": 127.79,
+  "text": "to make an effective model."
+ },
+ {
+  "start": 127.79,
+  "end": 131.91,
+  "text": "Thinking back to Percy's initial lecture, a big part of scaling"
+ },
+ {
+  "start": 131.91,
+  "end": 134.37,
+  "text": "is making sure you use your resources effectively."
+ },
+ {
+  "start": 134.37,
+  "end": 136.19,
+  "text": "And without understanding your systems,"
+ },
+ {
+  "start": 136.19,
+  "end": 140.79,
+  "text": "you will never be efficient at using your resources."
+ },
+ {
+  "start": 140.79,
+  "end": 143.81,
+  "text": "And I am not a systems person."
+ },
+ {
+  "start": 143.81,
+  "end": 144.87,
+  "text": "Surprise."
+ },
+ {
+  "start": 144.87,
+  "end": 146.82999999999998,
+  "text": "And so before I start, I want to make"
+ },
+ {
+  "start": 146.82999999999998,
+  "end": 148.31,
+  "text": "sure to point you towards resources"
+ },
+ {
+  "start": 148.31,
+  "end": 150.09,
+  "text": "that I think are very good and very useful"
+ },
+ {
+  "start": 150.09,
+  "end": 153.39,
+  "text": "and that I used in making this lecture."
+ },
+ {
+  "start": 153.39,
+  "end": 156.91,
+  "text": "Horace He has really incredible blogs and explainers"
+ },
+ {
+  "start": 156.91,
+  "end": 158.41,
+  "text": "of how GPUs work."
+ },
+ {
+  "start": 158.41,
+  "end": 160.71,
+  "text": "There's an enthusiast group, CUDA Mode,"
+ },
+ {
+  "start": 160.71,
+  "end": 165.63,
+  "text": "that loves to talk about GPUs and CUDA kernels and so on."
+ },
+ {
+  "start": 165.63,
+  "end": 168.15,
+  "text": "And there's a TPU and-- what?"
+ },
+ {
+  "start": 168.15,
+  "end": 169.21,
+  "text": "GPU Mode now."
+ },
+ {
+  "start": 169.21,
+  "end": 170.47,
+  "text": "They changed their name."
+ },
+ {
+  "start": 170.47,
+  "end": 172.71,
+  "text": "OK, fine, GPU Mode."
+ },
+ {
+  "start": 172.71,
+  "end": 176.38,
+  "text": "And the TPU book, but now it's also"
+ },
+ {
+  "start": 176.38,
+  "end": 179.952,
+  "text": "a GPU book by the Google folks, actually, this a really incredible resource."
+ },
+ {
+  "start": 179.952,
+  "end": 181.66,
+  "text": "So if you're really excited or interested"
+ },
+ {
+  "start": 181.66,
+  "end": 183.52,
+  "text": "by any of the stuff I talk about today,"
+ },
+ {
+  "start": 183.52,
+  "end": 186.52,
+  "text": "I would strongly encourage you to look at that book."
+ },
+ {
+  "start": 186.52,
+  "end": 189.98,
+  "text": "And they also have exercises that you can work through."
+ },
+ {
+  "start": 189.98,
+  "end": 191.647,
+  "text": "And your assignment will have things"
+ },
+ {
+  "start": 191.647,
+  "end": 193.48,
+  "text": "that look a little bit like those exercises."
+ },
+ {
+  "start": 193.48,
+  "end": 195.48,
+  "text": "So you can get a little bit of a preview of what"
+ },
+ {
+  "start": 195.48,
+  "end": 198.54,
+  "text": "we will send you to later."
+ },
+ {
+  "start": 198.54,
+  "end": 200.07999999999998,
+  "text": "Great OK."
+ },
+ {
+  "start": 200.07999999999998,
+  "end": 202.2,
+  "text": "So this lecture is going to be in three parts."
+ },
+ {
+  "start": 202.2,
+  "end": 203.82,
+  "text": "The first part is really, I would"
+ },
+ {
+  "start": 203.82,
+  "end": 207.22,
+  "text": "say, just broad introductory material on GPUs."
+ },
+ {
+  "start": 207.22,
+  "end": 208.82,
+  "text": "This is going to be just the hardware"
+ },
+ {
+  "start": 208.82,
+  "end": 211.78,
+  "text": "model, just how the programming of the GPU kind of"
+ },
+ {
+  "start": 211.78,
+  "end": 215.0,
+  "text": "works because the GPU is kind of a foreign device."
+ },
+ {
+  "start": 215.0,
+  "end": 217.3,
+  "text": "And I want you to understand philosophically how"
+ },
+ {
+  "start": 217.3,
+  "end": 219.22,
+  "text": "they're different from CPUs."
+ },
+ {
+  "start": 219.22,
+  "end": 221.22,
+  "text": "And once you do that, we're going to talk about,"
+ },
+ {
+  "start": 221.22,
+  "end": 224.06,
+  "text": "I think, six different tricks, important tricks,"
+ },
+ {
+  "start": 224.06,
+  "end": 226.197,
+  "text": "to get a GPU to go fast."
+ },
+ {
+  "start": 226.197,
+  "end": 227.78,
+  "text": "These are just kind of building blocks"
+ },
+ {
+  "start": 227.78,
+  "end": 231.74,
+  "text": "of how you can start to manipulate your code in order"
+ },
+ {
+  "start": 231.74,
+  "end": 233.847,
+  "text": "to make it run efficiently on a GPU."
+ },
+ {
+  "start": 233.847,
+  "end": 236.18,
+  "text": "And then finally, the last part where we put all of this"
+ },
+ {
+  "start": 236.18,
+  "end": 237.708,
+  "text": "together is going to be, we're going"
+ },
+ {
+  "start": 237.708,
+  "end": 239.0,
+  "text": "to walk through FlashAttention."
+ },
+ {
+  "start": 239.0,
+  "end": 240.375,
+  "text": "And this will be our victory lap."
+ },
+ {
+  "start": 240.375,
+  "end": 241.92,
+  "text": "We will say, actually, at this point,"
+ },
+ {
+  "start": 241.92,
+  "end": 243.9,
+  "text": "we understand everything we need in order"
+ },
+ {
+  "start": 243.9,
+  "end": 246.262,
+  "text": "to reinvent our own FlashAttention"
+ },
+ {
+  "start": 246.262,
+  "end": 248.22,
+  "text": "and to understand all the different components."
+ },
+ {
+  "start": 248.22,
+  "end": 250.26,
+  "text": "So that's going to be the goal that we're"
+ },
+ {
+  "start": 250.26,
+  "end": 255.38,
+  "text": "going to be building towards by the end of lecture."
+ },
+ {
+  "start": 255.38,
+  "end": 257.48,
+  "text": "So we haven't gotten to scaling yet,"
+ },
+ {
+  "start": 257.48,
+  "end": 260.94,
+  "text": "but from Percy's introductory lecture or just generally"
+ },
+ {
+  "start": 260.94,
+  "end": 263.566,
+  "text": "following language modeling, we know"
+ },
+ {
+  "start": 263.566,
+  "end": 265.84,
+  "text": "that if we have more compute on hand,"
+ },
+ {
+  "start": 265.84,
+  "end": 268.34,
+  "text": "we can get better language models."
+ },
+ {
+  "start": 268.34,
+  "end": 271.26,
+  "text": "This is the currency by which we operate."
+ },
+ {
+  "start": 271.26,
+  "end": 274.26,
+  "text": "So if we have faster hardware or if we have better utilization"
+ },
+ {
+  "start": 274.26,
+  "end": 276.46,
+  "text": "or we have more chips, and then we"
+ },
+ {
+  "start": 276.46,
+  "end": 277.84000000000003,
+  "text": "have improved parallelization."
+ },
+ {
+  "start": 277.84000000000003,
+  "end": 280.7,
+  "text": "All of these can drive progress."
+ },
+ {
+  "start": 280.7,
+  "end": 284.34000000000003,
+  "text": "And so in some sense, the game for the last few years has been,"
+ },
+ {
+  "start": 284.34000000000003,
+  "end": 287.32,
+  "text": "how can we bring more compute to bear in training models,"
+ },
+ {
+  "start": 287.32,
+  "end": 288.78,
+  "text": "and I guess in the last year or so,"
+ },
+ {
+  "start": 288.78,
+  "end": 291.06,
+  "text": "how can we bring more compute to bear"
+ },
+ {
+  "start": 291.06,
+  "end": 292.77,
+  "text": "in the inference of these models."
+ },
+ {
+  "start": 292.77,
+  "end": 294.69,
+  "text": "So compute is just extremely important."
+ },
+ {
+  "start": 294.69,
+  "end": 296.863,
+  "text": "And systems is part of that."
+ },
+ {
+  "start": 296.863,
+  "end": 299.53,
+  "text": "So if we were talking about this in the '90s, I think the things"
+ },
+ {
+  "start": 299.53,
+  "end": 301.91,
+  "text": "that we would be focusing on is clock speed."
+ },
+ {
+  "start": 301.91,
+  "end": 303.69,
+  "text": "We would be saying things like, well,"
+ },
+ {
+  "start": 303.69,
+  "end": 305.61,
+  "text": "how we make computers go fast is,"
+ },
+ {
+  "start": 305.61,
+  "end": 308.59,
+  "text": "we have a CPU that executes instructions serially,"
+ },
+ {
+  "start": 308.59,
+  "end": 311.69,
+  "text": "and we make those instructions go faster and faster."
+ },
+ {
+  "start": 311.69,
+  "end": 314.01,
+  "text": "I mean, this type of scaling where transistors"
+ },
+ {
+  "start": 314.01,
+  "end": 316.33,
+  "text": "got smaller and clock speeds got faster,"
+ },
+ {
+  "start": 316.33,
+  "end": 320.31,
+  "text": "called Dennard scaling, held quite well for a while."
+ },
+ {
+  "start": 320.31,
+  "end": 325.05,
+  "text": "Really, the 2000s was about when this kind of scaling tapped out."
+ },
+ {
+  "start": 325.05,
+  "end": 326.97,
+  "text": "And one interesting side note."
+ },
+ {
+  "start": 326.97,
+  "end": 330.17,
+  "text": "The number of transistors, of course, has continued to go up."
+ },
+ {
+  "start": 330.17,
+  "end": 332.81,
+  "text": "But making transistors smaller does not necessarily"
+ },
+ {
+  "start": 332.81,
+  "end": 334.85,
+  "text": "mean that your transistors go faster."
+ },
+ {
+  "start": 334.85,
+  "end": 336.90999999999997,
+  "text": "They don't move at a faster clock speed."
+ },
+ {
+  "start": 336.90999999999997,
+  "end": 340.17,
+  "text": "There's fundamental physical reasons why you don't actually"
+ },
+ {
+  "start": 340.17,
+  "end": 342.81,
+  "text": "continue to get benefits of smaller and smaller transistors"
+ },
+ {
+  "start": 342.81,
+  "end": 344.29,
+  "text": "at a certain point."
+ },
+ {
+  "start": 344.29,
+  "end": 347.27,
+  "text": "So this old approach of making your clocks faster,"
+ },
+ {
+  "start": 347.27,
+  "end": 350.25,
+  "text": "making instructions execute faster, is not going to work."
+ },
+ {
+  "start": 350.25,
+  "end": 354.49,
+  "text": "So how do we get LLMs to continue to scale in this world"
+ },
+ {
+  "start": 354.49,
+  "end": 359.77,
+  "text": "where we can't just make things faster in this frequency sense?"
+ },
+ {
+  "start": 359.77,
+  "end": 361.73,
+  "text": "And that's where the GPU shows up"
+ },
+ {
+  "start": 361.73,
+  "end": 363.71,
+  "text": "and parallel scaling, in general."
+ },
+ {
+  "start": 363.71,
+  "end": 367.47,
+  "text": "Percy's going to talk about more advanced topics next lecture."
+ },
+ {
+  "start": 367.47,
+  "end": 369.81,
+  "text": "But after that, it's going to be parallelism."
+ },
+ {
+  "start": 369.81,
+  "end": 372.95,
+  "text": "Parallelism and GPUs are both kind part of the same paradigm."
+ },
+ {
+  "start": 372.95,
+  "end": 376.17,
+  "text": "Instead of making things go faster serially with your clock"
+ },
+ {
+  "start": 376.17,
+  "end": 377.97,
+  "text": "going faster and faster and faster,"
+ },
+ {
+  "start": 377.97,
+  "end": 380.53,
+  "text": "instead you're going to scale horizontally,"
+ },
+ {
+  "start": 380.53,
+  "end": 384.37,
+  "text": "have more things executing your instructions in parallel."
+ },
+ {
+  "start": 384.37,
+  "end": 386.15,
+  "text": "And so this is the story of GPUs."
+ },
+ {
+  "start": 386.15,
+  "end": 388.41,
+  "text": "This one slide, really, I think, or one picture,"
+ },
+ {
+  "start": 388.41,
+  "end": 391.61,
+  "text": "summarizes the state of parallel scaling, which"
+ },
+ {
+  "start": 391.61,
+  "end": 395.11,
+  "text": "is, in the early days of K20s and M40s,"
+ },
+ {
+  "start": 395.11,
+  "end": 398.83,
+  "text": "you had respectable but somewhat pitiful by today's standards,"
+ },
+ {
+  "start": 398.83,
+  "end": 399.67,
+  "text": "flops."
+ },
+ {
+  "start": 399.67,
+  "end": 402.27,
+  "text": "And all of a sudden, around P100s and V100s,"
+ },
+ {
+  "start": 402.27,
+  "end": 403.49,
+  "text": "this curve takes off."
+ },
+ {
+  "start": 403.49,
+  "end": 405.65,
+  "text": "And you get super exponential scaling"
+ },
+ {
+  "start": 405.65,
+  "end": 407.40999999999997,
+  "text": "in the amount of floating-point operations"
+ },
+ {
+  "start": 407.40999999999997,
+  "end": 409.8,
+  "text": "that you can do year by year."
+ },
+ {
+  "start": 409.8,
+  "end": 412.24,
+  "text": "This is kind of a remarkable plot in the amount of compute"
+ },
+ {
+  "start": 412.24,
+  "end": 414.84000000000003,
+  "text": "that we can bring to bear."
+ },
+ {
+  "start": 414.84000000000003,
+  "end": 418.6,
+  "text": "And so GPU scaling has really driven almost all"
+ },
+ {
+  "start": 418.6,
+  "end": 421.193,
+  "text": "of the compute scaling that we've seen."
+ },
+ {
+  "start": 421.193,
+  "end": 423.36,
+  "text": "And we'll talk about all of the different components"
+ },
+ {
+  "start": 423.36,
+  "end": 424.92,
+  "text": "that we have here."
+ },
+ {
+  "start": 424.92,
+  "end": 427.92,
+  "text": "I'll highlight them here just to put them into your head."
+ },
+ {
+  "start": 427.92,
+  "end": 432.02,
+  "text": "At the V100 era in 2017, we start getting tensor cores."
+ },
+ {
+  "start": 432.02,
+  "end": 434.6,
+  "text": "That's one of the big hardware innovations."
+ },
+ {
+  "start": 434.6,
+  "end": 436.64,
+  "text": "And then in the next few years, we're"
+ },
+ {
+  "start": 436.64,
+  "end": 441.6,
+  "text": "seeing structured sparsity in FPGA and all these lower"
+ },
+ {
+  "start": 441.6,
+  "end": 445.02,
+  "text": "number formats also driving our flops forward."
+ },
+ {
+  "start": 445.02,
+  "end": 451.36,
+  "text": "And we're going to see what that means in detail in a little bit."
+ },
+ {
+  "start": 451.36,
+  "end": 453.86,
+  "text": "So how is the GPU different from a CPU?"
+ },
+ {
+  "start": 453.86,
+  "end": 456.537,
+  "text": "Those that have interacted with the GPU already know this."
+ },
+ {
+  "start": 456.537,
+  "end": 458.62,
+  "text": "We'll move on to more advanced things in a minute."
+ },
+ {
+  "start": 458.62,
+  "end": 460.787,
+  "text": "But for the rest of you, I think it's very important"
+ },
+ {
+  "start": 460.787,
+  "end": 463.88,
+  "text": "to understand the model, the philosophy in some sense,"
+ },
+ {
+  "start": 463.88,
+  "end": 465.15999999999997,
+  "text": "of how they're different."
+ },
+ {
+  "start": 465.15999999999997,
+  "end": 468.67,
+  "text": "So a CPU is designed for quick, serial execution where"
+ },
+ {
+  "start": 468.67,
+  "end": 472.33,
+  "text": "you have complex branching logic, complex conditionals,"
+ },
+ {
+  "start": 472.33,
+  "end": 473.79,
+  "text": "complex control flows."
+ },
+ {
+  "start": 473.79,
+  "end": 476.13,
+  "text": "Because of this, a CPU, generally speaking,"
+ },
+ {
+  "start": 476.13,
+  "end": 477.93,
+  "text": "has really big control units."
+ },
+ {
+  "start": 477.93,
+  "end": 480.11,
+  "text": "And it has a few ALUs that can do"
+ },
+ {
+  "start": 480.11,
+  "end": 482.33,
+  "text": "mathematical or other operations."
+ },
+ {
+  "start": 482.33,
+  "end": 483.95,
+  "text": "But this is meant to run very quickly."
+ },
+ {
+  "start": 483.95,
+  "end": 487.29,
+  "text": "So you want to go as fast as possible and have low latency."
+ },
+ {
+  "start": 487.29,
+  "end": 489.223,
+  "text": "The time between when you get an instruction"
+ },
+ {
+  "start": 489.223,
+  "end": 491.39,
+  "text": "and when you complete it should be very, very short."
+ },
+ {
+  "start": 491.39,
+  "end": 494.91,
+  "text": "That's the general CPU design philosophy."
+ },
+ {
+  "start": 494.91,
+  "end": 498.59,
+  "text": "In contrast, the GPU is really about throughput."
+ },
+ {
+  "start": 498.59,
+  "end": 500.83,
+  "text": "And the plot on the right, I think,"
+ },
+ {
+  "start": 500.83,
+  "end": 503.683,
+  "text": "is a great pictorial illustration of,"
+ },
+ {
+  "start": 503.683,
+  "end": 506.142,
+  "text": "when you change these philosophies, what you end up getting."
+ },
+ {
+  "start": 506.142,
+  "end": 508.89,
+  "text": "So in a GPU, maybe you dispatch a task,"
+ },
+ {
+  "start": 508.89,
+  "end": 511.03,
+  "text": "it takes a long time for it to finish."
+ },
+ {
+  "start": 511.03,
+  "end": 512.677,
+  "text": "It might be that you process a task,"
+ },
+ {
+  "start": 512.677,
+  "end": 515.01,
+  "text": "and then you stop, and then you go work on another task,"
+ },
+ {
+  "start": 515.01,
+  "end": 516.927,
+  "text": "and then you go back and work on another task."
+ },
+ {
+  "start": 516.927,
+  "end": 519.99,
+  "text": "But in general, even though your tasks don't finish quickly,"
+ },
+ {
+  "start": 519.99,
+  "end": 522.63,
+  "text": "you're getting large aggregate throughput"
+ },
+ {
+  "start": 522.63,
+  "end": 524.31,
+  "text": "across all of your tasks."
+ },
+ {
+  "start": 524.31,
+  "end": 526.79,
+  "text": "And what enables this is having tons"
+ },
+ {
+  "start": 526.79,
+  "end": 528.35,
+  "text": "and tons of lightweight cores."
+ },
+ {
+  "start": 528.35,
+  "end": 531.83,
+  "text": "So a GPU has hundreds and hundreds of compute units"
+ },
+ {
+  "start": 531.83,
+  "end": 533.65,
+  "text": "that are packed into a chip."
+ },
+ {
+  "start": 533.65,
+  "end": 535.63,
+  "text": "And all of these can execute in parallel."
+ },
+ {
+  "start": 535.63,
+  "end": 539.39,
+  "text": "So this is a very different mode of programming and thinking"
+ },
+ {
+  "start": 539.39,
+  "end": 541.91,
+  "text": "compared to a CPU."
+ },
+ {
+  "start": 541.91,
+  "end": 545.93,
+  "text": "And I want to demystify what a GPU is."
+ },
+ {
+  "start": 545.93,
+  "end": 548.87,
+  "text": "I don't want you to think of it as a set of pieces"
+ },
+ {
+  "start": 548.87,
+  "end": 550.67,
+  "text": "of text on NVIDIA-SMI."
+ },
+ {
+  "start": 550.67,
+  "end": 553.11,
+  "text": "I want you to be able to visualize"
+ },
+ {
+  "start": 553.11,
+  "end": 556.31,
+  "text": "what the hardware is of a GPU."
+ },
+ {
+  "start": 556.31,
+  "end": 558.95,
+  "text": "I think this picture is, I think, usually"
+ },
+ {
+  "start": 558.95,
+  "end": 561.428,
+  "text": "used as a pictorial illustration of what a GPU is."
+ },
+ {
+  "start": 561.428,
+  "end": 563.47,
+  "text": "I think this is a great logical picture of what's"
+ },
+ {
+  "start": 563.47,
+  "end": 565.67,
+  "text": "happening inside of a GPU."
+ },
+ {
+  "start": 565.67,
+  "end": 569.43,
+  "text": "So a GPU, the basic unit of a GPU"
+ },
+ {
+  "start": 569.43,
+  "end": 572.35,
+  "text": "is SM, a streaming multiprocessor."
+ },
+ {
+  "start": 572.35,
+  "end": 575.03,
+  "text": "And a streaming multiprocessor is kind of a core."
+ },
+ {
+  "start": 575.03,
+  "end": 577.27,
+  "text": "It's its own independent compute unit"
+ },
+ {
+  "start": 577.27,
+  "end": 580.35,
+  "text": "that has subcomponents that it can use"
+ },
+ {
+  "start": 580.35,
+  "end": 582.09,
+  "text": "to accelerate its computation."
+ },
+ {
+  "start": 582.09,
+  "end": 584.14,
+  "text": "And it has access to certain kinds of memories"
+ },
+ {
+  "start": 584.14,
+  "end": 586.34,
+  "text": "that it can connect to."
+ },
+ {
+  "start": 586.34,
+  "end": 590.64,
+  "text": "So each SM, building on this idea of parallelism,"
+ },
+ {
+  "start": 590.64,
+  "end": 592.32,
+  "text": "it's not a single compute unit."
+ },
+ {
+  "start": 592.32,
+  "end": 594.62,
+  "text": "It has streaming processors inside of it"
+ },
+ {
+  "start": 594.62,
+  "end": 596.84,
+  "text": "that can then execute different threads in parallel."
+ },
+ {
+  "start": 596.84,
+  "end": 600.0,
+  "text": "But an SM is the discrete compute unit."
+ },
+ {
+  "start": 600.0,
+  "end": 603.46,
+  "text": "We'll see why later when I get to the programming model."
+ },
+ {
+  "start": 603.46,
+  "end": 606.38,
+  "text": "Each SM, you can think of as a core, almost."
+ },
+ {
+  "start": 606.38,
+  "end": 608.38,
+  "text": "And GPUs have tons of SMS."
+ },
+ {
+  "start": 608.38,
+  "end": 611.14,
+  "text": "A A100 will have 128 SMs."
+ },
+ {
+  "start": 611.14,
+  "end": 613.34,
+  "text": "Each of these can be independently programmed,"
+ },
+ {
+  "start": 613.34,
+  "end": 615.56,
+  "text": "and they can independently execute different jobs."
+ },
+ {
+  "start": 615.56,
+  "end": 619.08,
+  "text": "And they have access to global memory outside of it."
+ },
+ {
+  "start": 621.82,
+  "end": 623.7,
+  "text": "And the other thing that we will see-- that's"
+ },
+ {
+  "start": 623.7,
+  "end": 627.155,
+  "text": "the compute story of a GPU."
+ },
+ {
+  "start": 627.155,
+  "end": 628.78,
+  "text": "But we will see throughout this lecture"
+ },
+ {
+  "start": 628.78,
+  "end": 630.98,
+  "text": "that a really, really important part of this story"
+ },
+ {
+  "start": 630.98,
+  "end": 633.68,
+  "text": "is not just the compute part but the memory part."
+ },
+ {
+  "start": 633.68,
+  "end": 637.34,
+  "text": "Modern hardware and LLM optimization"
+ },
+ {
+  "start": 637.34,
+  "end": 639.24,
+  "text": "is really defined by the memory."
+ },
+ {
+  "start": 639.24,
+  "end": 642.54,
+  "text": "And so we need to understand what the memories are"
+ },
+ {
+  "start": 642.54,
+  "end": 643.86,
+  "text": "and where they live."
+ },
+ {
+  "start": 643.86,
+  "end": 647.5,
+  "text": "So when we talk about memory, there's different kinds."
+ },
+ {
+  "start": 647.5,
+  "end": 649.46,
+  "text": "There's different levels of caches"
+ },
+ {
+  "start": 649.46,
+  "end": 651.58,
+  "text": "that are connected to a GPU."
+ },
+ {
+  "start": 651.58,
+  "end": 654.1,
+  "text": "There are registers, which are even more limited and even"
+ },
+ {
+  "start": 654.1,
+  "end": 654.92,
+  "text": "faster."
+ },
+ {
+  "start": 654.92,
+  "end": 659.02,
+  "text": "And then you have global or high-bandwidth memory."
+ },
+ {
+  "start": 659.02,
+  "end": 661.86,
+  "text": "And as you can see from this table-- this is a benchmarking"
+ },
+ {
+  "start": 661.86,
+  "end": 666.88,
+  "text": "that some folks did of, I think this was at A100 latencies--"
+ },
+ {
+  "start": 666.88,
+  "end": 670.16,
+  "text": "the L1 and shared memory, these are very fast."
+ },
+ {
+  "start": 670.16,
+  "end": 671.86,
+  "text": "In something like 20 to 30 cycles"
+ },
+ {
+  "start": 671.86,
+  "end": 674.22,
+  "text": "you, can read and get data from them."
+ },
+ {
+  "start": 674.22,
+  "end": 677.1,
+  "text": "If you're hitting the L2 cache, much slower, and if you're"
+ },
+ {
+  "start": 677.1,
+  "end": 680.68,
+  "text": "hitting global memory, that's 10 times slower than the L1 cache."
+ },
+ {
+  "start": 680.68,
+  "end": 683.06,
+  "text": "This is a big difference in your speed."
+ },
+ {
+  "start": 683.06,
+  "end": 685.26,
+  "text": "And this global memory is kind of what you normally"
+ },
+ {
+  "start": 685.26,
+  "end": 689.2,
+  "text": "think of high-level programmer as a GPU memory."
+ },
+ {
+  "start": 689.2,
+  "end": 693.282,
+  "text": "When H200 tells you I've got 144 gigs of memory,"
+ },
+ {
+  "start": 693.282,
+  "end": 694.74,
+  "text": "you're talking about global memory."
+ },
+ {
+  "start": 694.74,
+  "end": 697.7,
+  "text": "You're not talking about shared or L1 cache."
+ },
+ {
+  "start": 697.7,
+  "end": 700.03,
+  "text": "Now, physically, where do these things live?"
+ },
+ {
+  "start": 700.03,
+  "end": 703.57,
+  "text": "Well, global memory usually are these kind of memory chips"
+ },
+ {
+  "start": 703.57,
+  "end": 706.77,
+  "text": "that live outside of your compute unit, whereas"
+ },
+ {
+  "start": 706.77,
+  "end": 710.11,
+  "text": "L2 and L1 cache, they kind of live physically in the chip"
+ },
+ {
+  "start": 710.11,
+  "end": 710.61,
+  "text": "itself."
+ },
+ {
+  "start": 710.61,
+  "end": 714.29,
+  "text": "So this is the picture of a GPU chip."
+ },
+ {
+  "start": 714.29,
+  "end": 715.91,
+  "text": "And you see all of these SMs."
+ },
+ {
+  "start": 715.91,
+  "end": 718.29,
+  "text": "These green blocks are SMs."
+ },
+ {
+  "start": 718.29,
+  "end": 720.31,
+  "text": "And you see L2 right here."
+ },
+ {
+  "start": 720.31,
+  "end": 723.87,
+  "text": "And the L1 is inside of each of SMs."
+ },
+ {
+  "start": 723.87,
+  "end": 727.07,
+  "text": "So they're physically much closer to the compute units."
+ },
+ {
+  "start": 727.07,
+  "end": 730.81,
+  "text": "That's why their latency is so much better."
+ },
+ {
+  "start": 730.81,
+  "end": 734.15,
+  "text": "And you might say, OK, then if shared memory is so nice,"
+ },
+ {
+  "start": 734.15,
+  "end": 737.05,
+  "text": "why don't you build a whole chip out of shared memory?"
+ },
+ {
+  "start": 737.05,
+  "end": 739.15,
+  "text": "It's much more expensive, hundreds of times."
+ },
+ {
+  "start": 739.15,
+  "end": 741.61,
+  "text": "It's also much more power hungry from the way"
+ },
+ {
+  "start": 741.61,
+  "end": 745.73,
+  "text": "that these memories are built."
+ },
+ {
+  "start": 745.73,
+  "end": 745.73,
+  "text": "And so this the reason why if you're building"
+ },
+ {
+  "start": 745.73,
+  "end": 747.89,
+  "text": "a practical accelerator, often you don't"
+ },
+ {
+  "start": 747.89,
+  "end": 750.71,
+  "text": "want to just have a giant amount of shared memory."
+ },
+ {
+  "start": 750.71,
+  "end": 752.77,
+  "text": "You want to have this hierarchy of memory"
+ },
+ {
+  "start": 752.77,
+  "end": 754.57,
+  "text": "and use it effectively."
+ },
+ {
+  "start": 754.57,
+  "end": 758.84,
+  "text": "I think Grok, which was recently acquired by NVIDIA,"
+ },
+ {
+  "start": 758.84,
+  "end": 762.26,
+  "text": "was a design where you just have these giant amounts of SRAM."
+ },
+ {
+  "start": 762.26,
+  "end": 766.2,
+  "text": "And for certain workloads like inference, this is very helpful."
+ },
+ {
+  "start": 766.2,
+  "end": 767.602,
+  "text": "But still, for most accelerators,"
+ },
+ {
+  "start": 767.602,
+  "end": 769.56,
+  "text": "you're going to have this hierarchy that you're"
+ },
+ {
+  "start": 769.56,
+  "end": 771.68,
+  "text": "going to really have to respect in order"
+ },
+ {
+  "start": 771.68,
+  "end": 774.22,
+  "text": "to make anything run fast."
+ },
+ {
+  "start": 774.22,
+  "end": 774.72,
+  "text": "Yes."
+ },
+ {
+  "start": 774.72,
+  "end": 778.38,
+  "text": "[INAUDIBLE] be shared memory in the L1 cache."
+ },
+ {
+  "start": 778.38,
+  "end": 778.88,
+  "text": "Yeah."
+ },
+ {
+  "start": 778.88,
+  "end": 783.7,
+  "text": "So the shared memory in the L1 cache, I guess,"
+ },
+ {
+  "start": 783.7,
+  "end": 785.14,
+  "text": "operate differently."
+ },
+ {
+  "start": 785.14,
+  "end": 787.0,
+  "text": "The cache is really just a cache thing"
+ },
+ {
+  "start": 787.0,
+  "end": 790.255,
+  "text": "that is storing recently accessed data elements."
+ },
+ {
+  "start": 790.255,
+  "end": 791.88,
+  "text": "Shared memory is a programmable element"
+ },
+ {
+  "start": 791.88,
+  "end": 793.4,
+  "text": "that you'll actually interact with,"
+ },
+ {
+  "start": 793.4,
+  "end": 795.06,
+  "text": "that you can put things in and out of."
+ },
+ {
+  "start": 798.8,
+  "end": 799.72,
+  "text": "OK."
+ },
+ {
+  "start": 799.72,
+  "end": 800.8,
+  "text": "Cool."
+ },
+ {
+  "start": 800.8,
+  "end": 802.02,
+  "text": "So that's the memory store."
+ },
+ {
+  "start": 802.02,
+  "end": 804.0,
+  "text": "And keep that in mind because it's going to keep coming back,"
+ },
+ {
+  "start": 804.0,
+  "end": 804.98,
+  "text": "the memory hierarchy."
+ },
+ {
+  "start": 804.98,
+  "end": 807.04,
+  "text": "That's a really important object."
+ },
+ {
+  "start": 807.04,
+  "end": 810.148,
+  "text": "Now, we have the hardware mental model in place."
+ },
+ {
+  "start": 810.148,
+  "end": 812.44,
+  "text": "And now we're going to start talking about the software"
+ },
+ {
+  "start": 812.44,
+  "end": 815.0,
+  "text": "and programming model of a GPU."
+ },
+ {
+  "start": 815.0,
+  "end": 817.16,
+  "text": "So there's three different important players"
+ },
+ {
+  "start": 817.16,
+  "end": 820.32,
+  "text": "that live in the execution model of a GPU."
+ },
+ {
+  "start": 820.32,
+  "end": 821.58,
+  "text": "So there's a thread."
+ },
+ {
+  "start": 821.58,
+  "end": 825.095,
+  "text": "And if you're familiar with multiparallel programming"
+ },
+ {
+  "start": 825.095,
+  "end": 826.72,
+  "text": "of any kind, you know what a thread is."
+ },
+ {
+  "start": 826.72,
+  "end": 829.76,
+  "text": "A thread is a lightweight thing that's running in parallel"
+ },
+ {
+  "start": 829.76,
+  "end": 830.74,
+  "text": "and doing some work."
+ },
+ {
+  "start": 830.74,
+  "end": 834.84,
+  "text": "In a GPU, an important thing about the threads"
+ },
+ {
+  "start": 834.84,
+  "end": 837.72,
+  "text": "is they follow the SIMT model, which"
+ },
+ {
+  "start": 837.72,
+  "end": 840.12,
+  "text": "means that all of the threads that you have"
+ },
+ {
+  "start": 840.12,
+  "end": 844.0,
+  "text": "are executing the same exact instructions."
+ },
+ {
+  "start": 844.0,
+  "end": 845.88,
+  "text": "They're going to have different inputs, which"
+ },
+ {
+  "start": 845.88,
+  "end": 847.338,
+  "text": "means that the threads can actually"
+ },
+ {
+  "start": 847.338,
+  "end": 850.16,
+  "text": "do separate useful work, but the instructions they execute"
+ },
+ {
+  "start": 850.16,
+  "end": 851.96,
+  "text": "have to all be the same."
+ },
+ {
+  "start": 851.96,
+  "end": 854.04,
+  "text": "And this has important implications"
+ },
+ {
+  "start": 854.04,
+  "end": 855.8,
+  "text": "for both the efficiency of your code"
+ },
+ {
+  "start": 855.8,
+  "end": 857.34,
+  "text": "as well as the programming model."
+ },
+ {
+  "start": 857.34,
+  "end": 859.62,
+  "text": "If the threads can do all sorts of different stuff,"
+ },
+ {
+  "start": 859.62,
+  "end": 861.36,
+  "text": "it becomes very hard to program."
+ },
+ {
+  "start": 861.36,
+  "end": 866.0,
+  "text": "GPUs are this tradeoff between programmability and efficiency."
+ },
+ {
+  "start": 866.0,
+  "end": 868.88,
+  "text": "Now, a block is a group of threads."
+ },
+ {
+  "start": 868.88,
+  "end": 871.56,
+  "text": "And the reason why a block is a relevant object"
+ },
+ {
+  "start": 871.56,
+  "end": 875.21,
+  "text": "is that a block is guaranteed to run on a single SM."
+ },
+ {
+  "start": 875.21,
+  "end": 877.43,
+  "text": "And remember, an SM has a shared memory."
+ },
+ {
+  "start": 877.43,
+  "end": 880.85,
+  "text": "And so you can think of a thread as doing work in parallel."
+ },
+ {
+  "start": 880.85,
+  "end": 883.51,
+  "text": "Blocks have access to a shared pool of memory."
+ },
+ {
+  "start": 883.51,
+  "end": 885.51,
+  "text": "That will become very important later"
+ },
+ {
+  "start": 885.51,
+  "end": 887.75,
+  "text": "when we talk about this idea called tiling, where"
+ },
+ {
+  "start": 887.75,
+  "end": 889.67,
+  "text": "these blocks are going to be reusing"
+ },
+ {
+  "start": 889.67,
+  "end": 891.43,
+  "text": "the same pieces of memory."
+ },
+ {
+  "start": 891.43,
+  "end": 896.11,
+  "text": "Finally, a warp is essentially the scheduling unit"
+ },
+ {
+  "start": 896.11,
+  "end": 898.91,
+  "text": "of what is happening inside the GPU."
+ },
+ {
+  "start": 898.91,
+  "end": 901.71,
+  "text": "Threads are going to execute in groups of 32"
+ },
+ {
+  "start": 901.71,
+  "end": 903.57,
+  "text": "consecutively numbered threads."
+ },
+ {
+  "start": 903.57,
+  "end": 904.43,
+  "text": "That is a warp."
+ },
+ {
+  "start": 904.43,
+  "end": 907.39,
+  "text": "This decreases the overhead of a scheduler"
+ },
+ {
+  "start": 907.39,
+  "end": 909.153,
+  "text": "deciding which threads to run."
+ },
+ {
+  "start": 909.153,
+  "end": 911.07,
+  "text": "But essentially, these are the important three"
+ },
+ {
+  "start": 911.07,
+  "end": 913.11,
+  "text": "terminology items for GPU."
+ },
+ {
+  "start": 913.11,
+  "end": 914.83,
+  "text": "I might say something like, oh, we're"
+ },
+ {
+  "start": 914.83,
+  "end": 916.65,
+  "text": "going to have different warps executing."
+ },
+ {
+  "start": 916.65,
+  "end": 917.65,
+  "text": "That's what I mean here."
+ },
+ {
+  "start": 917.65,
+  "end": 921.35,
+  "text": "That's a basic unit of 32 threads that execute together."
+ },
+ {
+  "start": 921.35,
+  "end": 922.35,
+  "text": "Yes."
+ },
+ {
+  "start": 922.35,
+  "end": 925.05,
+  "text": "You mentioned the all threads execute same instructions."
+ },
+ {
+  "start": 925.05,
+  "end": 927.79,
+  "text": "Is it all threads in a block or all threads in a warp?"
+ },
+ {
+  "start": 927.79,
+  "end": 932.87,
+  "text": "All threads in a warp are going to get executed."
+ },
+ {
+  "start": 932.87,
+  "end": 933.51,
+  "text": "Cool."
+ },
+ {
+  "start": 933.51,
+  "end": 934.39,
+  "text": "Yeah."
+ },
+ {
+  "start": 934.39,
+  "end": 936.91,
+  "text": "So then the scheduler decides which warp"
+ },
+ {
+  "start": 936.91,
+  "end": 938.248,
+  "text": "the next instruction goes to."
+ },
+ {
+  "start": 938.248,
+  "end": 938.79,
+  "text": "That's right."
+ },
+ {
+  "start": 938.79,
+  "end": 939.57,
+  "text": "Or sorry."
+ },
+ {
+  "start": 939.57,
+  "end": 941.39,
+  "text": "The scheduler decides which warp is"
+ },
+ {
+  "start": 941.39,
+  "end": 948.35,
+  "text": "going to be executing next and on what assignment and so on."
+ },
+ {
+  "start": 948.35,
+  "end": 949.23,
+  "text": "Cool."
+ },
+ {
+  "start": 949.23,
+  "end": 953.47,
+  "text": "And so in the memory model of a GPU,"
+ },
+ {
+  "start": 953.47,
+  "end": 955.33,
+  "text": "device code can read from registers."
+ },
+ {
+  "start": 955.33,
+  "end": 959.21,
+  "text": "Registers are some of the fastest and most local items."
+ },
+ {
+  "start": 959.21,
+  "end": 961.87,
+  "text": "This might be storing things like memory addresses"
+ },
+ {
+  "start": 961.87,
+  "end": 964.53,
+  "text": "of where you might need your arrays start and end."
+ },
+ {
+  "start": 964.53,
+  "end": 967.55,
+  "text": "That's a place where you might store things in registers."
+ },
+ {
+  "start": 967.55,
+  "end": 969.35,
+  "text": "Then you've got local memory."
+ },
+ {
+  "start": 969.35,
+  "end": 971.95,
+  "text": "This is local, too, within your single SM."
+ },
+ {
+  "start": 971.95,
+  "end": 973.55,
+  "text": "You've got shared memory that can"
+ },
+ {
+  "start": 973.55,
+  "end": 976.21,
+  "text": "be accessed within your block."
+ },
+ {
+  "start": 976.21,
+  "end": 979.15,
+  "text": "So if you have something you want to transfer across threads"
+ },
+ {
+  "start": 979.15,
+  "end": 980.75,
+  "text": "or you want to have information that"
+ },
+ {
+  "start": 980.75,
+  "end": 983.05,
+  "text": "is going to be reused across threads,"
+ },
+ {
+  "start": 983.05,
+  "end": 984.85,
+  "text": "those are going to live in shared memory."
+ },
+ {
+  "start": 984.85,
+  "end": 987.03,
+  "text": "You can, of course, then read out, or sorry,"
+ },
+ {
+  "start": 987.03,
+  "end": 989.31,
+  "text": "read from global memory, the DRAM"
+ },
+ {
+  "start": 989.31,
+  "end": 991.58,
+  "text": "that's far away, as long as you're"
+ },
+ {
+  "start": 991.58,
+  "end": 994.42,
+  "text": "willing to pay the latency hit of waiting for data"
+ },
+ {
+  "start": 994.42,
+  "end": 996.66,
+  "text": "to come to you from global memory."
+ },
+ {
+  "start": 996.66,
+  "end": 998.475,
+  "text": "And there's also constant memory,"
+ },
+ {
+  "start": 998.475,
+  "end": 1000.1,
+  "text": "which I don't think I've seen very much"
+ },
+ {
+  "start": 1000.1,
+  "end": 1004.26,
+  "text": "used in various programming things, that you can use as well."
+ },
+ {
+  "start": 1004.26,
+  "end": 1007.56,
+  "text": "Now, you can even transfer to and back from host memory."
+ },
+ {
+  "start": 1007.56,
+  "end": 1010.26,
+  "text": "When I say host memory, that means CPU memory"
+ },
+ {
+  "start": 1010.26,
+  "end": 1012.317,
+  "text": "that lives on the machine."
+ },
+ {
+  "start": 1012.317,
+  "end": 1013.9,
+  "text": "You can do this if you need to offload"
+ },
+ {
+  "start": 1013.9,
+  "end": 1015.36,
+  "text": "beyond the size of your GPU."
+ },
+ {
+  "start": 1015.36,
+  "end": 1018.8,
+  "text": "This is the set of things that you can do in your memory."
+ },
+ {
+  "start": 1018.8,
+  "end": 1022.18,
+  "text": "And really, the key thing, the most important part"
+ },
+ {
+  "start": 1022.18,
+  "end": 1025.579,
+  "text": "of this memory model, is that as soon"
+ },
+ {
+  "start": 1025.579,
+  "end": 1027.56,
+  "text": "as you go outside of your shared memory,"
+ },
+ {
+  "start": 1027.56,
+  "end": 1028.859,
+  "text": "things are going to be slow."
+ },
+ {
+  "start": 1028.859,
+  "end": 1031.619,
+  "text": "So grouping the blocks to decrease"
+ },
+ {
+  "start": 1031.619,
+  "end": 1033.099,
+  "text": "the amount of global memory reads"
+ },
+ {
+  "start": 1033.099,
+  "end": 1038.06,
+  "text": "is going to be the name of the game throughout this lecture."
+ },
+ {
+  "start": 1038.06,
+  "end": 1043.7,
+  "text": "Now, I'm going to talk for three slides, two slides, about TPUs."
+ },
+ {
+  "start": 1043.7,
+  "end": 1046.9,
+  "text": "The majority of this lecture is about GPUs, mainly"
+ },
+ {
+  "start": 1046.9,
+  "end": 1051.02,
+  "text": "because I think if you all go out and you write your code"
+ },
+ {
+  "start": 1051.02,
+  "end": 1052.78,
+  "text": "and you build your models, it's probably"
+ },
+ {
+  "start": 1052.78,
+  "end": 1055.5,
+  "text": "going to be on GPUs for most of you."
+ },
+ {
+  "start": 1055.5,
+  "end": 1059.02,
+  "text": "But I think it is very important that we talk about TPUs, both"
+ },
+ {
+  "start": 1059.02,
+  "end": 1062.0,
+  "text": "because I think TPUs are cool and becoming more popular,"
+ },
+ {
+  "start": 1062.0,
+  "end": 1066.12,
+  "text": "but also because TPUs are the alternative evolution of GPUs."
+ },
+ {
+  "start": 1066.12,
+  "end": 1068.58,
+  "text": "And you can see what's the same, what's not."
+ },
+ {
+  "start": 1068.58,
+  "end": 1071.76,
+  "text": "It's very interesting to see how TPUs work as well."
+ },
+ {
+  "start": 1071.76,
+  "end": 1075.42,
+  "text": "So actually, what's very interesting is"
+ },
+ {
+  "start": 1075.42,
+  "end": 1078.4,
+  "text": "that TPUs are very similar to GPUs at a high level."
+ },
+ {
+  "start": 1078.4,
+  "end": 1079.96,
+  "text": "This is kind of convergent evolution."
+ },
+ {
+  "start": 1079.96,
+  "end": 1082.46,
+  "text": "If you want to build a energy-efficient accelerator"
+ },
+ {
+  "start": 1082.46,
+  "end": 1086.42,
+  "text": "that does machine learning, you end up at the same place."
+ },
+ {
+  "start": 1086.42,
+  "end": 1089.14,
+  "text": "So the core mental difference between a TPU"
+ },
+ {
+  "start": 1089.14,
+  "end": 1091.62,
+  "text": "and a GPU that you should keep in mind"
+ },
+ {
+  "start": 1091.62,
+  "end": 1093.68,
+  "text": "is that TPUs are in some sense simpler."
+ },
+ {
+  "start": 1093.68,
+  "end": 1097.26,
+  "text": "They're more optimized for the machine learning workload."
+ },
+ {
+  "start": 1097.26,
+  "end": 1099.72,
+  "text": "They have lightweight control units."
+ },
+ {
+  "start": 1099.72,
+  "end": 1103.1,
+  "text": "And they have much bigger matrix multiply units."
+ },
+ {
+  "start": 1103.1,
+  "end": 1106.06,
+  "text": "And so they have the same basic structure"
+ },
+ {
+  "start": 1106.06,
+  "end": 1110.77,
+  "text": "that I'll talk about for GPUs, where"
+ },
+ {
+  "start": 1110.77,
+  "end": 1114.09,
+  "text": "they will have a specialized circuit to multiply matrices."
+ },
+ {
+  "start": 1114.09,
+  "end": 1116.69,
+  "text": "They will have components that can do parallel vector"
+ },
+ {
+  "start": 1116.69,
+  "end": 1117.73,
+  "text": "operations."
+ },
+ {
+  "start": 1117.73,
+  "end": 1120.73,
+  "text": "And they will have some control system."
+ },
+ {
+  "start": 1120.73,
+  "end": 1123.33,
+  "text": "They have a very similar-looking memory structure"
+ },
+ {
+  "start": 1123.33,
+  "end": 1126.49,
+  "text": "where they have slow memory, which is called high bandwidth"
+ },
+ {
+  "start": 1126.49,
+  "end": 1129.01,
+  "text": "memory, and then they have an even faster local memory"
+ },
+ {
+  "start": 1129.01,
+  "end": 1130.83,
+  "text": "called SMEM or shared memory."
+ },
+ {
+  "start": 1130.83,
+  "end": 1135.13,
+  "text": "So this looks very, very similar to the architecture of a GPU."
+ },
+ {
+  "start": 1135.13,
+  "end": 1137.33,
+  "text": "Really, the difference is in how these things"
+ },
+ {
+  "start": 1137.33,
+  "end": 1142.37,
+  "text": "are sized and the flexibility of these operations."
+ },
+ {
+  "start": 1142.37,
+  "end": 1146.17,
+  "text": "And oh, and the main difference that I won't get into today"
+ },
+ {
+  "start": 1146.17,
+  "end": 1147.952,
+  "text": "is the networking for these accelerators."
+ },
+ {
+  "start": 1147.952,
+  "end": 1149.41,
+  "text": "So if you're thinking about what is"
+ },
+ {
+  "start": 1149.41,
+  "end": 1151.77,
+  "text": "the big difference between a CPU and a GPU,"
+ },
+ {
+  "start": 1151.77,
+  "end": 1154.19,
+  "text": "actually, the biggest differences come in networking,"
+ },
+ {
+  "start": 1154.19,
+  "end": 1157.29,
+  "text": "not in the individual chips because, really, the chips,"
+ },
+ {
+  "start": 1157.29,
+  "end": 1161.09,
+  "text": "they live to just multiply matrices."
+ },
+ {
+  "start": 1161.09,
+  "end": 1162.69,
+  "text": "And this is from the JAX book, which"
+ },
+ {
+  "start": 1162.69,
+  "end": 1165.17,
+  "text": "is a really lovely resource."
+ },
+ {
+  "start": 1165.17,
+  "end": 1166.825,
+  "text": "But they have these two tables."
+ },
+ {
+  "start": 1166.825,
+  "end": 1168.2,
+  "text": "They have a section on GPUs where"
+ },
+ {
+  "start": 1168.2,
+  "end": 1172.82,
+  "text": "they describe how to essentially map GPU ideas to TPU ideas."
+ },
+ {
+  "start": 1172.82,
+  "end": 1175.72,
+  "text": "And whatever I say today about what's on the left here,"
+ },
+ {
+  "start": 1175.72,
+  "end": 1177.56,
+  "text": "you can map directly to the TPU."
+ },
+ {
+  "start": 1177.56,
+  "end": 1181.24,
+  "text": "But the important thing at this point in the lecture to notice"
+ },
+ {
+  "start": 1181.24,
+  "end": 1184.26,
+  "text": "is that for every concept in the GPU,"
+ },
+ {
+  "start": 1184.26,
+  "end": 1186.62,
+  "text": "there's a corresponding concept in the TPU."
+ },
+ {
+  "start": 1186.62,
+  "end": 1189.2,
+  "text": "And this mapping is actually pretty precise."
+ },
+ {
+  "start": 1189.2,
+  "end": 1192.24,
+  "text": "A tensor core in a GPU, which is the matrix multiply unit,"
+ },
+ {
+  "start": 1192.24,
+  "end": 1194.46,
+  "text": "corresponds almost exactly to an MXU,"
+ },
+ {
+  "start": 1194.46,
+  "end": 1197.16,
+  "text": "which is a matrix multiply unit in the tensor core."
+ },
+ {
+  "start": 1197.16,
+  "end": 1199.74,
+  "text": "And if we're getting into really nitty-gritty details,"
+ },
+ {
+  "start": 1199.74,
+  "end": 1202.36,
+  "text": "they actually use the same underlying circuitry."
+ },
+ {
+  "start": 1202.36,
+  "end": 1204.64,
+  "text": "They're both what's called a systolic array,"
+ },
+ {
+  "start": 1204.64,
+  "end": 1207.98,
+  "text": "which kind of streams data in and out to do a matrix multiply."
+ },
+ {
+  "start": 1207.98,
+  "end": 1209.85,
+  "text": "So the architecture is very similar."
+ },
+ {
+  "start": 1209.85,
+  "end": 1211.1,
+  "text": "Now, how are they-- oh, sorry."
+ },
+ {
+  "start": 1211.1,
+  "end": 1211.86,
+  "text": "Yes."
+ },
+ {
+  "start": 1211.86,
+  "end": 1214.0,
+  "text": "Do you know what a typical [INAUDIBLE]"
+ },
+ {
+  "start": 1214.0,
+  "end": 1216.2,
+  "text": "size is on the GPU versus TPU?"
+ },
+ {
+  "start": 1216.2,
+  "end": 1218.68,
+  "text": "Oh, I do not know that off the top of my head."
+ },
+ {
+  "start": 1218.68,
+  "end": 1219.18,
+  "text": "I'm sorry."
+ },
+ {
+  "start": 1219.18,
+  "end": 1220.28,
+  "text": "I'll have to look that up."
+ },
+ {
+  "start": 1220.28,
+  "end": 1220.78,
+  "text": "Yes."
+ },
+ {
+  "start": 1223.6,
+  "end": 1226.72,
+  "text": "So the main difference between these two"
+ },
+ {
+  "start": 1226.72,
+  "end": 1230.385,
+  "text": "is the number of different units that we have."
+ },
+ {
+  "start": 1230.385,
+  "end": 1232.76,
+  "text": "Oh, actually, I'll mention one very, very confusing thing"
+ },
+ {
+  "start": 1232.76,
+  "end": 1233.98,
+  "text": "before I move on."
+ },
+ {
+  "start": 1233.98,
+  "end": 1235.04,
+  "text": "Sorry."
+ },
+ {
+  "start": 1235.04,
+  "end": 1237.24,
+  "text": "TPUs call their streaming multiprocessors"
+ },
+ {
+  "start": 1237.24,
+  "end": 1240.8,
+  "text": "tensor cores GPUs call their matrix multiply units tensor"
+ },
+ {
+  "start": 1240.8,
+  "end": 1241.557,
+  "text": "cores."
+ },
+ {
+  "start": 1241.557,
+  "end": 1243.14,
+  "text": "They are named exactly the same thing."
+ },
+ {
+  "start": 1243.14,
+  "end": 1245.88,
+  "text": "So you will have to disambiguate them based on context."
+ },
+ {
+  "start": 1245.88,
+  "end": 1249.16,
+  "text": "If someone says tensor core for TPU, that means a processor."
+ },
+ {
+  "start": 1249.16,
+  "end": 1250.78,
+  "text": "If someone says tensor core for GPU,"
+ },
+ {
+  "start": 1250.78,
+  "end": 1253.32,
+  "text": "they mean a matrix multiply."
+ },
+ {
+  "start": 1253.32,
+  "end": 1257.64,
+  "text": "So if you look at a GPU, a typical GPU like A100"
+ },
+ {
+  "start": 1257.64,
+  "end": 1261.38,
+  "text": "might have something 132 streaming multiprocessors."
+ },
+ {
+  "start": 1261.38,
+  "end": 1263.4,
+  "text": "That's a lot of processors."
+ },
+ {
+  "start": 1263.4,
+  "end": 1266.36,
+  "text": "A TPU will only have two units."
+ },
+ {
+  "start": 1266.36,
+  "end": 1269.08,
+  "text": "There's only two separate units running in parallel."
+ },
+ {
+  "start": 1269.08,
+  "end": 1273.74,
+  "text": "Now, the GPU, if we just look at the matrix multiply units,"
+ },
+ {
+  "start": 1273.74,
+  "end": 1277.0,
+  "text": "will have 528 matrix multiply units,"
+ },
+ {
+  "start": 1277.0,
+  "end": 1279.84,
+  "text": "whereas a TPU will have just 8."
+ },
+ {
+  "start": 1279.84,
+  "end": 1283.71,
+  "text": "And these are roughly scaled to be comparable-looking objects."
+ },
+ {
+  "start": 1283.71,
+  "end": 1285.39,
+  "text": "Why is it that it's this way?"
+ },
+ {
+  "start": 1285.39,
+  "end": 1288.99,
+  "text": "Well, the TPU is relying on much bigger, smaller numbers"
+ },
+ {
+  "start": 1288.99,
+  "end": 1291.39,
+  "text": "of matrix multiply units, whereas the GPU"
+ },
+ {
+  "start": 1291.39,
+  "end": 1293.31,
+  "text": "is relying on smaller but much more"
+ },
+ {
+  "start": 1293.31,
+  "end": 1295.57,
+  "text": "numerous matrix multiply units."
+ },
+ {
+  "start": 1295.57,
+  "end": 1297.19,
+  "text": "And you can imagine that if you have"
+ },
+ {
+  "start": 1297.19,
+  "end": 1299.663,
+  "text": "a small number of many matrix multiply units,"
+ },
+ {
+  "start": 1299.663,
+  "end": 1301.33,
+  "text": "it's going to give you more flexibility."
+ },
+ {
+  "start": 1301.33,
+  "end": 1303.29,
+  "text": "You can program them to do this and that."
+ },
+ {
+  "start": 1303.29,
+  "end": 1306.93,
+  "text": "Whereas a TPU, you're locked in to big, big matrix multiplies."
+ },
+ {
+  "start": 1306.93,
+  "end": 1310.27,
+  "text": "And so there was a funny situation in a recent paper"
+ },
+ {
+  "start": 1310.27,
+  "end": 1312.612,
+  "text": "that I wrote where we did a batch size sweep,"
+ },
+ {
+  "start": 1312.612,
+  "end": 1314.07,
+  "text": "and it goes all the way down to 64."
+ },
+ {
+  "start": 1314.07,
+  "end": 1315.59,
+  "text": "And it stops at 64."
+ },
+ {
+  "start": 1315.59,
+  "end": 1316.29,
+  "text": "Why is that?"
+ },
+ {
+  "start": 1316.29,
+  "end": 1318.915,
+  "text": "Because the tensor core refuses to accept anything smaller than"
+ },
+ {
+  "start": 1318.915,
+  "end": 1320.35,
+  "text": "a 64-dimensional input."
+ },
+ {
+  "start": 1320.35,
+  "end": 1323.038,
+  "text": "It has to be big matrix multiplies."
+ },
+ {
+  "start": 1323.038,
+  "end": 1324.33,
+  "text": "So this is the main difference."
+ },
+ {
+  "start": 1324.33,
+  "end": 1326.87,
+  "text": "But as you can see, GPUs and TPUs"
+ },
+ {
+  "start": 1326.87,
+  "end": 1328.29,
+  "text": "share a lot of similarities."
+ },
+ {
+  "start": 1328.29,
+  "end": 1331.23,
+  "text": "They rely on a memory hierarchy between fast memory"
+ },
+ {
+  "start": 1331.23,
+  "end": 1332.37,
+  "text": "and slow memory."
+ },
+ {
+  "start": 1332.37,
+  "end": 1334.127,
+  "text": "And they have a matrix multiply unit."
+ },
+ {
+  "start": 1334.127,
+  "end": 1335.71,
+  "text": "And because of that, the core concepts"
+ },
+ {
+  "start": 1335.71,
+  "end": 1338.03,
+  "text": "that I'm teaching you today is going to transfer over"
+ },
+ {
+  "start": 1338.03,
+  "end": 1339.63,
+  "text": "between GPU and TPU."
+ },
+ {
+  "start": 1339.63,
+  "end": 1342.823,
+  "text": "The basic ideas are always going to be the same for that reason."
+ },
+ {
+  "start": 1342.823,
+  "end": 1344.49,
+  "text": "And this is really convergent evolution."
+ },
+ {
+  "start": 1344.49,
+  "end": 1347.91,
+  "text": "There are only so many ways to cost-effectively allocate"
+ },
+ {
+  "start": 1347.91,
+  "end": 1348.69,
+  "text": "memory."
+ },
+ {
+  "start": 1348.69,
+  "end": 1351.47,
+  "text": "And there's only so many ways to multiply a matrix very fast."
+ },
+ {
+  "start": 1351.47,
+  "end": 1353.77,
+  "text": "There's some design decisions that are different."
+ },
+ {
+  "start": 1353.77,
+  "end": 1356.23,
+  "text": "But otherwise, you end up at the same place."
+ },
+ {
+  "start": 1356.23,
+  "end": 1356.79,
+  "text": "OK."
+ },
+ {
+  "start": 1356.79,
+  "end": 1357.29,
+  "text": "Cool."
+ },
+ {
+  "start": 1357.29,
+  "end": 1359.15,
+  "text": "So that's TPUs."
+ },
+ {
+  "start": 1359.15,
+  "end": 1361.91,
+  "text": "And right, good."
+ },
+ {
+  "start": 1361.91,
+  "end": 1364.51,
+  "text": "And GPUs, I think, have been enormously successful"
+ },
+ {
+  "start": 1364.51,
+  "end": 1368.51,
+  "text": "because it allows for easy scalability for things"
+ },
+ {
+  "start": 1368.51,
+  "end": 1369.73,
+  "text": "like matrix multiplies."
+ },
+ {
+  "start": 1369.73,
+  "end": 1372.55,
+  "text": "If you want more throughput, you just keep adding SMs."
+ },
+ {
+  "start": 1372.55,
+  "end": 1375.55,
+  "text": "As long as your memory bandwidth can handle those SMs,"
+ },
+ {
+  "start": 1375.55,
+  "end": 1377.91,
+  "text": "you get more and more throughput."
+ },
+ {
+  "start": 1377.91,
+  "end": 1380.61,
+  "text": "The programming is something we don't think about,"
+ },
+ {
+  "start": 1380.61,
+  "end": 1382.15,
+  "text": "but it's deceptively easy."
+ },
+ {
+  "start": 1382.15,
+  "end": 1385.15,
+  "text": "If you were to try to write lower level, machine"
+ },
+ {
+  "start": 1385.15,
+  "end": 1388.15,
+  "text": "code-looking stuff like TTX, it's actually doable"
+ },
+ {
+  "start": 1388.15,
+  "end": 1389.91,
+  "text": "because it's all SIMT."
+ },
+ {
+  "start": 1389.91,
+  "end": 1392.65,
+  "text": "It's not like you're programming every single thread."
+ },
+ {
+  "start": 1392.65,
+  "end": 1394.85,
+  "text": "You're saying, OK, here are my instructions,"
+ },
+ {
+  "start": 1394.85,
+  "end": 1397.145,
+  "text": "here are my inputs, now run them on all of my inputs."
+ },
+ {
+  "start": 1397.145,
+  "end": 1399.02,
+  "text": "It's something that maybe you all are already"
+ },
+ {
+  "start": 1399.02,
+  "end": 1402.54,
+  "text": "familiar with things like applying or using"
+ },
+ {
+  "start": 1402.54,
+  "end": 1404.3,
+  "text": "functional programming."
+ },
+ {
+  "start": 1404.3,
+  "end": 1407.68,
+  "text": "Finally, I haven't talked much about threads."
+ },
+ {
+  "start": 1407.68,
+  "end": 1409.68,
+  "text": "But whenever you're doing GPU programming,"
+ },
+ {
+  "start": 1409.68,
+  "end": 1411.6,
+  "text": "these threads are always very lightweight."
+ },
+ {
+  "start": 1411.6,
+  "end": 1413.88,
+  "text": "They can be stopped, started at any time."
+ },
+ {
+  "start": 1413.88,
+  "end": 1415.48,
+  "text": "The scheduler can decide that, OK,"
+ },
+ {
+  "start": 1415.48,
+  "end": 1417.8,
+  "text": "I have another warp that's better to run."
+ },
+ {
+  "start": 1417.8,
+  "end": 1420.26,
+  "text": "So I'm going to stop you and start this one."
+ },
+ {
+  "start": 1420.26,
+  "end": 1423.2,
+  "text": "And it's very quick to swap in these jobs."
+ },
+ {
+  "start": 1423.2,
+  "end": 1424.98,
+  "text": "That allows for much higher throughput"
+ },
+ {
+  "start": 1424.98,
+  "end": 1427.62,
+  "text": "if certain jobs are stalled or have some property"
+ },
+ {
+  "start": 1427.62,
+  "end": 1431.34,
+  "text": "that's lowering throughput."
+ },
+ {
+  "start": 1431.34,
+  "end": 1435.16,
+  "text": "So that's the benefit of GPUs as a hardware model."
+ },
+ {
+  "start": 1435.16,
+  "end": 1437.58,
+  "text": "It's been enormously successful."
+ },
+ {
+  "start": 1437.58,
+  "end": 1439.06,
+  "text": "And I think even in the early days"
+ },
+ {
+  "start": 1439.06,
+  "end": 1441.66,
+  "text": "before tensor cores were implemented,"
+ },
+ {
+  "start": 1441.66,
+  "end": 1445.6,
+  "text": "people realized that commodity graphics hardware,"
+ },
+ {
+  "start": 1445.6,
+  "end": 1446.98,
+  "text": "this massive parallelism would be"
+ },
+ {
+  "start": 1446.98,
+  "end": 1450.34,
+  "text": "very effective for scientific computing."
+ },
+ {
+  "start": 1450.34,
+  "end": 1452.46,
+  "text": "So this is one of the original papers"
+ },
+ {
+  "start": 1452.46,
+  "end": 1456.02,
+  "text": "on using graphics hardware for fast matrix multiplies."
+ },
+ {
+  "start": 1456.02,
+  "end": 1458.79,
+  "text": "And this is a really, really cool hacker work."
+ },
+ {
+  "start": 1458.79,
+  "end": 1461.33,
+  "text": "People figure it out, well, we have these shaders"
+ },
+ {
+  "start": 1461.33,
+  "end": 1463.21,
+  "text": "that are implemented, but we can program"
+ },
+ {
+  "start": 1463.21,
+  "end": 1465.21,
+  "text": "specific shaders that will actually"
+ },
+ {
+  "start": 1465.21,
+  "end": 1467.29,
+  "text": "give us matrix multiplies."
+ },
+ {
+  "start": 1467.29,
+  "end": 1469.17,
+  "text": "And different rendering settings actually"
+ },
+ {
+  "start": 1469.17,
+  "end": 1470.95,
+  "text": "give us faster matrix multiplies."
+ },
+ {
+  "start": 1470.95,
+  "end": 1474.21,
+  "text": "And that's just really cool computer science things"
+ },
+ {
+  "start": 1474.21,
+  "end": 1475.05,
+  "text": "you can do."
+ },
+ {
+  "start": 1475.05,
+  "end": 1476.91,
+  "text": "But nowadays, you do not have to do this."
+ },
+ {
+  "start": 1476.91,
+  "end": 1478.93,
+  "text": "You do not have to manually program your GPUs"
+ },
+ {
+  "start": 1478.93,
+  "end": 1482.69,
+  "text": "to do matrix multiplies because as of the V100,"
+ },
+ {
+  "start": 1482.69,
+  "end": 1485.89,
+  "text": "NVIDIA decided here is a piece of hardware that will do"
+ },
+ {
+  "start": 1485.89,
+  "end": 1488.33,
+  "text": "your matrix multiplies for you."
+ },
+ {
+  "start": 1488.33,
+  "end": 1491.97,
+  "text": "And once that hardware existed, matmuls"
+ },
+ {
+  "start": 1491.97,
+  "end": 1495.85,
+  "text": "became the one privileged operation in machine learning."
+ },
+ {
+  "start": 1495.85,
+  "end": 1499.21,
+  "text": "So at this point, there's a gigantic gap in the throughput"
+ },
+ {
+  "start": 1499.21,
+  "end": 1503.37,
+  "text": "that you're going to get between parallelizable but nonmatrix"
+ },
+ {
+  "start": 1503.37,
+  "end": 1506.45,
+  "text": "multiply operations versus amount of operations"
+ },
+ {
+  "start": 1506.45,
+  "end": 1508.45,
+  "text": "you can do in a matrix multiply."
+ },
+ {
+  "start": 1508.45,
+  "end": 1510.37,
+  "text": "So this is one of the reasons why"
+ },
+ {
+  "start": 1510.37,
+  "end": 1513.13,
+  "text": "any near future machine learning architecture"
+ },
+ {
+  "start": 1513.13,
+  "end": 1515.33,
+  "text": "that we see that scales with compute"
+ },
+ {
+  "start": 1515.33,
+  "end": 1520.65,
+  "text": "is going to have a matrix multiply in it because this the one way that you can really effectively get"
+ },
+ {
+  "start": 1520.65,
+  "end": 1524.09,
+  "text": "a lot of compute throughput, more than 10"
+ },
+ {
+  "start": 1524.09,
+  "end": 1527.81,
+  "text": "times faster than any other floating-point operation"
+ },
+ {
+  "start": 1527.81,
+  "end": 1531.85,
+  "text": "that you can do in a GPU."
+ },
+ {
+  "start": 1531.85,
+  "end": 1536.51,
+  "text": "And then the last hardware thing that I'll end with--"
+ },
+ {
+  "start": 1536.51,
+  "end": 1539.05,
+  "text": "I think this is the last slide of this section--"
+ },
+ {
+  "start": 1539.05,
+  "end": 1541.29,
+  "text": "is that different components of the GPU"
+ },
+ {
+  "start": 1541.29,
+  "end": 1543.73,
+  "text": "are scaling at different rates over time."
+ },
+ {
+  "start": 1543.73,
+  "end": 1547.478,
+  "text": "And we know that the GPUs are getting faster and faster."
+ },
+ {
+  "start": 1547.478,
+  "end": 1549.27,
+  "text": "This is just like a thing, as well as CPUs,"
+ },
+ {
+  "start": 1549.27,
+  "end": 1552.91,
+  "text": "overall compute throughput is getting faster and faster."
+ },
+ {
+  "start": 1552.91,
+  "end": 1554.01,
+  "text": "So that's the gray line."
+ },
+ {
+  "start": 1554.01,
+  "end": 1554.99,
+  "text": "That's pretty fast."
+ },
+ {
+  "start": 1554.99,
+  "end": 1556.823,
+  "text": "We're getting faster and faster improvements"
+ },
+ {
+  "start": 1556.823,
+  "end": 1559.81,
+  "text": "in the total floating-point operation."
+ },
+ {
+  "start": 1559.81,
+  "end": 1561.667,
+  "text": "Green is our memory bandwidth."
+ },
+ {
+  "start": 1561.667,
+  "end": 1563.25,
+  "text": "This is how fast we can transfer data."
+ },
+ {
+  "start": 1563.25,
+  "end": 1565.37,
+  "text": "That's growing comparatively slowly."
+ },
+ {
+  "start": 1565.37,
+  "end": 1566.87,
+  "text": "Blue is parallelism."
+ },
+ {
+  "start": 1566.87,
+  "end": 1569.75,
+  "text": "This is how fast we can connect different GPU devices."
+ },
+ {
+  "start": 1569.75,
+  "end": 1571.91,
+  "text": "That's also going very slowly."
+ },
+ {
+  "start": 1571.91,
+  "end": 1572.91,
+  "text": "And what does this mean?"
+ },
+ {
+  "start": 1572.91,
+  "end": 1576.2,
+  "text": "This means that if you're out here in the early days of GPU"
+ },
+ {
+  "start": 1576.2,
+  "end": 1578.08,
+  "text": "programming, probably you weren't thinking"
+ },
+ {
+  "start": 1578.08,
+  "end": 1581.2,
+  "text": "much about memory because your compute wasn't that much faster"
+ },
+ {
+  "start": 1581.2,
+  "end": 1582.64,
+  "text": "than your memory transfer."
+ },
+ {
+  "start": 1582.64,
+  "end": 1585.703,
+  "text": "But now as we go more and more to the right of this plot,"
+ },
+ {
+  "start": 1585.703,
+  "end": 1588.12,
+  "text": "we're going to see a bigger and bigger gap between compute"
+ },
+ {
+  "start": 1588.12,
+  "end": 1588.863,
+  "text": "and memory."
+ },
+ {
+  "start": 1588.863,
+  "end": 1591.28,
+  "text": "And that's why a lot of the optimization I'm talking about"
+ },
+ {
+  "start": 1591.28,
+  "end": 1593.52,
+  "text": "today are memory optimizations."
+ },
+ {
+  "start": 1593.52,
+  "end": 1595.04,
+  "text": "As we go further to the right, we're"
+ },
+ {
+  "start": 1595.04,
+  "end": 1596.582,
+  "text": "going to see memory and communication"
+ },
+ {
+  "start": 1596.582,
+  "end": 1597.98,
+  "text": "bottlenecks more and more."
+ },
+ {
+  "start": 1597.98,
+  "end": 1601.04,
+  "text": "And so it's going to take more and more work to fully utilize"
+ },
+ {
+  "start": 1601.04,
+  "end": 1603.28,
+  "text": "the hardware that we have."
+ },
+ {
+  "start": 1603.28,
+  "end": 1608.66,
+  "text": "So that was our very basic overview of GPUs."
+ },
+ {
+  "start": 1608.66,
+  "end": 1613.16,
+  "text": "I can't possibly give you a 20-minute lecture that fully"
+ },
+ {
+  "start": 1613.16,
+  "end": 1615.14,
+  "text": "helps you understand what the GPU hardware is."
+ },
+ {
+  "start": 1615.14,
+  "end": 1616.92,
+  "text": "But hopefully, you have a flavor."
+ },
+ {
+  "start": 1616.92,
+  "end": 1618.94,
+  "text": "The mental model should be GPUs are massively,"
+ },
+ {
+  "start": 1618.94,
+  "end": 1619.9,
+  "text": "massively parallel."
+ },
+ {
+  "start": 1619.9,
+  "end": 1622.48,
+  "text": "They execute instructions all at the same time."
+ },
+ {
+  "start": 1622.48,
+  "end": 1625.42,
+  "text": "Compute scale is really fast, really,"
+ },
+ {
+  "start": 1625.42,
+  "end": 1628.4,
+  "text": "really fast, and even faster than memory, which means memory"
+ },
+ {
+  "start": 1628.4,
+  "end": 1629.7,
+  "text": "is really important."
+ },
+ {
+  "start": 1629.7,
+  "end": 1632.36,
+  "text": "And because memory is important, everything we do"
+ },
+ {
+  "start": 1632.36,
+  "end": 1634.4,
+  "text": "has to respect the memory hierarchy,"
+ },
+ {
+  "start": 1634.4,
+  "end": 1637.36,
+  "text": "as much stuff that we do goes into shared memory and not"
+ },
+ {
+  "start": 1637.36,
+  "end": 1638.32,
+  "text": "global memory."
+ },
+ {
+  "start": 1638.32,
+  "end": 1641.22,
+  "text": "So this is hopefully your understanding of GPUs."
+ },
+ {
+  "start": 1641.22,
+  "end": 1642.84,
+  "text": "And if you have this understanding,"
+ },
+ {
+  "start": 1642.84,
+  "end": 1645.6,
+  "text": "at least you'll understand all the basics"
+ },
+ {
+  "start": 1645.6,
+  "end": 1649.74,
+  "text": "necessary to internalize the next part of this lecture."
+ },
+ {
+  "start": 1649.74,
+  "end": 1650.24,
+  "text": "OK."
+ },
+ {
+  "start": 1650.24,
+  "end": 1652.16,
+  "text": "I can pause for a moment here in case people"
+ },
+ {
+  "start": 1652.16,
+  "end": 1653.827,
+  "text": "have hardware questions or anything else"
+ },
+ {
+  "start": 1653.827,
+  "end": 1656.8,
+  "text": "before I move on to the next part."
+ },
+ {
+  "start": 1656.8,
+  "end": 1658.48,
+  "text": "Yes."
+ },
+ {
+  "start": 1658.48,
+  "end": 1663.24,
+  "text": "So before v100s, there was no matrix multiply unit?"
+ },
+ {
+  "start": 1663.24,
+  "end": 1663.74,
+  "text": "Yeah."
+ },
+ {
+  "start": 1663.74,
+  "end": 1666.14,
+  "text": "There was no tensor core that specialized to a matmul."
+ },
+ {
+  "start": 1666.14,
+  "end": 1666.64,
+  "text": "Yeah."
+ },
+ {
+  "start": 1666.64,
+  "end": 1668.74,
+  "text": "The tensor core is a vt100 edition."
+ },
+ {
+  "start": 1668.74,
+  "end": 1670.86,
+  "text": "Before that, you would be programming manually."
+ },
+ {
+  "start": 1670.86,
+  "end": 1673.0,
+  "text": "Of course, you have so many SMs and so many"
+ },
+ {
+  "start": 1673.0,
+  "end": 1675.78,
+  "text": "ALUs that you can still do quite good throughput."
+ },
+ {
+  "start": 1675.78,
+  "end": 1678.6,
+  "text": "But a specialized circuit for matrix multiply"
+ },
+ {
+  "start": 1678.6,
+  "end": 1680.6,
+  "text": "really changes the game for that."
+ },
+ {
+  "start": 1680.6,
+  "end": 1681.1,
+  "text": "Oh, yeah."
+ },
+ {
+  "start": 1681.1,
+  "end": 1682.042,
+  "text": "Back there."
+ },
+ {
+  "start": 1682.042,
+  "end": 1684.0,
+  "text": "What's the difference between the shared memory"
+ },
+ {
+  "start": 1684.0,
+  "end": 1685.6,
+  "text": "and the L1 cache?"
+ },
+ {
+  "start": 1685.6,
+  "end": 1687.3,
+  "text": "The cache just operates on its own."
+ },
+ {
+  "start": 1687.3,
+  "end": 1688.98,
+  "text": "You don't get to control the L1 cache."
+ },
+ {
+  "start": 1691.51,
+  "end": 1693.91,
+  "text": "[INAUDIBLE] saw that L1 just because"
+ },
+ {
+  "start": 1693.91,
+  "end": 1695.41,
+  "text": "of the physical distance."
+ },
+ {
+  "start": 1695.41,
+  "end": 1698.123,
+  "text": "Or does it also differ some other way?"
+ },
+ {
+  "start": 1698.123,
+  "end": 1700.29,
+  "text": "Yeah, I mean, physical distance is a big part of it."
+ },
+ {
+  "start": 1700.29,
+  "end": 1703.93,
+  "text": "I mean, if I believe, if I remember right, they're both SRAM."
+ },
+ {
+  "start": 1703.93,
+  "end": 1706.728,
+  "text": "That's of the reasons why global memory is much slower."
+ },
+ {
+  "start": 1706.728,
+  "end": 1709.27,
+  "text": "But the physical distance and the interconnects that are used"
+ },
+ {
+  "start": 1709.27,
+  "end": 1711.37,
+  "text": "are the reasons why it's slower."
+ },
+ {
+  "start": 1711.37,
+  "end": 1711.87,
+  "text": "Yeah."
+ },
+ {
+  "start": 1711.87,
+  "end": 1713.95,
+  "text": "This is not inherent, by the way."
+ },
+ {
+  "start": 1713.95,
+  "end": 1716.63,
+  "text": "One additional side thing is that the equivalent to L2"
+ },
+ {
+  "start": 1716.63,
+  "end": 1719.67,
+  "text": "cache in TPUs is much faster because they"
+ },
+ {
+  "start": 1719.67,
+  "end": 1722.83,
+  "text": "make different design tradeoffs on silicon to enable that."
+ },
+ {
+  "start": 1722.83,
+  "end": 1724.29,
+  "text": "That's one of their selling points."
+ },
+ {
+  "start": 1724.29,
+  "end": 1725.15,
+  "text": "Yes."
+ },
+ {
+  "start": 1725.15,
+  "end": 1727.91,
+  "text": "If the compute memory gap keeps growing,"
+ },
+ {
+  "start": 1727.91,
+  "end": 1729.43,
+  "text": "do you think that affects the way"
+ },
+ {
+  "start": 1729.43,
+  "end": 1732.53,
+  "text": "future chips will be laid out?"
+ },
+ {
+  "start": 1732.53,
+  "end": 1733.03,
+  "text": "Yeah."
+ },
+ {
+  "start": 1733.03,
+  "end": 1736.95,
+  "text": "Or maybe the future chip budget splits."
+ },
+ {
+  "start": 1736.95,
+  "end": 1738.55,
+  "text": "One of the things that I really didn't"
+ },
+ {
+  "start": 1738.55,
+  "end": 1740.383,
+  "text": "want to talk about but now you forced me to,"
+ },
+ {
+  "start": 1740.383,
+  "end": 1742.99,
+  "text": "is the inference landscape for hardware"
+ },
+ {
+  "start": 1742.99,
+  "end": 1745.15,
+  "text": "is actually even more crazy."
+ },
+ {
+  "start": 1745.15,
+  "end": 1747.325,
+  "text": "So one of the things that people started doing,"
+ },
+ {
+  "start": 1747.325,
+  "end": 1748.95,
+  "text": "I think last year, was something called"
+ },
+ {
+  "start": 1748.95,
+  "end": 1753.51,
+  "text": "prefill decode disaggregation, where the prefill part, which"
+ },
+ {
+  "start": 1753.51,
+  "end": 1756.39,
+  "text": "is very heavy matrix multiplies, is one chip, and then"
+ },
+ {
+  "start": 1756.39,
+  "end": 1759.63,
+  "text": "the decode part for your inference, which is more memory"
+ },
+ {
+  "start": 1759.63,
+  "end": 1763.03,
+  "text": "bandwidth-limited, is another chip."
+ },
+ {
+  "start": 1763.03,
+  "end": 1766.95,
+  "text": "And some of the models, I think, this was step 1-3,"
+ },
+ {
+  "start": 1766.95,
+  "end": 1768.695,
+  "text": "which is a Chinese open-source model,"
+ },
+ {
+  "start": 1768.695,
+  "end": 1771.07,
+  "text": "even has a thing where they try to disaggregate different"
+ },
+ {
+  "start": 1771.07,
+  "end": 1771.81,
+  "text": "layers."
+ },
+ {
+  "start": 1771.81,
+  "end": 1773.79,
+  "text": "So an attention will go to one chip optimized"
+ },
+ {
+  "start": 1773.79,
+  "end": 1775.57,
+  "text": "for one thing or one accelerator,"
+ },
+ {
+  "start": 1775.57,
+  "end": 1777.81,
+  "text": "and then MLPs will go to a different accelerator."
+ },
+ {
+  "start": 1777.81,
+  "end": 1781.83,
+  "text": "And so you're starting to see, if this gap grows,"
+ },
+ {
+  "start": 1781.83,
+  "end": 1786.19,
+  "text": "any clever tricks to utilize your very precious fast memory"
+ },
+ {
+  "start": 1786.19,
+  "end": 1787.567,
+  "text": "becomes very valuable."
+ },
+ {
+  "start": 1787.567,
+  "end": 1789.15,
+  "text": "And you start to see this very heavily"
+ },
+ {
+  "start": 1789.15,
+  "end": 1792.59,
+  "text": "in inference, which is even more memory-bound than training."
+ },
+ {
+  "start": 1792.59,
+  "end": 1793.31,
+  "text": "Yeah. ."
+ },
+ {
+  "start": 1793.31,
+  "end": 1794.55,
+  "text": "Cool."
+ },
+ {
+  "start": 1794.55,
+  "end": 1795.11,
+  "text": "Oh, yeah."
+ },
+ {
+  "start": 1795.11,
+  "end": 1801.83,
+  "text": "How many warps are in a block?"
+ },
+ {
+  "start": 1801.83,
+  "end": 1802.83,
+  "text": "Do I know that?"
+ },
+ {
+  "start": 1802.83,
+  "end": 1804.388,
+  "text": "I don't think that on top of my head,"
+ },
+ {
+  "start": 1804.388,
+  "end": 1805.93,
+  "text": "I think it's also hardware-dependent."
+ },
+ {
+  "start": 1805.93,
+  "end": 1807.44,
+  "text": "OK."
+ },
+ {
+  "start": 1807.44,
+  "end": 1809.42,
+  "text": "Good."
+ },
+ {
+  "start": 1809.42,
+  "end": 1811.26,
+  "text": "So the second part of this lecture"
+ },
+ {
+  "start": 1811.26,
+  "end": 1814.74,
+  "text": "is now you all have a general sense of what a GPU is"
+ },
+ {
+  "start": 1814.74,
+  "end": 1815.86,
+  "text": "and how it works."
+ },
+ {
+  "start": 1815.86,
+  "end": 1818.46,
+  "text": "Now we are going to talk about all of the basic tricks"
+ },
+ {
+  "start": 1818.46,
+  "end": 1821.38,
+  "text": "to make workloads fast on a GPU."
+ },
+ {
+  "start": 1821.38,
+  "end": 1823.14,
+  "text": "These are kind of basic components"
+ },
+ {
+  "start": 1823.14,
+  "end": 1825.66,
+  "text": "that you can put together to make things fast."
+ },
+ {
+  "start": 1825.66,
+  "end": 1829.62,
+  "text": "And to keep us motivated, one of my goals"
+ },
+ {
+  "start": 1829.62,
+  "end": 1832.7,
+  "text": "by the end of this section is to explain this plot to you."
+ },
+ {
+  "start": 1832.7,
+  "end": 1835.92,
+  "text": "So this plot, as I said before, has a very simple picture."
+ },
+ {
+  "start": 1835.92,
+  "end": 1838.305,
+  "text": "It's the size of the matrix, a square matrix"
+ },
+ {
+  "start": 1838.305,
+  "end": 1839.18,
+  "text": "that I'm multiplying."
+ },
+ {
+  "start": 1839.18,
+  "end": 1842.02,
+  "text": "I'm multiplying two square matrices."
+ },
+ {
+  "start": 1842.02,
+  "end": 1845.6,
+  "text": "And this y-axis is how many items I'm processing per second."
+ },
+ {
+  "start": 1845.6,
+  "end": 1847.46,
+  "text": "So this is the throughput."
+ },
+ {
+  "start": 1847.46,
+  "end": 1849.9,
+  "text": "And as I'm going to the right, in general, throughput"
+ },
+ {
+  "start": 1849.9,
+  "end": 1850.62,
+  "text": "is going up."
+ },
+ {
+  "start": 1850.62,
+  "end": 1853.24,
+  "text": "Because I have bigger matrices, I have more work to do."
+ },
+ {
+  "start": 1853.24,
+  "end": 1854.98,
+  "text": "And so if I have a lot more work,"
+ },
+ {
+  "start": 1854.98,
+  "end": 1856.84,
+  "text": "I can keep my hardware more utilized."
+ },
+ {
+  "start": 1856.84,
+  "end": 1859.58,
+  "text": "But there's all sorts of strange patterns here."
+ },
+ {
+  "start": 1859.58,
+  "end": 1862.9,
+  "text": "And we want to understand why are there strange patterns here"
+ },
+ {
+  "start": 1862.9,
+  "end": 1865.69,
+  "text": "and how can we be at the very top of that curve rather"
+ },
+ {
+  "start": 1865.69,
+  "end": 1866.45,
+  "text": "than the bottom."
+ },
+ {
+  "start": 1866.45,
+  "end": 1868.033,
+  "text": "So that's what I'm going to be talking"
+ },
+ {
+  "start": 1868.033,
+  "end": 1871.47,
+  "text": "about in this second part."
+ },
+ {
+  "start": 1871.47,
+  "end": 1873.15,
+  "text": "And Percy already mentioned this."
+ },
+ {
+  "start": 1873.15,
+  "end": 1874.39,
+  "text": "This is the roofline model."
+ },
+ {
+  "start": 1874.39,
+  "end": 1876.09,
+  "text": "But the plot I showed before looks"
+ },
+ {
+  "start": 1876.09,
+  "end": 1879.37,
+  "text": "a little bit like this classic roofline model."
+ },
+ {
+  "start": 1879.37,
+  "end": 1882.27,
+  "text": "This looks like there's a diagonal part and then a flat part."
+ },
+ {
+  "start": 1882.27,
+  "end": 1884.21,
+  "text": "And this is what we expect."
+ },
+ {
+  "start": 1884.21,
+  "end": 1887.39,
+  "text": "The roofline model says, up until a certain point,"
+ },
+ {
+  "start": 1887.39,
+  "end": 1889.37,
+  "text": "we will be memory-limited."
+ },
+ {
+  "start": 1889.37,
+  "end": 1890.55,
+  "text": "We're memory-limited."
+ },
+ {
+  "start": 1890.55,
+  "end": 1895.05,
+  "text": "So no matter how much compute you give me, my throughput"
+ },
+ {
+  "start": 1895.05,
+  "end": 1896.61,
+  "text": "is not going to go up."
+ },
+ {
+  "start": 1896.61,
+  "end": 1901.81,
+  "text": "At some point, you have enough work per unit of memory movement"
+ },
+ {
+  "start": 1901.81,
+  "end": 1905.51,
+  "text": "that I can keep my compute units completely saturated."
+ },
+ {
+  "start": 1905.51,
+  "end": 1908.61,
+  "text": "And past that point, having bigger and bigger units of work"
+ },
+ {
+  "start": 1908.61,
+  "end": 1910.13,
+  "text": "does not help me anymore."
+ },
+ {
+  "start": 1910.13,
+  "end": 1913.43,
+  "text": "No matter how much extra work you give me,"
+ },
+ {
+  "start": 1913.43,
+  "end": 1915.93,
+  "text": "that doesn't help because I've fully saturated"
+ },
+ {
+  "start": 1915.93,
+  "end": 1917.69,
+  "text": "my matrix multiply units."
+ },
+ {
+  "start": 1917.69,
+  "end": 1920.21,
+  "text": "So this is what we expect out of the classic roofline"
+ },
+ {
+  "start": 1920.21,
+  "end": 1924.07,
+  "text": "model, where as we have faster memory,"
+ },
+ {
+  "start": 1924.07,
+  "end": 1925.51,
+  "text": "we can push this upwards."
+ },
+ {
+  "start": 1925.51,
+  "end": 1927.73,
+  "text": "But there's a memory-bound region, which is diagonal,"
+ },
+ {
+  "start": 1927.73,
+  "end": 1929.97,
+  "text": "and then a compute-bound region, which is flat."
+ },
+ {
+  "start": 1929.97,
+  "end": 1932.17,
+  "text": "This is kind of what we expect."
+ },
+ {
+  "start": 1932.17,
+  "end": 1936.01,
+  "text": "Now, if you want to make sure that your code runs efficiently"
+ },
+ {
+  "start": 1936.01,
+  "end": 1938.29,
+  "text": "on a GPU, really, what you need to do is,"
+ },
+ {
+  "start": 1938.29,
+  "end": 1939.77,
+  "text": "you need to be on this flat part."
+ },
+ {
+  "start": 1939.77,
+  "end": 1941.03,
+  "text": "As soon as we're at this flat part,"
+ },
+ {
+  "start": 1941.03,
+  "end": 1942.155,
+  "text": "there's nothing else to do."
+ },
+ {
+  "start": 1942.155,
+  "end": 1943.89,
+  "text": "We're at maximum throughput."
+ },
+ {
+  "start": 1943.89,
+  "end": 1946.09,
+  "text": "So we want to prevent ourselves from being"
+ },
+ {
+  "start": 1946.09,
+  "end": 1948.53,
+  "text": "in this diagonal part, which means we want to increase"
+ },
+ {
+  "start": 1948.53,
+  "end": 1950.23,
+  "text": "the operational intensity."
+ },
+ {
+  "start": 1950.23,
+  "end": 1953.41,
+  "text": "The amount of computation we do per memory read"
+ },
+ {
+  "start": 1953.41,
+  "end": 1954.95,
+  "text": "needs to be high enough."
+ },
+ {
+  "start": 1954.95,
+  "end": 1956.83,
+  "text": "So that's what we need to do."
+ },
+ {
+  "start": 1956.83,
+  "end": 1960.19,
+  "text": "And there's six different tricks that we will talk about."
+ },
+ {
+  "start": 1960.19,
+  "end": 1962.75,
+  "text": "Actually, some of these are not memory tricks,"
+ },
+ {
+  "start": 1962.75,
+  "end": 1963.61,
+  "text": "the first one only."
+ },
+ {
+  "start": 1963.61,
+  "end": 1965.068,
+  "text": "There are six different tricks that"
+ },
+ {
+  "start": 1965.068,
+  "end": 1968.027,
+  "text": "are maybe necessary to understand to make GPUs go fast."
+ },
+ {
+  "start": 1968.027,
+  "end": 1970.11,
+  "text": "The first one is a little bit different in flavor,"
+ },
+ {
+  "start": 1970.11,
+  "end": 1971.568,
+  "text": "but then the rest of them will have"
+ },
+ {
+  "start": 1971.568,
+  "end": 1974.49,
+  "text": "this flavor of trying to minimize memory movement as"
+ },
+ {
+  "start": 1974.49,
+  "end": 1977.53,
+  "text": "much as possible."
+ },
+ {
+  "start": 1977.53,
+  "end": 1980.942,
+  "text": "The first one is a GPU-specific thing."
+ },
+ {
+  "start": 1980.942,
+  "end": 1982.4,
+  "text": "And it relates to one of the things"
+ },
+ {
+  "start": 1982.4,
+  "end": 1985.64,
+  "text": "I said before, the SIMT model."
+ },
+ {
+  "start": 1985.64,
+  "end": 1989.4,
+  "text": "So in a GPU, every thread is executing the same thing."
+ },
+ {
+  "start": 1989.4,
+  "end": 1992.96,
+  "text": "Now, what happens if you write an If statement on a piece"
+ },
+ {
+  "start": 1992.96,
+  "end": 1994.84,
+  "text": "of code that executes on a GPU?"
+ },
+ {
+  "start": 1994.84,
+  "end": 1997.24,
+  "text": "On a CPU, it's quite clear what happens."
+ },
+ {
+  "start": 1997.24,
+  "end": 2000.32,
+  "text": "On a CPU, you will either pick one branch or the other,"
+ },
+ {
+  "start": 2000.32,
+  "end": 2001.56,
+  "text": "you will execute that branch."
+ },
+ {
+  "start": 2001.56,
+  "end": 2003.48,
+  "text": "And you will move on with your life."
+ },
+ {
+  "start": 2003.48,
+  "end": 2006.12,
+  "text": "In a GPU, you will do something actually quite different"
+ },
+ {
+  "start": 2006.12,
+  "end": 2008.52,
+  "text": "and slightly counterintuitive."
+ },
+ {
+  "start": 2008.52,
+  "end": 2011.38,
+  "text": "Every thread has to execute the same instruction."
+ },
+ {
+  "start": 2011.38,
+  "end": 2015.28,
+  "text": "So actually, every thread will execute both If and the Else."
+ },
+ {
+  "start": 2015.28,
+  "end": 2017.46,
+  "text": "But if you're not part of If branch,"
+ },
+ {
+  "start": 2017.46,
+  "end": 2019.14,
+  "text": "you will just mask out that computation."
+ },
+ {
+  "start": 2019.14,
+  "end": 2020.76,
+  "text": "You'll just sit idle."
+ },
+ {
+  "start": 2020.76,
+  "end": 2022.84,
+  "text": "And so whenever you have a conditional,"
+ },
+ {
+  "start": 2022.84,
+  "end": 2026.02,
+  "text": "your mental model for the execution kind of looks like this."
+ },
+ {
+  "start": 2026.02,
+  "end": 2029.062,
+  "text": "Part of your threads will diverge based on this If statement."
+ },
+ {
+  "start": 2029.062,
+  "end": 2031.353,
+  "text": "Some of them will go to the bottom branch, some of them"
+ },
+ {
+  "start": 2031.353,
+  "end": 2032.46,
+  "text": "will go to the top branch."
+ },
+ {
+  "start": 2032.46,
+  "end": 2034.42,
+  "text": "And the bottom branch ones will execute first,"
+ },
+ {
+  "start": 2034.42,
+  "end": 2035.53,
+  "text": "top branch ones will wait."
+ },
+ {
+  "start": 2035.53,
+  "end": 2037.28,
+  "text": "And then the top branch ones will execute,"
+ },
+ {
+  "start": 2037.28,
+  "end": 2039.32,
+  "text": "and the bottom branch ones will wait."
+ },
+ {
+  "start": 2039.32,
+  "end": 2041.42,
+  "text": "So in order to execute an If statement,"
+ },
+ {
+  "start": 2041.42,
+  "end": 2044.698,
+  "text": "you're actually walking through both of these."
+ },
+ {
+  "start": 2044.698,
+  "end": 2046.24,
+  "text": "And then some of the threads are just"
+ },
+ {
+  "start": 2046.24,
+  "end": 2048.48,
+  "text": "waiting, doing nothing if they're"
+ },
+ {
+  "start": 2048.48,
+  "end": 2050.239,
+  "text": "on the wrong side of the branch."
+ },
+ {
+  "start": 2050.239,
+  "end": 2052.32,
+  "text": "And this is called control divergence."
+ },
+ {
+  "start": 2052.32,
+  "end": 2054.36,
+  "text": "And this is nice in some ways because it"
+ },
+ {
+  "start": 2054.36,
+  "end": 2055.88,
+  "text": "simplifies programming."
+ },
+ {
+  "start": 2055.88,
+  "end": 2058.44,
+  "text": "It's not nice in that you now have these big compute"
+ },
+ {
+  "start": 2058.44,
+  "end": 2061.32,
+  "text": "gaps where your GPU is doing nothing."
+ },
+ {
+  "start": 2061.32,
+  "end": 2063.48,
+  "text": "This is one of the reasons why you really do not"
+ },
+ {
+  "start": 2063.48,
+  "end": 2066.239,
+  "text": "want to write If statements."
+ },
+ {
+  "start": 2066.239,
+  "end": 2068.94,
+  "text": "If you look at GPU code, if you have a ReLU,"
+ },
+ {
+  "start": 2068.94,
+  "end": 2071.04,
+  "text": "you'll often find you're multiplying with zeros"
+ },
+ {
+  "start": 2071.04,
+  "end": 2073.639,
+  "text": "or multiplying with masks instead of doing an If statement"
+ },
+ {
+  "start": 2073.639,
+  "end": 2077.04,
+  "text": "where you're updating half because a multiplication is"
+ },
+ {
+  "start": 2077.04,
+  "end": 2078.46,
+  "text": "going to all go at once."
+ },
+ {
+  "start": 2078.46,
+  "end": 2079.96,
+  "text": "And an If statement might actually"
+ },
+ {
+  "start": 2079.96,
+  "end": 2082.3,
+  "text": "have to wait two clock cycles or something like this,"
+ },
+ {
+  "start": 2082.3,
+  "end": 2084.0,
+  "text": "two operations."
+ },
+ {
+  "start": 2084.0,
+  "end": 2086.08,
+  "text": "So that's the first thing."
+ },
+ {
+  "start": 2086.08,
+  "end": 2089.679,
+  "text": "But, that's a separate story from all this memory"
+ },
+ {
+  "start": 2089.679,
+  "end": 2093.92,
+  "text": "stuff, which is the main narrative or the main story of this."
+ },
+ {
+  "start": 2093.92,
+  "end": 2096.92,
+  "text": "The first one, which you don't really have to do too much for,"
+ },
+ {
+  "start": 2096.92,
+  "end": 2099.65,
+  "text": "but I think is one of the most important ones,"
+ },
+ {
+  "start": 2099.65,
+  "end": 2101.55,
+  "text": "and hardware-wise, I think where NVIDIA"
+ },
+ {
+  "start": 2101.55,
+  "end": 2105.96,
+  "text": "is investing the most effort, is low-precision computation."
+ },
+ {
+  "start": 2105.96,
+  "end": 2107.21,
+  "text": "And if you look at this plot--"
+ },
+ {
+  "start": 2107.21,
+  "end": 2110.55,
+  "text": "I've brought Bill Dally back to the slide--"
+ },
+ {
+  "start": 2110.55,
+  "end": 2112.87,
+  "text": "this super exponential growth, where does this really"
+ },
+ {
+  "start": 2112.87,
+  "end": 2114.19,
+  "text": "come from?"
+ },
+ {
+  "start": 2114.19,
+  "end": 2118.93,
+  "text": "Actually, a pretty nontrivial part of this number representations."
+ },
+ {
+  "start": 2118.93,
+  "end": 2123.13,
+  "text": "You start at FP32, you go to BF16, and then you go to Int8."
+ },
+ {
+  "start": 2123.13,
+  "end": 2126.85,
+  "text": "You just keep decreasing the precision of your numbers."
+ },
+ {
+  "start": 2126.85,
+  "end": 2128.73,
+  "text": "And of course, if you have half the bits,"
+ },
+ {
+  "start": 2128.73,
+  "end": 2130.39,
+  "text": "you have half the bits to move."
+ },
+ {
+  "start": 2130.39,
+  "end": 2132.75,
+  "text": "And so you have your memory movement."
+ },
+ {
+  "start": 2132.75,
+  "end": 2134.99,
+  "text": "And so you've solved the memory bottleneck"
+ },
+ {
+  "start": 2134.99,
+  "end": 2138.19,
+  "text": "for at least a little bit."
+ },
+ {
+  "start": 2138.19,
+  "end": 2140.01,
+  "text": "This is a dumb example."
+ },
+ {
+  "start": 2140.01,
+  "end": 2142.93,
+  "text": "But I'm just going to really drill it in there."
+ },
+ {
+  "start": 2142.93,
+  "end": 2145.83,
+  "text": "Let's say, I have a ReLU on a vector of size n."
+ },
+ {
+  "start": 2145.83,
+  "end": 2149.77,
+  "text": "If I'm on float 32, I need to do one read to read my number."
+ },
+ {
+  "start": 2149.77,
+  "end": 2152.71,
+  "text": "I need to do one write after I've computed my ReLU."
+ },
+ {
+  "start": 2152.71,
+  "end": 2155.75,
+  "text": "That's going to be 4 bytes per operation, total of 8"
+ },
+ {
+  "start": 2155.75,
+  "end": 2157.85,
+  "text": "bytes for my memory access."
+ },
+ {
+  "start": 2157.85,
+  "end": 2160.29,
+  "text": "I only have one FLOP worth of operation."
+ },
+ {
+  "start": 2160.29,
+  "end": 2161.87,
+  "text": "So that's 8 bytes for FLOP."
+ },
+ {
+  "start": 2161.87,
+  "end": 2164.31,
+  "text": "If I have the precision, of course,"
+ },
+ {
+  "start": 2164.31,
+  "end": 2166.73,
+  "text": "I've halved the number of bytes per op."
+ },
+ {
+  "start": 2166.73,
+  "end": 2171.13,
+  "text": "I've halved the number of bytes that I need to move per FLOP."
+ },
+ {
+  "start": 2171.13,
+  "end": 2173.79,
+  "text": "Sorry, this is the inverse of arithmetic intensity."
+ },
+ {
+  "start": 2173.79,
+  "end": 2176.43,
+  "text": "Arithmetic intensity should be reverse of this."
+ },
+ {
+  "start": 2178.99,
+  "end": 2181.89,
+  "text": "Now, that's a very simple example."
+ },
+ {
+  "start": 2181.89,
+  "end": 2185.07,
+  "text": "But actually, how low precision works in a modern GPU"
+ },
+ {
+  "start": 2185.07,
+  "end": 2188.59,
+  "text": "is actually very complicated and actually either very cool"
+ },
+ {
+  "start": 2188.59,
+  "end": 2191.47,
+  "text": "or very crazy, depending on how you think"
+ },
+ {
+  "start": 2191.47,
+  "end": 2194.11,
+  "text": "about how cool things are."
+ },
+ {
+  "start": 2194.11,
+  "end": 2195.923,
+  "text": "So when you do a matrix multiply,"
+ },
+ {
+  "start": 2195.923,
+  "end": 2197.59,
+  "text": "let's say, you have a tensor core that's"
+ },
+ {
+  "start": 2197.59,
+  "end": 2199.95,
+  "text": "operating in lower precision, how does that actually"
+ },
+ {
+  "start": 2199.95,
+  "end": 2201.59,
+  "text": "work in practice?"
+ },
+ {
+  "start": 2201.59,
+  "end": 2204.11,
+  "text": "Well, you're actually not going to keep everything"
+ },
+ {
+  "start": 2204.11,
+  "end": 2205.25,
+  "text": "in low precision."
+ },
+ {
+  "start": 2205.25,
+  "end": 2208.01,
+  "text": "You're going to downcast before you take your product."
+ },
+ {
+  "start": 2208.01,
+  "end": 2209.79,
+  "text": "And when you sum up your partial summands"
+ },
+ {
+  "start": 2209.79,
+  "end": 2211.51,
+  "text": "in your matrix multiply, you're going"
+ },
+ {
+  "start": 2211.51,
+  "end": 2212.85,
+  "text": "to do this in full precision."
+ },
+ {
+  "start": 2212.85,
+  "end": 2217.3,
+  "text": "And then you might emit your outputs or your results in FP32."
+ },
+ {
+  "start": 2217.3,
+  "end": 2220.62,
+  "text": "And part of, I think, the reason why low precision is actually"
+ },
+ {
+  "start": 2220.62,
+  "end": 2223.46,
+  "text": "kind of a black art is not because you can just"
+ },
+ {
+  "start": 2223.46,
+  "end": 2224.44,
+  "text": "decrease precision."
+ },
+ {
+  "start": 2224.44,
+  "end": 2225.7,
+  "text": "Anyone can do that."
+ },
+ {
+  "start": 2225.7,
+  "end": 2228.18,
+  "text": "You have to figure out which of your operations"
+ },
+ {
+  "start": 2228.18,
+  "end": 2230.42,
+  "text": "has to be in which number format."
+ },
+ {
+  "start": 2230.42,
+  "end": 2233.86,
+  "text": "So matrix multiplies, maybe both your weights and activations"
+ },
+ {
+  "start": 2233.86,
+  "end": 2235.12,
+  "text": "can be low precision."
+ },
+ {
+  "start": 2235.12,
+  "end": 2238.5,
+  "text": "If I'm doing a softmax, maybe I need to do that in FP32."
+ },
+ {
+  "start": 2238.5,
+  "end": 2240.66,
+  "text": "Or if I'm doing an exponential, maybe that"
+ },
+ {
+  "start": 2240.66,
+  "end": 2242.16,
+  "text": "also needs to be FP32."
+ },
+ {
+  "start": 2242.16,
+  "end": 2244.58,
+  "text": "Or maybe I can get away with BF16."
+ },
+ {
+  "start": 2244.58,
+  "end": 2248.46,
+  "text": "So I think it took several years, really,"
+ },
+ {
+  "start": 2248.46,
+  "end": 2252.52,
+  "text": "to get low-precision training to be the state that it is today."
+ },
+ {
+  "start": 2252.52,
+  "end": 2256.98,
+  "text": "And a lot of that work was slow, incremental, empirical work"
+ },
+ {
+  "start": 2256.98,
+  "end": 2260.36,
+  "text": "figuring out which of these operations we can downcast,"
+ },
+ {
+  "start": 2260.36,
+  "end": 2263.26,
+  "text": "how we can downcast them, and how we can preserve stability"
+ },
+ {
+  "start": 2263.26,
+  "end": 2266.22,
+  "text": "of training while making as much of our training"
+ },
+ {
+  "start": 2266.22,
+  "end": 2269.04,
+  "text": "and inference low precision as possible."
+ },
+ {
+  "start": 2271.547,
+  "end": 2273.63,
+  "text": "People have been pushing this further and further."
+ },
+ {
+  "start": 2273.63,
+  "end": 2275.53,
+  "text": "I think once you think about how hard it"
+ },
+ {
+  "start": 2275.53,
+  "end": 2278.73,
+  "text": "is to pay for fast memory, you realize,"
+ },
+ {
+  "start": 2278.73,
+  "end": 2281.85,
+  "text": "if only I can cut my precision by another factor of 2."
+ },
+ {
+  "start": 2281.85,
+  "end": 2284.45,
+  "text": "People really, really want to do that."
+ },
+ {
+  "start": 2284.45,
+  "end": 2289.75,
+  "text": "And so FP8 was the next frontier,"
+ },
+ {
+  "start": 2289.75,
+  "end": 2291.61,
+  "text": "I would say, of low precision."
+ },
+ {
+  "start": 2291.61,
+  "end": 2294.37,
+  "text": "Once you get to FP8, there's no longer"
+ },
+ {
+  "start": 2294.37,
+  "end": 2297.03,
+  "text": "a standard, canonical format that everyone uses."
+ },
+ {
+  "start": 2297.03,
+  "end": 2300.81,
+  "text": "If you're using 16 bits, you're probably"
+ },
+ {
+  "start": 2300.81,
+  "end": 2303.49,
+  "text": "using BF16 for a lot of what you're doing."
+ },
+ {
+  "start": 2303.49,
+  "end": 2305.17,
+  "text": "But with FP8, there's going to be"
+ },
+ {
+  "start": 2305.17,
+  "end": 2309.37,
+  "text": "E4M3, which stands for four bits of exponent"
+ },
+ {
+  "start": 2309.37,
+  "end": 2310.83,
+  "text": "and three of mantissa."
+ },
+ {
+  "start": 2310.83,
+  "end": 2312.53,
+  "text": "Or there's going to be E5M2, which is"
+ },
+ {
+  "start": 2312.53,
+  "end": 2314.49,
+  "text": "more exponent, fewer mantissa."
+ },
+ {
+  "start": 2314.49,
+  "end": 2316.67,
+  "text": "Because these are used in different places,"
+ },
+ {
+  "start": 2316.67,
+  "end": 2319.41,
+  "text": "there's no one-size-fits-all once you start to get to so few"
+ },
+ {
+  "start": 2319.41,
+  "end": 2320.49,
+  "text": "bits."
+ },
+ {
+  "start": 2320.49,
+  "end": 2322.77,
+  "text": "But I think the thing that's really interesting"
+ },
+ {
+  "start": 2322.77,
+  "end": 2326.13,
+  "text": "is the more advanced, low-precision number"
+ },
+ {
+  "start": 2326.13,
+  "end": 2328.47,
+  "text": "formats that are coming out with the new hardware."
+ },
+ {
+  "start": 2328.47,
+  "end": 2332.21,
+  "text": "So I'll talk briefly about MXFP8 because it's both cool"
+ },
+ {
+  "start": 2332.21,
+  "end": 2337.13,
+  "text": "and what it does to training is strange, to say the least."
+ },
+ {
+  "start": 2337.13,
+  "end": 2340.35,
+  "text": "So in FP8, the traditional version of training,"
+ },
+ {
+  "start": 2340.35,
+  "end": 2342.27,
+  "text": "what you have is that all of, let's say,"
+ },
+ {
+  "start": 2342.27,
+  "end": 2345.45,
+  "text": "activations are in 8 bits, So this is up here."
+ },
+ {
+  "start": 2345.45,
+  "end": 2349.355,
+  "text": "And then you're going to have a scaling factor in FP32 that's"
+ },
+ {
+  "start": 2349.355,
+  "end": 2351.23,
+  "text": "going to allow you to scale this up and down."
+ },
+ {
+  "start": 2351.23,
+  "end": 2352.83,
+  "text": "Why do you have a scaling factor?"
+ },
+ {
+  "start": 2352.83,
+  "end": 2355.69,
+  "text": "The scaling factor is necessary because you only"
+ },
+ {
+  "start": 2355.69,
+  "end": 2357.87,
+  "text": "have four bits of exponent, let's say."
+ },
+ {
+  "start": 2357.87,
+  "end": 2360.51,
+  "text": "That's so few bits of exponent you're going to quickly over"
+ },
+ {
+  "start": 2360.51,
+  "end": 2361.55,
+  "text": "or underflow."
+ },
+ {
+  "start": 2361.55,
+  "end": 2365.19,
+  "text": "So you need the scaling factor to keep you in the right range"
+ },
+ {
+  "start": 2365.19,
+  "end": 2366.59,
+  "text": "so you can keep some information."
+ },
+ {
+  "start": 2366.59,
+  "end": 2371.57,
+  "text": "Well, people realized this is not optimal"
+ },
+ {
+  "start": 2371.57,
+  "end": 2375.59,
+  "text": "because a single matrix might have very different magnitudes."
+ },
+ {
+  "start": 2375.59,
+  "end": 2378.69,
+  "text": "One part of my sequence might have much bigger activations"
+ },
+ {
+  "start": 2378.69,
+  "end": 2379.77,
+  "text": "than another."
+ },
+ {
+  "start": 2379.77,
+  "end": 2382.95,
+  "text": "So instead of having a single scaling factor,"
+ },
+ {
+  "start": 2382.95,
+  "end": 2385.07,
+  "text": "why don't we have many scaling factors?"
+ },
+ {
+  "start": 2385.07,
+  "end": 2389.56,
+  "text": "So MXFP8 and these multiscaling factor formats"
+ },
+ {
+  "start": 2389.56,
+  "end": 2393.9,
+  "text": "that are much more advanced now have many scaling factors."
+ },
+ {
+  "start": 2393.9,
+  "end": 2395.92,
+  "text": "Each of these scaling factors corresponds"
+ },
+ {
+  "start": 2395.92,
+  "end": 2398.14,
+  "text": "to the relevant colored submatrix."
+ },
+ {
+  "start": 2398.14,
+  "end": 2400.92,
+  "text": "So the first four elements in this matrix"
+ },
+ {
+  "start": 2400.92,
+  "end": 2404.64,
+  "text": "correspond to this first scaling factor and so on and so forth."
+ },
+ {
+  "start": 2404.64,
+  "end": 2407.76,
+  "text": "Now I have more scaling factors, these scaling factors"
+ },
+ {
+  "start": 2407.76,
+  "end": 2410.78,
+  "text": "are actually going to be in lower precision."
+ },
+ {
+  "start": 2410.78,
+  "end": 2412.34,
+  "text": "These are going to be 8 bits as well."
+ },
+ {
+  "start": 2412.34,
+  "end": 2413.94,
+  "text": "They're going to be E8M0."
+ },
+ {
+  "start": 2413.94,
+  "end": 2415.42,
+  "text": "So they only have exponent bits."
+ },
+ {
+  "start": 2415.42,
+  "end": 2419.72,
+  "text": "So they're all powers of 2 in 8 bits."
+ },
+ {
+  "start": 2419.72,
+  "end": 2422.28,
+  "text": "So you have to make these tradeoffs."
+ },
+ {
+  "start": 2422.28,
+  "end": 2425.2,
+  "text": "Now, what I was going to say?"
+ },
+ {
+  "start": 2425.2,
+  "end": 2425.7,
+  "text": "OK."
+ },
+ {
+  "start": 2425.7,
+  "end": 2428.9,
+  "text": "So MXFP8 is going to use more mantissa in the elements."
+ },
+ {
+  "start": 2428.9,
+  "end": 2431.24,
+  "text": "Scale factors are themselves FPA."
+ },
+ {
+  "start": 2431.24,
+  "end": 2433.8,
+  "text": "And you're going to have one scale factor every 32 elements"
+ },
+ {
+  "start": 2433.8,
+  "end": 2435.14,
+  "text": "in your matrix."
+ },
+ {
+  "start": 2435.14,
+  "end": 2435.64,
+  "text": "OK."
+ },
+ {
+  "start": 2435.64,
+  "end": 2437.0,
+  "text": "I'm going to pause here."
+ },
+ {
+  "start": 2437.0,
+  "end": 2438.34,
+  "text": "Don't read the third thing."
+ },
+ {
+  "start": 2438.34,
+  "end": 2439.66,
+  "text": "Now, think for a moment."
+ },
+ {
+  "start": 2439.66,
+  "end": 2441.94,
+  "text": "What is the problem with this design?"
+ },
+ {
+  "start": 2441.94,
+  "end": 2447.04,
+  "text": "What is the big issue if you do something as clever as this?"
+ },
+ {
+  "start": 2447.04,
+  "end": 2449.04,
+  "text": "So the big issue here is-- let's say,"
+ },
+ {
+  "start": 2449.04,
+  "end": 2450.98,
+  "text": "I want to transpose this matrix."
+ },
+ {
+  "start": 2450.98,
+  "end": 2452.96,
+  "text": "The transpose of this matrix does not"
+ },
+ {
+  "start": 2452.96,
+  "end": 2455.1,
+  "text": "have the same pattern, so to speak,"
+ },
+ {
+  "start": 2455.1,
+  "end": 2457.26,
+  "text": "scaling pattern as this matrix."
+ },
+ {
+  "start": 2457.26,
+  "end": 2460.72,
+  "text": "And so now it used to be that a transpose of a matrix"
+ },
+ {
+  "start": 2460.72,
+  "end": 2461.46,
+  "text": "was simple."
+ },
+ {
+  "start": 2461.46,
+  "end": 2462.82,
+  "text": "I just transpose this matrix."
+ },
+ {
+  "start": 2462.82,
+  "end": 2463.953,
+  "text": "I don't have to requantize."
+ },
+ {
+  "start": 2463.953,
+  "end": 2465.12,
+  "text": "I don't have to do anything."
+ },
+ {
+  "start": 2465.12,
+  "end": 2468.44,
+  "text": "Transposing this matrix is very complicated"
+ },
+ {
+  "start": 2468.44,
+  "end": 2471.16,
+  "text": "because I now have to potentially requantize"
+ },
+ {
+  "start": 2471.16,
+  "end": 2476.32,
+  "text": "this whole matrix to fit this 1 out of 32 pattern that I have."
+ },
+ {
+  "start": 2476.32,
+  "end": 2480.58,
+  "text": "And so what happens internally when you actually use MXFP8--"
+ },
+ {
+  "start": 2480.58,
+  "end": 2483.247,
+  "text": "and I found this to be crazy but also kind of cool--"
+ },
+ {
+  "start": 2483.247,
+  "end": 2485.58,
+  "text": "is that when you're training your model with this thing,"
+ },
+ {
+  "start": 2485.58,
+  "end": 2488.88,
+  "text": "it actually creates two copies of every quantized matrix, one"
+ },
+ {
+  "start": 2488.88,
+  "end": 2491.32,
+  "text": "for your original matrix, one for the transpose."
+ },
+ {
+  "start": 2491.32,
+  "end": 2492.94,
+  "text": "So if you ever want to transpose,"
+ },
+ {
+  "start": 2492.94,
+  "end": 2494.94,
+  "text": "you have the transposed version waiting for you."
+ },
+ {
+  "start": 2494.94,
+  "end": 2497.68,
+  "text": "And that's how you get around this, which I think"
+ },
+ {
+  "start": 2497.68,
+  "end": 2500.2,
+  "text": "is a crazy and cool thing."
+ },
+ {
+  "start": 2500.2,
+  "end": 2503.692,
+  "text": "The point here is maybe not to emphasize the GPU trivia."
+ },
+ {
+  "start": 2503.692,
+  "end": 2505.15,
+  "text": "But the point here is that once you"
+ },
+ {
+  "start": 2505.15,
+  "end": 2507.89,
+  "text": "start getting to these FPA, FP4 formats,"
+ },
+ {
+  "start": 2507.89,
+  "end": 2510.43,
+  "text": "things start getting pretty exotic because the amount"
+ },
+ {
+  "start": 2510.43,
+  "end": 2512.91,
+  "text": "of exponent and mantissa loss that you"
+ },
+ {
+  "start": 2512.91,
+  "end": 2514.49,
+  "text": "have are pretty extreme."
+ },
+ {
+  "start": 2514.49,
+  "end": 2517.59,
+  "text": "So you have to be very clever about how you do this."
+ },
+ {
+  "start": 2517.59,
+  "end": 2521.25,
+  "text": "And as I said, if you were to go and really train a model, FPA,"
+ },
+ {
+  "start": 2521.25,
+  "end": 2522.83,
+  "text": "which I think a lot of frontier labs"
+ },
+ {
+  "start": 2522.83,
+  "end": 2525.67,
+  "text": "are doing for the compute benefits,"
+ },
+ {
+  "start": 2525.67,
+  "end": 2528.67,
+  "text": "you have to be very careful."
+ },
+ {
+  "start": 2528.67,
+  "end": 2530.65,
+  "text": "This plot does show what I was saying."
+ },
+ {
+  "start": 2530.65,
+  "end": 2532.19,
+  "text": "So every time you quantize, you're"
+ },
+ {
+  "start": 2532.19,
+  "end": 2534.037,
+  "text": "going to quantize one way, and you're"
+ },
+ {
+  "start": 2534.037,
+  "end": 2535.37,
+  "text": "going to transpose and quantize."
+ },
+ {
+  "start": 2535.37,
+  "end": 2536.87,
+  "text": "So you're going to have both copies."
+ },
+ {
+  "start": 2536.87,
+  "end": 2539.77,
+  "text": "And then the other part, which I told you about a few slides ago,"
+ },
+ {
+  "start": 2539.77,
+  "end": 2542.59,
+  "text": "is you're only going to quantize certain layers that you"
+ },
+ {
+  "start": 2542.59,
+  "end": 2543.97,
+  "text": "think are safe to do so."
+ },
+ {
+  "start": 2543.97,
+  "end": 2545.83,
+  "text": "And this is another trial and error thing"
+ },
+ {
+  "start": 2545.83,
+  "end": 2547.09,
+  "text": "that you have to figure out."
+ },
+ {
+  "start": 2547.09,
+  "end": 2549.81,
+  "text": "But once you have all this together,"
+ },
+ {
+  "start": 2549.81,
+  "end": 2552.31,
+  "text": "you have the big benefits of training an FPA, which"
+ },
+ {
+  "start": 2552.31,
+  "end": 2554.77,
+  "text": "is that when you're doing those matrix multiplies,"
+ },
+ {
+  "start": 2554.77,
+  "end": 2558.25,
+  "text": "you're probably going to get 20% to 30% savings, maybe more,"
+ },
+ {
+  "start": 2558.25,
+  "end": 2560.27,
+  "text": "depending on the size of your matrix."
+ },
+ {
+  "start": 2560.27,
+  "end": 2563.19,
+  "text": "Unfortunately, it's not going to be a 2x speedup because you have"
+ },
+ {
+  "start": 2563.19,
+  "end": 2564.983,
+  "text": "to do all these quantization operations."
+ },
+ {
+  "start": 2564.983,
+  "end": 2566.4,
+  "text": "There's a big overhead doing this."
+ },
+ {
+  "start": 2566.4,
+  "end": 2567.108,
+  "text": "So it's not free."
+ },
+ {
+  "start": 2567.108,
+  "end": 2568.74,
+  "text": "Yes,"
+ },
+ {
+  "start": 2568.74,
+  "end": 2572.677,
+  "text": "I remember reading that the first layer and the last layer"
+ },
+ {
+  "start": 2572.677,
+  "end": 2573.76,
+  "text": "are very hard to quantize."
+ },
+ {
+  "start": 2573.76,
+  "end": 2575.64,
+  "text": "Do you have any intuition about that?"
+ },
+ {
+  "start": 2575.64,
+  "end": 2577.952,
+  "text": "That's right, that's right."
+ },
+ {
+  "start": 2577.952,
+  "end": 2580.295,
+  "text": "I do not have intuitions for the first layer."
+ },
+ {
+  "start": 2580.295,
+  "end": 2580.92,
+  "text": "The last layer."
+ },
+ {
+  "start": 2580.92,
+  "end": 2583.5,
+  "text": "I think, being hard to quantize is because it"
+ },
+ {
+  "start": 2583.5,
+  "end": 2584.88,
+  "text": "is a first-order factor."
+ },
+ {
+  "start": 2584.88,
+  "end": 2586.417,
+  "text": "It drives a ton of the loss."
+ },
+ {
+  "start": 2586.417,
+  "end": 2588.5,
+  "text": "And so I think you end up getting both instability"
+ },
+ {
+  "start": 2588.5,
+  "end": 2591.94,
+  "text": "and big loss increases if you attempt to quantize the very"
+ },
+ {
+  "start": 2591.94,
+  "end": 2595.06,
+  "text": "last layer."
+ },
+ {
+  "start": 2595.06,
+  "end": 2597.3,
+  "text": "I put this up there almost because I"
+ },
+ {
+  "start": 2597.3,
+  "end": 2598.66,
+  "text": "think it's so ridiculous."
+ },
+ {
+  "start": 2598.66,
+  "end": 2602.06,
+  "text": "The next frontier, this is already implemented as MXFP4."
+ },
+ {
+  "start": 2602.06,
+  "end": 2605.82,
+  "text": "The entirety of MXFP8 can be shown to you in this slide."
+ },
+ {
+  "start": 2605.82,
+  "end": 2608.62,
+  "text": "It's negative 6 to 6."
+ },
+ {
+  "start": 2608.62,
+  "end": 2611.06,
+  "text": "You have all the possible values."
+ },
+ {
+  "start": 2611.06,
+  "end": 2612.84,
+  "text": "But now that you understand MXFP8,"
+ },
+ {
+  "start": 2612.84,
+  "end": 2615.1,
+  "text": "you can also understand how this thing works."
+ },
+ {
+  "start": 2615.1,
+  "end": 2617.02,
+  "text": "You're going to have a structured block,"
+ },
+ {
+  "start": 2617.02,
+  "end": 2621.18,
+  "text": "where each block is going to be one of these four bits."
+ },
+ {
+  "start": 2621.18,
+  "end": 2622.86,
+  "text": "Every 16 of these numbers, you're"
+ },
+ {
+  "start": 2622.86,
+  "end": 2624.28,
+  "text": "going to have one scaling factor."
+ },
+ {
+  "start": 2624.28,
+  "end": 2627.08,
+  "text": "And that scaling factor will itself be FP8."
+ },
+ {
+  "start": 2627.08,
+  "end": 2632.86,
+  "text": "This is a E4M3 scaling for those scaling factors."
+ },
+ {
+  "start": 2632.86,
+  "end": 2635.46,
+  "text": "There has been a paper that has trained with FP4."
+ },
+ {
+  "start": 2635.46,
+  "end": 2637.98,
+  "text": "I don't think I've heard of anyone successfully training"
+ },
+ {
+  "start": 2637.98,
+  "end": 2642.86,
+  "text": "in the wild, real, big, serious models with FP4."
+ },
+ {
+  "start": 2642.86,
+  "end": 2644.1,
+  "text": "But I think this is coming."
+ },
+ {
+  "start": 2644.1,
+  "end": 2648.38,
+  "text": "The next generation of models will probably be FP4."
+ },
+ {
+  "start": 2648.38,
+  "end": 2649.72,
+  "text": "So that was low precision."
+ },
+ {
+  "start": 2649.72,
+  "end": 2651.82,
+  "text": "I think it's really cool that you can really"
+ },
+ {
+  "start": 2651.82,
+  "end": 2655.5,
+  "text": "push the limits so far that you're ending up with just plus"
+ },
+ {
+  "start": 2655.5,
+  "end": 2658.02,
+  "text": "6 to negative 6, and yet you can do interesting things"
+ },
+ {
+  "start": 2658.02,
+  "end": 2660.62,
+  "text": "with matrices in that precision."
+ },
+ {
+  "start": 2660.62,
+  "end": 2663.22,
+  "text": "Oh, yeah, there's a question."
+ },
+ {
+  "start": 2663.22,
+  "end": 2671.06,
+  "text": "So is this only for matrices that you can apply this,"
+ },
+ {
+  "start": 2671.06,
+  "end": 2673.36,
+  "text": "not just single scalar step?"
+ },
+ {
+  "start": 2673.36,
+  "end": 2673.86,
+  "text": "Yeah."
+ },
+ {
+  "start": 2673.86,
+  "end": 2675.4,
+  "text": "So you can quantize anything."
+ },
+ {
+  "start": 2675.4,
+  "end": 2678.32,
+  "text": "You can quantize the activations after a ReLU, for example."
+ },
+ {
+  "start": 2678.32,
+  "end": 2681.13,
+  "text": "But there just isn't as much of a need to."
+ },
+ {
+  "start": 2681.13,
+  "end": 2684.77,
+  "text": "So like a matmul, if you quantize that,you can get really"
+ },
+ {
+  "start": 2684.77,
+  "end": 2686.17,
+  "text": "big throughput improvements."
+ },
+ {
+  "start": 2686.17,
+  "end": 2689.57,
+  "text": "And that's why if you look at the MXFP8 training one,"
+ },
+ {
+  "start": 2689.57,
+  "end": 2692.57,
+  "text": "these are all matmuls that are getting FP8 quantized."
+ },
+ {
+  "start": 2692.57,
+  "end": 2694.29,
+  "text": "The overhead is probably not worth it"
+ },
+ {
+  "start": 2694.29,
+  "end": 2695.51,
+  "text": "for most of [INAUDIBLE]."
+ },
+ {
+  "start": 2695.51,
+  "end": 2697.45,
+  "text": "This has something to do with the hardware."
+ },
+ {
+  "start": 2697.45,
+  "end": 2703.77,
+  "text": "It's not like the matmul hardware part only does this."
+ },
+ {
+  "start": 2703.77,
+  "end": 2705.23,
+  "text": "Well, it's not exclusive to that."
+ },
+ {
+  "start": 2705.23,
+  "end": 2705.73,
+  "text": "Yeah."
+ },
+ {
+  "start": 2705.73,
+  "end": 2707.472,
+  "text": "You can always do lower precision stuff."
+ },
+ {
+  "start": 2707.472,
+  "end": 2709.43,
+  "text": "And then it will decrease your memory movement."
+ },
+ {
+  "start": 2709.43,
+  "end": 2710.17,
+  "text": "This is true."
+ },
+ {
+  "start": 2710.17,
+  "end": 2712.23,
+  "text": "But for the others, it doesn't quite make sense."
+ },
+ {
+  "start": 2712.23,
+  "end": 2714.913,
+  "text": "This isn't any hardware limitations?"
+ },
+ {
+  "start": 2714.913,
+  "end": 2715.83,
+  "text": "It's not a limitation."
+ },
+ {
+  "start": 2715.83,
+  "end": 2717.43,
+  "text": "But there is hardware support for all of this."
+ },
+ {
+  "start": 2717.43,
+  "end": 2718.35,
+  "text": "So it is baked in."
+ },
+ {
+  "start": 2718.35,
+  "end": 2721.01,
+  "text": "A bunch of this is baked into the hardware to accelerate it."
+ },
+ {
+  "start": 2721.01,
+  "end": 2722.25,
+  "text": "Yeah."
+ },
+ {
+  "start": 2722.25,
+  "end": 2725.81,
+  "text": "You positioned this as an improvement for memory bandwidth"
+ },
+ {
+  "start": 2725.81,
+  "end": 2729.11,
+  "text": "or loss, requiring less memory bandwidth."
+ },
+ {
+  "start": 2729.11,
+  "end": 2731.31,
+  "text": "But is there a benefit in this one?"
+ },
+ {
+  "start": 2731.31,
+  "end": 2732.79,
+  "text": "Yes, yes, for sure."
+ },
+ {
+  "start": 2732.79,
+  "end": 2735.09,
+  "text": "For compute, you get basically linear improvements"
+ },
+ {
+  "start": 2735.09,
+  "end": 2737.362,
+  "text": "for just multiplying the quantized numbers."
+ },
+ {
+  "start": 2737.362,
+  "end": 2739.57,
+  "text": "But the fact that you have to quantize and dequantize"
+ },
+ {
+  "start": 2739.57,
+  "end": 2743.11,
+  "text": "means that the benefits are more diluted."
+ },
+ {
+  "start": 2743.11,
+  "end": 2743.61,
+  "text": "Yeah."
+ },
+ {
+  "start": 2743.61,
+  "end": 2746.57,
+  "text": "Do you have to train the scale factor?"
+ },
+ {
+  "start": 2746.57,
+  "end": 2749.167,
+  "text": "The scaling factor is an implementation-dependent choice."
+ },
+ {
+  "start": 2749.167,
+  "end": 2750.75,
+  "text": "Depending on the library, for example,"
+ },
+ {
+  "start": 2750.75,
+  "end": 2755.45,
+  "text": "you might get different ways of quantizing and dequantizing."
+ },
+ {
+  "start": 2755.45,
+  "end": 2757.345,
+  "text": "Training is a strong word."
+ },
+ {
+  "start": 2757.345,
+  "end": 2758.97,
+  "text": "But you might have quantization factors"
+ },
+ {
+  "start": 2758.97,
+  "end": 2760.795,
+  "text": "that scan through and pick the max, min."
+ },
+ {
+  "start": 2760.795,
+  "end": 2762.17,
+  "text": "Or you might have scaling factors"
+ },
+ {
+  "start": 2762.17,
+  "end": 2764.753,
+  "text": "that look at historical running statistics and then use those."
+ },
+ {
+  "start": 2764.753,
+  "end": 2766.65,
+  "text": "I wouldn't really call them training per se."
+ },
+ {
+  "start": 2766.65,
+  "end": 2768.65,
+  "text": "At inference, you might fit them more precisely."
+ },
+ {
+  "start": 2768.65,
+  "end": 2769.97,
+  "text": "So there's no gradients."
+ },
+ {
+  "start": 2769.97,
+  "end": 2771.317,
+  "text": "At inference time, you might."
+ },
+ {
+  "start": 2771.317,
+  "end": 2772.65,
+  "text": "At training time, you would not."
+ },
+ {
+  "start": 2772.65,
+  "end": 2774.73,
+  "text": "Yeah."
+ },
+ {
+  "start": 2774.73,
+  "end": 2777.23,
+  "text": "Has anything been done with structured sparsity?"
+ },
+ {
+  "start": 2777.23,
+  "end": 2777.73,
+  "text": "Yeah."
+ },
+ {
+  "start": 2777.73,
+  "end": 2778.99,
+  "text": "Because I guess NVIDIA had it."
+ },
+ {
+  "start": 2778.99,
+  "end": 2779.49,
+  "text": "Yeah."
+ },
+ {
+  "start": 2779.49,
+  "end": 2781.823,
+  "text": "There's a lot that's been done with structured sparsity."
+ },
+ {
+  "start": 2781.823,
+  "end": 2784.21,
+  "text": "And I mean, MOV's, I think, one successful example"
+ },
+ {
+  "start": 2784.21,
+  "end": 2787.11,
+  "text": "of a structured sparse operation that people use."
+ },
+ {
+  "start": 2787.11,
+  "end": 2789.37,
+  "text": "[INAUDIBLE]"
+ },
+ {
+  "start": 2790.69,
+  "end": 2791.55,
+  "text": "Yeah, right."
+ },
+ {
+  "start": 2791.55,
+  "end": 2792.915,
+  "text": "So I mean a lot has been done."
+ },
+ {
+  "start": 2792.915,
+  "end": 2795.29,
+  "text": "Chris Re here has done a lot with lots of different kinds"
+ },
+ {
+  "start": 2795.29,
+  "end": 2796.84,
+  "text": "of structured matrices."
+ },
+ {
+  "start": 2796.84,
+  "end": 2799.44,
+  "text": "I think the benefits of that in terms"
+ },
+ {
+  "start": 2799.44,
+  "end": 2802.54,
+  "text": "of the compute benefits versus the representation losses,"
+ },
+ {
+  "start": 2802.54,
+  "end": 2804.08,
+  "text": "I think has washed out."
+ },
+ {
+  "start": 2804.08,
+  "end": 2805.38,
+  "text": "I don't think it's a bad idea."
+ },
+ {
+  "start": 2805.38,
+  "end": 2808.88,
+  "text": "But empirically, it hasn't, I think, necessarily panned out."
+ },
+ {
+  "start": 2808.88,
+  "end": 2809.96,
+  "text": "Oh, yeah."
+ },
+ {
+  "start": 2809.96,
+  "end": 2813.64,
+  "text": "A lot of squeeze that we've been talking about quantizing models"
+ },
+ {
+  "start": 2813.64,
+  "end": 2815.08,
+  "text": "for decades."
+ },
+ {
+  "start": 2815.08,
+  "end": 2817.34,
+  "text": "What is current approach?"
+ },
+ {
+  "start": 2817.34,
+  "end": 2822.72,
+  "text": "Is it train in full precision or half precision and then distill"
+ },
+ {
+  "start": 2822.72,
+  "end": 2825.985,
+  "text": "into a quantized model that you can run on your Apple computer"
+ },
+ {
+  "start": 2825.985,
+  "end": 2826.86,
+  "text": "and things like that?"
+ },
+ {
+  "start": 2826.86,
+  "end": 2828.46,
+  "text": "What it's like [INAUDIBLE]?"
+ },
+ {
+  "start": 2828.46,
+  "end": 2828.96,
+  "text": "Yeah."
+ },
+ {
+  "start": 2828.96,
+  "end": 2831.72,
+  "text": "I mean, there's a combination of-- you probably"
+ },
+ {
+  "start": 2831.72,
+  "end": 2835.28,
+  "text": "want to train a bigger model and then quantize down."
+ },
+ {
+  "start": 2835.28,
+  "end": 2837.88,
+  "text": "There's various kinds of quantization, scaling laws,"
+ },
+ {
+  "start": 2837.88,
+  "end": 2839.42,
+  "text": "and papers that people have written,"
+ },
+ {
+  "start": 2839.42,
+  "end": 2842.88,
+  "text": "precisely characterizing the tradeoffs here."
+ },
+ {
+  "start": 2842.88,
+  "end": 2846.087,
+  "text": "I think the state-of-the-art involves combining both"
+ },
+ {
+  "start": 2846.087,
+  "end": 2847.92,
+  "text": "quantization-aware training, to some extent,"
+ },
+ {
+  "start": 2847.92,
+  "end": 2850.84,
+  "text": "and model scaling with post-training quantization"
+ },
+ {
+  "start": 2850.84,
+  "end": 2851.6,
+  "text": "of various kinds."
+ },
+ {
+  "start": 2851.6,
+  "end": 2853.52,
+  "text": "Yeah."
+ },
+ {
+  "start": 2853.52,
+  "end": 2857.0,
+  "text": "There's a lot that I think is not fully well understood."
+ },
+ {
+  "start": 2857.0,
+  "end": 2858.64,
+  "text": "Even industry teams that I've talked to"
+ },
+ {
+  "start": 2858.64,
+  "end": 2862.5,
+  "text": "are talking about still doing science of quantization."
+ },
+ {
+  "start": 2862.5,
+  "end": 2863.0,
+  "text": "Yeah."
+ },
+ {
+  "start": 2863.0,
+  "end": 2863.58,
+  "text": "OK."
+ },
+ {
+  "start": 2863.58,
+  "end": 2864.88,
+  "text": "So the other trick--"
+ },
+ {
+  "start": 2864.88,
+  "end": 2868.24,
+  "text": "this one is much more of a conceptual programming thing--"
+ },
+ {
+  "start": 2868.24,
+  "end": 2869.64,
+  "text": "is operator fusion."
+ },
+ {
+  "start": 2869.64,
+  "end": 2871.1,
+  "text": "It's fairly simple idea."
+ },
+ {
+  "start": 2871.1,
+  "end": 2874.36,
+  "text": "But you'll be surprised at how much this doesn't already"
+ },
+ {
+  "start": 2874.36,
+  "end": 2875.52,
+  "text": "happen."
+ },
+ {
+  "start": 2875.52,
+  "end": 2876.812,
+  "text": "So think of a GPU as a factory."
+ },
+ {
+  "start": 2876.812,
+  "end": 2878.187,
+  "text": "You've got your memory warehouse."
+ },
+ {
+  "start": 2878.187,
+  "end": 2880.06,
+  "text": "And you've got your little compute factory."
+ },
+ {
+  "start": 2880.06,
+  "end": 2882.518,
+  "text": "And you've got a little belt conveyor going back and forth."
+ },
+ {
+  "start": 2882.518,
+  "end": 2885.32,
+  "text": "If you scale up your compute, you're"
+ },
+ {
+  "start": 2885.32,
+  "end": 2887.84,
+  "text": "going to be bottlenecked by your little belt conveyor."
+ },
+ {
+  "start": 2887.84,
+  "end": 2890.78,
+  "text": "And this will be worse if you have many operations."
+ },
+ {
+  "start": 2890.78,
+  "end": 2894.22,
+  "text": "Imagine I've got lots of different operations I need to do."
+ },
+ {
+  "start": 2894.22,
+  "end": 2896.8,
+  "text": "And I'm going to ship my raw materials to my factory"
+ },
+ {
+  "start": 2896.8,
+  "end": 2898.86,
+  "text": "and back and forth and back and forth."
+ },
+ {
+  "start": 2898.86,
+  "end": 2900.88,
+  "text": "This is a lot of memory bottleneck that you're"
+ },
+ {
+  "start": 2900.88,
+  "end": 2904.84,
+  "text": "paying for and lots of duplex bidirectional memory bandwidth."
+ },
+ {
+  "start": 2904.84,
+  "end": 2907.007,
+  "text": "Now, wouldn't it be better if I just had a one giant"
+ },
+ {
+  "start": 2907.007,
+  "end": 2908.882,
+  "text": "factory that would take all the raw materials"
+ },
+ {
+  "start": 2908.882,
+  "end": 2910.32,
+  "text": "and ship back my finished product?"
+ },
+ {
+  "start": 2910.32,
+  "end": 2914.71,
+  "text": "This way, I only have to pay for memory bandwidth twice,"
+ },
+ {
+  "start": 2914.71,
+  "end": 2916.01,
+  "text": "very simple idea."
+ },
+ {
+  "start": 2916.01,
+  "end": 2919.27,
+  "text": "This is operator fusion."
+ },
+ {
+  "start": 2919.27,
+  "end": 2921.37,
+  "text": "And this appears very often."
+ },
+ {
+  "start": 2921.37,
+  "end": 2925.51,
+  "text": "If you write a very simple, let's say, computation of sine"
+ },
+ {
+  "start": 2925.51,
+  "end": 2926.95,
+  "text": "squared plus cosine squared, what"
+ },
+ {
+  "start": 2926.95,
+  "end": 2928.89,
+  "text": "does the PyTorch computation graph look like?"
+ },
+ {
+  "start": 2928.89,
+  "end": 2929.93,
+  "text": "It looks like this."
+ },
+ {
+  "start": 2929.93,
+  "end": 2932.45,
+  "text": "You got your x, I do my sine, I do my cosine."
+ },
+ {
+  "start": 2932.45,
+  "end": 2934.47,
+  "text": "I square it on both sides, I add them."
+ },
+ {
+  "start": 2934.47,
+  "end": 2937.31,
+  "text": "And I get my output."
+ },
+ {
+  "start": 2937.31,
+  "end": 2939.29,
+  "text": "Naively, if you don't do anything smart,"
+ },
+ {
+  "start": 2939.29,
+  "end": 2941.23,
+  "text": "what this will do is each of these"
+ },
+ {
+  "start": 2941.23,
+  "end": 2943.23,
+  "text": "will be a factory, so to speak."
+ },
+ {
+  "start": 2943.23,
+  "end": 2945.87,
+  "text": "You will read and write from global memory"
+ },
+ {
+  "start": 2945.87,
+  "end": 2948.31,
+  "text": "each time one of these is called."
+ },
+ {
+  "start": 2948.31,
+  "end": 2950.63,
+  "text": "And you will incur quite a bit of memory cost"
+ },
+ {
+  "start": 2950.63,
+  "end": 2952.23,
+  "text": "every time you do so."
+ },
+ {
+  "start": 2952.23,
+  "end": 2955.39,
+  "text": "So this is pretty painful."
+ },
+ {
+  "start": 2955.39,
+  "end": 2957.19,
+  "text": "And you can imagine instead of doing"
+ },
+ {
+  "start": 2957.19,
+  "end": 2960.99,
+  "text": "that, why don't I just write GPU code that reads once"
+ },
+ {
+  "start": 2960.99,
+  "end": 2965.65,
+  "text": "from global memory, does the whole thing inside the SM,"
+ },
+ {
+  "start": 2965.65,
+  "end": 2966.93,
+  "text": "as I talked about before."
+ },
+ {
+  "start": 2966.93,
+  "end": 2968.73,
+  "text": "And then after it's done inside the SM,"
+ },
+ {
+  "start": 2968.73,
+  "end": 2970.563,
+  "text": "I'm going to write it back to global memory,"
+ },
+ {
+  "start": 2970.563,
+  "end": 2973.72,
+  "text": "a single for the kernel that does all of these operations."
+ },
+ {
+  "start": 2973.72,
+  "end": 2974.68,
+  "text": "This is called fusion."
+ },
+ {
+  "start": 2974.68,
+  "end": 2979.8,
+  "text": "And anything that's easy like this-- this a very easy fusion."
+ },
+ {
+  "start": 2979.8,
+  "end": 2982.3,
+  "text": "It's like a graph that I can just squish down"
+ },
+ {
+  "start": 2982.3,
+  "end": 2984.46,
+  "text": "into a single unit--"
+ },
+ {
+  "start": 2984.46,
+  "end": 2986.64,
+  "text": "a compiler can automatically do this for you."
+ },
+ {
+  "start": 2986.64,
+  "end": 2990.26,
+  "text": "So Torch compiler, which is a compiler for PyTorch, or JAX"
+ },
+ {
+  "start": 2990.26,
+  "end": 2992.54,
+  "text": "compiler, which is JAX's compiler, which"
+ },
+ {
+  "start": 2992.54,
+  "end": 2995.38,
+  "text": "is more deeply integrated into JAX, both of these"
+ },
+ {
+  "start": 2995.38,
+  "end": 3001.58,
+  "text": "will fuse these kinds of basic things into a single CUDA call."
+ },
+ {
+  "start": 3001.58,
+  "end": 3005.82,
+  "text": "I'll talk a little bit more about fusion later."
+ },
+ {
+  "start": 3005.82,
+  "end": 3008.798,
+  "text": "The advanced version sometimes require manual intervention."
+ },
+ {
+  "start": 3008.798,
+  "end": 3011.34,
+  "text": "But the simple versions, you can just think of as compilation"
+ },
+ {
+  "start": 3011.34,
+  "end": 3013.36,
+  "text": "will solve your problems."
+ },
+ {
+  "start": 3013.36,
+  "end": 3015.88,
+  "text": "The third idea is recomputation."
+ },
+ {
+  "start": 3015.88,
+  "end": 3018.18,
+  "text": "So we know in back propagation, what"
+ },
+ {
+  "start": 3018.18,
+  "end": 3021.16,
+  "text": "do we do, well, we go forwards, upwards up on the tree."
+ },
+ {
+  "start": 3021.16,
+  "end": 3023.08,
+  "text": "This is from Percy's 221 class."
+ },
+ {
+  "start": 3023.08,
+  "end": 3024.42,
+  "text": "You go upwards on the tree."
+ },
+ {
+  "start": 3024.42,
+  "end": 3026.4,
+  "text": "And you keep track of activations."
+ },
+ {
+  "start": 3026.4,
+  "end": 3028.74,
+  "text": "You store these little activation numbers."
+ },
+ {
+  "start": 3028.74,
+  "end": 3031.02,
+  "text": "And then when I go backwards, I'm"
+ },
+ {
+  "start": 3031.02,
+  "end": 3032.54,
+  "text": "going to use the activations that I"
+ },
+ {
+  "start": 3032.54,
+  "end": 3036.04,
+  "text": "store to compute the backward signal down my tree."
+ },
+ {
+  "start": 3036.04,
+  "end": 3037.92,
+  "text": "We all know backprop to some extent."
+ },
+ {
+  "start": 3037.92,
+  "end": 3040.3,
+  "text": "So we all know what this is."
+ },
+ {
+  "start": 3040.3,
+  "end": 3042.5,
+  "text": "But also, now we're looking at this"
+ },
+ {
+  "start": 3042.5,
+  "end": 3044.56,
+  "text": "not from the perspective of mathematics,"
+ },
+ {
+  "start": 3044.56,
+  "end": 3045.88,
+  "text": "how do we compute a gradient."
+ },
+ {
+  "start": 3045.88,
+  "end": 3048.297,
+  "text": "We're thinking about this from the perspective of systems."
+ },
+ {
+  "start": 3048.297,
+  "end": 3050.26,
+  "text": "How do we minimize our memory?"
+ },
+ {
+  "start": 3050.26,
+  "end": 3052.563,
+  "text": "Well, if we think about what's happening,"
+ },
+ {
+  "start": 3052.563,
+  "end": 3053.98,
+  "text": "let's say, I have something simple"
+ },
+ {
+  "start": 3053.98,
+  "end": 3056.28,
+  "text": "I have x sigmoid, sigmoid, sigmoid out,"
+ },
+ {
+  "start": 3056.28,
+  "end": 3060.02,
+  "text": "each of these sigmoids is going to generate in the computation"
+ },
+ {
+  "start": 3060.02,
+  "end": 3063.46,
+  "text": "graph some of residual or some of activation"
+ },
+ {
+  "start": 3063.46,
+  "end": 3064.86,
+  "text": "that I need to track."
+ },
+ {
+  "start": 3064.86,
+  "end": 3069.147,
+  "text": "So after my first operation, I have S2, second operation, S1."
+ },
+ {
+  "start": 3069.147,
+  "end": 3070.98,
+  "text": "And then when I need to do my backwards pass"
+ },
+ {
+  "start": 3070.98,
+  "end": 3074.98,
+  "text": "it will consume S2, S1, and my output, or sorry, the gradient"
+ },
+ {
+  "start": 3074.98,
+  "end": 3075.64,
+  "text": "at my output."
+ },
+ {
+  "start": 3075.64,
+  "end": 3078.5,
+  "text": "And I'm going to push this backwards towards the derivative"
+ },
+ {
+  "start": 3078.5,
+  "end": 3079.12,
+  "text": "of my input."
+ },
+ {
+  "start": 3079.12,
+  "end": 3081.84,
+  "text": "So if I count the number of memory reads and writes,"
+ },
+ {
+  "start": 3081.84,
+  "end": 3084.54,
+  "text": "it's going to be one memory read for x, three memory"
+ },
+ {
+  "start": 3084.54,
+  "end": 3086.4,
+  "text": "writes for S2, S1 out."
+ },
+ {
+  "start": 3086.4,
+  "end": 3088.69,
+  "text": "And then on the backwards pass, this is flipped."
+ },
+ {
+  "start": 3088.69,
+  "end": 3091.533,
+  "text": "So this is a total of eight memory reads and writes,"
+ },
+ {
+  "start": 3091.533,
+  "end": 3096.13,
+  "text": "very low arithmetic intensity because I'm just acking a bunch of sigmoids."
+ },
+ {
+  "start": 3096.13,
+  "end": 3098.77,
+  "text": "Now, what can I do instead?"
+ },
+ {
+  "start": 3098.77,
+  "end": 3102.21,
+  "text": "Well, what I can do is, I can just throw away"
+ },
+ {
+  "start": 3102.21,
+  "end": 3103.71,
+  "text": "all of the activations."
+ },
+ {
+  "start": 3103.71,
+  "end": 3105.05,
+  "text": "Normally, you wouldn't do this."
+ },
+ {
+  "start": 3105.05,
+  "end": 3107.57,
+  "text": "Why would I want to recompute something?"
+ },
+ {
+  "start": 3107.57,
+  "end": 3109.77,
+  "text": "But imagine you're in a world where computation"
+ },
+ {
+  "start": 3109.77,
+  "end": 3110.71,
+  "text": "is super, super cheap."
+ },
+ {
+  "start": 3110.71,
+  "end": 3112.168,
+  "text": "You just have abundant computation."
+ },
+ {
+  "start": 3112.168,
+  "end": 3113.75,
+  "text": "You're not using all of your units."
+ },
+ {
+  "start": 3113.75,
+  "end": 3115.167,
+  "text": "But your memory is very expensive."
+ },
+ {
+  "start": 3115.167,
+  "end": 3117.25,
+  "text": "Any read and write has a lot of penalty."
+ },
+ {
+  "start": 3117.25,
+  "end": 3120.09,
+  "text": "Then you might prefer this computation graph"
+ },
+ {
+  "start": 3120.09,
+  "end": 3122.33,
+  "text": "where I read an X, and then I'm going"
+ },
+ {
+  "start": 3122.33,
+  "end": 3124.098,
+  "text": "to do sigmoid, sigmoid, sigmoid, output."
+ },
+ {
+  "start": 3124.098,
+  "end": 3125.39,
+  "text": "I'm going to store this output."
+ },
+ {
+  "start": 3125.39,
+  "end": 3127.97,
+  "text": "I have to write this because that's the output of my graph."
+ },
+ {
+  "start": 3127.97,
+  "end": 3131.21,
+  "text": "But now in the backwards pass, my backwards graph"
+ },
+ {
+  "start": 3131.21,
+  "end": 3132.65,
+  "text": "is going to get in D out."
+ },
+ {
+  "start": 3132.65,
+  "end": 3136.45,
+  "text": "And on the fly, I'm going to reforward the X"
+ },
+ {
+  "start": 3136.45,
+  "end": 3138.89,
+  "text": "and then compute the activations on the fly right"
+ },
+ {
+  "start": 3138.89,
+  "end": 3139.79,
+  "text": "where I need them."
+ },
+ {
+  "start": 3139.79,
+  "end": 3141.45,
+  "text": "So now this is going to be two memory"
+ },
+ {
+  "start": 3141.45,
+  "end": 3145.31,
+  "text": "reads for the D out and Dx and one memory right for the Dx."
+ },
+ {
+  "start": 3145.31,
+  "end": 3149.37,
+  "text": "So I've gone from eight total memory accesses to just five."
+ },
+ {
+  "start": 3149.37,
+  "end": 3152.07,
+  "text": "So now I have 5/8 the total memory accesses,"
+ },
+ {
+  "start": 3152.07,
+  "end": 3153.69,
+  "text": "same computation."
+ },
+ {
+  "start": 3153.69,
+  "end": 3155.65,
+  "text": "But I've spent a little bit of extra compute"
+ },
+ {
+  "start": 3155.65,
+  "end": 3157.45,
+  "text": "and saved a little bit of extra memory."
+ },
+ {
+  "start": 3157.45,
+  "end": 3159.93,
+  "text": "This is another very important trick."
+ },
+ {
+  "start": 3159.93,
+  "end": 3161.41,
+  "text": "We don't normally think about this"
+ },
+ {
+  "start": 3161.41,
+  "end": 3163.77,
+  "text": "because, usually, we're concerned with just"
+ },
+ {
+  "start": 3163.77,
+  "end": 3164.87,
+  "text": "computing the gradient."
+ },
+ {
+  "start": 3164.87,
+  "end": 3166.37,
+  "text": "But once you have a systems mindset,"
+ },
+ {
+  "start": 3166.37,
+  "end": 3170.21,
+  "text": "you start to think about recomputation."
+ },
+ {
+  "start": 3170.21,
+  "end": 3172.45,
+  "text": "Cool."
+ },
+ {
+  "start": 3172.45,
+  "end": 3173.89,
+  "text": "Trick number four."
+ },
+ {
+  "start": 3173.89,
+  "end": 3177.69,
+  "text": "This is another memory trivia thing but surprisingly becomes"
+ },
+ {
+  "start": 3177.69,
+  "end": 3179.93,
+  "text": "important and also why sometimes it's"
+ },
+ {
+  "start": 3179.93,
+  "end": 3182.53,
+  "text": "important to understand the hardware model of what"
+ },
+ {
+  "start": 3182.53,
+  "end": 3185.33,
+  "text": "you're interacting with."
+ },
+ {
+  "start": 3185.33,
+  "end": 3188.49,
+  "text": "So global memory, which is the big memory that lives"
+ },
+ {
+  "start": 3188.49,
+  "end": 3191.37,
+  "text": "outside the chip, is DRAM."
+ },
+ {
+  "start": 3191.37,
+  "end": 3195.69,
+  "text": "And DRAM, because of the way that it is structured,"
+ },
+ {
+  "start": 3195.69,
+  "end": 3197.07,
+  "text": "actually comes in bursts."
+ },
+ {
+  "start": 3197.07,
+  "end": 3199.11,
+  "text": "What that means is, when I access,"
+ },
+ {
+  "start": 3199.11,
+  "end": 3200.87,
+  "text": "let's say, the very first position,"
+ },
+ {
+  "start": 3200.87,
+  "end": 3203.25,
+  "text": "I don't actually get just the first value."
+ },
+ {
+  "start": 3203.25,
+  "end": 3207.0,
+  "text": "I can read off all four of these first values for free."
+ },
+ {
+  "start": 3207.0,
+  "end": 3209.62,
+  "text": "And that's because the way the memory cells are lined up,"
+ },
+ {
+  "start": 3209.62,
+  "end": 3212.42,
+  "text": "there's these blocks of memory units."
+ },
+ {
+  "start": 3212.42,
+  "end": 3214.62,
+  "text": "And then when I activate an amplifier,"
+ },
+ {
+  "start": 3214.62,
+  "end": 3217.36,
+  "text": "I can just read out all of these almost for free."
+ },
+ {
+  "start": 3217.36,
+  "end": 3219.48,
+  "text": "The way that it's structured in parallel"
+ },
+ {
+  "start": 3219.48,
+  "end": 3221.46,
+  "text": "allows me to read blocks of memory."
+ },
+ {
+  "start": 3221.46,
+  "end": 3224.52,
+  "text": "That makes sense as a hardware model."
+ },
+ {
+  "start": 3224.52,
+  "end": 3226.26,
+  "text": "And so this is called a burst section."
+ },
+ {
+  "start": 3226.26,
+  "end": 3228.42,
+  "text": "And so whenever a section is accessed,"
+ },
+ {
+  "start": 3228.42,
+  "end": 3231.68,
+  "text": "all the other locations can also get delivered for free."
+ },
+ {
+  "start": 3231.68,
+  "end": 3234.32,
+  "text": "And you won't pay for them, so to speak."
+ },
+ {
+  "start": 3234.32,
+  "end": 3238.9,
+  "text": "And so you might have something like 128 bytes worth of a burst."
+ },
+ {
+  "start": 3238.9,
+  "end": 3241.44,
+  "text": "That means a single read will return, potentially,"
+ },
+ {
+  "start": 3241.44,
+  "end": 3244.32,
+  "text": "128 bytes worth of data, as long as it lives"
+ },
+ {
+  "start": 3244.32,
+  "end": 3246.48,
+  "text": "in the same contiguous block."
+ },
+ {
+  "start": 3246.48,
+  "end": 3250.32,
+  "text": "So this means that if you have your reads arranged contiguously"
+ },
+ {
+  "start": 3250.32,
+  "end": 3254.44,
+  "text": "where they're all together, it's going to go much faster."
+ },
+ {
+  "start": 3254.44,
+  "end": 3259.1,
+  "text": "And to use a term, you say that a memory access is coalesced."
+ },
+ {
+  "start": 3259.1,
+  "end": 3262.92,
+  "text": "So that word means if all of the threads in a warp"
+ },
+ {
+  "start": 3262.92,
+  "end": 3264.34,
+  "text": "fall in the same burst."
+ },
+ {
+  "start": 3264.34,
+  "end": 3268.04,
+  "text": "So what that means is let's, say, I have three threads."
+ },
+ {
+  "start": 3268.04,
+  "end": 3273.24,
+  "text": "And all three of my threads, sorry, four threads, and my four threads"
+ },
+ {
+  "start": 3273.24,
+  "end": 3274.868,
+  "text": "live inside of a single burst section,"
+ },
+ {
+  "start": 3274.868,
+  "end": 3276.66,
+  "text": "or they're reading from this burst section."
+ },
+ {
+  "start": 3276.66,
+  "end": 3279.88,
+  "text": "Then this is coalesced because they're using up all"
+ },
+ {
+  "start": 3279.88,
+  "end": 3281.64,
+  "text": "of this entire burst section."
+ },
+ {
+  "start": 3281.64,
+  "end": 3284.16,
+  "text": "And I'm fully utilizing this very nice property"
+ },
+ {
+  "start": 3284.16,
+  "end": 3286.52,
+  "text": "of DRAM memory."
+ },
+ {
+  "start": 3286.52,
+  "end": 3291.08,
+  "text": "And so if I have multiple warps, I'm"
+ },
+ {
+  "start": 3291.08,
+  "end": 3293.17,
+  "text": "going to have different multiple burst sections."
+ },
+ {
+  "start": 3293.17,
+  "end": 3294.92,
+  "text": "But you can efficiently read out of memory"
+ },
+ {
+  "start": 3294.92,
+  "end": 3299.56,
+  "text": "by grouping together your memory reads."
+ },
+ {
+  "start": 3299.56,
+  "end": 3302.16,
+  "text": "Yeah."
+ },
+ {
+  "start": 3302.16,
+  "end": 3304.76,
+  "text": "Why does the memory access have this pattern,"
+ },
+ {
+  "start": 3304.76,
+  "end": 3306.56,
+  "text": "like this T shape pattern?"
+ },
+ {
+  "start": 3306.56,
+  "end": 3307.62,
+  "text": "Which one, like this?"
+ },
+ {
+  "start": 3307.62,
+  "end": 3308.18,
+  "text": "This one."
+ },
+ {
+  "start": 3308.18,
+  "end": 3309.3,
+  "text": "Yeah."
+ },
+ {
+  "start": 3309.3,
+  "end": 3312.8,
+  "text": "So as far as I understand, the memory cells"
+ },
+ {
+  "start": 3312.8,
+  "end": 3314.24,
+  "text": "are arranged in a grid."
+ },
+ {
+  "start": 3314.24,
+  "end": 3316.48,
+  "text": "And your amplifiers are deciding which cells"
+ },
+ {
+  "start": 3316.48,
+  "end": 3319.2,
+  "text": "to read, operate at a column-wise level."
+ },
+ {
+  "start": 3319.2,
+  "end": 3323.91,
+  "text": "And activating the voltage for this often a thing that takes a significant amount of time."
+ },
+ {
+  "start": 3323.91,
+  "end": 3326.09,
+  "text": "So once you've selected the column,"
+ },
+ {
+  "start": 3326.09,
+  "end": 3328.27,
+  "text": "readouts of multiple elements within that column"
+ },
+ {
+  "start": 3328.27,
+  "end": 3329.71,
+  "text": "are much comparatively cheaper."
+ },
+ {
+  "start": 3329.71,
+  "end": 3337.11,
+  "text": "But this is to select, to read that upper red cell."
+ },
+ {
+  "start": 3337.11,
+  "end": 3337.61,
+  "text": "Yeah, right."
+ },
+ {
+  "start": 3337.61,
+  "end": 3340.667,
+  "text": "So if I want to read this, for example, I'm selecting this."
+ },
+ {
+  "start": 3340.667,
+  "end": 3343.25,
+  "text": "Or maybe it's columns that are cheap in this diagram at least."
+ },
+ {
+  "start": 3343.25,
+  "end": 3345.43,
+  "text": "But if I'm trying to read this, I"
+ },
+ {
+  "start": 3345.43,
+  "end": 3347.45,
+  "text": "might get this whole row for free"
+ },
+ {
+  "start": 3347.45,
+  "end": 3350.965,
+  "text": "because I've addressed this whole row."
+ },
+ {
+  "start": 3350.965,
+  "end": 3352.09,
+  "text": "You don't get a T for free."
+ },
+ {
+  "start": 3352.09,
+  "end": 3354.35,
+  "text": "Yeah."
+ },
+ {
+  "start": 3354.35,
+  "end": 3354.85,
+  "text": "OK."
+ },
+ {
+  "start": 3354.85,
+  "end": 3355.35,
+  "text": "Good."
+ },
+ {
+  "start": 3358.255,
+  "end": 3359.63,
+  "text": "So you're saying like, Tatsu, why"
+ },
+ {
+  "start": 3359.63,
+  "end": 3362.43,
+  "text": "are you telling me DRAM trivia?"
+ },
+ {
+  "start": 3362.43,
+  "end": 3364.39,
+  "text": "The reason why I'm telling you DRAM trivia"
+ },
+ {
+  "start": 3364.39,
+  "end": 3366.93,
+  "text": "is because-- think about matrices."
+ },
+ {
+  "start": 3366.93,
+  "end": 3370.27,
+  "text": "Matrices, you often want to read in big blocks"
+ },
+ {
+  "start": 3370.27,
+  "end": 3371.91,
+  "text": "because you're going to do matmuls."
+ },
+ {
+  "start": 3371.91,
+  "end": 3374.99,
+  "text": "And certain kinds of memory accesses on matmuls"
+ },
+ {
+  "start": 3374.99,
+  "end": 3376.53,
+  "text": "are privileged."
+ },
+ {
+  "start": 3376.53,
+  "end": 3378.96,
+  "text": "They're much more nicely structured than others."
+ },
+ {
+  "start": 3378.96,
+  "end": 3380.46,
+  "text": "And sometimes you can take advantage"
+ },
+ {
+  "start": 3380.46,
+  "end": 3382.86,
+  "text": "of this to get very, very fast memory reads."
+ },
+ {
+  "start": 3382.86,
+  "end": 3386.18,
+  "text": "So the mnemonic or the thing that I remember"
+ },
+ {
+  "start": 3386.18,
+  "end": 3389.24,
+  "text": "is, if you have threads and you have a row major matrix,"
+ },
+ {
+  "start": 3389.24,
+  "end": 3395.46,
+  "text": "so it's sorted where each row is how your indexes are increasing,"
+ },
+ {
+  "start": 3395.46,
+  "end": 3399.2,
+  "text": "threads that move along the major axis are not coalesced."
+ },
+ {
+  "start": 3399.2,
+  "end": 3401.3,
+  "text": "And to really make this visual-- actually,"
+ },
+ {
+  "start": 3401.3,
+  "end": 3403.56,
+  "text": "I like this diagram on the right."
+ },
+ {
+  "start": 3403.56,
+  "end": 3406.7,
+  "text": "Imagine I have this 4 by 4 matrix."
+ },
+ {
+  "start": 3406.7,
+  "end": 3407.76,
+  "text": "This is row major."
+ },
+ {
+  "start": 3407.76,
+  "end": 3411.718,
+  "text": "So it's sorted in the order of the yellow block comes first,"
+ },
+ {
+  "start": 3411.718,
+  "end": 3413.76,
+  "text": "the red block comes next, and so on and so forth."
+ },
+ {
+  "start": 3413.76,
+  "end": 3417.06,
+  "text": "This is the linear ordering in memory address."
+ },
+ {
+  "start": 3417.06,
+  "end": 3420.7,
+  "text": "This is the matrix that I'm trying to store."
+ },
+ {
+  "start": 3420.7,
+  "end": 3422.9,
+  "text": "Now, imagine that I have threads that"
+ },
+ {
+  "start": 3422.9,
+  "end": 3426.425,
+  "text": "are trying to read each column, each clock cycle."
+ },
+ {
+  "start": 3426.425,
+  "end": 3428.8,
+  "text": "So I read a column, I move to the right, I read a column,"
+ },
+ {
+  "start": 3428.8,
+  "end": 3429.84,
+  "text": "I move to the right."
+ },
+ {
+  "start": 3429.84,
+  "end": 3431.84,
+  "text": "If I'm doing that at the very first iteration,"
+ },
+ {
+  "start": 3431.84,
+  "end": 3435.42,
+  "text": "I hit this element, this element, this element, this element."
+ },
+ {
+  "start": 3435.42,
+  "end": 3439.5,
+  "text": "Notice that each one of these limit a different burst window."
+ },
+ {
+  "start": 3439.5,
+  "end": 3441.94,
+  "text": "And I've read the entire vector, so to speak,"
+ },
+ {
+  "start": 3441.94,
+  "end": 3444.54,
+  "text": "or the entire matrix, sorry, so to speak, even though all I"
+ },
+ {
+  "start": 3444.54,
+  "end": 3446.62,
+  "text": "wanted was a single column."
+ },
+ {
+  "start": 3446.62,
+  "end": 3449.68,
+  "text": "Now, imagine if I was reversed, if I was flipping this matrix,"
+ },
+ {
+  "start": 3449.68,
+  "end": 3452.08,
+  "text": "I could read the entire block."
+ },
+ {
+  "start": 3452.08,
+  "end": 3457.06,
+  "text": "Every thread would get its read in a single read of the memory."
+ },
+ {
+  "start": 3457.06,
+  "end": 3460.26,
+  "text": "So coalescing can give you significant improvements"
+ },
+ {
+  "start": 3460.26,
+  "end": 3464.442,
+  "text": "in reads from large, contiguous structures like matrices."
+ },
+ {
+  "start": 3464.442,
+  "end": 3465.9,
+  "text": "So this is one reason why you might"
+ },
+ {
+  "start": 3465.9,
+  "end": 3468.5,
+  "text": "want to think a little bit about row versus column"
+ },
+ {
+  "start": 3468.5,
+  "end": 3471.22,
+  "text": "versus other kinds of ordering."
+ },
+ {
+  "start": 3471.22,
+  "end": 3474.52,
+  "text": "The last one that I want to talk about--"
+ },
+ {
+  "start": 3474.52,
+  "end": 3477.86,
+  "text": "and this is the big one and maybe the most important idea,"
+ },
+ {
+  "start": 3477.86,
+  "end": 3481.04,
+  "text": "I've saved it for last-- is the idea of tiling."
+ },
+ {
+  "start": 3481.04,
+  "end": 3484.1,
+  "text": "And I think this one has probably the big impact"
+ },
+ {
+  "start": 3484.1,
+  "end": 3486.9,
+  "text": "on performance."
+ },
+ {
+  "start": 3486.9,
+  "end": 3489.22,
+  "text": "Tiling, I think, more than any other idea,"
+ },
+ {
+  "start": 3489.22,
+  "end": 3491.66,
+  "text": "is this idea of trying to do as much as you can"
+ },
+ {
+  "start": 3491.66,
+  "end": 3493.42,
+  "text": "with the memory hierarchy."
+ },
+ {
+  "start": 3493.42,
+  "end": 3496.37,
+  "text": "So what we want to do is, we want to group our memory"
+ },
+ {
+  "start": 3496.37,
+  "end": 3497.97,
+  "text": "accesses as much as possible."
+ },
+ {
+  "start": 3497.97,
+  "end": 3501.29,
+  "text": "And shared memory accesses should be done together,"
+ },
+ {
+  "start": 3501.29,
+  "end": 3503.35,
+  "text": "and they should be done on shared memory."
+ },
+ {
+  "start": 3503.35,
+  "end": 3506.17,
+  "text": "So the reason why it's called tiling"
+ },
+ {
+  "start": 3506.17,
+  "end": 3508.15,
+  "text": "is I'm going to cut up the things that I need."
+ },
+ {
+  "start": 3508.15,
+  "end": 3509.49,
+  "text": "I'm going to tile my space."
+ },
+ {
+  "start": 3509.49,
+  "end": 3512.71,
+  "text": "And each tile will be loaded into my shared memory."
+ },
+ {
+  "start": 3512.71,
+  "end": 3514.17,
+  "text": "And once that tile is loaded, I'm"
+ },
+ {
+  "start": 3514.17,
+  "end": 3515.97,
+  "text": "going to repeatedly read from that tile"
+ },
+ {
+  "start": 3515.97,
+  "end": 3517.45,
+  "text": "and do as much as I can."
+ },
+ {
+  "start": 3517.45,
+  "end": 3519.39,
+  "text": "So let's think about the matrix multiply case."
+ },
+ {
+  "start": 3519.39,
+  "end": 3522.41,
+  "text": "I want to multiply this matrix and this matrix."
+ },
+ {
+  "start": 3522.41,
+  "end": 3526.55,
+  "text": "And this matrix on the right bottom, this is my output."
+ },
+ {
+  "start": 3526.55,
+  "end": 3528.47,
+  "text": "This is where I'm writing my matrix out."
+ },
+ {
+  "start": 3528.47,
+  "end": 3531.85,
+  "text": "This is a pretty standard notation for this."
+ },
+ {
+  "start": 3531.85,
+  "end": 3534.25,
+  "text": "Now, if I want to do this, I'm going"
+ },
+ {
+  "start": 3534.25,
+  "end": 3536.73,
+  "text": "to be reading as I'm reading through the threads"
+ },
+ {
+  "start": 3536.73,
+  "end": 3538.05,
+  "text": "multiple-- sorry."
+ },
+ {
+  "start": 3538.05,
+  "end": 3539.89,
+  "text": "The same entry will be read multiple times."
+ },
+ {
+  "start": 3539.89,
+  "end": 3543.81,
+  "text": "And to be precise, each entry will be read n times in an N"
+ },
+ {
+  "start": 3543.81,
+  "end": 3547.01,
+  "text": "by N matrix multiply, naively."
+ },
+ {
+  "start": 3547.01,
+  "end": 3549.21,
+  "text": "So you might think, if I'm reading"
+ },
+ {
+  "start": 3549.21,
+  "end": 3551.97,
+  "text": "this entry, let's say, M0, multiple times, instead"
+ },
+ {
+  "start": 3551.97,
+  "end": 3554.51,
+  "text": "of hitting global memory each time,"
+ },
+ {
+  "start": 3554.51,
+  "end": 3558.49,
+  "text": "why can't I group all of those memory accesses together?"
+ },
+ {
+  "start": 3558.49,
+  "end": 3559.93,
+  "text": "And the nice thing about matrices"
+ },
+ {
+  "start": 3559.93,
+  "end": 3562.81,
+  "text": "is that there's a very natural grouping."
+ },
+ {
+  "start": 3562.81,
+  "end": 3567.33,
+  "text": "And this is to essentially cut the matrix up into submatrices"
+ },
+ {
+  "start": 3567.33,
+  "end": 3569.79,
+  "text": "and then load them and then operate upon them."
+ },
+ {
+  "start": 3569.79,
+  "end": 3572.19,
+  "text": "So here is a very simple algorithm."
+ },
+ {
+  "start": 3572.19,
+  "end": 3577.21,
+  "text": "I'm going to cut out my matrices into 2 by 2 submatrices."
+ },
+ {
+  "start": 3577.21,
+  "end": 3579.03,
+  "text": "And then I'm going to load different tiles."
+ },
+ {
+  "start": 3579.03,
+  "end": 3582.31,
+  "text": "So I'm going to first load the M 0,0 tile, the top left here."
+ },
+ {
+  "start": 3582.31,
+  "end": 3584.31,
+  "text": "I'm going to load the N 0,0 tile,"
+ },
+ {
+  "start": 3584.31,
+  "end": 3586.632,
+  "text": "the top left of my top matrix."
+ },
+ {
+  "start": 3586.632,
+  "end": 3588.59,
+  "text": "And I'm going to load those into shared memory."
+ },
+ {
+  "start": 3588.59,
+  "end": 3590.81,
+  "text": "So I'm going to pay the cost of transferring those"
+ },
+ {
+  "start": 3590.81,
+  "end": 3592.89,
+  "text": "slowly from global memory once."
+ },
+ {
+  "start": 3592.89,
+  "end": 3594.37,
+  "text": "But once they're in shared memory,"
+ },
+ {
+  "start": 3594.37,
+  "end": 3597.97,
+  "text": "I can read and write very fast with those tiles."
+ },
+ {
+  "start": 3597.97,
+  "end": 3600.83,
+  "text": "This output tile will also be, for now, in shared memory."
+ },
+ {
+  "start": 3600.83,
+  "end": 3603.95,
+  "text": "And I will operate on these submatrices entirely."
+ },
+ {
+  "start": 3603.95,
+  "end": 3606.01,
+  "text": "So I'll multiply these two submatrices."
+ },
+ {
+  "start": 3606.01,
+  "end": 3609.17,
+  "text": "And I'll put the partial sum into my output submatrix."
+ },
+ {
+  "start": 3609.17,
+  "end": 3611.25,
+  "text": "So that allows me to do a bunch of reads"
+ },
+ {
+  "start": 3611.25,
+  "end": 3614.3,
+  "text": "and writes all in the shared fast memory."
+ },
+ {
+  "start": 3614.3,
+  "end": 3617.6,
+  "text": "And then I can write it back out when I'm done."
+ },
+ {
+  "start": 3617.6,
+  "end": 3619.16,
+  "text": "What does the math look like?"
+ },
+ {
+  "start": 3619.16,
+  "end": 3621.96,
+  "text": "Well, in the nontiled case, I already told you,"
+ },
+ {
+  "start": 3621.96,
+  "end": 3623.92,
+  "text": "each element of my input is going"
+ },
+ {
+  "start": 3623.92,
+  "end": 3627.04,
+  "text": "to have to be read n times when I do this big N by N matrix"
+ },
+ {
+  "start": 3627.04,
+  "end": 3628.76,
+  "text": "multiply."
+ },
+ {
+  "start": 3628.76,
+  "end": 3631.76,
+  "text": "If I tile them with a tile size of T,"
+ },
+ {
+  "start": 3631.76,
+  "end": 3634.16,
+  "text": "then each input is going to be read N over T times"
+ },
+ {
+  "start": 3634.16,
+  "end": 3637.64,
+  "text": "from global memory and then T times within each tile."
+ },
+ {
+  "start": 3637.64,
+  "end": 3639.46,
+  "text": "And this makes sense, the extreme."
+ },
+ {
+  "start": 3639.46,
+  "end": 3641.44,
+  "text": "If T is equal to N, I read it once"
+ },
+ {
+  "start": 3641.44,
+  "end": 3645.14,
+  "text": "from global memory and access it N times in shared memory."
+ },
+ {
+  "start": 3645.14,
+  "end": 3648.4,
+  "text": "And this is great because the T times reduction in global memory"
+ },
+ {
+  "start": 3648.4,
+  "end": 3648.9,
+  "text": "access."
+ },
+ {
+  "start": 3648.9,
+  "end": 3651.023,
+  "text": "If you have big, big shared memory tiles,"
+ },
+ {
+  "start": 3651.023,
+  "end": 3652.44,
+  "text": "it means that you can dramatically"
+ },
+ {
+  "start": 3652.44,
+  "end": 3658.16,
+  "text": "reduce your global memory access on something like a matmul."
+ },
+ {
+  "start": 3658.16,
+  "end": 3659.68,
+  "text": "Cool."
+ },
+ {
+  "start": 3659.68,
+  "end": 3660.18,
+  "text": "OK."
+ },
+ {
+  "start": 3660.18,
+  "end": 3660.72,
+  "text": "Yes."
+ },
+ {
+  "start": 3660.72,
+  "end": 3663.28,
+  "text": "Are you doing this because you can't put that entire block?"
+ },
+ {
+  "start": 3663.28,
+  "end": 3664.64,
+  "text": "Yes, yes."
+ },
+ {
+  "start": 3664.64,
+  "end": 3666.04,
+  "text": "That's right."
+ },
+ {
+  "start": 3666.04,
+  "end": 3670.07,
+  "text": "But if you were building one of these very fancy"
+ },
+ {
+  "start": 3670.07,
+  "end": 3672.41,
+  "text": "alternative accelerators like rock or something,"
+ },
+ {
+  "start": 3672.41,
+  "end": 3674.1,
+  "text": "which is all SRAM, then yeah, you just"
+ },
+ {
+  "start": 3674.1,
+  "end": 3675.35,
+  "text": "put the whole matrix in there."
+ },
+ {
+  "start": 3675.35,
+  "end": 3677.97,
+  "text": "And you're very fast for the whole thing but very expensive,"
+ },
+ {
+  "start": 3677.97,
+  "end": 3678.95,
+  "text": "very, very expensive."
+ },
+ {
+  "start": 3678.95,
+  "end": 3679.47,
+  "text": "Yeah."
+ },
+ {
+  "start": 3679.47,
+  "end": 3682.87,
+  "text": "And then this also happens at the GPU level"
+ },
+ {
+  "start": 3682.87,
+  "end": 3686.302,
+  "text": "too because there's contact charging where I can't even"
+ },
+ {
+  "start": 3686.302,
+  "end": 3688.07,
+  "text": "fit a [INAUDIBLE] into one."
+ },
+ {
+  "start": 3688.07,
+  "end": 3692.31,
+  "text": "And then you just keep adding that cell again and then again."
+ },
+ {
+  "start": 3692.31,
+  "end": 3693.25,
+  "text": "Is that how it works?"
+ },
+ {
+  "start": 3693.25,
+  "end": 3696.59,
+  "text": "You mean, like, are you asking whether this kind of splitting"
+ },
+ {
+  "start": 3696.59,
+  "end": 3698.63,
+  "text": "happens at the accelerator level?"
+ },
+ {
+  "start": 3698.63,
+  "end": 3701.39,
+  "text": "[INAUDIBLE] tile across the GPUs."
+ },
+ {
+  "start": 3701.39,
+  "end": 3702.948,
+  "text": "This [INAUDIBLE] will be one tile."
+ },
+ {
+  "start": 3702.948,
+  "end": 3703.49,
+  "text": "That's right."
+ },
+ {
+  "start": 3703.49,
+  "end": 3704.11,
+  "text": "Yeah."
+ },
+ {
+  "start": 3704.11,
+  "end": 3705.93,
+  "text": "So data parallel, you can think of as this."
+ },
+ {
+  "start": 3705.93,
+  "end": 3708.798,
+  "text": "If I have data on this axis and weights"
+ },
+ {
+  "start": 3708.798,
+  "end": 3710.59,
+  "text": "here, if I cut it on one of the axes that's"
+ },
+ {
+  "start": 3710.59,
+  "end": 3712.47,
+  "text": "kind of data parallel, tensor parallel"
+ },
+ {
+  "start": 3712.47,
+  "end": 3714.13,
+  "text": "could be another kind of parallelism."
+ },
+ {
+  "start": 3714.13,
+  "end": 3715.79,
+  "text": "All these parallelism look a little bit"
+ },
+ {
+  "start": 3715.79,
+  "end": 3717.05,
+  "text": "like tiling in some ways."
+ },
+ {
+  "start": 3717.05,
+  "end": 3718.03,
+  "text": "Yeah."
+ },
+ {
+  "start": 3718.03,
+  "end": 3718.71,
+  "text": "Cool."
+ },
+ {
+  "start": 3718.71,
+  "end": 3719.79,
+  "text": "OK."
+ },
+ {
+  "start": 3719.79,
+  "end": 3721.47,
+  "text": "Oh, yeah."
+ },
+ {
+  "start": 3721.47,
+  "end": 3723.83,
+  "text": "So for the previous one, can I assume"
+ },
+ {
+  "start": 3723.83,
+  "end": 3727.75,
+  "text": "that a library like PyTorch will just do that automatically?"
+ },
+ {
+  "start": 3727.75,
+  "end": 3729.07,
+  "text": "Yes, yes."
+ },
+ {
+  "start": 3729.07,
+  "end": 3731.35,
+  "text": "So like any matmul kernel that you"
+ },
+ {
+  "start": 3731.35,
+  "end": 3732.89,
+  "text": "call will do tiling underneath."
+ },
+ {
+  "start": 3732.89,
+  "end": 3734.19,
+  "text": "Yeah, that's right."
+ },
+ {
+  "start": 3734.19,
+  "end": 3735.91,
+  "text": "If you're doing some of exotic operation,"
+ },
+ {
+  "start": 3735.91,
+  "end": 3738.49,
+  "text": "you might want to think about tiling like, things happening."
+ },
+ {
+  "start": 3738.49,
+  "end": 3743.91,
+  "text": "You want to be able to locally reuse your reads."
+ },
+ {
+  "start": 3743.91,
+  "end": 3747.93,
+  "text": "But I will say even PyTorch or something is not perfect."
+ },
+ {
+  "start": 3747.93,
+  "end": 3750.95,
+  "text": "And so we will talk about some of the imperfections that"
+ },
+ {
+  "start": 3750.95,
+  "end": 3752.35,
+  "text": "will happen."
+ },
+ {
+  "start": 3752.35,
+  "end": 3755.01,
+  "text": "So tiling is very, very powerful as an idea,"
+ },
+ {
+  "start": 3755.01,
+  "end": 3756.29,
+  "text": "but it's also complex."
+ },
+ {
+  "start": 3756.29,
+  "end": 3758.71,
+  "text": "You can actually end up with some really subtle things"
+ },
+ {
+  "start": 3758.71,
+  "end": 3760.17,
+  "text": "happening with tiles."
+ },
+ {
+  "start": 3760.17,
+  "end": 3763.27,
+  "text": "So imagine I have a tile size of 128, 128."
+ },
+ {
+  "start": 3763.27,
+  "end": 3766.69,
+  "text": "If my matrices are 256 by 256, life is good."
+ },
+ {
+  "start": 3766.69,
+  "end": 3769.55,
+  "text": "I've got four tiles, perfectly cut."
+ },
+ {
+  "start": 3769.55,
+  "end": 3772.73,
+  "text": "Now, imagine I increase my coordinate size by one."
+ },
+ {
+  "start": 3772.73,
+  "end": 3777.23,
+  "text": "Now, I've generated two very skinny tiles with basically"
+ },
+ {
+  "start": 3777.23,
+  "end": 3778.37,
+  "text": "nothing inside of them."
+ },
+ {
+  "start": 3778.37,
+  "end": 3784.63,
+  "text": "So now you realize, actually, this tile sizing thing"
+ },
+ {
+  "start": 3784.63,
+  "end": 3786.02,
+  "text": "is actually pretty complex."
+ },
+ {
+  "start": 3786.02,
+  "end": 3788.02,
+  "text": "Depending on my matrices, I might"
+ },
+ {
+  "start": 3788.02,
+  "end": 3791.74,
+  "text": "need to adjust my tile sizes to somehow trade off"
+ },
+ {
+  "start": 3791.74,
+  "end": 3795.06,
+  "text": "my memory bandwidth versus this gigantic empty space"
+ },
+ {
+  "start": 3795.06,
+  "end": 3796.06,
+  "text": "where I'm doing nothing."
+ },
+ {
+  "start": 3798.98,
+  "end": 3802.32,
+  "text": "The tile sizes is actually a thing that you optimize."
+ },
+ {
+  "start": 3802.32,
+  "end": 3804.46,
+  "text": "So coalesced memory accesses, the size"
+ },
+ {
+  "start": 3804.46,
+  "end": 3806.36,
+  "text": "of your shared memory in your accelerator,"
+ },
+ {
+  "start": 3806.36,
+  "end": 3807.94,
+  "text": "and the sizes of your matrices all"
+ },
+ {
+  "start": 3807.94,
+  "end": 3811.34,
+  "text": "affect which tiles are optimal."
+ },
+ {
+  "start": 3811.34,
+  "end": 3815.3,
+  "text": "And if you know about different options in PyTorch,"
+ },
+ {
+  "start": 3815.3,
+  "end": 3817.44,
+  "text": "there's a compiler option called max-autotune."
+ },
+ {
+  "start": 3817.44,
+  "end": 3819.7,
+  "text": "I don't how many of you have used this or about this."
+ },
+ {
+  "start": 3819.7,
+  "end": 3820.74,
+  "text": "You turn on that flag."
+ },
+ {
+  "start": 3820.74,
+  "end": 3822.5,
+  "text": "For the next 15 minutes, PyTorch is"
+ },
+ {
+  "start": 3822.5,
+  "end": 3826.14,
+  "text": "going to run an endless series of benchmarking tests."
+ },
+ {
+  "start": 3826.14,
+  "end": 3828.22,
+  "text": "And you'll realize, actually, what it's doing is,"
+ },
+ {
+  "start": 3828.22,
+  "end": 3830.18,
+  "text": "it's trying all sorts of different tile sizes"
+ },
+ {
+  "start": 3830.18,
+  "end": 3831.888,
+  "text": "on your matrices and trying to figure out"
+ },
+ {
+  "start": 3831.888,
+  "end": 3833.14,
+  "text": "which one is actually faster."
+ },
+ {
+  "start": 3833.14,
+  "end": 3835.82,
+  "text": "And you'll find that you'll get nontrivial benefits"
+ },
+ {
+  "start": 3835.82,
+  "end": 3839.78,
+  "text": "from actually optimizing these things."
+ },
+ {
+  "start": 3839.78,
+  "end": 3844.82,
+  "text": "The other thing that you'll find related to coalescing is,"
+ },
+ {
+  "start": 3844.82,
+  "end": 3848.02,
+  "text": "or if your matrices are the wrong size, what you can do"
+ },
+ {
+  "start": 3848.02,
+  "end": 3850.98,
+  "text": "is that your attempt to read a tile might actually"
+ },
+ {
+  "start": 3850.98,
+  "end": 3852.6,
+  "text": "trigger a lot of memory reads."
+ },
+ {
+  "start": 3852.6,
+  "end": 3857.5,
+  "text": "So imagine I have this nice world where I have,N let's say,"
+ },
+ {
+  "start": 3857.5,
+  "end": 3858.92,
+  "text": "this blue one is the row."
+ },
+ {
+  "start": 3858.92,
+  "end": 3861.04,
+  "text": "And I want to read this nice tile."
+ },
+ {
+  "start": 3861.04,
+  "end": 3863.56,
+  "text": "And my burst sections are the width of the tile."
+ },
+ {
+  "start": 3863.56,
+  "end": 3866.66,
+  "text": "In this case, if I do four reads, I'm good to go."
+ },
+ {
+  "start": 3866.66,
+  "end": 3869.94,
+  "text": "Because of the burst sections, I read this entire submatrix,"
+ },
+ {
+  "start": 3869.94,
+  "end": 3872.02,
+  "text": "so good memory reads from coalescing."
+ },
+ {
+  "start": 3872.02,
+  "end": 3875.32,
+  "text": "Now, imagine I shift the matrix size by one."
+ },
+ {
+  "start": 3875.32,
+  "end": 3877.4,
+  "text": "Now I've bumped this first row over."
+ },
+ {
+  "start": 3877.4,
+  "end": 3880.02,
+  "text": "So this blue box now lives over here."
+ },
+ {
+  "start": 3880.02,
+  "end": 3882.18,
+  "text": "And there's no way for me to coalesce my reads"
+ },
+ {
+  "start": 3882.18,
+  "end": 3885.58,
+  "text": "to read a single tile in one go because now all these things are"
+ },
+ {
+  "start": 3885.58,
+  "end": 3886.8,
+  "text": "ragged and misaligned."
+ },
+ {
+  "start": 3886.8,
+  "end": 3889.14,
+  "text": "So I need do at least two tiles worth of reads"
+ },
+ {
+  "start": 3889.14,
+  "end": 3890.84,
+  "text": "to read out this one tile."
+ },
+ {
+  "start": 3890.84,
+  "end": 3894.74,
+  "text": "So there's actually a lot of complexities involved"
+ },
+ {
+  "start": 3894.74,
+  "end": 3896.582,
+  "text": "in optimizing tile reads once you"
+ },
+ {
+  "start": 3896.582,
+  "end": 3899.04,
+  "text": "start thinking about coalescing and all these other things."
+ },
+ {
+  "start": 3899.04,
+  "end": 3901.5,
+  "text": "And so in this case, what you have to do is padding"
+ },
+ {
+  "start": 3901.5,
+  "end": 3903.37,
+  "text": "in order to line up, essentially,"
+ },
+ {
+  "start": 3903.37,
+  "end": 3907.53,
+  "text": "the boundaries of the burst sections with the tile"
+ },
+ {
+  "start": 3907.53,
+  "end": 3911.23,
+  "text": "sizes that you have."
+ },
+ {
+  "start": 3911.23,
+  "end": 3913.91,
+  "text": "And this is why you end up getting stuff like this,"
+ },
+ {
+  "start": 3913.91,
+  "end": 3915.97,
+  "text": "which seems very mysterious."
+ },
+ {
+  "start": 3915.97,
+  "end": 3918.69,
+  "text": "I think this is one of my favorite weird ones."
+ },
+ {
+  "start": 3918.69,
+  "end": 3921.39,
+  "text": "Andrej Karpathy, when he was doing nanoGPT speedruns,"
+ },
+ {
+  "start": 3921.39,
+  "end": 3927.61,
+  "text": "said well, when I increase my vocab size to 50,257 to 50,304,"
+ },
+ {
+  "start": 3927.61,
+  "end": 3931.25,
+  "text": "I got a 25% speedup."
+ },
+ {
+  "start": 3931.25,
+  "end": 3934.29,
+  "text": "And it's kind of weird to have to pad in order"
+ },
+ {
+  "start": 3934.29,
+  "end": 3935.59,
+  "text": "to get a speedup."
+ },
+ {
+  "start": 3935.59,
+  "end": 3938.33,
+  "text": "But maybe it makes sense once you realize things like this."
+ },
+ {
+  "start": 3938.33,
+  "end": 3941.69,
+  "text": "Padding can start to shift the rows and columns so that you"
+ },
+ {
+  "start": 3941.69,
+  "end": 3944.69,
+  "text": "actually get very efficient reads, whereas at other times,"
+ },
+ {
+  "start": 3944.69,
+  "end": 3945.65,
+  "text": "you do not."
+ },
+ {
+  "start": 3945.65,
+  "end": 3946.65,
+  "text": "Yes, go ahead."
+ },
+ {
+  "start": 3946.65,
+  "end": 3952.05,
+  "text": "Is there a usual tile size that you"
+ },
+ {
+  "start": 3952.05,
+  "end": 3953.35,
+  "text": "should be taking into account?"
+ },
+ {
+  "start": 3953.35,
+  "end": 3955.35,
+  "text": "You don't want to think about tile sizes per se,"
+ },
+ {
+  "start": 3955.35,
+  "end": 3957.2,
+  "text": "because tiles, you should normally"
+ },
+ {
+  "start": 3957.2,
+  "end": 3959.45,
+  "text": "think of as a lower level systems thing, unless you're"
+ },
+ {
+  "start": 3959.45,
+  "end": 3960.695,
+  "text": "writing your own kernels."
+ },
+ {
+  "start": 3960.695,
+  "end": 3963.07,
+  "text": "But you do want to think about the size of your matrices."
+ },
+ {
+  "start": 3963.07,
+  "end": 3965.09,
+  "text": "But you want your size of your matrices"
+ },
+ {
+  "start": 3965.09,
+  "end": 3967.17,
+  "text": "to be divisible by the tile size."
+ },
+ {
+  "start": 3967.17,
+  "end": 3967.67,
+  "text": "Right."
+ },
+ {
+  "start": 3967.67,
+  "end": 3969.905,
+  "text": "So you want it to be--I'll talk about that in a moment,"
+ },
+ {
+  "start": 3969.905,
+  "end": 3975.69,
+  "text": "but right-- generally, powers of 2, ideally divisible also by 32."
+ },
+ {
+  "start": 3975.69,
+  "end": 3976.55,
+  "text": "OK."
+ },
+ {
+  "start": 3976.55,
+  "end": 3980.108,
+  "text": "So now we can talk about this matrix mystery over here."
+ },
+ {
+  "start": 3980.108,
+  "end": 3981.65,
+  "text": "We have essentially all of the pieces"
+ },
+ {
+  "start": 3981.65,
+  "end": 3982.983,
+  "text": "that we need to understand this."
+ },
+ {
+  "start": 3982.983,
+  "end": 3985.69,
+  "text": "So we'll walk through this one by one."
+ },
+ {
+  "start": 3985.69,
+  "end": 3987.59,
+  "text": "We've already talked about compute intensity,"
+ },
+ {
+  "start": 3987.59,
+  "end": 3988.43,
+  "text": "the roofline plot."
+ },
+ {
+  "start": 3988.43,
+  "end": 3991.53,
+  "text": "You need to have enough work for each memory read"
+ },
+ {
+  "start": 3991.53,
+  "end": 3993.95,
+  "text": "in order for you to be able to saturate your compute unit."
+ },
+ {
+  "start": 3993.95,
+  "end": 3996.35,
+  "text": "That's what's driving this diagonal upward trend."
+ },
+ {
+  "start": 3996.35,
+  "end": 3997.61,
+  "text": "So that one is done."
+ },
+ {
+  "start": 3997.61,
+  "end": 3999.61,
+  "text": "Now, let's talk about some of the other ones."
+ },
+ {
+  "start": 3999.61,
+  "end": 4000.83,
+  "text": "First one's tiling."
+ },
+ {
+  "start": 4000.83,
+  "end": 4003.53,
+  "text": "If we look at each of these lines"
+ },
+ {
+  "start": 4003.53,
+  "end": 4006.25,
+  "text": "and we color them based on, essentially,"
+ },
+ {
+  "start": 4006.25,
+  "end": 4009.59,
+  "text": "the divisibility of the matrices,"
+ },
+ {
+  "start": 4009.59,
+  "end": 4013.37,
+  "text": "you will find that the blue ones are essentially only"
+ },
+ {
+  "start": 4013.37,
+  "end": 4015.57,
+  "text": "divisible by 1."
+ },
+ {
+  "start": 4015.57,
+  "end": 4018.39,
+  "text": "They're not even even."
+ },
+ {
+  "start": 4018.39,
+  "end": 4021.28,
+  "text": "Orange ones are divisible by 2."
+ },
+ {
+  "start": 4021.28,
+  "end": 4026.6,
+  "text": "Green is divisible by 8, red is 16, and then purple is 32."
+ },
+ {
+  "start": 4026.6,
+  "end": 4031.36,
+  "text": "And you see that the ones that are not divisible by 1 or just 1"
+ },
+ {
+  "start": 4031.36,
+  "end": 4034.56,
+  "text": "or just 2 actually have very bad throughput."
+ },
+ {
+  "start": 4034.56,
+  "end": 4037.42,
+  "text": "But once you start to get to higher multiples,"
+ },
+ {
+  "start": 4037.42,
+  "end": 4040.48,
+  "text": "you start to essentially get no diminishing--"
+ },
+ {
+  "start": 4040.48,
+  "end": 4041.96,
+  "text": "sorry, no penalties."
+ },
+ {
+  "start": 4041.96,
+  "end": 4044.56,
+  "text": "16 or 32 perform equally well."
+ },
+ {
+  "start": 4044.56,
+  "end": 4047.28,
+  "text": "And it's not because of somehow powers of 2"
+ },
+ {
+  "start": 4047.28,
+  "end": 4048.78,
+  "text": "are magic or something like that."
+ },
+ {
+  "start": 4048.78,
+  "end": 4051.2,
+  "text": "It's because 16 and 32 are sufficiently"
+ },
+ {
+  "start": 4051.2,
+  "end": 4053.9,
+  "text": "large that it has the right burst window property."
+ },
+ {
+  "start": 4053.9,
+  "end": 4055.9,
+  "text": "It fits the whole burst window in."
+ },
+ {
+  "start": 4055.9,
+  "end": 4058.62,
+  "text": "And so you can get coalesced, reads into your entire tile."
+ },
+ {
+  "start": 4058.62,
+  "end": 4062.76,
+  "text": "And it has a major impact on alignment."
+ },
+ {
+  "start": 4062.76,
+  "end": 4065.26,
+  "text": "Now, if we look at what's remaining, if we look"
+ },
+ {
+  "start": 4065.26,
+  "end": 4066.76,
+  "text": "at this orange line, we'll sometimes"
+ },
+ {
+  "start": 4066.76,
+  "end": 4069.92,
+  "text": "see this weird periodic behavior where, suddenly, performance"
+ },
+ {
+  "start": 4069.92,
+  "end": 4070.92,
+  "text": "will drop."
+ },
+ {
+  "start": 4070.92,
+  "end": 4074.12,
+  "text": "And this is very weird because I'm just multiplying matrices."
+ },
+ {
+  "start": 4074.12,
+  "end": 4075.92,
+  "text": "Why does adding a single extra dimension"
+ },
+ {
+  "start": 4075.92,
+  "end": 4078.91,
+  "text": "suddenly kill my throughput?"
+ },
+ {
+  "start": 4078.91,
+  "end": 4081.35,
+  "text": "And this is, I think, using all of the things"
+ },
+ {
+  "start": 4081.35,
+  "end": 4083.89,
+  "text": "that we learned is kind of fun to get to this end."
+ },
+ {
+  "start": 4083.89,
+  "end": 4086.21,
+  "text": "Percy calls this GPU trivia."
+ },
+ {
+  "start": 4086.21,
+  "end": 4088.79,
+  "text": "So I think he hates this one, but I love this one."
+ },
+ {
+  "start": 4088.79,
+  "end": 4090.89,
+  "text": "So why is it that going from here to here,"
+ },
+ {
+  "start": 4090.89,
+  "end": 4092.67,
+  "text": "I get such a big drop in throughput?"
+ },
+ {
+  "start": 4092.67,
+  "end": 4097.99,
+  "text": "Well, it happens between 1792 to 1793."
+ },
+ {
+  "start": 4097.99,
+  "end": 4099.13,
+  "text": "And why does this happen?"
+ },
+ {
+  "start": 4099.13,
+  "end": 4103.09,
+  "text": "Well, I'm using a tile size of 256 by 128."
+ },
+ {
+  "start": 4103.09,
+  "end": 4105.29,
+  "text": "So that means-- how many tiles are there?"
+ },
+ {
+  "start": 4105.29,
+  "end": 4109.13,
+  "text": "Well, there's 98 at 1792."
+ },
+ {
+  "start": 4109.13,
+  "end": 4112.609,
+  "text": "But once I bumped myself up to 1793, well,"
+ },
+ {
+  "start": 4112.609,
+  "end": 4115.13,
+  "text": "actually I've increased both tile sizes by one."
+ },
+ {
+  "start": 4115.13,
+  "end": 4117.609,
+  "text": "So I now have 120 tiles."
+ },
+ {
+  "start": 4117.609,
+  "end": 4121.75,
+  "text": "So I have 98 tiles before, and I have 120 tiles now."
+ },
+ {
+  "start": 4121.75,
+  "end": 4123.83,
+  "text": "That's bad, but it's not this bad."
+ },
+ {
+  "start": 4123.83,
+  "end": 4125.27,
+  "text": "This drop is gigantic."
+ },
+ {
+  "start": 4125.27,
+  "end": 4126.79,
+  "text": "Well, it turns out the reason why"
+ },
+ {
+  "start": 4126.79,
+  "end": 4131.75,
+  "text": "it's so dramatic is because the A100 has 108 SMs."
+ },
+ {
+  "start": 4131.75,
+  "end": 4135.13,
+  "text": "And 98 tiles fits in 108 SMs."
+ },
+ {
+  "start": 4135.13,
+  "end": 4138.39,
+  "text": "But 120 tiles does not fit in 108 SMs."
+ },
+ {
+  "start": 4138.39,
+  "end": 4141.79,
+  "text": "And so you finish doing 108 SMs and you're, well, I've"
+ },
+ {
+  "start": 4141.79,
+  "end": 4143.21,
+  "text": "got 12 more of these guys."
+ },
+ {
+  "start": 4143.21,
+  "end": 4144.83,
+  "text": "I got to, I guess, process them."
+ },
+ {
+  "start": 4144.83,
+  "end": 4146.93,
+  "text": "And most of your GPUs sitting idle."
+ },
+ {
+  "start": 4146.93,
+  "end": 4150.43,
+  "text": "So you can end up with these very weird effects once again,"
+ },
+ {
+  "start": 4150.43,
+  "end": 4153.67,
+  "text": "where by bumping up your tile size by one, suddenly,"
+ },
+ {
+  "start": 4153.67,
+  "end": 4155.63,
+  "text": "you need to wait a whole other cycle for you"
+ },
+ {
+  "start": 4155.63,
+  "end": 4157.25,
+  "text": "to process a bunch of tiles."
+ },
+ {
+  "start": 4157.25,
+  "end": 4160.569,
+  "text": "And that's called wave quantization."
+ },
+ {
+  "start": 4160.569,
+  "end": 4163.149,
+  "text": "So that was all for part two."
+ },
+ {
+  "start": 4163.149,
+  "end": 4166.75,
+  "text": "How do we make machine learning workloads go fast on a GPU?"
+ },
+ {
+  "start": 4166.75,
+  "end": 4168.91,
+  "text": "Well, a lot of the story is really just"
+ },
+ {
+  "start": 4168.91,
+  "end": 4170.609,
+  "text": "about memory, memory, memory."
+ },
+ {
+  "start": 4170.609,
+  "end": 4174.29,
+  "text": "So how do we reduce the amount of memory access we have to do?"
+ },
+ {
+  "start": 4174.29,
+  "end": 4177.05,
+  "text": "Well, let's coalesce our memory reads together."
+ },
+ {
+  "start": 4177.05,
+  "end": 4179.069,
+  "text": "Let's fuse our operations together"
+ },
+ {
+  "start": 4179.069,
+  "end": 4180.868,
+  "text": "so we don't have to read as much."
+ },
+ {
+  "start": 4180.868,
+  "end": 4182.91,
+  "text": "And for the things that we have to read no matter"
+ },
+ {
+  "start": 4182.91,
+  "end": 4185.569,
+  "text": "what, well, let's reuse the memory,"
+ },
+ {
+  "start": 4185.569,
+  "end": 4188.67,
+  "text": "so move things to shared memory and reuse it"
+ },
+ {
+  "start": 4188.67,
+  "end": 4190.51,
+  "text": "as much as possible, which is tiling."
+ },
+ {
+  "start": 4190.51,
+  "end": 4193.939,
+  "text": "And then finally, maybe you can trade other resources"
+ },
+ {
+  "start": 4193.939,
+  "end": 4195.73,
+  "text": "that you have for memory."
+ },
+ {
+  "start": 4195.73,
+  "end": 4197.48,
+  "text": "And that's quantization and recomputation."
+ },
+ {
+  "start": 4197.48,
+  "end": 4200.58,
+  "text": "So all these ideas very much relate"
+ },
+ {
+  "start": 4200.58,
+  "end": 4203.038,
+  "text": "to this idea of memory is our bottleneck,"
+ },
+ {
+  "start": 4203.038,
+  "end": 4204.08,
+  "text": "how do we deal with that."
+ },
+ {
+  "start": 4204.08,
+  "end": 4205.4,
+  "text": "Cool."
+ },
+ {
+  "start": 4205.4,
+  "end": 4209.28,
+  "text": "Any questions for the last thing?"
+ },
+ {
+  "start": 4209.28,
+  "end": 4209.78,
+  "text": "Yeah."
+ },
+ {
+  "start": 4209.78,
+  "end": 4213.62,
+  "text": "I think we just bump up SRAM so to get rid of DRAM."
+ },
+ {
+  "start": 4213.62,
+  "end": 4215.393,
+  "text": "Very expensive."
+ },
+ {
+  "start": 4215.393,
+  "end": 4216.56,
+  "text": "I mean, there's two reasons."
+ },
+ {
+  "start": 4216.56,
+  "end": 4219.703,
+  "text": "One is it's just expensive to build SRAM,"
+ },
+ {
+  "start": 4219.703,
+  "end": 4222.12,
+  "text": "also very difficult because it has to be physically close."
+ },
+ {
+  "start": 4222.12,
+  "end": 4223.96,
+  "text": "Signal propagation is hard."
+ },
+ {
+  "start": 4223.96,
+  "end": 4226.62,
+  "text": "And I think a third reason is that SRAM and DRAM are just"
+ },
+ {
+  "start": 4226.62,
+  "end": 4229.26,
+  "text": "different storage mechanisms."
+ },
+ {
+  "start": 4229.26,
+  "end": 4232.82,
+  "text": "SRAM needs to be powered the whole time to hold value, very"
+ },
+ {
+  "start": 4232.82,
+  "end": 4233.9,
+  "text": "energy hungry."
+ },
+ {
+  "start": 4233.9,
+  "end": 4236.56,
+  "text": "And so if you're thinking about total cost of ownership,"
+ },
+ {
+  "start": 4236.56,
+  "end": 4239.56,
+  "text": "energy consumption, maybe you don't want a giant SRAM chip."
+ },
+ {
+  "start": 4239.56,
+  "end": 4242.46,
+  "text": "You really want to be using it where you need it."
+ },
+ {
+  "start": 4242.46,
+  "end": 4244.74,
+  "text": "Yes."
+ },
+ {
+  "start": 4244.74,
+  "end": 4249.88,
+  "text": "Those things scale up past 32, or if you like,"
+ },
+ {
+  "start": 4249.88,
+  "end": 4251.96,
+  "text": "operate in chunks of 64."
+ },
+ {
+  "start": 4251.96,
+  "end": 4253.8,
+  "text": "You mean like, does it help if I go higher?"
+ },
+ {
+  "start": 4253.8,
+  "end": 4254.56,
+  "text": "Yeah. No."
+ },
+ {
+  "start": 4254.56,
+  "end": 4258.392,
+  "text": "Because I think it's kind of as long as it divides by your burst"
+ },
+ {
+  "start": 4258.392,
+  "end": 4259.6,
+  "text": "size, then you're good to go."
+ },
+ {
+  "start": 4259.6,
+  "end": 4261.05,
+  "text": "It's a divisor property."
+ },
+ {
+  "start": 4261.05,
+  "end": 4263.3,
+  "text": "There are other phenomena where you might get benefits"
+ },
+ {
+  "start": 4263.3,
+  "end": 4267.42,
+  "text": "from larger divisors but not here."
+ },
+ {
+  "start": 4267.42,
+  "end": 4268.46,
+  "text": "Yes."
+ },
+ {
+  "start": 4268.46,
+  "end": 4271.02,
+  "text": "Why 108?"
+ },
+ {
+  "start": 4271.02,
+  "end": 4272.28,
+  "text": "That's just the number of SMs."
+ },
+ {
+  "start": 4272.28,
+  "end": 4273.52,
+  "text": "You will have to ask Jensen for that."
+ },
+ {
+  "start": 4273.52,
+  "end": 4274.853,
+  "text": "I do not have an answer for you."
+ },
+ {
+  "start": 4274.853,
+  "end": 4275.66,
+  "text": "Yes."
+ },
+ {
+  "start": 4275.66,
+  "end": 4282.62,
+  "text": "So going back to the hardware side, sorry, not this part."
+ },
+ {
+  "start": 4282.62,
+  "end": 4284.64,
+  "text": "It just occurred in my mind."
+ },
+ {
+  "start": 4284.64,
+  "end": 4291.68,
+  "text": "Have you studied GPU versus Cerebras' wafer-scale engine?"
+ },
+ {
+  "start": 4291.68,
+  "end": 4292.18,
+  "text": "Yeah."
+ },
+ {
+  "start": 4292.18,
+  "end": 4294.22,
+  "text": "I mean, I think sitting over there"
+ },
+ {
+  "start": 4294.22,
+  "end": 4296.72,
+  "text": "knows much more about wafer scale stuff than I do."
+ },
+ {
+  "start": 4296.72,
+  "end": 4299.32,
+  "text": "We were talking about, after last lecture,"
+ },
+ {
+  "start": 4299.32,
+  "end": 4300.695,
+  "text": "how difficult the compilation was"
+ },
+ {
+  "start": 4300.695,
+  "end": 4302.653,
+  "text": "because if you have something wafer scale, then"
+ },
+ {
+  "start": 4302.653,
+  "end": 4304.82,
+  "text": "you have wave interference effects and all sorts"
+ },
+ {
+  "start": 4304.82,
+  "end": 4306.17,
+  "text": "of horrible things that happen."
+ },
+ {
+  "start": 4306.17,
+  "end": 4307.92,
+  "text": "That's a world that I'm not familiar with."
+ },
+ {
+  "start": 4307.92,
+  "end": 4310.93,
+  "text": "But I think is much more complicated than what we have here."
+ },
+ {
+  "start": 4310.93,
+  "end": 4311.43,
+  "text": "OK."
+ },
+ {
+  "start": 4311.43,
+  "end": 4311.87,
+  "text": "Cool."
+ },
+ {
+  "start": 4311.87,
+  "end": 4312.37,
+  "text": "All right."
+ },
+ {
+  "start": 4312.37,
+  "end": 4314.45,
+  "text": "So now I think we can talk about,"
+ },
+ {
+  "start": 4314.45,
+  "end": 4316.89,
+  "text": "in some sense, the finale, which is, we've learned"
+ },
+ {
+  "start": 4316.89,
+  "end": 4318.27,
+  "text": "a bunch of things about GPUs."
+ },
+ {
+  "start": 4318.27,
+  "end": 4321.89,
+  "text": "It would be nice if we can tie that all together to essentially"
+ },
+ {
+  "start": 4321.89,
+  "end": 4323.89,
+  "text": "be able to reproduce or understand something"
+ },
+ {
+  "start": 4323.89,
+  "end": 4325.83,
+  "text": "that I think is really important and advanced,"
+ },
+ {
+  "start": 4325.83,
+  "end": 4327.33,
+  "text": "which is flash attention."
+ },
+ {
+  "start": 4327.33,
+  "end": 4329.17,
+  "text": "So flash attention is one of the big,"
+ },
+ {
+  "start": 4329.17,
+  "end": 4333.59,
+  "text": "I think, improvements in attention capabilities in a while."
+ },
+ {
+  "start": 4333.59,
+  "end": 4334.69,
+  "text": "And it's all systems."
+ },
+ {
+  "start": 4334.69,
+  "end": 4337.73,
+  "text": "So it's going from just PyTorch's naive implementation"
+ },
+ {
+  "start": 4337.73,
+  "end": 4342.137,
+  "text": "of attention to a single, very cleverly fused kernel."
+ },
+ {
+  "start": 4342.137,
+  "end": 4343.47,
+  "text": "This is from the original paper."
+ },
+ {
+  "start": 4343.47,
+  "end": 4345.49,
+  "text": "But you've got this dramatic improvement"
+ },
+ {
+  "start": 4345.49,
+  "end": 4347.99,
+  "text": "in the latency of serving these things."
+ },
+ {
+  "start": 4347.99,
+  "end": 4350.41,
+  "text": "And as I showed you in, I think, two lectures ago,"
+ },
+ {
+  "start": 4350.41,
+  "end": 4352.81,
+  "text": "flash attention is a nice, memory-efficient way"
+ },
+ {
+  "start": 4352.81,
+  "end": 4353.95,
+  "text": "of computing things."
+ },
+ {
+  "start": 4353.95,
+  "end": 4356.31,
+  "text": "So you can do bigger and bigger attention."
+ },
+ {
+  "start": 4356.31,
+  "end": 4358.01,
+  "text": "And you can see, a lot of the gains"
+ },
+ {
+  "start": 4358.01,
+  "end": 4360.73,
+  "text": "are going to come from improvements"
+ },
+ {
+  "start": 4360.73,
+  "end": 4363.87,
+  "text": "in the amount of memory that is transferred from HBM,"
+ },
+ {
+  "start": 4363.87,
+  "end": 4366.63,
+  "text": "which is the global memory."
+ },
+ {
+  "start": 4366.63,
+  "end": 4368.25,
+  "text": "So what do they actually do?"
+ },
+ {
+  "start": 4368.25,
+  "end": 4371.78,
+  "text": "If you read the paper, they'll say, OK, we just do two things."
+ },
+ {
+  "start": 4371.78,
+  "end": 4374.02,
+  "text": "We apply tiling and recomputation."
+ },
+ {
+  "start": 4374.02,
+  "end": 4376.68,
+  "text": "And then we do it in a way that allows"
+ },
+ {
+  "start": 4376.68,
+  "end": 4379.8,
+  "text": "us to do things subquadratically in the number of memory"
+ },
+ {
+  "start": 4379.8,
+  "end": 4380.58,
+  "text": "accesses."
+ },
+ {
+  "start": 4380.58,
+  "end": 4382.8,
+  "text": "I think we understand all of those components now."
+ },
+ {
+  "start": 4382.8,
+  "end": 4385.6,
+  "text": "So let's see what's actually happening."
+ },
+ {
+  "start": 4385.6,
+  "end": 4389.5,
+  "text": "So remember, attention computation has a couple of things."
+ },
+ {
+  "start": 4389.5,
+  "end": 4395.06,
+  "text": "It has a K, Q, V. And we do a matrix multiply with e K's and the Q's."
+ },
+ {
+  "start": 4395.06,
+  "end": 4397.62,
+  "text": "And then we have a matrix multiply with a V at the end."
+ },
+ {
+  "start": 4397.62,
+  "end": 4399.18,
+  "text": "And I have a softmax in the middle."
+ },
+ {
+  "start": 4399.18,
+  "end": 4400.638,
+  "text": "So those are the operations that we"
+ },
+ {
+  "start": 4400.638,
+  "end": 4404.16,
+  "text": "need to deal with-- three matrix multiplies and one softmax."
+ },
+ {
+  "start": 4404.16,
+  "end": 4406.14,
+  "text": "So we have matrix multiplies."
+ },
+ {
+  "start": 4406.14,
+  "end": 4407.34,
+  "text": "We how to do them now."
+ },
+ {
+  "start": 4407.34,
+  "end": 4410.24,
+  "text": "So we're going to do a tiled matrix multiply."
+ },
+ {
+  "start": 4410.24,
+  "end": 4412.12,
+  "text": "Figure 1 from the paper is literally just"
+ },
+ {
+  "start": 4412.12,
+  "end": 4413.58,
+  "text": "tiled matrix multiplies."
+ },
+ {
+  "start": 4413.58,
+  "end": 4414.7,
+  "text": "We've seen this before."
+ },
+ {
+  "start": 4414.7,
+  "end": 4417.443,
+  "text": "We're taking our inputs, our K's and Q's."
+ },
+ {
+  "start": 4417.443,
+  "end": 4418.36,
+  "text": "We're cutting them up."
+ },
+ {
+  "start": 4418.36,
+  "end": 4421.74,
+  "text": "And we're just multiplying them chunk by chunk on a tile."
+ },
+ {
+  "start": 4421.74,
+  "end": 4424.36,
+  "text": "And then after we do the computation, we write them out."
+ },
+ {
+  "start": 4424.36,
+  "end": 4426.44,
+  "text": "Nothing fancy or special here."
+ },
+ {
+  "start": 4426.44,
+  "end": 4429.24,
+  "text": "The thing that is tricky about flash attention,"
+ },
+ {
+  "start": 4429.24,
+  "end": 4430.88,
+  "text": "and you'll see this in the assignment,"
+ },
+ {
+  "start": 4430.88,
+  "end": 4434.3,
+  "text": "is there's a big global softmax on the whole thing."
+ },
+ {
+  "start": 4434.3,
+  "end": 4437.72,
+  "text": "So we can't just do this naively because the softmax"
+ },
+ {
+  "start": 4437.72,
+  "end": 4440.06,
+  "text": "is a global operation that ties everyone together."
+ },
+ {
+  "start": 4440.06,
+  "end": 4442.82,
+  "text": "So it connects all of the different tiles together."
+ },
+ {
+  "start": 4442.82,
+  "end": 4447.24,
+  "text": "It might not seem obvious how to tile attention."
+ },
+ {
+  "start": 4447.24,
+  "end": 4450.96,
+  "text": "The key trick, and once you see this, this really the core,"
+ },
+ {
+  "start": 4450.96,
+  "end": 4454.02,
+  "text": "I guess, idea or observation, once you see this,"
+ },
+ {
+  "start": 4454.02,
+  "end": 4455.02,
+  "text": "the rest is very simple."
+ },
+ {
+  "start": 4455.02,
+  "end": 4456.56,
+  "text": "Normally, to compute a softmax, you"
+ },
+ {
+  "start": 4456.56,
+  "end": 4460.4,
+  "text": "would do it this way, as shown in this plot here,"
+ },
+ {
+  "start": 4460.4,
+  "end": 4463.1,
+  "text": "which is, you would exponentiate all of your elements."
+ },
+ {
+  "start": 4463.1,
+  "end": 4465.98,
+  "text": "You would subtract the maximum for numerical stability reasons."
+ },
+ {
+  "start": 4465.98,
+  "end": 4468.62,
+  "text": "And then you would normalize that standard softmax."
+ },
+ {
+  "start": 4468.62,
+  "end": 4471.22,
+  "text": "Now, there's a different way of computing this online."
+ },
+ {
+  "start": 4471.22,
+  "end": 4473.24,
+  "text": "And I think once you realize it, it's"
+ },
+ {
+  "start": 4473.24,
+  "end": 4476.36,
+  "text": "kind of simple, which is, you're going to, as you go,"
+ },
+ {
+  "start": 4476.36,
+  "end": 4478.44,
+  "text": "compute the normalized softmax."
+ },
+ {
+  "start": 4478.44,
+  "end": 4480.6,
+  "text": "And every time you encounter a bigger number"
+ },
+ {
+  "start": 4480.6,
+  "end": 4482.24,
+  "text": "than what you've seen before, you're"
+ },
+ {
+  "start": 4482.24,
+  "end": 4484.99,
+  "text": "going to swap out the maximum."
+ },
+ {
+  "start": 4484.99,
+  "end": 4488.99,
+  "text": "And so you have an online way of computing the softmax as you go."
+ },
+ {
+  "start": 4488.99,
+  "end": 4491.33,
+  "text": "The only tricky thing, of course, being the max,"
+ },
+ {
+  "start": 4491.33,
+  "end": 4494.217,
+  "text": "and the way we deal with the max is, we keep track of the max."
+ },
+ {
+  "start": 4494.217,
+  "end": 4496.55,
+  "text": "And then we swap it out and correct for it every time we"
+ },
+ {
+  "start": 4496.55,
+  "end": 4497.57,
+  "text": "see a new maximum."
+ },
+ {
+  "start": 4497.57,
+  "end": 4499.99,
+  "text": "Otherwise, this is really just an online running sum"
+ },
+ {
+  "start": 4499.99,
+  "end": 4503.295,
+  "text": "of an exponential from everything that we've seen before."
+ },
+ {
+  "start": 4503.295,
+  "end": 4504.67,
+  "text": "And of course, at the end, you'll"
+ },
+ {
+  "start": 4504.67,
+  "end": 4506.378,
+  "text": "just divide everything by the accumulator"
+ },
+ {
+  "start": 4506.378,
+  "end": 4508.35,
+  "text": "that you've computed online."
+ },
+ {
+  "start": 4508.35,
+  "end": 4510.75,
+  "text": "Now, the important thing about the softmax"
+ },
+ {
+  "start": 4510.75,
+  "end": 4512.35,
+  "text": "is because it's online and it goes"
+ },
+ {
+  "start": 4512.35,
+  "end": 4514.97,
+  "text": "kind of block by block or piece by piece,"
+ },
+ {
+  "start": 4514.97,
+  "end": 4516.91,
+  "text": "we can compute this tile by tile."
+ },
+ {
+  "start": 4516.91,
+  "end": 4518.95,
+  "text": "I don't need to see the rest of the tiles"
+ },
+ {
+  "start": 4518.95,
+  "end": 4520.13,
+  "text": "in order to compute this."
+ },
+ {
+  "start": 4520.13,
+  "end": 4522.49,
+  "text": "I can compute the softmax for my tile."
+ },
+ {
+  "start": 4522.49,
+  "end": 4524.29,
+  "text": "And then I can save the partial results,"
+ },
+ {
+  "start": 4524.29,
+  "end": 4526.35,
+  "text": "maybe write them back to global memory,"
+ },
+ {
+  "start": 4526.35,
+  "end": 4528.47,
+  "text": "and then just continue on with my day."
+ },
+ {
+  "start": 4528.47,
+  "end": 4532.91,
+  "text": "So this allows us to now break up all the different interacting"
+ },
+ {
+  "start": 4532.91,
+  "end": 4537.01,
+  "text": "pieces into something simpler."
+ },
+ {
+  "start": 4537.01,
+  "end": 4540.01,
+  "text": "I think this was from FlashAttention 2 or maybe 3."
+ },
+ {
+  "start": 4540.01,
+  "end": 4541.39,
+  "text": "I think it's 2."
+ },
+ {
+  "start": 4541.39,
+  "end": 4544.27,
+  "text": "I like this visualization, which shows you"
+ },
+ {
+  "start": 4544.27,
+  "end": 4546.09,
+  "text": "which parts are being tiled."
+ },
+ {
+  "start": 4546.09,
+  "end": 4549.87,
+  "text": "So the dashed blocks are being done, tiled in SRAM."
+ },
+ {
+  "start": 4549.87,
+  "end": 4553.05,
+  "text": "The blue boxes are the ones that are in high-bandwidth memory,"
+ },
+ {
+  "start": 4553.05,
+  "end": 4554.11,
+  "text": "the global memory."
+ },
+ {
+  "start": 4554.11,
+  "end": 4557.75,
+  "text": "And what you see is-- let's say, we do the K, Q inner product."
+ },
+ {
+  "start": 4557.75,
+  "end": 4559.27,
+  "text": "These are tiled matrix multiplies."
+ },
+ {
+  "start": 4559.27,
+  "end": 4560.67,
+  "text": "And they're stored in SRAM."
+ },
+ {
+  "start": 4560.67,
+  "end": 4562.57,
+  "text": "And we keep them in the SRAM."
+ },
+ {
+  "start": 4562.57,
+  "end": 4564.59,
+  "text": "And we compute this exponential."
+ },
+ {
+  "start": 4564.59,
+  "end": 4566.87,
+  "text": "And then similarly, in this tile,"
+ },
+ {
+  "start": 4566.87,
+  "end": 4569.107,
+  "text": "we're going to compute this running softmax."
+ },
+ {
+  "start": 4569.107,
+  "end": 4570.69,
+  "text": "And I'm going to move to my next tile."
+ },
+ {
+  "start": 4570.69,
+  "end": 4572.21,
+  "text": "And I'm going to do the same thing."
+ },
+ {
+  "start": 4572.21,
+  "end": 4575.23,
+  "text": "But now I'm going to keep the partial running sums"
+ },
+ {
+  "start": 4575.23,
+  "end": 4576.89,
+  "text": "of my softmax as I go."
+ },
+ {
+  "start": 4576.89,
+  "end": 4580.218,
+  "text": "I can keep them in shared memory or in registers or elsewhere."
+ },
+ {
+  "start": 4580.218,
+  "end": 4582.51,
+  "text": "This is a very small number of things to keep track of."
+ },
+ {
+  "start": 4582.51,
+  "end": 4584.07,
+  "text": "At the end, after I've computed all"
+ },
+ {
+  "start": 4584.07,
+  "end": 4587.25,
+  "text": "these exponentiated quantities and my normalizers,"
+ },
+ {
+  "start": 4587.25,
+  "end": 4589.55,
+  "text": "it's very simple to just multiply it with a V,"
+ },
+ {
+  "start": 4589.55,
+  "end": 4593.71,
+  "text": "once again at the tile form, and then divide at the very end."
+ },
+ {
+  "start": 4593.71,
+  "end": 4597.09,
+  "text": "This allows me to essentially take the attention operation,"
+ },
+ {
+  "start": 4597.09,
+  "end": 4600.94,
+  "text": "cut it up into these small tiled chunks, and then go."
+ },
+ {
+  "start": 4600.94,
+  "end": 4604.08,
+  "text": "Finally, you've got fusion."
+ },
+ {
+  "start": 4604.08,
+  "end": 4606.86,
+  "text": "You're going to do both of these together as much as you can"
+ },
+ {
+  "start": 4606.86,
+  "end": 4609.14,
+  "text": "without going back and forth."
+ },
+ {
+  "start": 4609.14,
+  "end": 4611.88,
+  "text": "And then I'm not going to cover this or talk about it."
+ },
+ {
+  "start": 4611.88,
+  "end": 4615.36,
+  "text": "But what you can do is, you can, in the backward pass,"
+ },
+ {
+  "start": 4615.36,
+  "end": 4617.48,
+  "text": "recompute everything that you need."
+ },
+ {
+  "start": 4617.48,
+  "end": 4620.7,
+  "text": "So the last piece of flash attention"
+ },
+ {
+  "start": 4620.7,
+  "end": 4622.88,
+  "text": "is, if you saved your activations,"
+ },
+ {
+  "start": 4622.88,
+  "end": 4624.82,
+  "text": "you still have this N squared-sized activation"
+ },
+ {
+  "start": 4624.82,
+  "end": 4627.028,
+  "text": "that you're going to need to save for your attention."
+ },
+ {
+  "start": 4627.028,
+  "end": 4629.18,
+  "text": "Instead of saving that, throw it all away"
+ },
+ {
+  "start": 4629.18,
+  "end": 4632.1,
+  "text": "and recompute everything tile by tile on the backward pass."
+ },
+ {
+  "start": 4632.1,
+  "end": 4634.82,
+  "text": "So it's got that recomputation piece as well."
+ },
+ {
+  "start": 4634.82,
+  "end": 4636.92,
+  "text": "That gives you flash attention."
+ },
+ {
+  "start": 4636.92,
+  "end": 4639.78,
+  "text": "Now we've seen all the different tricks in action."
+ },
+ {
+  "start": 4639.78,
+  "end": 4641.7,
+  "text": "And that's essentially all there is."
+ },
+ {
+  "start": 4641.7,
+  "end": 4644.46,
+  "text": "A lot of the tricks that you see for efficient implementation"
+ },
+ {
+  "start": 4644.46,
+  "end": 4648.98,
+  "text": "and how to use GPUs well boil down to those kinds of ideas."
+ },
+ {
+  "start": 4648.98,
+  "end": 4651.9,
+  "text": "So to put it all back together, important to understand"
+ },
+ {
+  "start": 4651.9,
+  "end": 4652.56,
+  "text": "the hardware."
+ },
+ {
+  "start": 4652.56,
+  "end": 4654.94,
+  "text": "The hardware, in our case, the GPU,"
+ },
+ {
+  "start": 4654.94,
+  "end": 4656.88,
+  "text": "is powering scale and compute."
+ },
+ {
+  "start": 4656.88,
+  "end": 4658.94,
+  "text": "And we need to understand, really,"
+ },
+ {
+  "start": 4658.94,
+  "end": 4660.62,
+  "text": "all the way to the low-level details"
+ },
+ {
+  "start": 4660.62,
+  "end": 4664.38,
+  "text": "to fully grasp why we make certain decisions."
+ },
+ {
+  "start": 4664.38,
+  "end": 4666.58,
+  "text": "I don't want you guys to be the kind of people"
+ },
+ {
+  "start": 4666.58,
+  "end": 4669.68,
+  "text": "that cargo cult, 32 multipliers for your matrices."
+ },
+ {
+  "start": 4669.68,
+  "end": 4672.403,
+  "text": "I want you to really understand why we do those things."
+ },
+ {
+  "start": 4672.403,
+  "end": 4674.32,
+  "text": "And that goes all the way down, in my opinion,"
+ },
+ {
+  "start": 4674.32,
+  "end": 4676.46,
+  "text": "to the hardware level."
+ },
+ {
+  "start": 4676.46,
+  "end": 4680.58,
+  "text": "The other thing is that the current way that compute"
+ },
+ {
+  "start": 4680.58,
+  "end": 4683.8,
+  "text": "is growing means that we really want to think about matmuls."
+ },
+ {
+  "start": 4683.8,
+  "end": 4685.94,
+  "text": "Those are the core operations that"
+ },
+ {
+  "start": 4685.94,
+  "end": 4687.86,
+  "text": "are very arithmetically dense."
+ },
+ {
+  "start": 4687.86,
+  "end": 4690.8,
+  "text": "And because of the gap between compute and memory,"
+ },
+ {
+  "start": 4690.8,
+  "end": 4693.36,
+  "text": "we need to think very carefully about data movement."
+ },
+ {
+  "start": 4693.36,
+  "end": 4696.46,
+  "text": "And then finally, things like flash attention, I think,"
+ },
+ {
+  "start": 4696.46,
+  "end": 4697.54,
+  "text": "are really cool."
+ },
+ {
+  "start": 4697.54,
+  "end": 4701.66,
+  "text": "There's also architecture work that's very hardware-aware."
+ },
+ {
+  "start": 4701.66,
+  "end": 4703.32,
+  "text": "Thinking carefully about the hardware"
+ },
+ {
+  "start": 4703.32,
+  "end": 4705.78,
+  "text": "when we do things like architecture design"
+ },
+ {
+  "start": 4705.78,
+  "end": 4709.06,
+  "text": "is critical to good performance for future systems."
+ },
+ {
+  "start": 4709.06,
+  "end": 4711.16,
+  "text": "Thanks."
+ },
+ {
+  "start": 4711.16,
+  "end": 4714.21,
+  "text": "[APPLAUSE]"
+ }
+]

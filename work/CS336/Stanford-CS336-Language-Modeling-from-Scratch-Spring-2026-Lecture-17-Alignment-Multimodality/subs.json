@@ -1,0 +1,6227 @@
+[
+ {
+  "start": 5.0,
+  "end": 8.2,
+  "text": "So originally, the plan was to talk more"
+ },
+ {
+  "start": 8.2,
+  "end": 9.66,
+  "text": "about reinforcement learning."
+ },
+ {
+  "start": 9.66,
+  "end": 12.34,
+  "text": "But I thought since I only had one lecture to give,"
+ },
+ {
+  "start": 12.34,
+  "end": 14.64,
+  "text": "I think this class would be a little bit"
+ },
+ {
+  "start": 14.64,
+  "end": 17.78,
+  "text": "incomplete without saying something about multimodality,"
+ },
+ {
+  "start": 17.78,
+  "end": 21.88,
+  "text": "which is so pervasive if you look at all the major models."
+ },
+ {
+  "start": 21.88,
+  "end": 27.04,
+  "text": "So this will be an overview of multimodal models."
+ },
+ {
+  "start": 27.04,
+  "end": 29.96,
+  "text": "Of course, this could be a whole class in itself,"
+ },
+ {
+  "start": 29.96,
+  "end": 32.759,
+  "text": "and I'll try to do what I can in one lecture."
+ },
+ {
+  "start": 32.759,
+  "end": 35.5,
+  "text": "OK, so let's dive into multimodal models."
+ },
+ {
+  "start": 35.5,
+  "end": 38.28,
+  "text": "So far in this class, we have exclusively"
+ },
+ {
+  "start": 38.28,
+  "end": 40.24,
+  "text": "focused on language models."
+ },
+ {
+  "start": 40.24,
+  "end": 43.3,
+  "text": "And language models are already pretty general."
+ },
+ {
+  "start": 43.3,
+  "end": 45.76,
+  "text": "They give you the ability to go from any piece of text"
+ },
+ {
+  "start": 45.76,
+  "end": 47.18,
+  "text": "to any text."
+ },
+ {
+  "start": 47.18,
+  "end": 53.34,
+  "text": "So this could be any language, code, poetry, anything you like,"
+ },
+ {
+  "start": 53.34,
+  "end": 57.68,
+  "text": "even, let's say, DNA, for example."
+ },
+ {
+  "start": 57.68,
+  "end": 60.38,
+  "text": "But the world is multi-modal."
+ },
+ {
+  "start": 60.38,
+  "end": 65.26,
+  "text": "You have text, you have images, audio, video."
+ },
+ {
+  "start": 65.26,
+  "end": 69.82,
+  "text": "And if you think about a North Star of where we want to be"
+ },
+ {
+  "start": 69.82,
+  "end": 72.58,
+  "text": "is what people call omni model, which"
+ },
+ {
+  "start": 72.58,
+  "end": 77.22,
+  "text": "is ability to take any combination of these modalities"
+ },
+ {
+  "start": 77.22,
+  "end": 80.86,
+  "text": "and output any combination of any of these modalities."
+ },
+ {
+  "start": 80.86,
+  "end": 84.5,
+  "text": "So, for example, I can give you an image and a video"
+ },
+ {
+  "start": 84.5,
+  "end": 89.92,
+  "text": "and I can ask a question about the image and the video."
+ },
+ {
+  "start": 89.92,
+  "end": 91.08,
+  "text": "I can generate images."
+ },
+ {
+  "start": 91.08,
+  "end": 94.4,
+  "text": "I can convert the audio into an image."
+ },
+ {
+  "start": 94.4,
+  "end": 97.14,
+  "text": "You can imagine all sorts of different applications"
+ },
+ {
+  "start": 97.14,
+  "end": 99.0,
+  "text": "by having an omni model."
+ },
+ {
+  "start": 99.0,
+  "end": 101.62,
+  "text": "So in this class, I'm not going to build up"
+ },
+ {
+  "start": 101.62,
+  "end": 102.92,
+  "text": "to a whole omni model."
+ },
+ {
+  "start": 102.92,
+  "end": 107.9,
+  "text": "But I'll give you some of the pieces that at least to allow"
+ },
+ {
+  "start": 107.9,
+  "end": 112.9,
+  "text": "you to ingest a little bit of images, which we'll mostly"
+ },
+ {
+  "start": 112.9,
+  "end": 115.9,
+  "text": "focus on today."
+ },
+ {
+  "start": 115.9,
+  "end": 117.99000000000001,
+  "text": "So how do you build such a thing?"
+ },
+ {
+  "start": 117.99000000000001,
+  "end": 122.21,
+  "text": "Well, this is a weird way to motivate this,"
+ },
+ {
+  "start": 122.21,
+  "end": 126.07,
+  "text": "but the reality is that transformers work really well."
+ },
+ {
+  "start": 126.07,
+  "end": 130.63,
+  "text": "And despite the best efforts of people to try other things,"
+ },
+ {
+  "start": 130.63,
+  "end": 134.41,
+  "text": "those are across all of these modalities still at scale"
+ },
+ {
+  "start": 134.41,
+  "end": 135.69,
+  "text": "the best thing we have."
+ },
+ {
+  "start": 135.69,
+  "end": 137.91,
+  "text": "So we have to figure out how to use them."
+ },
+ {
+  "start": 137.91,
+  "end": 141.19,
+  "text": "And now, transformers were designed for text."
+ },
+ {
+  "start": 141.19,
+  "end": 144.91,
+  "text": "So they have this property that they speak tokens."
+ },
+ {
+  "start": 144.91,
+  "end": 147.99,
+  "text": "So they take as input a bunch of tokens"
+ },
+ {
+  "start": 147.99,
+  "end": 150.31,
+  "text": "and then output some tokens."
+ },
+ {
+  "start": 150.31,
+  "end": 154.07,
+  "text": "And here, I'm expanding the notion"
+ },
+ {
+  "start": 154.07,
+  "end": 156.95,
+  "text": "of tokenization to be not just a discrete token that we've"
+ },
+ {
+  "start": 156.95,
+  "end": 160.73,
+  "text": "seen in text but also potentially continuous tokens."
+ },
+ {
+  "start": 160.73,
+  "end": 164.82999999999998,
+  "text": "You can think about these as embedding of tokens."
+ },
+ {
+  "start": 164.82999999999998,
+  "end": 166.75,
+  "text": "And the key thing is that a token"
+ },
+ {
+  "start": 166.75,
+  "end": 171.35,
+  "text": "should represent some semantic unit of information."
+ },
+ {
+  "start": 171.35,
+  "end": 175.39,
+  "text": "For example, in natural language, tokens are subwords."
+ },
+ {
+  "start": 175.39,
+  "end": 178.05,
+  "text": "And these are somewhat meaningful."
+ },
+ {
+  "start": 178.05,
+  "end": 182.09,
+  "text": "Whereas, for example, a pixel is certainly not"
+ },
+ {
+  "start": 182.09,
+  "end": 184.89,
+  "text": "meaningful by itself."
+ },
+ {
+  "start": 184.89,
+  "end": 187.43,
+  "text": "So somehow we must convert everything,"
+ },
+ {
+  "start": 187.43,
+  "end": 193.53,
+  "text": "including audio and images, into either discrete or continuous"
+ },
+ {
+  "start": 193.53,
+  "end": 195.37,
+  "text": "tokens."
+ },
+ {
+  "start": 195.37,
+  "end": 198.45,
+  "text": "Now, notice that we've already had to do this even with text."
+ },
+ {
+  "start": 198.45,
+  "end": 201.57,
+  "text": "In the first lecture, we talked about tokenization."
+ },
+ {
+  "start": 201.57,
+  "end": 204.82999999999998,
+  "text": "And there, it was not too bad."
+ },
+ {
+  "start": 204.82999999999998,
+  "end": 206.75,
+  "text": "I mean, we had a BP tokenizer."
+ },
+ {
+  "start": 206.75,
+  "end": 210.01,
+  "text": "You guys implemented it."
+ },
+ {
+  "start": 210.01,
+  "end": 211.21,
+  "text": "It's fine."
+ },
+ {
+  "start": 211.21,
+  "end": 217.69,
+  "text": "One could wish for a better tokenizer or something that"
+ },
+ {
+  "start": 217.69,
+  "end": 219.59,
+  "text": "doesn't have tokenizers at all."
+ },
+ {
+  "start": 219.59,
+  "end": 223.81,
+  "text": "But it's not the worst thing in the world."
+ },
+ {
+  "start": 223.81,
+  "end": 226.53,
+  "text": "Now, for non-text modalities, we have"
+ },
+ {
+  "start": 226.53,
+  "end": 229.41,
+  "text": "to scratch our heads a lot more and figure out"
+ },
+ {
+  "start": 229.41,
+  "end": 231.81,
+  "text": "what is the equivalent of the BP tokenizer that"
+ },
+ {
+  "start": 231.81,
+  "end": 234.02,
+  "text": "will take an image and produce things"
+ },
+ {
+  "start": 234.02,
+  "end": 237.34,
+  "text": "that a transformer can digest?"
+ },
+ {
+  "start": 237.34,
+  "end": 241.28,
+  "text": "OK, so you have to answer two questions here."
+ },
+ {
+  "start": 241.28,
+  "end": 244.46,
+  "text": "One is, for non-text data, for example, images or videos"
+ },
+ {
+  "start": 244.46,
+  "end": 249.7,
+  "text": "or audio, how do you input these into the transformer?"
+ },
+ {
+  "start": 249.7,
+  "end": 252.74,
+  "text": "And then how do you generate them out?"
+ },
+ {
+  "start": 252.74,
+  "end": 257.579,
+  "text": "And this lecture will mostly focus on question number one."
+ },
+ {
+  "start": 257.579,
+  "end": 265.86,
+  "text": "OK, so let's start back and rewind the clock back to 21."
+ },
+ {
+  "start": 265.86,
+  "end": 268.98,
+  "text": "So the CLIP model, which some of you might be familiar with,"
+ },
+ {
+  "start": 268.98,
+  "end": 274.26,
+  "text": "is a lot of the foundation of modern VLMs."
+ },
+ {
+  "start": 274.26,
+  "end": 279.78,
+  "text": "And so we can go through this a bit in more detail."
+ },
+ {
+  "start": 279.78,
+  "end": 283.5,
+  "text": "So CLIP stands for Contrastive Language Image Pre-Training."
+ },
+ {
+  "start": 283.5,
+  "end": 286.46,
+  "text": "And a bit of historical context is around"
+ },
+ {
+  "start": 286.46,
+  "end": 292.04,
+  "text": "that time GPT-3 had already happened."
+ },
+ {
+  "start": 292.04,
+  "end": 292.84000000000003,
+  "text": "GPT-2."
+ },
+ {
+  "start": 292.84000000000003,
+  "end": 295.48,
+  "text": "All the language models had already"
+ },
+ {
+  "start": 295.48,
+  "end": 299.2,
+  "text": "gone into this foundation model era."
+ },
+ {
+  "start": 299.2,
+  "end": 303.22,
+  "text": "Neovision was still-- there were some efforts,"
+ },
+ {
+  "start": 303.22,
+  "end": 308.98,
+  "text": "but traditionally had been based on large annotated data"
+ },
+ {
+  "start": 308.98,
+  "end": 312.76,
+  "text": "sets, such as ImageNet, and training models,"
+ },
+ {
+  "start": 312.76,
+  "end": 315.92,
+  "text": "such as the ResNet, on these data sets"
+ },
+ {
+  "start": 315.92,
+  "end": 319.16,
+  "text": "and doing a bunch of other things, like data augmentation,"
+ },
+ {
+  "start": 319.16,
+  "end": 321.72,
+  "text": "and getting really good performance."
+ },
+ {
+  "start": 321.72,
+  "end": 325.96,
+  "text": "And so the researchers at OpenAI were wondering,"
+ },
+ {
+  "start": 325.96,
+  "end": 329.52,
+  "text": "is it possible to leverage the large amount of image"
+ },
+ {
+  "start": 329.52,
+  "end": 332.48,
+  "text": "and textual captions out there?"
+ },
+ {
+  "start": 332.48,
+  "end": 335.84000000000003,
+  "text": "So inspired by this idea in language where you could just"
+ },
+ {
+  "start": 335.84000000000003,
+  "end": 339.46,
+  "text": "scrape the internet, you have all this text, it's very noisy."
+ },
+ {
+  "start": 339.46,
+  "end": 342.18,
+  "text": "But somehow if you train a large enough model,"
+ },
+ {
+  "start": 342.18,
+  "end": 345.68,
+  "text": "you can make sense out of this and generate something useful."
+ },
+ {
+  "start": 345.68,
+  "end": 349.72,
+  "text": "So what was the equivalent of that for images?"
+ },
+ {
+  "start": 349.72,
+  "end": 353.42,
+  "text": "So as a result, CLIP was born."
+ },
+ {
+  "start": 353.42,
+  "end": 358.9,
+  "text": "And the idea of CLIP is fairly simple and straightforward."
+ },
+ {
+  "start": 358.9,
+  "end": 362.38,
+  "text": "So the idea here is that suppose I give you"
+ },
+ {
+  "start": 362.38,
+  "end": 365.98,
+  "text": "a bunch of image-text pairs."
+ },
+ {
+  "start": 365.98,
+  "end": 369.22,
+  "text": "So let's say I give you 32,000 of these."
+ },
+ {
+  "start": 369.22,
+  "end": 373.14,
+  "text": "OK, so what I'm going to do is for each image"
+ },
+ {
+  "start": 373.14,
+  "end": 376.9,
+  "text": "I'm going to encode it using an image encoder, which I'll"
+ },
+ {
+  "start": 376.9,
+  "end": 380.38,
+  "text": "explain later, into a vector."
+ },
+ {
+  "start": 380.38,
+  "end": 386.38,
+  "text": "So I'm going to have 32,000 of these image encodings."
+ },
+ {
+  "start": 386.38,
+  "end": 387.94,
+  "text": "I'm going to also do the same thing"
+ },
+ {
+  "start": 387.94,
+  "end": 390.4,
+  "text": "with the corresponding text."
+ },
+ {
+  "start": 390.4,
+  "end": 393.96,
+  "text": "So that will give me T1 through TN."
+ },
+ {
+  "start": 393.96,
+  "end": 396.24,
+  "text": "So these are the embeddings of the text."
+ },
+ {
+  "start": 396.24,
+  "end": 399.1,
+  "text": "These are embedding of the images."
+ },
+ {
+  "start": 399.1,
+  "end": 401.22,
+  "text": "Now, the objective I want to set up"
+ },
+ {
+  "start": 401.22,
+  "end": 408.55,
+  "text": "is that I want the image-- let's take I1."
+ },
+ {
+  "start": 408.55,
+  "end": 412.40999999999997,
+  "text": "So I1 is aligned with T1."
+ },
+ {
+  "start": 412.40999999999997,
+  "end": 417.67,
+  "text": "So I want this alignment, the dot product between these two"
+ },
+ {
+  "start": 417.67,
+  "end": 421.75,
+  "text": "embeddings to be much larger than the dot product between I1"
+ },
+ {
+  "start": 421.75,
+  "end": 424.59,
+  "text": "and all the other texts, OK."
+ },
+ {
+  "start": 424.59,
+  "end": 428.83,
+  "text": "And conversely, I also want for this text"
+ },
+ {
+  "start": 428.83,
+  "end": 431.11,
+  "text": "to say that this dot product is larger"
+ },
+ {
+  "start": 431.11,
+  "end": 434.59,
+  "text": "than the dot product between T1 and all the other images."
+ },
+ {
+  "start": 434.59,
+  "end": 438.93,
+  "text": "So that, in a nutshell, is the CLIP objective."
+ },
+ {
+  "start": 438.93,
+  "end": 442.27,
+  "text": "And you can imagine doing-- there's basically"
+ },
+ {
+  "start": 442.27,
+  "end": 450.35,
+  "text": "2 times N different softmax classification problems."
+ },
+ {
+  "start": 450.35,
+  "end": 453.99,
+  "text": "So here's the code."
+ },
+ {
+  "start": 453.99,
+  "end": 460.47,
+  "text": "So you get a n by d matrix for the image encodings"
+ },
+ {
+  "start": 460.47,
+  "end": 463.87,
+  "text": "and n by d times for the textual embeddings."
+ },
+ {
+  "start": 463.87,
+  "end": 468.57,
+  "text": "You normalize and you take this dot stop product"
+ },
+ {
+  "start": 468.57,
+  "end": 470.37,
+  "text": "with some temperature."
+ },
+ {
+  "start": 470.37,
+  "end": 476.97,
+  "text": "And then you compute the cross entropy, OK."
+ },
+ {
+  "start": 476.97,
+  "end": 480.21,
+  "text": "So it's basically a multi-class classification problem,"
+ },
+ {
+  "start": 480.21,
+  "end": 489.05,
+  "text": "where the examples are structured in this m by n matrix form."
+ },
+ {
+  "start": 489.05,
+  "end": 491.39,
+  "text": "OK, any questions about that?"
+ },
+ {
+  "start": 495.21,
+  "end": 504.05,
+  "text": "All right, so some more details about how CLIP was built."
+ },
+ {
+  "start": 504.05,
+  "end": 506.61,
+  "text": "So where does the data come from?"
+ },
+ {
+  "start": 506.61,
+  "end": 512.89,
+  "text": "There are not too many details in the paper about the data."
+ },
+ {
+  "start": 512.89,
+  "end": 519.49,
+  "text": "Roughly, you take a bunch of queries from somewhere"
+ },
+ {
+  "start": 519.49,
+  "end": 523.25,
+  "text": "and then you go search online for these"
+ },
+ {
+  "start": 523.25,
+  "end": 527.63,
+  "text": "and you mine a bunch of image and text pairs."
+ },
+ {
+  "start": 527.63,
+  "end": 533.59,
+  "text": "And this resulted in 400 million image-text pairs."
+ },
+ {
+  "start": 533.59,
+  "end": 535.99,
+  "text": "The data set wasn't released, but there"
+ },
+ {
+  "start": 535.99,
+  "end": 540.27,
+  "text": "was an effort by this paper called"
+ },
+ {
+  "start": 540.27,
+  "end": 549.11,
+  "text": "OpenCLIP, which replicated and further extended the CLIP ideas."
+ },
+ {
+  "start": 549.11,
+  "end": 552.09,
+  "text": "So there was a data set called LAION-5B,"
+ },
+ {
+  "start": 552.09,
+  "end": 554.43,
+  "text": "which was released 5 billion images"
+ },
+ {
+  "start": 554.43,
+  "end": 556.35,
+  "text": "with textual descriptions."
+ },
+ {
+  "start": 556.35,
+  "end": 559.47,
+  "text": "And there was a bunch of processing that happened."
+ },
+ {
+  "start": 559.47,
+  "end": 562.03,
+  "text": "Interestingly, they actually used CLIP for the data filtering"
+ },
+ {
+  "start": 562.03,
+  "end": 564.31,
+  "text": "and then train OpenCLIP."
+ },
+ {
+  "start": 564.31,
+  "end": 566.53,
+  "text": "So there's some bootstrapping happening."
+ },
+ {
+  "start": 566.53,
+  "end": 568.39,
+  "text": "But at least this is a model where"
+ },
+ {
+  "start": 568.39,
+  "end": 571.35,
+  "text": "you can point to the data set that it was trained"
+ },
+ {
+  "start": 571.35,
+  "end": 574.29,
+  "text": "on and the code as well."
+ },
+ {
+  "start": 576.95,
+  "end": 581.63,
+  "text": "So a few other details."
+ },
+ {
+  "start": 581.63,
+  "end": 585.32,
+  "text": "So images come in all sorts of resolutions."
+ },
+ {
+  "start": 585.32,
+  "end": 587.68,
+  "text": "If you find an internet image, it"
+ },
+ {
+  "start": 587.68,
+  "end": 592.96,
+  "text": "might be long and skinny or tall--sorry."
+ },
+ {
+  "start": 592.96,
+  "end": 595.0,
+  "text": "Long and skinny or the other way."
+ },
+ {
+  "start": 595.0,
+  "end": 597.24,
+  "text": "So arbitrary dimensions."
+ },
+ {
+  "start": 597.24,
+  "end": 601.8,
+  "text": "And one thing that you learn about neural nets"
+ },
+ {
+  "start": 601.8,
+  "end": 603.82,
+  "text": "is that they don't like things to be dynamic."
+ },
+ {
+  "start": 603.82,
+  "end": 606.84,
+  "text": "They want things to be fixed size."
+ },
+ {
+  "start": 606.84,
+  "end": 611.56,
+  "text": "So there is a somewhat heuristic processing"
+ },
+ {
+  "start": 611.56,
+  "end": 616.6,
+  "text": "that happens is they resize the image so that the shorter side"
+ },
+ {
+  "start": 616.6,
+  "end": 620.0,
+  "text": "is 336 or whatever target size."
+ },
+ {
+  "start": 620.0,
+  "end": 623.0,
+  "text": "It could be 224 as well."
+ },
+ {
+  "start": 623.0,
+  "end": 627.52,
+  "text": "And then they center crop to get a square."
+ },
+ {
+  "start": 627.52,
+  "end": 629.66,
+  "text": "OK, this is obviously for convenience."
+ },
+ {
+  "start": 629.66,
+  "end": 632.58,
+  "text": "Later, we'll see that you can do better than this."
+ },
+ {
+  "start": 632.58,
+  "end": 635.0,
+  "text": "But this is just for expediency."
+ },
+ {
+  "start": 635.0,
+  "end": 639.56,
+  "text": "And also at this time the CLIP authors"
+ },
+ {
+  "start": 639.56,
+  "end": 642.4,
+  "text": "were thinking about ImageNet and classification."
+ },
+ {
+  "start": 642.4,
+  "end": 646.14,
+  "text": "So usually, the object is in the middle"
+ },
+ {
+  "start": 646.14,
+  "end": 648.04,
+  "text": "and you're just trimming off some background."
+ },
+ {
+  "start": 648.04,
+  "end": 649.76,
+  "text": "So it doesn't matter too much."
+ },
+ {
+  "start": 655.84,
+  "end": 657.72,
+  "text": "So what is the vision encoder?"
+ },
+ {
+  "start": 657.72,
+  "end": 659.52,
+  "text": "So this is the general algorithm."
+ },
+ {
+  "start": 659.52,
+  "end": 665.52,
+  "text": "But I haven't specified what the image and text encoders are."
+ },
+ {
+  "start": 665.52,
+  "end": 666.02,
+  "text": "Yeah."
+ },
+ {
+  "start": 666.02,
+  "end": 684.7,
+  "text": "[INAUDIBLE]"
+ },
+ {
+  "start": 684.7,
+  "end": 688.1,
+  "text": "So the question I think is why they train on image-text pairs"
+ },
+ {
+  "start": 688.1,
+  "end": 689.56,
+  "text": "as opposed to images."
+ },
+ {
+  "start": 689.56,
+  "end": 696.38,
+  "text": "[INAUDIBLE] So there is a line of work that tries"
+ },
+ {
+  "start": 696.38,
+  "end": 701.11,
+  "text": "to encode images into representations"
+ },
+ {
+  "start": 701.11,
+  "end": 703.65,
+  "text": "based on data augmentation."
+ },
+ {
+  "start": 703.65,
+  "end": 706.83,
+  "text": "So, for example, if you take an image-- and I think"
+ },
+ {
+  "start": 706.83,
+  "end": 708.09,
+  "text": "this idea called SimCLR."
+ },
+ {
+  "start": 708.09,
+  "end": 709.59,
+  "text": "You augment it."
+ },
+ {
+  "start": 709.59,
+  "end": 710.41,
+  "text": "You crop it."
+ },
+ {
+  "start": 710.41,
+  "end": 712.63,
+  "text": "You randomly perturb it."
+ },
+ {
+  "start": 712.63,
+  "end": 713.57,
+  "text": "Rotate it."
+ },
+ {
+  "start": 713.57,
+  "end": 716.85,
+  "text": "And you want to say that that is the same image."
+ },
+ {
+  "start": 716.85,
+  "end": 718.61,
+  "text": "They should have similar embeddings."
+ },
+ {
+  "start": 721.496,
+  "end": 725.41,
+  "text": "And that's useful for low level details."
+ },
+ {
+  "start": 725.41,
+  "end": 729.71,
+  "text": "But the problem is that you won't data"
+ },
+ {
+  "start": 729.71,
+  "end": 734.39,
+  "text": "augment your way from one type of dog to another dog."
+ },
+ {
+  "start": 734.39,
+  "end": 736.91,
+  "text": "So by using the text, it gives you"
+ },
+ {
+  "start": 736.91,
+  "end": 743.83,
+  "text": "a higher level semantic representations of images."
+ },
+ {
+  "start": 743.83,
+  "end": 745.93,
+  "text": "And, yeah, that's a good question."
+ },
+ {
+  "start": 745.93,
+  "end": 749.59,
+  "text": "And later, we'll see how these semantic representations are"
+ },
+ {
+  "start": 749.59,
+  "end": 751.51,
+  "text": "useful if you look at the types of tasks"
+ },
+ {
+  "start": 751.51,
+  "end": 753.85,
+  "text": "that people are trying to solve."
+ },
+ {
+  "start": 756.87,
+  "end": 761.45,
+  "text": "OK, so what is the vision encoder that CLIP uses?"
+ },
+ {
+  "start": 761.45,
+  "end": 764.93,
+  "text": "They actually experimented with a bunch of different ones,"
+ },
+ {
+  "start": 764.93,
+  "end": 769.29,
+  "text": "ResNets and vision transformers, which had just come out."
+ },
+ {
+  "start": 769.29,
+  "end": 771.99,
+  "text": "They found out that vision transformers performed the best."
+ },
+ {
+  "start": 771.99,
+  "end": 776.77,
+  "text": "So when people say CLIP, they usually mean the VIT version."
+ },
+ {
+  "start": 776.77,
+  "end": 783.13,
+  "text": "And so a vision transformer does the following."
+ },
+ {
+  "start": 783.13,
+  "end": 790.93,
+  "text": "So you take an image and you break it up into these patches."
+ },
+ {
+  "start": 790.93,
+  "end": 795.25,
+  "text": "I think the original paper was 16 by 16"
+ },
+ {
+  "start": 795.25,
+  "end": 798.85,
+  "text": "and the CLIP used 14 by 14."
+ },
+ {
+  "start": 798.85,
+  "end": 801.73,
+  "text": "But anyway, you have these little patches,"
+ },
+ {
+  "start": 801.73,
+  "end": 804.85,
+  "text": "which are basically vectors."
+ },
+ {
+  "start": 804.85,
+  "end": 807.97,
+  "text": "So each patches in some sense a--"
+ },
+ {
+  "start": 807.97,
+  "end": 811.93,
+  "text": "well, a token for this vision transformer."
+ },
+ {
+  "start": 811.93,
+  "end": 813.49,
+  "text": "You add the positional embeddings"
+ },
+ {
+  "start": 813.49,
+  "end": 816.63,
+  "text": "just like you would if you were training a language model,"
+ },
+ {
+  "start": 816.63,
+  "end": 822.31,
+  "text": "and then you just put it through a standard transformer."
+ },
+ {
+  "start": 822.31,
+  "end": 830.19,
+  "text": "And if you want to classify, then you would--"
+ },
+ {
+  "start": 830.19,
+  "end": 835.23,
+  "text": "well, you would usually want to--OK, sorry."
+ },
+ {
+  "start": 835.23,
+  "end": 843.55,
+  "text": "The transformer encoder produces a sequence of vectors."
+ },
+ {
+  "start": 843.55,
+  "end": 847.53,
+  "text": "And the CLIP paper does something a little bit different."
+ },
+ {
+  "start": 847.53,
+  "end": 848.947,
+  "text": "You can average all these vectors."
+ },
+ {
+  "start": 848.947,
+  "end": 850.35,
+  "text": "That gives you a single vector."
+ },
+ {
+  "start": 850.35,
+  "end": 854.23,
+  "text": "But they thought it was better to do attention pooling, which"
+ },
+ {
+  "start": 854.23,
+  "end": 857.83,
+  "text": "means that you take the global average of all the activations,"
+ },
+ {
+  "start": 857.83,
+  "end": 862.63,
+  "text": "but then you also do another round of attention"
+ },
+ {
+  "start": 862.63,
+  "end": 867.59,
+  "text": "with that query against the key and values of each position."
+ },
+ {
+  "start": 867.59,
+  "end": 869.53,
+  "text": "And that gives you another vector,"
+ },
+ {
+  "start": 869.53,
+  "end": 872.31,
+  "text": "which is maybe a little bit more informed"
+ },
+ {
+  "start": 872.31,
+  "end": 877.08,
+  "text": "rather than just a straight up average."
+ },
+ {
+  "start": 877.08,
+  "end": 880.28,
+  "text": "OK, so that's the VIT."
+ },
+ {
+  "start": 880.28,
+  "end": 885.72,
+  "text": "And the CLIP paper found that the best model is what is called"
+ },
+ {
+  "start": 885.72,
+  "end": 886.32,
+  "text": "VIT-L/14."
+ },
+ {
+  "start": 889.36,
+  "end": 894.04,
+  "text": "So to decipher, this is a large VIT."
+ },
+ {
+  "start": 894.04,
+  "end": 898.76,
+  "text": "I think it has 24 layers or so."
+ },
+ {
+  "start": 898.76,
+  "end": 900.88,
+  "text": "Not quite sure about that."
+ },
+ {
+  "start": 900.88,
+  "end": 903.96,
+  "text": "And 14 by 14 patches."
+ },
+ {
+  "start": 903.96,
+  "end": 907.32,
+  "text": "Each patch is RGB, so it has three channels."
+ },
+ {
+  "start": 907.32,
+  "end": 913.42,
+  "text": "And they trained on 336 by 336 resolution images."
+ },
+ {
+  "start": 913.42,
+  "end": 919.12,
+  "text": "Actually, they trained on a lower res"
+ },
+ {
+  "start": 919.12,
+  "end": 923.452,
+  "text": "I guess for speed because high resolution images take longer."
+ },
+ {
+  "start": 923.452,
+  "end": 925.16,
+  "text": "And then for the latter part of training,"
+ },
+ {
+  "start": 925.16,
+  "end": 927.72,
+  "text": "they train on higher res."
+ },
+ {
+  "start": 927.72,
+  "end": 929.0,
+  "text": "Yeah."
+ },
+ {
+  "start": 929.0,
+  "end": 931.04,
+  "text": "For the position embedding, would it"
+ },
+ {
+  "start": 931.04,
+  "end": 933.44,
+  "text": "be more complicated than the task?"
+ },
+ {
+  "start": 933.44,
+  "end": 936.14,
+  "text": "For example, task only has [INAUDIBLE]."
+ },
+ {
+  "start": 940.66,
+  "end": 944.67,
+  "text": "Yeah, so the question is, can you"
+ },
+ {
+  "start": 944.67,
+  "end": 946.42,
+  "text": "be smarter about the positional embeddings"
+ },
+ {
+  "start": 946.42,
+  "end": 951.06,
+  "text": "because this is just linear 0 through 9?"
+ },
+ {
+  "start": 951.06,
+  "end": 954.22,
+  "text": "I think in this paper, they actually-- in the CLIP paper,"
+ },
+ {
+  "start": 954.22,
+  "end": 957.5,
+  "text": "I believe they tried some 2D version of this."
+ },
+ {
+  "start": 957.5,
+  "end": 962.3,
+  "text": "And the one DNA found that it doesn't really matter that much."
+ },
+ {
+  "start": 962.3,
+  "end": 965.44,
+  "text": "I think it's also--"
+ },
+ {
+  "start": 965.44,
+  "end": 969.26,
+  "text": "I always have to take these results with the idea"
+ },
+ {
+  "start": 969.26,
+  "end": 971.48,
+  "text": "that they're interested in classification in mind."
+ },
+ {
+  "start": 971.48,
+  "end": 973.56,
+  "text": "So for classification, maybe it doesn't matter."
+ },
+ {
+  "start": 973.56,
+  "end": 976.54,
+  "text": "Later, we'll see a fancier positional embeddings"
+ },
+ {
+  "start": 976.54,
+  "end": 980.84,
+  "text": "that do take into account the spatial structure."
+ },
+ {
+  "start": 984.74,
+  "end": 990.2,
+  "text": "OK, so the text encoder is a standard transformer."
+ },
+ {
+  "start": 990.2,
+  "end": 993.27,
+  "text": "It's a GPT-2 style transformer since that"
+ },
+ {
+  "start": 993.27,
+  "end": 997.07,
+  "text": "was from the same group that developed GPT-2."
+ },
+ {
+  "start": 997.07,
+  "end": 1002.83,
+  "text": "And in order to get a single vector out of a sequence,"
+ },
+ {
+  "start": 1002.83,
+  "end": 1007.23,
+  "text": "they prepended BOS and appended EOS."
+ },
+ {
+  "start": 1007.23,
+  "end": 1011.39,
+  "text": "And then they took EOS, the activation at the highest layer"
+ },
+ {
+  "start": 1011.39,
+  "end": 1017.83,
+  "text": "as the representation of that whole sequence."
+ },
+ {
+  "start": 1017.83,
+  "end": 1019.29,
+  "text": "OK, so you have the vision encoder."
+ },
+ {
+  "start": 1019.29,
+  "end": 1020.83,
+  "text": "You have the text encoder."
+ },
+ {
+  "start": 1020.83,
+  "end": 1026.349,
+  "text": "And then you can do this process to train."
+ },
+ {
+  "start": 1026.349,
+  "end": 1027.369,
+  "text": "You pick a batch."
+ },
+ {
+  "start": 1027.369,
+  "end": 1028.65,
+  "text": "You encode all the text."
+ },
+ {
+  "start": 1028.65,
+  "end": 1030.25,
+  "text": "You decode all the images."
+ },
+ {
+  "start": 1030.25,
+  "end": 1034.99,
+  "text": "And then you form these two end cross-entropy losses."
+ },
+ {
+  "start": 1034.99,
+  "end": 1038.27,
+  "text": "And then you go from there."
+ },
+ {
+  "start": 1038.27,
+  "end": 1041.71,
+  "text": "OK, so the headline result, which"
+ },
+ {
+  "start": 1041.71,
+  "end": 1045.91,
+  "text": "got a lot of people excited about CLIP back in 2021,"
+ },
+ {
+  "start": 1045.91,
+  "end": 1048.69,
+  "text": "is that on the ImageNet benchmark,"
+ },
+ {
+  "start": 1048.69,
+  "end": 1052.33,
+  "text": "0 shot CLIP outperform a ResNet that was trained"
+ },
+ {
+  "start": 1052.33,
+  "end": 1056.09,
+  "text": "on 1.2 million ImageNet images."
+ },
+ {
+  "start": 1056.09,
+  "end": 1059.27,
+  "text": "So if you think about this, 1.2 ImageNet images,"
+ },
+ {
+  "start": 1059.27,
+  "end": 1064.65,
+  "text": "this was many, many hours of Amazon Mechanical Turk worker"
+ },
+ {
+  "start": 1064.65,
+  "end": 1068.49,
+  "text": "time to do this annotation."
+ },
+ {
+  "start": 1068.49,
+  "end": 1072.89,
+  "text": "And now you have CLIP that was trained on more organic web"
+ },
+ {
+  "start": 1072.89,
+  "end": 1074.41,
+  "text": "data."
+ },
+ {
+  "start": 1074.41,
+  "end": 1077.03,
+  "text": "Of course, this was the labor of a bunch of people on the web."
+ },
+ {
+  "start": 1077.03,
+  "end": 1081.73,
+  "text": "But if you're able to leverage that or existing data already,"
+ },
+ {
+  "start": 1081.73,
+  "end": 1084.65,
+  "text": "then you can just zero shot it."
+ },
+ {
+  "start": 1084.65,
+  "end": 1087.77,
+  "text": "And the zero shot technique is basically"
+ },
+ {
+  "start": 1087.77,
+  "end": 1090.87,
+  "text": "to explain I don't have slide support here."
+ },
+ {
+  "start": 1090.87,
+  "end": 1094.23,
+  "text": "But you take an image and then you have a bunch of text."
+ },
+ {
+  "start": 1094.23,
+  "end": 1096.13,
+  "text": "And then you basically take the dot product"
+ },
+ {
+  "start": 1096.13,
+  "end": 1099.79,
+  "text": "with the various labels and see which one's the highest."
+ },
+ {
+  "start": 1103.63,
+  "end": 1104.13,
+  "text": "Oh, yeah."
+ },
+ {
+  "start": 1104.13,
+  "end": 1104.71,
+  "text": "It is."
+ },
+ {
+  "start": 1104.71,
+  "end": 1105.25,
+  "text": "Sorry."
+ },
+ {
+  "start": 1105.25,
+  "end": 1106.93,
+  "text": "It is on this part of the slide."
+ },
+ {
+  "start": 1106.93,
+  "end": 1108.97,
+  "text": "OK, good point."
+ },
+ {
+  "start": 1108.97,
+  "end": 1112.85,
+  "text": "So this is a zero shot prediction,"
+ },
+ {
+  "start": 1112.85,
+  "end": 1115.45,
+  "text": "where you take an image and then you-- yeah, what I said."
+ },
+ {
+  "start": 1120.87,
+  "end": 1121.41,
+  "text": "Cool."
+ },
+ {
+  "start": 1121.41,
+  "end": 1123.37,
+  "text": "Any questions?"
+ },
+ {
+  "start": 1123.37,
+  "end": 1123.87,
+  "text": "Yeah."
+ },
+ {
+  "start": 1123.87,
+  "end": 1140.47,
+  "text": "[INAUDIBLE]"
+ },
+ {
+  "start": 1140.47,
+  "end": 1142.23,
+  "text": "Yeah, so the question is if you have a dog"
+ },
+ {
+  "start": 1142.23,
+  "end": 1145.27,
+  "text": "and there's maybe other captions that also have dogs,"
+ },
+ {
+  "start": 1145.27,
+  "end": 1148.67,
+  "text": "would that confuse the model?"
+ },
+ {
+  "start": 1148.67,
+  "end": 1153.43,
+  "text": "In general, this process is going to be noisy."
+ },
+ {
+  "start": 1153.43,
+  "end": 1158.172,
+  "text": "It's OK if there's another dog because, on average, it's"
+ },
+ {
+  "start": 1158.172,
+  "end": 1160.13,
+  "text": "unlikely that there's always going to be a dog."
+ },
+ {
+  "start": 1160.13,
+  "end": 1163.95,
+  "text": "Sometimes it's going to be an apple or a cat or something."
+ },
+ {
+  "start": 1163.95,
+  "end": 1169.04,
+  "text": "But also another point is that these images are basically"
+ },
+ {
+  "start": 1169.04,
+  "end": 1174.06,
+  "text": "scraped from images on the web with textual text next to them"
+ },
+ {
+  "start": 1174.06,
+  "end": 1176.86,
+  "text": "or in the alt image."
+ },
+ {
+  "start": 1176.86,
+  "end": 1178.9,
+  "text": "And so they're extremely noisy."
+ },
+ {
+  "start": 1178.9,
+  "end": 1181.28,
+  "text": "There's been studies that look at when"
+ },
+ {
+  "start": 1181.28,
+  "end": 1185.16,
+  "text": "you have a caption of an image, it doesn't necessarily just"
+ },
+ {
+  "start": 1185.16,
+  "end": 1188.547,
+  "text": "verbatim say what's in the image."
+ },
+ {
+  "start": 1188.547,
+  "end": 1190.38,
+  "text": "Because if you have an image and it's a dog,"
+ },
+ {
+  "start": 1190.38,
+  "end": 1192.76,
+  "text": "you don't need to say a dog."
+ },
+ {
+  "start": 1192.76,
+  "end": 1195.22,
+  "text": "So this process is very noisy."
+ },
+ {
+  "start": 1195.22,
+  "end": 1202.517,
+  "text": "So it's maybe somewhat surprising but also interesting"
+ },
+ {
+  "start": 1202.517,
+  "end": 1203.1,
+  "text": "that it works."
+ },
+ {
+  "start": 1203.1,
+  "end": 1206.06,
+  "text": "I mean, there was a lot of data filtering that is needed."
+ },
+ {
+  "start": 1206.06,
+  "end": 1209.3,
+  "text": "So if you take arbitrary images on and text on that web,"
+ },
+ {
+  "start": 1209.3,
+  "end": 1212.92,
+  "text": "it's probably going to be too way too noisy."
+ },
+ {
+  "start": 1212.92,
+  "end": 1215.84,
+  "text": "One other thing to note, which relates"
+ },
+ {
+  "start": 1215.84,
+  "end": 1218.12,
+  "text": "to a point I'll come back to at the very end,"
+ },
+ {
+  "start": 1218.12,
+  "end": 1221.56,
+  "text": "is they also try this alternative where"
+ },
+ {
+  "start": 1221.56,
+  "end": 1224.18,
+  "text": "instead of doing this ranking, they can"
+ },
+ {
+  "start": 1224.18,
+  "end": 1226.52,
+  "text": "predict a text from the images."
+ },
+ {
+  "start": 1226.52,
+  "end": 1228.1,
+  "text": "So they can set an objective where"
+ },
+ {
+  "start": 1228.1,
+  "end": 1230.18,
+  "text": "they try to take the images and predict"
+ },
+ {
+  "start": 1230.18,
+  "end": 1238.98,
+  "text": "the text, either as a bag of words or as a language model."
+ },
+ {
+  "start": 1238.98,
+  "end": 1243.78,
+  "text": "And they show that maybe, I don't know, somewhat"
+ },
+ {
+  "start": 1243.78,
+  "end": 1247.08,
+  "text": "surprisingly, that if you use a stronger model,"
+ },
+ {
+  "start": 1247.08,
+  "end": 1249.5,
+  "text": "it actually does worse or at least"
+ },
+ {
+  "start": 1249.5,
+  "end": 1255.98,
+  "text": "is less efficient compared to using bag of words, CLIP."
+ },
+ {
+  "start": 1255.98,
+  "end": 1260.62,
+  "text": "So this is saying that--"
+ },
+ {
+  "start": 1260.62,
+  "end": 1265.42,
+  "text": "I think saying that for actually the representations"
+ },
+ {
+  "start": 1265.42,
+  "end": 1269.12,
+  "text": "that you're trying to learn-- or, again, this ImageNet accuracy."
+ },
+ {
+  "start": 1269.12,
+  "end": 1270.9,
+  "text": "So it's classification."
+ },
+ {
+  "start": 1270.9,
+  "end": 1275.18,
+  "text": "Actually modeling the exact token sequences of the caption"
+ },
+ {
+  "start": 1275.18,
+  "end": 1280.34,
+  "text": "isn't so important for getting the rough representation"
+ },
+ {
+  "start": 1280.34,
+  "end": 1281.2,
+  "text": "of the image."
+ },
+ {
+  "start": 1284.484,
+  "end": 1289.67,
+  "text": "OK, we'll come back to this point at the end."
+ },
+ {
+  "start": 1289.67,
+  "end": 1292.43,
+  "text": "So what did we learned so far?"
+ },
+ {
+  "start": 1292.43,
+  "end": 1295.55,
+  "text": "So we've encoded images using CLIP."
+ },
+ {
+  "start": 1295.55,
+  "end": 1298.99,
+  "text": "And it captures the semantics of the image"
+ },
+ {
+  "start": 1298.99,
+  "end": 1300.65,
+  "text": "because it's paired with text."
+ },
+ {
+  "start": 1300.65,
+  "end": 1304.83,
+  "text": "And generally, text talks about the semantics."
+ },
+ {
+  "start": 1304.83,
+  "end": 1308.03,
+  "text": "It is important to note that the design decisions here are"
+ },
+ {
+  "start": 1308.03,
+  "end": 1310.19,
+  "text": "based on image classification."
+ },
+ {
+  "start": 1310.19,
+  "end": 1313.15,
+  "text": "So it's not very fine-grained."
+ },
+ {
+  "start": 1313.15,
+  "end": 1316.43,
+  "text": "But yet, it's still, as we'll see, serves"
+ },
+ {
+  "start": 1316.43,
+  "end": 1318.99,
+  "text": "as a robust starting point for everything"
+ },
+ {
+  "start": 1318.99,
+  "end": 1321.35,
+  "text": "we're going to do later."
+ },
+ {
+  "start": 1321.35,
+  "end": 1327.75,
+  "text": "One technical downside of CLIP is that it does require large"
+ },
+ {
+  "start": 1327.75,
+  "end": 1330.51,
+  "text": "batch sizes, like 30,000."
+ },
+ {
+  "start": 1330.51,
+  "end": 1332.35,
+  "text": "If you have a batch size of 1, clearly, it"
+ },
+ {
+  "start": 1332.35,
+  "end": 1334.83,
+  "text": "doesn't work, or even 10, it doesn't work."
+ },
+ {
+  "start": 1334.83,
+  "end": 1337.59,
+  "text": "And furthermore, the softmax operation"
+ },
+ {
+  "start": 1337.59,
+  "end": 1340.29,
+  "text": "operates over the full batch."
+ },
+ {
+  "start": 1340.29,
+  "end": 1342.97,
+  "text": "So it's not really very decomposable."
+ },
+ {
+  "start": 1342.97,
+  "end": 1345.09,
+  "text": "Whereas if you think about normal language model"
+ },
+ {
+  "start": 1345.09,
+  "end": 1350.25,
+  "text": "training, a batch of examples, all the sequences parallelize"
+ },
+ {
+  "start": 1350.25,
+  "end": 1357.81,
+  "text": "and you just do aggregation at the end."
+ },
+ {
+  "start": 1357.81,
+  "end": 1362.93,
+  "text": "So this point will be addressed by another paper from Google"
+ },
+ {
+  "start": 1362.93,
+  "end": 1365.93,
+  "text": "that came out called SigLIP."
+ },
+ {
+  "start": 1365.93,
+  "end": 1369.77,
+  "text": "And so think about this as basically an improved version"
+ },
+ {
+  "start": 1369.77,
+  "end": 1370.43,
+  "text": "of CLIP."
+ },
+ {
+  "start": 1370.43,
+  "end": 1376.49,
+  "text": "So it stands for Sigmoid Loss for Language Image Pre-training."
+ },
+ {
+  "start": 1376.49,
+  "end": 1380.89,
+  "text": "And here, the main difference is that CLIP does"
+ },
+ {
+  "start": 1380.89,
+  "end": 1382.83,
+  "text": "multi-class classification."
+ },
+ {
+  "start": 1382.83,
+  "end": 1385.25,
+  "text": "It says, I have this aligned text and image."
+ },
+ {
+  "start": 1385.25,
+  "end": 1389.17,
+  "text": "And I'm going to say this is positive against all"
+ },
+ {
+  "start": 1389.17,
+  "end": 1391.89,
+  "text": "the other alternative images or against all"
+ },
+ {
+  "start": 1391.89,
+  "end": 1393.93,
+  "text": "the alternative text."
+ },
+ {
+  "start": 1393.93,
+  "end": 1396.27,
+  "text": "SigLIP, in some sense, is a lot simpler."
+ },
+ {
+  "start": 1396.27,
+  "end": 1401.07,
+  "text": "It basically says for any given image text pair,"
+ },
+ {
+  "start": 1401.07,
+  "end": 1403.19,
+  "text": "are they aligned or not?"
+ },
+ {
+  "start": 1403.19,
+  "end": 1407.03,
+  "text": "So if I reference this diagram up here,"
+ },
+ {
+  "start": 1407.03,
+  "end": 1408.87,
+  "text": "it's basically binary classification"
+ },
+ {
+  "start": 1408.87,
+  "end": 1411.03,
+  "text": "where the diagonals are positive examples"
+ },
+ {
+  "start": 1411.03,
+  "end": 1413.63,
+  "text": "and the diagonal are negative examples."
+ },
+ {
+  "start": 1413.63,
+  "end": 1416.07,
+  "text": "That's it."
+ },
+ {
+  "start": 1416.07,
+  "end": 1419.19,
+  "text": "So here's the algorithm."
+ },
+ {
+  "start": 1419.19,
+  "end": 1420.93,
+  "text": "You take the embeddings."
+ },
+ {
+  "start": 1420.93,
+  "end": 1421.97,
+  "text": "You normalize."
+ },
+ {
+  "start": 1421.97,
+  "end": 1424.23,
+  "text": "You take the dot product as usual."
+ },
+ {
+  "start": 1424.23,
+  "end": 1430.39,
+  "text": "But now you're forming the labels which are minus 1"
+ },
+ {
+  "start": 1430.39,
+  "end": 1433.95,
+  "text": "on the off-diagonal, and diagonals you have one."
+ },
+ {
+  "start": 1433.95,
+  "end": 1440.03,
+  "text": "And then you do log_sigmoid."
+ },
+ {
+  "start": 1440.03,
+  "end": 1442.05,
+  "text": "So the objective is very simple."
+ },
+ {
+  "start": 1442.05,
+  "end": 1443.275,
+  "text": "Yeah."
+ },
+ {
+  "start": 1443.275,
+  "end": 1457.32,
+  "text": "[INAUDIBLE]"
+ },
+ {
+  "start": 1457.32,
+  "end": 1459.0,
+  "text": "Yeah, so the question is, does this"
+ },
+ {
+  "start": 1459.0,
+  "end": 1463.68,
+  "text": "require any sophisticated sampling strategies?"
+ },
+ {
+  "start": 1463.68,
+  "end": 1466.12,
+  "text": "At least in the initial paper, they"
+ },
+ {
+  "start": 1466.12,
+  "end": 1471.28,
+  "text": "were just operating on literally the same type of matrix."
+ },
+ {
+  "start": 1471.28,
+  "end": 1474.52,
+  "text": "You could imagine I think you're probably thinking in general"
+ },
+ {
+  "start": 1474.52,
+  "end": 1477.84,
+  "text": "for these contrastive methods."
+ },
+ {
+  "start": 1477.84,
+  "end": 1480.28,
+  "text": "The negative examples need to be-- sometimes"
+ },
+ {
+  "start": 1480.28,
+  "end": 1482.5,
+  "text": "you need to balance the positives and the negatives,"
+ },
+ {
+  "start": 1482.5,
+  "end": 1485.16,
+  "text": "or the negatives need to be like tight negatives"
+ },
+ {
+  "start": 1485.16,
+  "end": 1486.7,
+  "text": "so that you're not biased."
+ },
+ {
+  "start": 1486.7,
+  "end": 1489.18,
+  "text": "But at least in the initial version,"
+ },
+ {
+  "start": 1489.18,
+  "end": 1494.28,
+  "text": "this was fairly straightforward."
+ },
+ {
+  "start": 1494.28,
+  "end": 1501.903,
+  "text": "So to speak about the data, this was done at Google."
+ },
+ {
+  "start": 1501.903,
+  "end": 1502.82,
+  "text": "This was the data set."
+ },
+ {
+  "start": 1502.82,
+  "end": 1506.28,
+  "text": "They used another paper, which was another language image"
+ },
+ {
+  "start": 1506.28,
+  "end": 1511.88,
+  "text": "model around 2022, which got a WebLI data set with order"
+ },
+ {
+  "start": 1511.88,
+  "end": 1514.66,
+  "text": "billion image text pairs."
+ },
+ {
+  "start": 1514.66,
+  "end": 1516.48,
+  "text": "They also did some extra work."
+ },
+ {
+  "start": 1516.48,
+  "end": 1518.4,
+  "text": "For example, images that have text in them."
+ },
+ {
+  "start": 1518.4,
+  "end": 1519.62,
+  "text": "They did OCR."
+ },
+ {
+  "start": 1519.62,
+  "end": 1523.14,
+  "text": "And that's another way to form text image pairs"
+ },
+ {
+  "start": 1523.14,
+  "end": 1524.64,
+  "text": "and did some filtering."
+ },
+ {
+  "start": 1524.64,
+  "end": 1526.92,
+  "text": "This was multilingual."
+ },
+ {
+  "start": 1526.92,
+  "end": 1533.78,
+  "text": "The main point of this paper was that it was much more"
+ },
+ {
+  "start": 1533.78,
+  "end": 1536.46,
+  "text": "efficient to train than CLIP."
+ },
+ {
+  "start": 1536.46,
+  "end": 1542.54,
+  "text": "So CLIP was trained 10 days on 256 TPUv3,"
+ },
+ {
+  "start": 1542.54,
+  "end": 1546.26,
+  "text": "and CLIP was five days on 32v4s."
+ },
+ {
+  "start": 1546.26,
+  "end": 1548.14,
+  "text": "And you might think, oh, v4s actually"
+ },
+ {
+  "start": 1548.14,
+  "end": 1549.7,
+  "text": "should be faster than v3."
+ },
+ {
+  "start": 1549.7,
+  "end": 1553.14,
+  "text": "In terms of flops per second, they're actually not."
+ },
+ {
+  "start": 1553.14,
+  "end": 1556.14,
+  "text": "They're better because you can put more of them in a pod"
+ },
+ {
+  "start": 1556.14,
+  "end": 1557.56,
+  "text": "and the interconnect is better."
+ },
+ {
+  "start": 1557.56,
+  "end": 1564.5,
+  "text": "But at this scale, it's really actually not faster."
+ },
+ {
+  "start": 1564.5,
+  "end": 1569.66,
+  "text": "Actually, 60% slower or something."
+ },
+ {
+  "start": 1569.66,
+  "end": 1575.7,
+  "text": "So the way that this is faster-- and, of course,"
+ },
+ {
+  "start": 1575.7,
+  "end": 1577.16,
+  "text": "I think CLIP probably did not try"
+ },
+ {
+  "start": 1577.16,
+  "end": 1581.18,
+  "text": "to optimize the code for the maximum throughput."
+ },
+ {
+  "start": 1581.18,
+  "end": 1584.56,
+  "text": "It was just let's get this thing to work."
+ },
+ {
+  "start": 1584.56,
+  "end": 1590.64,
+  "text": "But the SigLIP paper showed that you can parallelize this"
+ },
+ {
+  "start": 1590.64,
+  "end": 1591.42,
+  "text": "as follows."
+ },
+ {
+  "start": 1591.42,
+  "end": 1596.5,
+  "text": "So you have-- basically, if you recall your systems lecture,"
+ },
+ {
+  "start": 1596.5,
+  "end": 1601.4,
+  "text": "so this is you can think about it as DDP if you like,"
+ },
+ {
+  "start": 1601.4,
+  "end": 1611.88,
+  "text": "where each device stores a subset of the image text pairs."
+ },
+ {
+  "start": 1611.88,
+  "end": 1615.78,
+  "text": "However, there's interactions between the examples,"
+ },
+ {
+  "start": 1615.78,
+  "end": 1618.36,
+  "text": "unlike in language model training, where everything just"
+ },
+ {
+  "start": 1618.36,
+  "end": 1619.44,
+  "text": "factors."
+ },
+ {
+  "start": 1619.44,
+  "end": 1622.56,
+  "text": "So in the first pass, each device"
+ },
+ {
+  "start": 1622.56,
+  "end": 1629.84,
+  "text": "just computes all the losses on whatever image text"
+ },
+ {
+  "start": 1629.84,
+  "end": 1631.41,
+  "text": "pairs it has locally."
+ },
+ {
+  "start": 1635.296,
+  "end": 1639.15,
+  "text": "And then you send the text."
+ },
+ {
+  "start": 1639.15,
+  "end": 1644.57,
+  "text": "So basically, device 1 gets T5 through T8."
+ },
+ {
+  "start": 1644.57,
+  "end": 1647.27,
+  "text": "And now it's able to compute the negatives here."
+ },
+ {
+  "start": 1647.27,
+  "end": 1650.11,
+  "text": "And then it gets T9 through T12."
+ },
+ {
+  "start": 1650.11,
+  "end": 1655.29,
+  "text": "So you rotate around until you cover all the off-diagonal block"
+ },
+ {
+  "start": 1655.29,
+  "end": 1658.21,
+  "text": "entries."
+ },
+ {
+  "start": 1658.21,
+  "end": 1662.85,
+  "text": "Another thing that was nice about SigLIP"
+ },
+ {
+  "start": 1662.85,
+  "end": 1668.25,
+  "text": "is that you effectively decoupling batch size from the loss."
+ },
+ {
+  "start": 1668.25,
+  "end": 1671.43,
+  "text": "Whereas in CLIP, the loss is tied to the batch size."
+ },
+ {
+  "start": 1671.43,
+  "end": 1674.93,
+  "text": "If you change the batch size, it's a different loss function."
+ },
+ {
+  "start": 1674.93,
+  "end": 1679.01,
+  "text": "So they were able to experiment with much smaller batch sizes"
+ },
+ {
+  "start": 1679.01,
+  "end": 1680.89,
+  "text": "less than 16K."
+ },
+ {
+  "start": 1680.89,
+  "end": 1683.69,
+  "text": "And in that regime, it's much better than CLIP"
+ },
+ {
+  "start": 1683.69,
+  "end": 1685.21,
+  "text": "because the loss function, if you"
+ },
+ {
+  "start": 1685.21,
+  "end": 1690.49,
+  "text": "have too many too small a batch size, it just degrades."
+ },
+ {
+  "start": 1690.49,
+  "end": 1696.45,
+  "text": "Whereas for smaller batch size for CLIP, you have more variance"
+ },
+ {
+  "start": 1696.45,
+  "end": 1698.77,
+  "text": "but it's the same in expectation."
+ },
+ {
+  "start": 1698.77,
+  "end": 1701.03,
+  "text": "It's the same loss."
+ },
+ {
+  "start": 1701.03,
+  "end": 1704.73,
+  "text": "They also say, well, you can go up to much larger batch sizes."
+ },
+ {
+  "start": 1704.73,
+  "end": 1706.39,
+  "text": "But that doesn't really help."
+ },
+ {
+  "start": 1706.39,
+  "end": 1710.67,
+  "text": "And we saw that critical batch sizes at some limit."
+ },
+ {
+  "start": 1710.67,
+  "end": 1714.37,
+  "text": "And 32K was essentially their critical batch size."
+ },
+ {
+  "start": 1717.07,
+  "end": 1720.67,
+  "text": "OK, so now we have CLIP and SigLIP."
+ },
+ {
+  "start": 1720.67,
+  "end": 1724.79,
+  "text": "These are image encoders that take an image, in this version,"
+ },
+ {
+  "start": 1724.79,
+  "end": 1729.51,
+  "text": "just a fixed size image, 336 by 336, let's say, and maps it"
+ },
+ {
+  "start": 1729.51,
+  "end": 1736.79,
+  "text": "into a vector, OK, which contains some semantics."
+ },
+ {
+  "start": 1736.79,
+  "end": 1743.47,
+  "text": "So now let's start building VLMs, Vision Language Models."
+ },
+ {
+  "start": 1743.47,
+  "end": 1748.0,
+  "text": "And I'm going to talk about two families of models, LLaVA"
+ },
+ {
+  "start": 1748.0,
+  "end": 1749.92,
+  "text": "and Qwen."
+ },
+ {
+  "start": 1749.92,
+  "end": 1753.83,
+  "text": "The two are very similar in the broad template."
+ },
+ {
+  "start": 1753.83,
+  "end": 1755.58,
+  "text": "There are some details that are different,"
+ },
+ {
+  "start": 1755.58,
+  "end": 1758.8,
+  "text": "which we'll go through, and the basic idea"
+ },
+ {
+  "start": 1758.8,
+  "end": 1760.76,
+  "text": "is that we're going to take these embeddings"
+ },
+ {
+  "start": 1760.76,
+  "end": 1763.64,
+  "text": "and then just inject them into our language model."
+ },
+ {
+  "start": 1763.64,
+  "end": 1766.84,
+  "text": "So this is going to be more of a flavor of mid-training"
+ },
+ {
+  "start": 1766.84,
+  "end": 1770.42,
+  "text": "or post-training, where we take an existing image encoder."
+ },
+ {
+  "start": 1770.42,
+  "end": 1773.04,
+  "text": "We take an existing LLM, and then we're"
+ },
+ {
+  "start": 1773.04,
+  "end": 1777.36,
+  "text": "going to stitch it together rather than training something"
+ },
+ {
+  "start": 1777.36,
+  "end": 1780.68,
+  "text": "from scratch."
+ },
+ {
+  "start": 1780.68,
+  "end": 1786.68,
+  "text": "So LLaVA paper came out in 2023."
+ },
+ {
+  "start": 1786.68,
+  "end": 1791.08,
+  "text": "And this got people excited because around this time,"
+ },
+ {
+  "start": 1791.08,
+  "end": 1795.76,
+  "text": "the closed models, like GPT, I think it was GPT-4,"
+ },
+ {
+  "start": 1795.76,
+  "end": 1798.48,
+  "text": "was able to do visual reasoning."
+ },
+ {
+  "start": 1798.48,
+  "end": 1802.24,
+  "text": "And they were able to show that they could do"
+ },
+ {
+  "start": 1802.24,
+  "end": 1803.66,
+  "text": "some visual reasoning as well."
+ },
+ {
+  "start": 1803.66,
+  "end": 1807.32,
+  "text": "It wasn't as good as GPT-4, of course,"
+ },
+ {
+  "start": 1807.32,
+  "end": 1809.38,
+  "text": "but I think it was an open model and people"
+ },
+ {
+  "start": 1809.38,
+  "end": 1812.26,
+  "text": "got to see what went under the hood."
+ },
+ {
+  "start": 1812.26,
+  "end": 1819.78,
+  "text": "So for VLMs, there's essentially a few pieces here."
+ },
+ {
+  "start": 1819.78,
+  "end": 1821.34,
+  "text": "There's the vision encoder."
+ },
+ {
+  "start": 1821.34,
+  "end": 1823.26,
+  "text": "They use CLIP here."
+ },
+ {
+  "start": 1823.26,
+  "end": 1826.74,
+  "text": "For the text decoder, they use a language model called Vicuna,"
+ },
+ {
+  "start": 1826.74,
+  "end": 1830.5,
+  "text": "which is the first Llama model that was fine-tuned"
+ },
+ {
+  "start": 1830.5,
+  "end": 1833.04,
+  "text": "on some shared GPT conversations."
+ },
+ {
+  "start": 1833.04,
+  "end": 1836.74,
+  "text": "So these are conversations that people have with ChatGPT"
+ },
+ {
+  "start": 1836.74,
+  "end": 1838.4,
+  "text": "and share them on this website."
+ },
+ {
+  "start": 1838.4,
+  "end": 1842.34,
+  "text": "I don't think this is up anymore."
+ },
+ {
+  "start": 1842.34,
+  "end": 1850.08,
+  "text": "So the data that they used was based on MS COCO."
+ },
+ {
+  "start": 1850.08,
+  "end": 1851.7,
+  "text": "So this was an annotated data set"
+ },
+ {
+  "start": 1851.7,
+  "end": 1855.3,
+  "text": "where they had Mechanical Turk workers go and annotate"
+ },
+ {
+  "start": 1855.3,
+  "end": 1859.02,
+  "text": "a bunch of images with bounding boxes and captions describing"
+ },
+ {
+  "start": 1859.02,
+  "end": 1861.26,
+  "text": "what was in the image."
+ },
+ {
+  "start": 1861.26,
+  "end": 1867.02,
+  "text": "So they basically synthesized a data set for their model."
+ },
+ {
+  "start": 1867.02,
+  "end": 1871.6,
+  "text": "So they prompted GPT-4 with the captions or the detected objects"
+ },
+ {
+  "start": 1871.6,
+  "end": 1875.8,
+  "text": "and GPT-4 to generate questions or conversations."
+ },
+ {
+  "start": 1875.8,
+  "end": 1880.8,
+  "text": "For example, this is an image in the MS COCO data set."
+ },
+ {
+  "start": 1880.8,
+  "end": 1884.66,
+  "text": "This was an annotated caption done by a human."
+ },
+ {
+  "start": 1884.66,
+  "end": 1891.12,
+  "text": "And also here is also annotated by a human."
+ },
+ {
+  "start": 1891.12,
+  "end": 1897.12,
+  "text": "And then you ask GPT-4, generate me a conversation"
+ },
+ {
+  "start": 1897.12,
+  "end": 1901.08,
+  "text": "and you might get a question and an answer."
+ },
+ {
+  "start": 1901.08,
+  "end": 1904.78,
+  "text": "You might ask GPT-4 generate me a detailed description."
+ },
+ {
+  "start": 1904.78,
+  "end": 1907.66,
+  "text": "It generates something, I guess, similar to the caption."
+ },
+ {
+  "start": 1907.66,
+  "end": 1910.98,
+  "text": "And then you can ask GPT-4 to generate complex reasoning."
+ },
+ {
+  "start": 1910.98,
+  "end": 1914.532,
+  "text": "And it does something like that."
+ },
+ {
+  "start": 1914.532,
+  "end": 1923.39,
+  "text": "OK, so those are synthesized data, 158,000 examples."
+ },
+ {
+  "start": 1923.39,
+  "end": 1926.31,
+  "text": "And then they trained a model on this."
+ },
+ {
+  "start": 1926.31,
+  "end": 1932.61,
+  "text": "So the model-- so they use CLIP, in particular,"
+ },
+ {
+  "start": 1932.61,
+  "end": 1938.09,
+  "text": "the highest performing CLIP version, VITL/14."
+ },
+ {
+  "start": 1938.09,
+  "end": 1941.77,
+  "text": "So 14 by 14 patches."
+ },
+ {
+  "start": 1941.77,
+  "end": 1945.85,
+  "text": "And then they-- let's just look at this image."
+ },
+ {
+  "start": 1945.85,
+  "end": 1948.11,
+  "text": "So they take images."
+ },
+ {
+  "start": 1948.11,
+  "end": 1950.41,
+  "text": "They send it through this vision encoder CLIP."
+ },
+ {
+  "start": 1950.41,
+  "end": 1952.41,
+  "text": "That gives you a vector."
+ },
+ {
+  "start": 1952.41,
+  "end": 1955.99,
+  "text": "But this vector isn't really in the same space,"
+ },
+ {
+  "start": 1955.99,
+  "end": 1958.77,
+  "text": "so to speak, as the text."
+ },
+ {
+  "start": 1958.77,
+  "end": 1963.33,
+  "text": "So then they multiply by a matrix W"
+ },
+ {
+  "start": 1963.33,
+  "end": 1967.89,
+  "text": "to get another vector, which is in the same space as the text"
+ },
+ {
+  "start": 1967.89,
+  "end": 1969.01,
+  "text": "embeddings."
+ },
+ {
+  "start": 1969.01,
+  "end": 1972.33,
+  "text": "And for text, you basically just use your standard embeddings"
+ },
+ {
+  "start": 1972.33,
+  "end": 1974.85,
+  "text": "to get vectors."
+ },
+ {
+  "start": 1974.85,
+  "end": 1978.81,
+  "text": "So what's basically happening is that the text gets encoded"
+ },
+ {
+  "start": 1978.81,
+  "end": 1981.27,
+  "text": "into these vectors and the image also gets"
+ },
+ {
+  "start": 1981.27,
+  "end": 1984.03,
+  "text": "encoded into these vectors."
+ },
+ {
+  "start": 1984.03,
+  "end": 1986.67,
+  "text": "And then this whole sequence of vectors"
+ },
+ {
+  "start": 1986.67,
+  "end": 1991.682,
+  "text": "just goes through a standard transformer and produces output."
+ },
+ {
+  "start": 1991.682,
+  "end": 1994.55,
+  "text": "OK, so we're in some sense converting these images"
+ },
+ {
+  "start": 1994.55,
+  "end": 1998.75,
+  "text": "into textual tokens."
+ },
+ {
+  "start": 1998.75,
+  "end": 2001.77,
+  "text": "So I can leverage the pre-trained language model."
+ },
+ {
+  "start": 2004.51,
+  "end": 2010.89,
+  "text": "So to train this model, they do it in two stages."
+ },
+ {
+  "start": 2010.89,
+  "end": 2013.67,
+  "text": "The first stage is that they freeze the vision"
+ },
+ {
+  "start": 2013.67,
+  "end": 2019.07,
+  "text": "encoder and the language model and only train this matrix W."
+ },
+ {
+  "start": 2019.07,
+  "end": 2022.15,
+  "text": "And this is what they call the alignment phase, which"
+ },
+ {
+  "start": 2022.15,
+  "end": 2026.83,
+  "text": "is essentially making sure that the image gets"
+ },
+ {
+  "start": 2026.83,
+  "end": 2030.09,
+  "text": "mapped into the same space."
+ },
+ {
+  "start": 2030.09,
+  "end": 2034.89,
+  "text": "Because if you just use a random W,"
+ },
+ {
+  "start": 2034.89,
+  "end": 2038.52,
+  "text": "these images are not going to be--"
+ },
+ {
+  "start": 2038.52,
+  "end": 2040.32,
+  "text": "I mean, certainly, they're not embeddings,"
+ },
+ {
+  "start": 2040.32,
+  "end": 2043.76,
+  "text": "representing any natural language token."
+ },
+ {
+  "start": 2043.76,
+  "end": 2046.04,
+  "text": "So the goal of training W is that they"
+ },
+ {
+  "start": 2046.04,
+  "end": 2049.84,
+  "text": "look like natural language token embeddings."
+ },
+ {
+  "start": 2049.84,
+  "end": 2052.84,
+  "text": "And the second stage is that they now"
+ },
+ {
+  "start": 2052.84,
+  "end": 2055.0,
+  "text": "still freeze a vision encoder and then train"
+ },
+ {
+  "start": 2055.0,
+  "end": 2056.219,
+  "text": "W and the language model."
+ },
+ {
+  "start": 2056.219,
+  "end": 2062.52,
+  "text": "So they're fine-tuning the language model on their data."
+ },
+ {
+  "start": 2062.52,
+  "end": 2066.04,
+  "text": "So remember, their data is basically here's an image"
+ },
+ {
+  "start": 2066.04,
+  "end": 2068.4,
+  "text": "and here is a conversation or a description"
+ },
+ {
+  "start": 2068.4,
+  "end": 2072.08,
+  "text": "or a complex reasoning example."
+ },
+ {
+  "start": 2072.08,
+  "end": 2077.96,
+  "text": "So this is all image plus text to text."
+ },
+ {
+  "start": 2077.96,
+  "end": 2083.44,
+  "text": "OK, so this is one example from their paper."
+ },
+ {
+  "start": 2083.44,
+  "end": 2084.659,
+  "text": "It's interesting."
+ },
+ {
+  "start": 2084.659,
+  "end": 2088.543,
+  "text": "So you have an input image and a conversation."
+ },
+ {
+  "start": 2088.543,
+  "end": 2090.46,
+  "text": "The user says what's unusual about this image."
+ },
+ {
+  "start": 2090.46,
+  "end": 2094.239,
+  "text": "And their model is able to tell you that you don't usually"
+ },
+ {
+  "start": 2094.239,
+  "end": 2097.38,
+  "text": "iron on the back of a minivan."
+ },
+ {
+  "start": 2097.38,
+  "end": 2100.9,
+  "text": "And they also make a point that their model is pretty good"
+ },
+ {
+  "start": 2100.9,
+  "end": 2106.94,
+  "text": "because even if your user prompt is not really"
+ },
+ {
+  "start": 2106.94,
+  "end": 2112.18,
+  "text": "prompting the unusualness, it still talks about it, whereas--"
+ },
+ {
+  "start": 2112.18,
+  "end": 2114.52,
+  "text": "GPT-4, obviously, is able to do this,"
+ },
+ {
+  "start": 2114.52,
+  "end": 2120.65,
+  "text": "but other models at the time were not able to."
+ },
+ {
+  "start": 2120.65,
+  "end": 2125.2,
+  "text": "OK, any questions about LLaVA?"
+ },
+ {
+  "start": 2125.2,
+  "end": 2129.1,
+  "text": "OK, so that was 2023."
+ },
+ {
+  "start": 2129.1,
+  "end": 2135.8,
+  "text": "And I'm going to skip forward to LLaVA OneVision, which is 2024."
+ },
+ {
+  "start": 2135.8,
+  "end": 2139.34,
+  "text": "There is a sequence of papers after the LLaVA paper came out"
+ },
+ {
+  "start": 2139.34,
+  "end": 2144.22,
+  "text": "of LLaVA 1.5, LLaVA-Next."
+ },
+ {
+  "start": 2144.22,
+  "end": 2147.08,
+  "text": "But I'll capture all of these innovations, I think,"
+ },
+ {
+  "start": 2147.08,
+  "end": 2151.1,
+  "text": "in what I'll describe next."
+ },
+ {
+  "start": 2151.1,
+  "end": 2155.0,
+  "text": "The main thing that they did is it's essentially"
+ },
+ {
+  "start": 2155.0,
+  "end": 2156.96,
+  "text": "the same recipe, but they are trying"
+ },
+ {
+  "start": 2156.96,
+  "end": 2159.12,
+  "text": "to be more ambitious in terms of the types"
+ },
+ {
+  "start": 2159.12,
+  "end": 2162.88,
+  "text": "of multimodal applications they could do."
+ },
+ {
+  "start": 2162.88,
+  "end": 2166.68,
+  "text": "So they were able to handle multiple images and videos."
+ },
+ {
+  "start": 2166.68,
+  "end": 2170.06,
+  "text": "So here's the same diagram."
+ },
+ {
+  "start": 2170.06,
+  "end": 2175.4,
+  "text": "Now they can take a single image or multiple images"
+ },
+ {
+  "start": 2175.4,
+  "end": 2179.52,
+  "text": "or a video, which is essentially a sequence of images"
+ },
+ {
+  "start": 2179.52,
+  "end": 2183.92,
+  "text": "corresponding to a sampling of the frames."
+ },
+ {
+  "start": 2183.92,
+  "end": 2186.06,
+  "text": "And here are the vision encoder."
+ },
+ {
+  "start": 2186.06,
+  "end": 2188.92,
+  "text": "They upgrade it to SigLIP."
+ },
+ {
+  "start": 2188.92,
+  "end": 2191.98,
+  "text": "The text decoder, they use Qwen-2 now,"
+ },
+ {
+  "start": 2191.98,
+  "end": 2196.44,
+  "text": "which was probably the best language model"
+ },
+ {
+  "start": 2196.44,
+  "end": 2198.4,
+  "text": "that was out at that time."
+ },
+ {
+  "start": 2198.4,
+  "end": 2202.16,
+  "text": "And then for the projector or the adapter, which"
+ },
+ {
+  "start": 2202.16,
+  "end": 2206.2,
+  "text": "is the thing that takes the output of the vision encoder"
+ },
+ {
+  "start": 2206.2,
+  "end": 2209.68,
+  "text": "and turns it into the input of the language model"
+ },
+ {
+  "start": 2209.68,
+  "end": 2215.17,
+  "text": "is a two-layer MLP instead of a linear projection."
+ },
+ {
+  "start": 2215.17,
+  "end": 2218.73,
+  "text": "OK, so it's like you have a system"
+ },
+ {
+  "start": 2218.73,
+  "end": 2221.09,
+  "text": "and you're just upgrading the parts."
+ },
+ {
+  "start": 2221.09,
+  "end": 2225.37,
+  "text": "But it's the same rough system."
+ },
+ {
+  "start": 2225.37,
+  "end": 2230.21,
+  "text": "So let's talk a little bit about data processing."
+ },
+ {
+  "start": 2230.21,
+  "end": 2234.29,
+  "text": "So one thing that they wanted to do is to do OCR."
+ },
+ {
+  "start": 2234.29,
+  "end": 2236.49,
+  "text": "And the thing with OCR is that you"
+ },
+ {
+  "start": 2236.49,
+  "end": 2240.13,
+  "text": "need to preserve very fine-grained information."
+ },
+ {
+  "start": 2240.13,
+  "end": 2244.73,
+  "text": "Otherwise, a J looks like an I, and that's not good."
+ },
+ {
+  "start": 2244.73,
+  "end": 2250.17,
+  "text": "So remember that CLIP resizes and crops to 336 by 336."
+ },
+ {
+  "start": 2250.17,
+  "end": 2252.93,
+  "text": "And clearly, if you have a document"
+ },
+ {
+  "start": 2252.93,
+  "end": 2256.69,
+  "text": "and you crop to 336 by 336, you can't read it."
+ },
+ {
+  "start": 2256.69,
+  "end": 2260.73,
+  "text": "So their solution is this idea called"
+ },
+ {
+  "start": 2260.73,
+  "end": 2266.21,
+  "text": "AnyRes, which was actually introduced in the LLaVA 1.5 paper."
+ },
+ {
+  "start": 2266.21,
+  "end": 2269.87,
+  "text": "And the idea is basically, I mean,"
+ },
+ {
+  "start": 2269.87,
+  "end": 2271.15,
+  "text": "it's fairly straightforward."
+ },
+ {
+  "start": 2271.15,
+  "end": 2276.83,
+  "text": "You break up an image into multiple pieces."
+ },
+ {
+  "start": 2276.83,
+  "end": 2280.79,
+  "text": "And the idea is that each piece is the resolution of whatever"
+ },
+ {
+  "start": 2280.79,
+  "end": 2285.59,
+  "text": "the vision encoder is going to take, 336 by 336, for example."
+ },
+ {
+  "start": 2285.59,
+  "end": 2289.89,
+  "text": "So you're going to code all the pieces into a bunch of vectors."
+ },
+ {
+  "start": 2289.89,
+  "end": 2292.23,
+  "text": "And then you concatenate the vectors."
+ },
+ {
+  "start": 2292.23,
+  "end": 2295.95,
+  "text": "OK, so you're basically noticing that your vision encoder"
+ },
+ {
+  "start": 2295.95,
+  "end": 2298.31,
+  "text": "can't handle high resolution."
+ },
+ {
+  "start": 2298.31,
+  "end": 2300.71,
+  "text": "So rather than downsampling, you're"
+ },
+ {
+  "start": 2300.71,
+  "end": 2305.59,
+  "text": "just going to crop and look at different parts of image."
+ },
+ {
+  "start": 2305.59,
+  "end": 2309.71,
+  "text": "And now if you have really super high resolution images or videos"
+ },
+ {
+  "start": 2309.71,
+  "end": 2311.33,
+  "text": "then, you get too many tokens."
+ },
+ {
+  "start": 2311.33,
+  "end": 2315.23,
+  "text": "So then they downsample."
+ },
+ {
+  "start": 2315.23,
+  "end": 2318.99,
+  "text": "But the idea behind AnyRes is that it's adaptive."
+ },
+ {
+  "start": 2318.99,
+  "end": 2323.13,
+  "text": "And this is nice because the transformer is already adaptive."
+ },
+ {
+  "start": 2323.13,
+  "end": 2326.23,
+  "text": "Language can be-- your sentences can be any length"
+ },
+ {
+  "start": 2326.23,
+  "end": 2328.75,
+  "text": "and the transformer already handles that pretty well."
+ },
+ {
+  "start": 2328.75,
+  "end": 2331.66,
+  "text": "So it turns out images can be any resolution."
+ },
+ {
+  "start": 2331.66,
+  "end": 2338.04,
+  "text": "So that's picking back on the same dynamic ability."
+ },
+ {
+  "start": 2338.04,
+  "end": 2342.92,
+  "text": "So here is what they actually do for images here."
+ },
+ {
+  "start": 2342.92,
+  "end": 2347.36,
+  "text": "So let's say you have this image of a paper."
+ },
+ {
+  "start": 2347.36,
+  "end": 2351.56,
+  "text": "They do downsample and have one path,"
+ },
+ {
+  "start": 2351.56,
+  "end": 2355.48,
+  "text": "which is basically a downsampled encoding of the entire paper."
+ },
+ {
+  "start": 2355.48,
+  "end": 2357.76,
+  "text": "But then they break it up into these chunks,"
+ },
+ {
+  "start": 2357.76,
+  "end": 2359.56,
+  "text": "where each chunk is the resolution"
+ },
+ {
+  "start": 2359.56,
+  "end": 2364.16,
+  "text": "that the vision encoder expects, and then encodes each of these parately."
+ },
+ {
+  "start": 2364.16,
+  "end": 2366.86,
+  "text": "And then you concatenate all these patches."
+ },
+ {
+  "start": 2366.86,
+  "end": 2368.76,
+  "text": "And if you have too many, then you"
+ },
+ {
+  "start": 2368.76,
+  "end": 2373.74,
+  "text": "reduce that the number of patches by interpolation."
+ },
+ {
+  "start": 2376.8,
+  "end": 2382.08,
+  "text": "OK, so then they're able to handle images, multiple images,"
+ },
+ {
+  "start": 2382.08,
+  "end": 2383.56,
+  "text": "and video."
+ },
+ {
+  "start": 2383.56,
+  "end": 2386.8,
+  "text": "So you think about, well, all of these"
+ },
+ {
+  "start": 2386.8,
+  "end": 2389.94,
+  "text": "are technically all reducible to images,"
+ },
+ {
+  "start": 2389.94,
+  "end": 2392.3,
+  "text": "but they put their thumb on the scale a little bit"
+ },
+ {
+  "start": 2392.3,
+  "end": 2399.26,
+  "text": "because they want to make sure all the modalities are roughly"
+ },
+ {
+  "start": 2399.26,
+  "end": 2400.638,
+  "text": "comparable."
+ },
+ {
+  "start": 2400.638,
+  "end": 2402.18,
+  "text": "Because videos can be very long, they"
+ },
+ {
+  "start": 2402.18,
+  "end": 2404.26,
+  "text": "don't want their data set to be dominated"
+ },
+ {
+  "start": 2404.26,
+  "end": 2407.18,
+  "text": "by a bunch of repetitive frames."
+ },
+ {
+  "start": 2407.18,
+  "end": 2409.42,
+  "text": "So here's what they do here."
+ },
+ {
+  "start": 2409.42,
+  "end": 2411.98,
+  "text": "So for a single image, they basically"
+ },
+ {
+  "start": 2411.98,
+  "end": 2414.9,
+  "text": "have the full image downsampled and then"
+ },
+ {
+  "start": 2414.9,
+  "end": 2420.26,
+  "text": "a bunch of crops up to N crops there, up to 9."
+ },
+ {
+  "start": 2420.26,
+  "end": 2423.46,
+  "text": "And if you are presented with multiple images,"
+ },
+ {
+  "start": 2423.46,
+  "end": 2428.88,
+  "text": "then they just use the base resolution."
+ },
+ {
+  "start": 2428.88,
+  "end": 2430.38,
+  "text": "So if you have a single image, I get"
+ },
+ {
+  "start": 2430.38,
+  "end": 2431.882,
+  "text": "to look at it more carefully."
+ },
+ {
+  "start": 2431.882,
+  "end": 2433.34,
+  "text": "If I have multiple images, I'm just"
+ },
+ {
+  "start": 2433.34,
+  "end": 2437.78,
+  "text": "going to look at it from afar."
+ },
+ {
+  "start": 2437.78,
+  "end": 2443.1,
+  "text": "And for video, we're going to use even lower resolution"
+ },
+ {
+  "start": 2443.1,
+  "end": 2446.92,
+  "text": "or fewer tokens to represent each frame because the idea is"
+ },
+ {
+  "start": 2446.92,
+  "end": 2454.16,
+  "text": "that, well, videos can be-- they only use up to 32 frames,"
+ },
+ {
+  "start": 2454.16,
+  "end": 2458.32,
+  "text": "but you start running into context length"
+ },
+ {
+  "start": 2458.32,
+  "end": 2461.28,
+  "text": "problems for viewing."
+ },
+ {
+  "start": 2461.28,
+  "end": 2464.76,
+  "text": "And later, we'll see how a big part"
+ },
+ {
+  "start": 2464.76,
+  "end": 2466.96,
+  "text": "of being able to handle multimodal"
+ },
+ {
+  "start": 2466.96,
+  "end": 2469.22,
+  "text": "is to deal with longer context."
+ },
+ {
+  "start": 2471.96,
+  "end": 2482.4,
+  "text": "OK, so the data here that they use is, I would say,"
+ },
+ {
+  "start": 2482.4,
+  "end": 2486.12,
+  "text": "the state of philosophy is they want to curate high quality data"
+ },
+ {
+  "start": 2486.12,
+  "end": 2487.12,
+  "text": "and quantity."
+ },
+ {
+  "start": 2487.12,
+  "end": 2491.02,
+  "text": "Another way to interpret this is that it's very targeted data."
+ },
+ {
+  "start": 2491.02,
+  "end": 2494.86,
+  "text": "If you look at many of these, it's very task-based"
+ },
+ {
+  "start": 2494.86,
+  "end": 2500.04,
+  "text": "whether you're doing visual question answering or answering"
+ },
+ {
+  "start": 2500.04,
+  "end": 2501.76,
+  "text": "questions about tables."
+ },
+ {
+  "start": 2501.76,
+  "end": 2505.57,
+  "text": "So this is definitely post-training territory,"
+ },
+ {
+  "start": 2505.57,
+  "end": 2509.85,
+  "text": "where you're trying to get your model to do these tasks,"
+ },
+ {
+  "start": 2509.85,
+  "end": 2512.21,
+  "text": "and therefore, you create a bunch of these tasks."
+ },
+ {
+  "start": 2512.21,
+  "end": 2517.97,
+  "text": "And this work is also unabashedly, basically,"
+ },
+ {
+  "start": 2517.97,
+  "end": 2521.89,
+  "text": "distilling GPT-4 models so that they"
+ },
+ {
+  "start": 2521.89,
+  "end": 2527.07,
+  "text": "can get the best performance, which is, I guess, not ideal."
+ },
+ {
+  "start": 2527.07,
+  "end": 2534.53,
+  "text": "But this is what you do if you don't have an annotation budget."
+ },
+ {
+  "start": 2534.53,
+  "end": 2540.39,
+  "text": "And so they have single images, multiple images, and videos."
+ },
+ {
+  "start": 2540.39,
+  "end": 2544.87,
+  "text": "So there's a lot of different pieces."
+ },
+ {
+  "start": 2544.87,
+  "end": 2546.63,
+  "text": "Some of these are very specific."
+ },
+ {
+  "start": 2546.63,
+  "end": 2551.05,
+  "text": "You give two images and you're trying to spot the difference."
+ },
+ {
+  "start": 2551.05,
+  "end": 2553.05,
+  "text": "But one thing that--"
+ },
+ {
+  "start": 2553.05,
+  "end": 2556.47,
+  "text": "OK, I'll come back to this at this point later."
+ },
+ {
+  "start": 2556.47,
+  "end": 2562.55,
+  "text": "So for training, it's roughly the same idea as before,"
+ },
+ {
+  "start": 2562.55,
+  "end": 2568.19,
+  "text": "where the first stage is that you're focused on alignment."
+ },
+ {
+  "start": 2568.19,
+  "end": 2574.83,
+  "text": "So in particular, you only train the projector,"
+ },
+ {
+  "start": 2574.83,
+  "end": 2578.51,
+  "text": "which is the adapter."
+ },
+ {
+  "start": 2578.51,
+  "end": 2582.99,
+  "text": "And then in the second stage and the third stages"
+ },
+ {
+  "start": 2582.99,
+  "end": 2584.71,
+  "text": "you train the full model."
+ },
+ {
+  "start": 2584.71,
+  "end": 2586.17,
+  "text": "And before, we had two stages."
+ },
+ {
+  "start": 2586.17,
+  "end": 2589.95,
+  "text": "Now, we have three stages."
+ },
+ {
+  "start": 2589.95,
+  "end": 2594.39,
+  "text": "I'm not sure there's any particular principled reason"
+ },
+ {
+  "start": 2594.39,
+  "end": 2596.23,
+  "text": "for this, except for this second stage is"
+ },
+ {
+  "start": 2596.23,
+  "end": 2599.81,
+  "text": "trying to put high quality data but more focused on knowledge."
+ },
+ {
+  "start": 2599.81,
+  "end": 2604.11,
+  "text": "And the final stage is focusing on examples that look"
+ },
+ {
+  "start": 2604.11,
+  "end": 2605.89,
+  "text": "like your downstream tasks."
+ },
+ {
+  "start": 2610.23,
+  "end": 2614.03,
+  "text": "OK, so one thing that they found in this paper, which"
+ },
+ {
+  "start": 2614.03,
+  "end": 2621.01,
+  "text": "was interesting, is that you get transfer between modalities."
+ },
+ {
+  "start": 2621.01,
+  "end": 2624.57,
+  "text": "So even though they have only single image data"
+ },
+ {
+  "start": 2624.57,
+  "end": 2627.37,
+  "text": "for diagrams and charts, but this actually"
+ },
+ {
+  "start": 2627.37,
+  "end": 2629.07,
+  "text": "generalizes to multiple images."
+ },
+ {
+  "start": 2629.07,
+  "end": 2634.13,
+  "text": "So at training time, you never saw an example"
+ },
+ {
+  "start": 2634.13,
+  "end": 2636.168,
+  "text": "where you have a table and a chart"
+ },
+ {
+  "start": 2636.168,
+  "end": 2637.71,
+  "text": "and you're asking questions about it."
+ },
+ {
+  "start": 2637.71,
+  "end": 2644.13,
+  "text": "But at test time, you have two images, one for the table"
+ },
+ {
+  "start": 2644.13,
+  "end": 2645.27,
+  "text": "and one for the chart."
+ },
+ {
+  "start": 2645.27,
+  "end": 2649.65,
+  "text": "And you're able to have some of conversation about it."
+ },
+ {
+  "start": 2649.65,
+  "end": 2654.29,
+  "text": "At training time, you only have OCR data on single image data,"
+ },
+ {
+  "start": 2654.29,
+  "end": 2658.85,
+  "text": "and you only have relational reasoning from multiple images."
+ },
+ {
+  "start": 2658.85,
+  "end": 2663.01,
+  "text": "But you can generalize to these cases which"
+ },
+ {
+  "start": 2663.01,
+  "end": 2665.43,
+  "text": "are useful for powering GUI agents,"
+ },
+ {
+  "start": 2665.43,
+  "end": 2668.15,
+  "text": "where you show it a bunch of screenshots."
+ },
+ {
+  "start": 2668.15,
+  "end": 2672.41,
+  "text": "This is multiple images and it can generate a description"
+ },
+ {
+  "start": 2672.41,
+  "end": 2676.77,
+  "text": "of the screenshots."
+ },
+ {
+  "start": 2676.77,
+  "end": 2679.22,
+  "text": "Another example is that they have"
+ },
+ {
+  "start": 2679.22,
+  "end": 2682.46,
+  "text": "this idea of visual prompting, where"
+ },
+ {
+  "start": 2682.46,
+  "end": 2685.64,
+  "text": "you have this circle, which is a part of the image,"
+ },
+ {
+  "start": 2685.64,
+  "end": 2688.18,
+  "text": "but that's meant to highlight the part of the image"
+ },
+ {
+  "start": 2688.18,
+  "end": 2691.86,
+  "text": "that you're supposed to do something about."
+ },
+ {
+  "start": 2691.86,
+  "end": 2694.66,
+  "text": "And this type of data only exists for single images."
+ },
+ {
+  "start": 2694.66,
+  "end": 2699.42,
+  "text": "And now it can generalize to videos"
+ },
+ {
+  "start": 2699.42,
+  "end": 2702.62,
+  "text": "where the user says describe the player highlighted in the video."
+ },
+ {
+  "start": 2702.62,
+  "end": 2706.86,
+  "text": "And this player is across multiple frames."
+ },
+ {
+  "start": 2706.86,
+  "end": 2711.94,
+  "text": "So when you first look at this and say, oh, boy."
+ },
+ {
+  "start": 2711.94,
+  "end": 2714.12,
+  "text": "You're basically targeting each of these tasks."
+ },
+ {
+  "start": 2714.12,
+  "end": 2716.6,
+  "text": "It's supervised learning."
+ },
+ {
+  "start": 2716.6,
+  "end": 2719.02,
+  "text": "But if you have enough tasks, these models"
+ },
+ {
+  "start": 2719.02,
+  "end": 2726.56,
+  "text": "seem to do some transfer, which is, I guess, reassuring."
+ },
+ {
+  "start": 2729.3,
+  "end": 2733.66,
+  "text": "OK, so again, this is a fairly standard VLM"
+ },
+ {
+  "start": 2733.66,
+  "end": 2737.68,
+  "text": "template, vision encoder plus the projector into the language"
+ },
+ {
+  "start": 2737.68,
+  "end": 2739.8,
+  "text": "model."
+ },
+ {
+  "start": 2739.8,
+  "end": 2743.54,
+  "text": "There's a lot of work that goes into the data curation."
+ },
+ {
+  "start": 2743.54,
+  "end": 2748.12,
+  "text": "They lean pretty heavily into synthesize task-specific data."
+ },
+ {
+  "start": 2748.12,
+  "end": 2749.96,
+  "text": "The nice thing about the LLaVA series"
+ },
+ {
+  "start": 2749.96,
+  "end": 2753.78,
+  "text": "is that it's one of the few works that open sources."
+ },
+ {
+  "start": 2753.78,
+  "end": 2756.62,
+  "text": "They're not just the model weights, but also the data."
+ },
+ {
+  "start": 2756.62,
+  "end": 2761.12,
+  "text": "So you can really replicate and study this stuff."
+ },
+ {
+  "start": 2761.12,
+  "end": 2766.68,
+  "text": "OK, now let's talk about the Qwen Models."
+ },
+ {
+  "start": 2766.68,
+  "end": 2771.86,
+  "text": "So Qwen started also training in 2023 multimodal models."
+ },
+ {
+  "start": 2771.86,
+  "end": 2774.48,
+  "text": "So the first version was Qwen-VL."
+ },
+ {
+  "start": 2774.48,
+  "end": 2777.36,
+  "text": "And hopefully, I'll go through this"
+ },
+ {
+  "start": 2777.36,
+  "end": 2779.78,
+  "text": "quickly because you hopefully see the pattern."
+ },
+ {
+  "start": 2779.78,
+  "end": 2783.56,
+  "text": "The vision encoder, they use Open-CLIP."
+ },
+ {
+  "start": 2783.56,
+  "end": 2787.96,
+  "text": "Remember, OpenCLIP was the open reproductions of the CLIP model."
+ },
+ {
+  "start": 2787.96,
+  "end": 2791.76,
+  "text": "So it's basically a CLIP encoder."
+ },
+ {
+  "start": 2791.76,
+  "end": 2799.25,
+  "text": "And for the adapter, they did one layer of cross-attention,"
+ },
+ {
+  "start": 2799.25,
+  "end": 2802.97,
+  "text": "incorporate 2D positional embeddings and maps to a fixed"
+ },
+ {
+  "start": 2802.97,
+  "end": 2807.85,
+  "text": "size of 256, which is a little bit--"
+ },
+ {
+  "start": 2811.21,
+  "end": 2814.09,
+  "text": "I guess this will be changed later because this is definitely"
+ },
+ {
+  "start": 2814.09,
+  "end": 2816.73,
+  "text": "not very dynamic, but neither is the vision encoder"
+ },
+ {
+  "start": 2816.73,
+  "end": 2818.49,
+  "text": "at this point."
+ },
+ {
+  "start": 2818.49,
+  "end": 2820.74,
+  "text": "I guess this got cut off."
+ },
+ {
+  "start": 2820.74,
+  "end": 2823.81,
+  "text": "But the special tokens, they have"
+ },
+ {
+  "start": 2823.81,
+  "end": 2826.39,
+  "text": "an image tag and a box tag for bounding box,"
+ },
+ {
+  "start": 2826.39,
+  "end": 2830.45,
+  "text": "and a ref tag for descriptions."
+ },
+ {
+  "start": 2830.45,
+  "end": 2834.41,
+  "text": "This is what happens when your slides are in HTML."
+ },
+ {
+  "start": 2834.41,
+  "end": 2838.09,
+  "text": "So for training, they have three stages, just"
+ },
+ {
+  "start": 2838.09,
+  "end": 2839.83,
+  "text": "like with the LLaVA models."
+ },
+ {
+  "start": 2839.83,
+  "end": 2843.09,
+  "text": "In the first stage, the idea is to--"
+ },
+ {
+  "start": 2843.09,
+  "end": 2846.93,
+  "text": "I mean, they call it pre-training but you're not"
+ },
+ {
+  "start": 2846.93,
+  "end": 2849.49,
+  "text": "pre-training from scratch."
+ },
+ {
+  "start": 2849.49,
+  "end": 2853.35,
+  "text": "This is generally large-scale, low quality data."
+ },
+ {
+  "start": 2853.35,
+  "end": 2858.15,
+  "text": "They freeze the language model and train"
+ },
+ {
+  "start": 2858.15,
+  "end": 2861.07,
+  "text": "the vision encoder and adapter."
+ },
+ {
+  "start": 2861.07,
+  "end": 2865.39,
+  "text": "So this is a bit different from the LLaVA models, in"
+ },
+ {
+  "start": 2865.39,
+  "end": 2871.55,
+  "text": "that, they train the vision encoder at this point."
+ },
+ {
+  "start": 2871.55,
+  "end": 2875.83,
+  "text": "And you can see some of the data sets that they are training on,"
+ },
+ {
+  "start": 2875.83,
+  "end": 2878.43,
+  "text": "1.4 billion examples."
+ },
+ {
+  "start": 2878.43,
+  "end": 2882.77,
+  "text": "Stage 2, they move to higher quality task-specific data."
+ },
+ {
+  "start": 2882.77,
+  "end": 2888.55,
+  "text": "And you can see some of the usual suspects of VQA data sets,"
+ },
+ {
+  "start": 2888.55,
+  "end": 2891.79,
+  "text": "chart question answering, and so on."
+ },
+ {
+  "start": 2891.79,
+  "end": 2893.85,
+  "text": "And then they train all the parameters here."
+ },
+ {
+  "start": 2893.85,
+  "end": 2899.79,
+  "text": "And finally, stage 3 is instruction tuning data."
+ },
+ {
+  "start": 2899.79,
+  "end": 2905.71,
+  "text": "You freeze the visual encoder and you train the adapter"
+ },
+ {
+  "start": 2905.71,
+  "end": 2907.59,
+  "text": "and the language model."
+ },
+ {
+  "start": 2907.59,
+  "end": 2909.67,
+  "text": "Here are some examples of the type of things"
+ },
+ {
+  "start": 2909.67,
+  "end": 2910.89,
+  "text": "that they're able to do."
+ },
+ {
+  "start": 2910.89,
+  "end": 2913.11,
+  "text": "So, of course, this is Qwen."
+ },
+ {
+  "start": 2913.11,
+  "end": 2917.57,
+  "text": "So some of these examples are in Chinese."
+ },
+ {
+  "start": 2917.57,
+  "end": 2920.09,
+  "text": "Their interest is also making a model"
+ },
+ {
+  "start": 2920.09,
+  "end": 2924.35,
+  "text": "that is supposed to be subsuming a language model."
+ },
+ {
+  "start": 2924.35,
+  "end": 2926.25,
+  "text": "So a language model can do code."
+ },
+ {
+  "start": 2926.25,
+  "end": 2931.89,
+  "text": "So we want the vision model to be good at code as well."
+ },
+ {
+  "start": 2931.89,
+  "end": 2936.63,
+  "text": "And you can have this example, if you can see it, is an image."
+ },
+ {
+  "start": 2936.63,
+  "end": 2938.45,
+  "text": "And can you find Spider-Man and the Hulk."
+ },
+ {
+  "start": 2938.45,
+  "end": 2941.77,
+  "text": "And it can output bounding boxes as well."
+ },
+ {
+  "start": 2941.77,
+  "end": 2943.27,
+  "text": "It doesn't actually output an image."
+ },
+ {
+  "start": 2943.27,
+  "end": 2947.07,
+  "text": "It just outputs a bounding box."
+ },
+ {
+  "start": 2950.09,
+  "end": 2951.73,
+  "text": "And then you can do OCR."
+ },
+ {
+  "start": 2951.73,
+  "end": 2956.73,
+  "text": "You can compare-- so usual stuff."
+ },
+ {
+  "start": 2956.73,
+  "end": 2962.15,
+  "text": "OK, so then Qwen-2 was, again, a upgrade."
+ },
+ {
+  "start": 2962.15,
+  "end": 2965.65,
+  "text": "There's some new ideas here, which I'll go through."
+ },
+ {
+  "start": 2965.65,
+  "end": 2969.01,
+  "text": "So use a larger vision encoder."
+ },
+ {
+  "start": 2969.01,
+  "end": 2972.9,
+  "text": "They also started doing dynamic resolution."
+ },
+ {
+  "start": 2972.9,
+  "end": 2974.54,
+  "text": "I think this was the main thing."
+ },
+ {
+  "start": 2974.54,
+  "end": 2977.42,
+  "text": "We remember when we went from LLaVA to LLaVA OneVision,"
+ },
+ {
+  "start": 2977.42,
+  "end": 2979.98,
+  "text": "they realized, oh, we need to handle"
+ },
+ {
+  "start": 2979.98,
+  "end": 2982.44,
+  "text": "images of different sizes."
+ },
+ {
+  "start": 2982.44,
+  "end": 2984.62,
+  "text": "And if you try to do video, it's clear"
+ },
+ {
+  "start": 2984.62,
+  "end": 2987.7,
+  "text": "that you need some dynamic resolution."
+ },
+ {
+  "start": 2987.7,
+  "end": 2994.94,
+  "text": "So the model is basically-- so let's say you have this picture"
+ },
+ {
+  "start": 2994.94,
+  "end": 3000.66,
+  "text": "here, that might be mapped to 11,000 tokens."
+ },
+ {
+  "start": 3000.66,
+  "end": 3006.14,
+  "text": "This tiny picture of an equation might be only mapped to 8 tokens"
+ },
+ {
+  "start": 3006.14,
+  "end": 3009.38,
+  "text": "and so on and so forth."
+ },
+ {
+  "start": 3009.38,
+  "end": 3013.22,
+  "text": "So how do they do this?"
+ },
+ {
+  "start": 3013.22,
+  "end": 3018.62,
+  "text": "Well, basically each-- it's the same idea AnyRes idea"
+ },
+ {
+  "start": 3018.62,
+  "end": 3026.98,
+  "text": "from LLaVA, where each 224 by 224 patch is encoded with a VIT."
+ },
+ {
+  "start": 3026.98,
+  "end": 3030.48,
+  "text": "And remember the VIT that they started"
+ },
+ {
+  "start": 3030.48,
+  "end": 3032.92,
+  "text": "with is the OpenCLIP bit."
+ },
+ {
+  "start": 3032.92,
+  "end": 3036.88,
+  "text": "But this gets fine-tuned."
+ },
+ {
+  "start": 3036.88,
+  "end": 3040.06,
+  "text": "And then trying to reduce the contact size,"
+ },
+ {
+  "start": 3040.06,
+  "end": 3043.2,
+  "text": "they compress every 2 by 2 into 1"
+ },
+ {
+  "start": 3043.2,
+  "end": 3050.28,
+  "text": "so that they ultimately edge every patch generates 66 tokens."
+ },
+ {
+  "start": 3050.28,
+  "end": 3054.64,
+  "text": "For eight videos, they sample 2 frames a second but max out"
+ },
+ {
+  "start": 3054.64,
+  "end": 3059.6,
+  "text": "at 16,000 tokens."
+ },
+ {
+  "start": 3059.6,
+  "end": 3061.8,
+  "text": "OK, so one thing coming back to this question"
+ },
+ {
+  "start": 3061.8,
+  "end": 3065.84,
+  "text": "about positional embeddings, so they did"
+ },
+ {
+  "start": 3065.84,
+  "end": 3069.36,
+  "text": "do something different here with Qwen-2."
+ },
+ {
+  "start": 3069.36,
+  "end": 3074.32,
+  "text": "So they used this idea called multimodal rotary, multimodal"
+ },
+ {
+  "start": 3074.32,
+  "end": 3075.2,
+  "text": "RoPE."
+ },
+ {
+  "start": 3075.2,
+  "end": 3077.64,
+  "text": "So remember, we saw RoPE before."
+ },
+ {
+  "start": 3077.64,
+  "end": 3082.4,
+  "text": "And the idea behind RoPE is that you have embedding such"
+ },
+ {
+  "start": 3082.4,
+  "end": 3086.93,
+  "text": "that the inner product between the vectors"
+ },
+ {
+  "start": 3086.93,
+  "end": 3089.49,
+  "text": "depends only on the distance."
+ },
+ {
+  "start": 3089.49,
+  "end": 3094.79,
+  "text": "So the distance is defined in 1D by just the number of tokens."
+ },
+ {
+  "start": 3094.79,
+  "end": 3096.45,
+  "text": "You're away from it."
+ },
+ {
+  "start": 3096.45,
+  "end": 3099.13,
+  "text": "So now, the multidimensional version"
+ },
+ {
+  "start": 3099.13,
+  "end": 3101.03,
+  "text": "is essentially the same thing."
+ },
+ {
+  "start": 3101.03,
+  "end": 3104.49,
+  "text": "Except for now you have 3D."
+ },
+ {
+  "start": 3104.49,
+  "end": 3105.63,
+  "text": "So you have height."
+ },
+ {
+  "start": 3105.63,
+  "end": 3107.69,
+  "text": "You have width and you have time."
+ },
+ {
+  "start": 3107.69,
+  "end": 3113.61,
+  "text": "So each position, each patch now is a triple"
+ },
+ {
+  "start": 3113.61,
+  "end": 3116.05,
+  "text": "defined by the coordinates."
+ },
+ {
+  "start": 3116.05,
+  "end": 3121.85,
+  "text": "And then to compute the M-RoPE, basically, for every dimension,"
+ },
+ {
+  "start": 3121.85,
+  "end": 3124.61,
+  "text": "you compute the RoPE and then you concatenate."
+ },
+ {
+  "start": 3124.61,
+  "end": 3129.29,
+  "text": "So it's a fairly straightforward idea."
+ },
+ {
+  "start": 3129.29,
+  "end": 3131.61,
+  "text": "Although, later, with Qwen-3, we'll"
+ },
+ {
+  "start": 3131.61,
+  "end": 3137.33,
+  "text": "see how this is actually a bit suboptimal."
+ },
+ {
+  "start": 3137.33,
+  "end": 3142.17,
+  "text": "So they initialize the language model with--"
+ },
+ {
+  "start": 3142.17,
+  "end": 3143.79,
+  "text": "this is the Qwen-VL model."
+ },
+ {
+  "start": 3143.79,
+  "end": 3146.51,
+  "text": "So, of course, they're initializing with Gwen."
+ },
+ {
+  "start": 3146.51,
+  "end": 3150.19,
+  "text": "And then they have three stages of training,"
+ },
+ {
+  "start": 3150.19,
+  "end": 3154.67,
+  "text": "which is very similar to what we did before."
+ },
+ {
+  "start": 3154.67,
+  "end": 3157.15,
+  "text": "And then they were able to show a bunch"
+ },
+ {
+  "start": 3157.15,
+  "end": 3161.99,
+  "text": "of different capabilities, some video understanding."
+ },
+ {
+  "start": 3161.99,
+  "end": 3166.79,
+  "text": "It can do math and code, function calling,"
+ },
+ {
+  "start": 3166.79,
+  "end": 3170.59,
+  "text": "and so on and so forth."
+ },
+ {
+  "start": 3170.59,
+  "end": 3173.31,
+  "text": "OK, so quickly, I'll talk about Gwen-3."
+ },
+ {
+  "start": 3176.11,
+  "end": 3179.95,
+  "text": "So again, there's a few changes here."
+ },
+ {
+  "start": 3179.95,
+  "end": 3183.01,
+  "text": "I wouldn't say these are structural big changes,"
+ },
+ {
+  "start": 3183.01,
+  "end": 3185.83,
+  "text": "but they're probably changes that do impact"
+ },
+ {
+  "start": 3185.83,
+  "end": 3187.21,
+  "text": "the quality of the model."
+ },
+ {
+  "start": 3187.21,
+  "end": 3191.47,
+  "text": "So this is from last year Gwen3-VL report."
+ },
+ {
+  "start": 3191.47,
+  "end": 3196.71,
+  "text": "And so it's roughly the same diagram here."
+ },
+ {
+  "start": 3196.71,
+  "end": 3200.77,
+  "text": "I'll point out maybe--I'll come back to this diagram."
+ },
+ {
+  "start": 3200.77,
+  "end": 3204.19,
+  "text": "I'll go through some of the changes."
+ },
+ {
+  "start": 3204.19,
+  "end": 3206.83,
+  "text": "So one is that now they're using Qwen-3 models."
+ },
+ {
+  "start": 3206.83,
+  "end": 3209.27,
+  "text": "They have a series of dense and MoE models."
+ },
+ {
+  "start": 3209.27,
+  "end": 3212.35,
+  "text": "And the Qwen-3 models are really, really good,"
+ },
+ {
+  "start": 3212.35,
+  "end": 3215.89,
+  "text": "and it really helps the quality of the final model."
+ },
+ {
+  "start": 3215.89,
+  "end": 3219.43,
+  "text": "One thing that they're vested in is long context understanding."
+ },
+ {
+  "start": 3219.43,
+  "end": 3222.77,
+  "text": "So their context length can go up to 256K,"
+ },
+ {
+  "start": 3222.77,
+  "end": 3228.29,
+  "text": "which is really important if you're trying to do long video."
+ },
+ {
+  "start": 3228.29,
+  "end": 3230.73,
+  "text": "Let's talk about the vision encoder."
+ },
+ {
+  "start": 3230.73,
+  "end": 3233.61,
+  "text": "So they use SigLIP-2, which is basically"
+ },
+ {
+  "start": 3233.61,
+  "end": 3235.35,
+  "text": "an improved version of SigLIP."
+ },
+ {
+  "start": 3235.35,
+  "end": 3236.97,
+  "text": "It's actually identical architecture,"
+ },
+ {
+  "start": 3236.97,
+  "end": 3240.65,
+  "text": "is designed to be backward compatible."
+ },
+ {
+  "start": 3240.65,
+  "end": 3244.49,
+  "text": "And then they improved their RoPE."
+ },
+ {
+  "start": 3244.49,
+  "end": 3250.25,
+  "text": "And the way to explain this is, before, you"
+ },
+ {
+  "start": 3250.25,
+  "end": 3253.49,
+  "text": "had the three dimensions, time, width, and height."
+ },
+ {
+  "start": 3253.49,
+  "end": 3260.33,
+  "text": "And basically, when to basically allocate"
+ },
+ {
+  "start": 3260.33,
+  "end": 3264.46,
+  "text": "the first block of dimensions to the time,"
+ },
+ {
+  "start": 3264.46,
+  "end": 3268.06,
+  "text": "then the next block to width and the next to height."
+ },
+ {
+  "start": 3268.06,
+  "end": 3271.32,
+  "text": "And the problem, if you remember RoPE"
+ },
+ {
+  "start": 3271.32,
+  "end": 3274.74,
+  "text": "is that each component refers represents"
+ },
+ {
+  "start": 3274.74,
+  "end": 3276.98,
+  "text": "a different frequency."
+ },
+ {
+  "start": 3276.98,
+  "end": 3279.86,
+  "text": "So this would mean that maybe all the temporal dimensions"
+ },
+ {
+  "start": 3279.86,
+  "end": 3282.22,
+  "text": "are low frequency and all the high dimensions"
+ },
+ {
+  "start": 3282.22,
+  "end": 3283.94,
+  "text": "are high frequency."
+ },
+ {
+  "start": 3283.94,
+  "end": 3288.92,
+  "text": "So they basically interleave them when they realize that."
+ },
+ {
+  "start": 3288.92,
+  "end": 3295.66,
+  "text": "And they now all the axes are exposed"
+ },
+ {
+  "start": 3295.66,
+  "end": 3299.3,
+  "text": "to both low and high frequency."
+ },
+ {
+  "start": 3299.3,
+  "end": 3304.74,
+  "text": "Another thing they did was explicit video timestamps."
+ },
+ {
+  "start": 3304.74,
+  "end": 3308.84,
+  "text": "So if you look closely at this--"
+ },
+ {
+  "start": 3312.02,
+  "end": 3312.9,
+  "text": "wait."
+ },
+ {
+  "start": 3312.9,
+  "end": 3314.9,
+  "text": "OK, this is Qwen-3."
+ },
+ {
+  "start": 3314.9,
+  "end": 3316.3,
+  "text": "Oops."
+ },
+ {
+  "start": 3316.3,
+  "end": 3319.58,
+  "text": "So if you look--this is probably a little bit too small."
+ },
+ {
+  "start": 3319.58,
+  "end": 3325.0,
+  "text": "But before, the time stamp was implicit"
+ },
+ {
+  "start": 3325.0,
+  "end": 3328.28,
+  "text": "in the positional encodings."
+ },
+ {
+  "start": 3328.28,
+  "end": 3330.6,
+  "text": "Each frame in the video intrinsically"
+ },
+ {
+  "start": 3330.6,
+  "end": 3333.92,
+  "text": "gets a different-- there's a notion of time"
+ },
+ {
+  "start": 3333.92,
+  "end": 3337.12,
+  "text": "just because it's in a different position."
+ },
+ {
+  "start": 3337.12,
+  "end": 3339.62,
+  "text": "But here, they made the time explicit."
+ },
+ {
+  "start": 3339.62,
+  "end": 3342.04,
+  "text": "So these are actually tokens zero seconds,"
+ },
+ {
+  "start": 3342.04,
+  "end": 3345.64,
+  "text": "is a token that is now you have a token that"
+ },
+ {
+  "start": 3345.64,
+  "end": 3347.88,
+  "text": "represents the time."
+ },
+ {
+  "start": 3347.88,
+  "end": 3351.812,
+  "text": "And they found this to be helpful presumably because it's"
+ },
+ {
+  "start": 3351.812,
+  "end": 3353.52,
+  "text": "something that you can directly refer to,"
+ },
+ {
+  "start": 3353.52,
+  "end": 3356.3,
+  "text": "like what happened after two seconds."
+ },
+ {
+  "start": 3359.08,
+  "end": 3365.52,
+  "text": "So that is one of the main changes."
+ },
+ {
+  "start": 3365.52,
+  "end": 3370.44,
+  "text": "They also did this square root normalized per token loss."
+ },
+ {
+  "start": 3370.44,
+  "end": 3374.32,
+  "text": "So the idea is that some examples that"
+ },
+ {
+  "start": 3374.32,
+  "end": 3378.26,
+  "text": "involve video are very long and some examples that involve"
+ },
+ {
+  "start": 3378.26,
+  "end": 3380.46,
+  "text": "a single image are very short."
+ },
+ {
+  "start": 3380.46,
+  "end": 3384.78,
+  "text": "And the normal thing is that every token is treated the same."
+ },
+ {
+  "start": 3384.78,
+  "end": 3386.94,
+  "text": "And this would mean that the video examples"
+ },
+ {
+  "start": 3386.94,
+  "end": 3389.7,
+  "text": "are going to dominate."
+ },
+ {
+  "start": 3389.7,
+  "end": 3393.0,
+  "text": "So they basically-- the details aren't too clear."
+ },
+ {
+  "start": 3393.0,
+  "end": 3395.86,
+  "text": "But I believe they normalized each example"
+ },
+ {
+  "start": 3395.86,
+  "end": 3401.94,
+  "text": "by the square root of the length to basically downweight"
+ },
+ {
+  "start": 3401.94,
+  "end": 3406.5,
+  "text": "the impact of really long examples."
+ },
+ {
+  "start": 3406.5,
+  "end": 3409.6,
+  "text": "The final thing that is worth noting, which is interesting,"
+ },
+ {
+  "start": 3409.6,
+  "end": 3411.9,
+  "text": "is that they did something interesting with adapter."
+ },
+ {
+  "start": 3411.9,
+  "end": 3413.82,
+  "text": "So remember we started the adapter is"
+ },
+ {
+  "start": 3413.82,
+  "end": 3416.26,
+  "text": "the thing that connects the vision encoder to the language"
+ },
+ {
+  "start": 3416.26,
+  "end": 3416.98,
+  "text": "model."
+ },
+ {
+  "start": 3416.98,
+  "end": 3418.407,
+  "text": "And LLaVA was the simplest."
+ },
+ {
+  "start": 3418.407,
+  "end": 3419.74,
+  "text": "It was just a linear projection."
+ },
+ {
+  "start": 3419.74,
+  "end": 3421.18,
+  "text": "And then we got an MLP."
+ },
+ {
+  "start": 3421.18,
+  "end": 3423.1,
+  "text": "And then we got some cross-attention."
+ },
+ {
+  "start": 3423.1,
+  "end": 3428.06,
+  "text": "And DeepStack, which is actually a paper from the DeepSeek team,"
+ },
+ {
+  "start": 3428.06,
+  "end": 3434.02,
+  "text": "but when used here is more sophisticated."
+ },
+ {
+  "start": 3434.02,
+  "end": 3438.03,
+  "text": "They noticed that, well, the vision encoder already computes"
+ },
+ {
+  "start": 3438.03,
+  "end": 3443.35,
+  "text": "a stack of vision embeddings."
+ },
+ {
+  "start": 3443.35,
+  "end": 3446.87,
+  "text": "And we're basically going to basically add"
+ },
+ {
+  "start": 3446.87,
+  "end": 3454.79,
+  "text": "these directly into the residual stream of the language model."
+ },
+ {
+  "start": 3454.79,
+  "end": 3462.63,
+  "text": "OK, so this is a bit more of a deep fusion of the vision"
+ },
+ {
+  "start": 3462.63,
+  "end": 3467.75,
+  "text": "encoder into the language model as opposed to the vision encoder"
+ },
+ {
+  "start": 3467.75,
+  "end": 3471.41,
+  "text": "is a black box that just outputs a sequence of vectors."
+ },
+ {
+  "start": 3474.43,
+  "end": 3480.39,
+  "text": "OK, so training is--so they have two phases."
+ },
+ {
+  "start": 3480.39,
+  "end": 3482.718,
+  "text": "Pre-training has actually four stages."
+ },
+ {
+  "start": 3482.718,
+  "end": 3484.01,
+  "text": "Post-training has three stages."
+ },
+ {
+  "start": 3484.01,
+  "end": 3486.51,
+  "text": "So you can see that this pipelines are"
+ },
+ {
+  "start": 3486.51,
+  "end": 3490.43,
+  "text": "getting quite complicated now."
+ },
+ {
+  "start": 3490.43,
+  "end": 3491.89,
+  "text": "So they first train the adapter."
+ },
+ {
+  "start": 3491.89,
+  "end": 3494.85,
+  "text": "This is the same as all of these models."
+ },
+ {
+  "start": 3494.85,
+  "end": 3498.17,
+  "text": "And then they have three stages where they progressively train"
+ },
+ {
+  "start": 3498.17,
+  "end": 3505.29,
+  "text": "on longer and longer sequences, from 8K, to 32K, to 256K."
+ },
+ {
+  "start": 3505.29,
+  "end": 3512.09,
+  "text": "Most of the tokens are in the stages 2 and 3."
+ },
+ {
+  "start": 3512.09,
+  "end": 3514.53,
+  "text": "And then for post-training, they do"
+ },
+ {
+  "start": 3514.53,
+  "end": 3519.43,
+  "text": "SFT on long chain of thought data, knowledge distillation,"
+ },
+ {
+  "start": 3519.43,
+  "end": 3523.73,
+  "text": "and then some reinforcement learning."
+ },
+ {
+  "start": 3523.73,
+  "end": 3526.07,
+  "text": "At this point, it's really a systems paper."
+ },
+ {
+  "start": 3526.07,
+  "end": 3531.19,
+  "text": "There's a bunch of--I highlighted the core new ideas,"
+ },
+ {
+  "start": 3531.19,
+  "end": 3534.61,
+  "text": "but there's a lot of details that are different."
+ },
+ {
+  "start": 3534.61,
+  "end": 3536.23,
+  "text": "And if you look at the final results,"
+ },
+ {
+  "start": 3536.23,
+  "end": 3539.15,
+  "text": "this is a pretty good model."
+ },
+ {
+  "start": 3539.15,
+  "end": 3541.69,
+  "text": "I mean, if you look at these benchmarks as compared"
+ },
+ {
+  "start": 3541.69,
+  "end": 3549.136,
+  "text": "to the closed models Gemini, GPT-5, and Opus 4.1,"
+ },
+ {
+  "start": 3549.136,
+  "end": 3551.09,
+  "text": "these numbers are--"
+ },
+ {
+  "start": 3551.09,
+  "end": 3555.14,
+  "text": "the bold means that it's the best number in that row."
+ },
+ {
+  "start": 3555.14,
+  "end": 3558.32,
+  "text": "So the Qwen models are actually quite strong."
+ },
+ {
+  "start": 3561.34,
+  "end": 3565.45,
+  "text": "OK, maybe the-- yeah, a question."
+ },
+ {
+  "start": 3565.45,
+  "end": 3594.9,
+  "text": "[INAUDIBLE]"
+ },
+ {
+  "start": 3594.9,
+  "end": 3599.86,
+  "text": "Yeah, so the question is what about video generation"
+ },
+ {
+  "start": 3599.86,
+  "end": 3602.48,
+  "text": "and how do you know whether there should be a video or text?"
+ },
+ {
+  "start": 3602.48,
+  "end": 3607.26,
+  "text": "So first of all, these models don't generate videos or images."
+ },
+ {
+  "start": 3607.26,
+  "end": 3609.66,
+  "text": "All the multimodal stuff is on the input side."
+ },
+ {
+  "start": 3609.66,
+  "end": 3611.9,
+  "text": "You're always generating text."
+ },
+ {
+  "start": 3616.2,
+  "end": 3621.76,
+  "text": "And then you're always in most of these stages, except for RL,"
+ },
+ {
+  "start": 3621.76,
+  "end": 3624.04,
+  "text": "you're supervising every token."
+ },
+ {
+  "start": 3624.04,
+  "end": 3631.04,
+  "text": "So there's no LLM as a judge or quality on how well"
+ },
+ {
+  "start": 3631.04,
+  "end": 3632.22,
+  "text": "the description is working."
+ },
+ {
+  "start": 3632.22,
+  "end": 3634.8,
+  "text": "It's just basically whatever is in your data set."
+ },
+ {
+  "start": 3634.8,
+  "end": 3639.52,
+  "text": "Now, with RL, you can play around with different rewards."
+ },
+ {
+  "start": 3639.52,
+  "end": 3641.04,
+  "text": "Yeah."
+ },
+ {
+  "start": 3641.04,
+  "end": 3645.28,
+  "text": "I'll ask is the training of multimodal models"
+ },
+ {
+  "start": 3645.28,
+  "end": 3651.78,
+  "text": "harder than training a pure LLM from a system perspective?"
+ },
+ {
+  "start": 3651.78,
+  "end": 3676.86,
+  "text": "[INAUDIBLE]"
+ },
+ {
+  "start": 3676.86,
+  "end": 3682.5,
+  "text": "Yeah, so the two questions are trained multimodal models harder"
+ },
+ {
+  "start": 3682.5,
+  "end": 3684.02,
+  "text": "on the system side?"
+ },
+ {
+  "start": 3684.02,
+  "end": 3687.82,
+  "text": "And, I mean, certainly, it's not easier."
+ },
+ {
+  "start": 3687.82,
+  "end": 3692.12,
+  "text": "I think you pointed out that the data sets are larger."
+ },
+ {
+  "start": 3692.12,
+  "end": 3696.0,
+  "text": "Video data is just-- even loading it can be a bottleneck."
+ },
+ {
+  "start": 3696.0,
+  "end": 3698.58,
+  "text": "Whereas generally, we have not really"
+ },
+ {
+  "start": 3698.58,
+  "end": 3701.7,
+  "text": "focused on data loading for talking about language models"
+ },
+ {
+  "start": 3701.7,
+  "end": 3704.6,
+  "text": "because it's very, very cheap."
+ },
+ {
+  "start": 3704.6,
+  "end": 3707.36,
+  "text": "So that needs to be taken into account."
+ },
+ {
+  "start": 3707.36,
+  "end": 3709.74,
+  "text": "And all the same principles of making sure"
+ },
+ {
+  "start": 3709.74,
+  "end": 3711.42,
+  "text": "that your data loading is happening"
+ },
+ {
+  "start": 3711.42,
+  "end": 3716.3,
+  "text": "async with actual computation needs to be taken into account."
+ },
+ {
+  "start": 3716.3,
+  "end": 3719.3,
+  "text": "And the second part was--"
+ },
+ {
+  "start": 3719.3,
+  "end": 3721.2,
+  "text": "sorry, what was the second question?"
+ },
+ {
+  "start": 3721.2,
+  "end": 3723.56,
+  "text": "[INAUDIBLE] Oh, yeah."
+ },
+ {
+  "start": 3723.56,
+  "end": 3727.95,
+  "text": "So the videos and images can have more-- especially"
+ },
+ {
+  "start": 3727.95,
+  "end": 3729.59,
+  "text": "video have more tokens."
+ },
+ {
+  "start": 3729.59,
+  "end": 3734.27,
+  "text": "So that's one reason we saw this normalization"
+ },
+ {
+  "start": 3734.27,
+  "end": 3739.192,
+  "text": "to make sure that we're not giving more weight to video."
+ },
+ {
+  "start": 3739.192,
+  "end": 3740.65,
+  "text": "I mean, you can always down weight."
+ },
+ {
+  "start": 3740.65,
+  "end": 3742.775,
+  "text": "So if you have more tokens, if you don't like that,"
+ },
+ {
+  "start": 3742.775,
+  "end": 3744.11,
+  "text": "you can down weight."
+ },
+ {
+  "start": 3744.11,
+  "end": 3749.11,
+  "text": "We talked in the last or two weeks ago about data mixtures."
+ },
+ {
+  "start": 3749.11,
+  "end": 3751.39,
+  "text": "So you can always weight things according"
+ },
+ {
+  "start": 3751.39,
+  "end": 3755.75,
+  "text": "to whatever makes sense."
+ },
+ {
+  "start": 3755.75,
+  "end": 3758.87,
+  "text": "But there's also a lot of text tokens out there."
+ },
+ {
+  "start": 3758.87,
+  "end": 3764.09,
+  "text": "So I think, in general, if you look at, yeah,"
+ },
+ {
+  "start": 3764.09,
+  "end": 3768.55,
+  "text": "the models are trained on tens of trillions of tokens."
+ },
+ {
+  "start": 3768.55,
+  "end": 3770.31,
+  "text": "I think there's a-- yeah, I wouldn't"
+ },
+ {
+  "start": 3770.31,
+  "end": 3772.99,
+  "text": "say that the number of multimodal tokens"
+ },
+ {
+  "start": 3772.99,
+  "end": 3776.47,
+  "text": "vastly outnumbers text tokens."
+ },
+ {
+  "start": 3776.47,
+  "end": 3780.37,
+  "text": "Yeah, oh, I think you were first."
+ },
+ {
+  "start": 3780.37,
+  "end": 3803.01,
+  "text": "[INAUDIBLE]"
+ },
+ {
+  "start": 3803.01,
+  "end": 3806.17,
+  "text": "So the question is, when you do this alignment,"
+ },
+ {
+  "start": 3806.17,
+  "end": 3809.53,
+  "text": "how does it know what the language-- is the model language"
+ },
+ {
+  "start": 3809.53,
+  "end": 3811.35,
+  "text": "model pre-trained?"
+ },
+ {
+  "start": 3811.35,
+  "end": 3814.93,
+  "text": "And it definitely has to be pre-trained because otherwise it"
+ },
+ {
+  "start": 3814.93,
+  "end": 3816.71,
+  "text": "doesn't make sense to align it."
+ },
+ {
+  "start": 3816.71,
+  "end": 3818.51,
+  "text": "So the language model is frozen."
+ },
+ {
+  "start": 3818.51,
+  "end": 3820.37,
+  "text": "And you're just training the adapter"
+ },
+ {
+  "start": 3820.37,
+  "end": 3827.33,
+  "text": "to connect the given vision encoder with a given language"
+ },
+ {
+  "start": 3827.33,
+  "end": 3828.21,
+  "text": "model."
+ },
+ {
+  "start": 3828.21,
+  "end": 3830.35,
+  "text": "And the way you train it is, well,"
+ },
+ {
+  "start": 3830.35,
+  "end": 3834.81,
+  "text": "you pick a token budget, 67 billion tokens"
+ },
+ {
+  "start": 3834.81,
+  "end": 3836.15,
+  "text": "and you just train."
+ },
+ {
+  "start": 3836.15,
+  "end": 3840.09,
+  "text": "There's not an adaptive threshold here."
+ },
+ {
+  "start": 3840.09,
+  "end": 3840.61,
+  "text": "Yeah."
+ },
+ {
+  "start": 3840.61,
+  "end": 3872.34,
+  "text": "[INAUDIBLE]"
+ },
+ {
+  "start": 3872.34,
+  "end": 3876.22,
+  "text": "Yeah, so the question is, is the number"
+ },
+ {
+  "start": 3876.22,
+  "end": 3879.22,
+  "text": "of parameters in the vision coder much smaller?"
+ },
+ {
+  "start": 3879.22,
+  "end": 3881.82,
+  "text": "And the answer is yes, in general."
+ },
+ {
+  "start": 3881.82,
+  "end": 3885.52,
+  "text": "I'm trying to find--where is the other place I--"
+ },
+ {
+  "start": 3888.82,
+  "end": 3889.64,
+  "text": "not here."
+ },
+ {
+  "start": 3889.64,
+  "end": 3894.58,
+  "text": "OK, the reason is that the vision encoder"
+ },
+ {
+  "start": 3894.58,
+  "end": 3897.96,
+  "text": "is in some sense doing a very local operation."
+ },
+ {
+  "start": 3897.96,
+  "end": 3898.96,
+  "text": "It's looking at a patch."
+ },
+ {
+  "start": 3898.96,
+  "end": 3900.46,
+  "text": "A patch is very small."
+ },
+ {
+  "start": 3900.46,
+  "end": 3903.5,
+  "text": "And it's just trying to understand the patches."
+ },
+ {
+  "start": 3903.5,
+  "end": 3905.48,
+  "text": "There's not much knowledge."
+ },
+ {
+  "start": 3905.48,
+  "end": 3907.46,
+  "text": "So the patch, we're not reasoning."
+ },
+ {
+  "start": 3907.46,
+  "end": 3910.2,
+  "text": "So most of the capabilities of the model"
+ },
+ {
+  "start": 3910.2,
+  "end": 3914.56,
+  "text": "are still in the language model."
+ },
+ {
+  "start": 3914.56,
+  "end": 3919.24,
+  "text": "I'm trying to find the--OK, where?"
+ },
+ {
+  "start": 3919.24,
+  "end": 3921.44,
+  "text": "Maybe it was up here."
+ },
+ {
+  "start": 3921.44,
+  "end": 3923.68,
+  "text": "OK, I can't-- oh, yeah."
+ },
+ {
+  "start": 3923.68,
+  "end": 3928.16,
+  "text": "So if you look at the LLaVA model, so the full--"
+ },
+ {
+  "start": 3928.16,
+  "end": 3930.72,
+  "text": "so 72 billion parameter language model."
+ },
+ {
+  "start": 3935.64,
+  "end": 3936.16,
+  "text": "Sorry."
+ },
+ {
+  "start": 3936.16,
+  "end": 3946.22,
+  "text": "What-- OK, I don't know why this number is so-- oh, sorry."
+ },
+ {
+  "start": 3946.22,
+  "end": 3947.7,
+  "text": "This is 72 million, OK."
+ },
+ {
+  "start": 3947.7,
+  "end": 3949.98,
+  "text": "So this is much smaller."
+ },
+ {
+  "start": 3949.98,
+  "end": 3951.38,
+  "text": "The projector is much smaller."
+ },
+ {
+  "start": 3951.38,
+  "end": 3958.68,
+  "text": "And the VIT is generally less than a billion, parameters."
+ },
+ {
+  "start": 3958.68,
+  "end": 3965.0,
+  "text": "Yeah, I guess mostly because it's fairly a local operation."
+ },
+ {
+  "start": 3965.0,
+  "end": 3967.38,
+  "text": "I guess that's the easy way to say it."
+ },
+ {
+  "start": 3967.38,
+  "end": 3969.4,
+  "text": "OK, I'm going to think some other questions."
+ },
+ {
+  "start": 3969.4,
+  "end": 3971.36,
+  "text": "I'm going to try to move on now."
+ },
+ {
+  "start": 3973.87,
+  "end": 3978.86,
+  "text": "So I Qwen-3 is the last vision language model."
+ },
+ {
+  "start": 3978.86,
+  "end": 3984.34,
+  "text": "I'll talk about this SOTA, Save Our Performance."
+ },
+ {
+  "start": 3984.34,
+  "end": 3988.66,
+  "text": "There's a lot of data work that happens."
+ },
+ {
+  "start": 3988.66,
+  "end": 3991.06,
+  "text": "Not too many details about the data"
+ },
+ {
+  "start": 3991.06,
+  "end": 3995.58,
+  "text": "and the data mix in these later Qwen models."
+ },
+ {
+  "start": 3995.58,
+  "end": 4001.58,
+  "text": "So you'll have to look at the LLaVA paper or the--"
+ },
+ {
+  "start": 4001.58,
+  "end": 4003.62,
+  "text": "AI2 has a [INAUDIBLE] paper, which"
+ },
+ {
+  "start": 4003.62,
+  "end": 4005.98,
+  "text": "I didn't get a chance to talk about that"
+ },
+ {
+  "start": 4005.98,
+  "end": 4009.42,
+  "text": "has more details here."
+ },
+ {
+  "start": 4009.42,
+  "end": 4016.66,
+  "text": "And from Qwen to Qwen-2, Qwen-3, many of these changes were"
+ },
+ {
+  "start": 4016.66,
+  "end": 4021.91,
+  "text": "mostly--there's some changes there."
+ },
+ {
+  "start": 4021.91,
+  "end": 4026.11,
+  "text": "But the overall framework remains the same."
+ },
+ {
+  "start": 4026.11,
+  "end": 4029.69,
+  "text": "And mostly, it's scaling up, curating more data sets,"
+ },
+ {
+  "start": 4029.69,
+  "end": 4033.63,
+  "text": "noticing that your context isn't-- you have to handle long"
+ },
+ {
+  "start": 4033.63,
+  "end": 4038.99,
+  "text": "context and maybe sharpening your image processing and so on."
+ },
+ {
+  "start": 4038.99,
+  "end": 4046.55,
+  "text": "OK, so I'm going to now jump to something quite different."
+ },
+ {
+  "start": 4046.55,
+  "end": 4052.11,
+  "text": "So there's this paper called Chameleon from Meta in 2024."
+ },
+ {
+  "start": 4052.11,
+  "end": 4057.37,
+  "text": "So, so far, VLMs encode images into these vectors"
+ },
+ {
+  "start": 4057.37,
+  "end": 4060.55,
+  "text": "and then they inject them into a language model."
+ },
+ {
+  "start": 4060.55,
+  "end": 4062.43,
+  "text": "And because it's a language model,"
+ },
+ {
+  "start": 4062.43,
+  "end": 4064.89,
+  "text": "you can only generate text."
+ },
+ {
+  "start": 4064.89,
+  "end": 4069.55,
+  "text": "You can't generate images."
+ },
+ {
+  "start": 4069.55,
+  "end": 4073.85,
+  "text": "So there's many ways you can go about fixing this."
+ },
+ {
+  "start": 4073.85,
+  "end": 4075.53,
+  "text": "You can just take a VLM."
+ },
+ {
+  "start": 4075.53,
+  "end": 4077.57,
+  "text": "You can also attach a diffusion head."
+ },
+ {
+  "start": 4077.57,
+  "end": 4080.17,
+  "text": "And now you can generate images or--"
+ },
+ {
+  "start": 4080.17,
+  "end": 4084.17,
+  "text": "but I want to talk about this idea here,"
+ },
+ {
+  "start": 4084.17,
+  "end": 4087.57,
+  "text": "which is Chameleon says, what if we mapped everything"
+ },
+ {
+  "start": 4087.57,
+  "end": 4090.45,
+  "text": "into discrete tokens?"
+ },
+ {
+  "start": 4090.45,
+  "end": 4094.21,
+  "text": "And in some ways aesthetically this is--"
+ },
+ {
+  "start": 4094.21,
+  "end": 4096.43,
+  "text": "well, maybe this reflects that I'm a language person."
+ },
+ {
+  "start": 4096.43,
+  "end": 4102.17,
+  "text": "This is appealing because now you can analyze and generate"
+ },
+ {
+  "start": 4102.17,
+  "end": 4103.569,
+  "text": "images in the same way."
+ },
+ {
+  "start": 4103.569,
+  "end": 4105.37,
+  "text": "Everything is a discrete token."
+ },
+ {
+  "start": 4105.37,
+  "end": 4110.41,
+  "text": "If you want to do what--"
+ },
+ {
+  "start": 4110.41,
+  "end": 4113.55,
+  "text": "let's say you want to generate images."
+ },
+ {
+  "start": 4113.55,
+  "end": 4117.229,
+  "text": "You can say, here's a text prompt."
+ },
+ {
+  "start": 4117.229,
+  "end": 4120.649,
+  "text": "And then you can just-- these are more just"
+ },
+ {
+  "start": 4120.649,
+  "end": 4122.33,
+  "text": "tokens that you can generate."
+ },
+ {
+  "start": 4122.33,
+  "end": 4129.33,
+  "text": "Or you can flip the language and the text around as well."
+ },
+ {
+  "start": 4129.33,
+  "end": 4132.77,
+  "text": "They have these examples from the Chameleon paper"
+ },
+ {
+  "start": 4132.77,
+  "end": 4135.319,
+  "text": "you can prompt in say I'm bored."
+ },
+ {
+  "start": 4135.319,
+  "end": 4136.479,
+  "text": "Can you show me some birds?"
+ },
+ {
+  "start": 4136.479,
+  "end": 4138.22,
+  "text": "And then it would be text, and then it"
+ },
+ {
+  "start": 4138.22,
+  "end": 4141.439,
+  "text": "would be images, and then some more text and some images."
+ },
+ {
+  "start": 4141.439,
+  "end": 4143.979,
+  "text": "So it's interleaved."
+ },
+ {
+  "start": 4143.979,
+  "end": 4146.899,
+  "text": "So in some sense, the vision of an omni model"
+ },
+ {
+  "start": 4146.899,
+  "end": 4150.8,
+  "text": "is that text and images truly live in the same space."
+ },
+ {
+  "start": 4150.8,
+  "end": 4155.0,
+  "text": "And this is accomplished by making everything look like text."
+ },
+ {
+  "start": 4155.0,
+  "end": 4156.62,
+  "text": "That's one way to do it."
+ },
+ {
+  "start": 4156.62,
+  "end": 4160.12,
+  "text": "OK, so I'll talk a little bit about how this is done."
+ },
+ {
+  "start": 4160.12,
+  "end": 4168.38,
+  "text": "So the thing you need to do now is to map images"
+ },
+ {
+  "start": 4168.38,
+  "end": 4170.74,
+  "text": "into discrete tokens."
+ },
+ {
+  "start": 4170.74,
+  "end": 4178.46,
+  "text": "So there's this idea rather old from Oord 2017,"
+ },
+ {
+  "start": 4178.46,
+  "end": 4181.74,
+  "text": "which is called vector quantized variational autoencoder."
+ },
+ {
+  "start": 4181.74,
+  "end": 4187.18,
+  "text": "And the basic idea here is to map an image"
+ },
+ {
+  "start": 4187.18,
+  "end": 4191.06,
+  "text": "into a discrete code."
+ },
+ {
+  "start": 4191.06,
+  "end": 4194.08,
+  "text": "And what you learn is a mapping that maps this"
+ },
+ {
+  "start": 4194.08,
+  "end": 4197.08,
+  "text": "into a continuous vector."
+ },
+ {
+  "start": 4197.08,
+  "end": 4200.84,
+  "text": "And this gets rounded to the nearest code."
+ },
+ {
+  "start": 4200.84,
+  "end": 4206.06,
+  "text": "So you have a codebook which has, let's say, 8,000 codes."
+ },
+ {
+  "start": 4206.06,
+  "end": 4211.04,
+  "text": "So these are prototypical vectors that correspond to what"
+ },
+ {
+  "start": 4211.04,
+  "end": 4212.32,
+  "text": "patches."
+ },
+ {
+  "start": 4212.32,
+  "end": 4216.6,
+  "text": "And then so you pick one of these that's the closest."
+ },
+ {
+  "start": 4216.6,
+  "end": 4219.12,
+  "text": "And that would be your representation."
+ },
+ {
+  "start": 4219.12,
+  "end": 4220.163,
+  "text": "So that's your encoder."
+ },
+ {
+  "start": 4220.163,
+  "end": 4221.58,
+  "text": "It goes through a continuous phase"
+ },
+ {
+  "start": 4221.58,
+  "end": 4225.08,
+  "text": "and then you round it to the nearest code."
+ },
+ {
+  "start": 4225.08,
+  "end": 4227.64,
+  "text": "And now the decoder is you take that code"
+ },
+ {
+  "start": 4227.64,
+  "end": 4229.8,
+  "text": "and you try to reconstruct the image."
+ },
+ {
+  "start": 4229.8,
+  "end": 4236.48,
+  "text": "And then you train these VQ-VAEs by basically minimizing"
+ },
+ {
+  "start": 4236.48,
+  "end": 4238.68,
+  "text": "the reconstruction loss."
+ },
+ {
+  "start": 4238.68,
+  "end": 4240.24,
+  "text": "There are some other terms that you"
+ },
+ {
+  "start": 4240.24,
+  "end": 4243.16,
+  "text": "add because this is not differentiable, which"
+ },
+ {
+  "start": 4243.16,
+  "end": 4246.64,
+  "text": "I won't have time to get into."
+ },
+ {
+  "start": 4246.64,
+  "end": 4252.5,
+  "text": "OK, but, at the end of the day, you have 512 by 512 images that"
+ },
+ {
+  "start": 4252.5,
+  "end": 4259.98,
+  "text": "are converted into 1,024 tokens, and each token comes from"
+ },
+ {
+  "start": 4259.98,
+  "end": 4263.14,
+  "text": "a vocabulary of 8,000."
+ },
+ {
+  "start": 4263.14,
+  "end": 4266.44,
+  "text": "OK, so now you have basically text."
+ },
+ {
+  "start": 4266.44,
+  "end": 4272.02,
+  "text": "You have your images, which are basically these codes."
+ },
+ {
+  "start": 4272.02,
+  "end": 4276.82,
+  "text": "They train a new tokenizer because now you"
+ },
+ {
+  "start": 4276.82,
+  "end": 4279.46,
+  "text": "have different-- your data looks different than if it were"
+ },
+ {
+  "start": 4279.46,
+  "end": 4284.06,
+  "text": "just normal natural language."
+ },
+ {
+  "start": 4284.06,
+  "end": 4289.52,
+  "text": "The training is now actually very straightforward."
+ },
+ {
+  "start": 4289.52,
+  "end": 4291.88,
+  "text": "This is just normal language model training."
+ },
+ {
+  "start": 4291.88,
+  "end": 4292.92,
+  "text": "There's no adapter."
+ },
+ {
+  "start": 4292.92,
+  "end": 4296.86,
+  "text": "There's no turn the vision encoder."
+ },
+ {
+  "start": 4296.86,
+  "end": 4299.94,
+  "text": "There's just a language model now."
+ },
+ {
+  "start": 4299.94,
+  "end": 4304.02,
+  "text": "So this is the part that's appealing."
+ },
+ {
+  "start": 4304.02,
+  "end": 4306.56,
+  "text": "So there's still two stages."
+ },
+ {
+  "start": 4306.56,
+  "end": 4308.42,
+  "text": "But even for language model training,"
+ },
+ {
+  "start": 4308.42,
+  "end": 4311.03,
+  "text": "there's usually two or more stages,"
+ },
+ {
+  "start": 4311.03,
+  "end": 4313.69,
+  "text": "where the first stage is the bulk of training."
+ },
+ {
+  "start": 4313.69,
+  "end": 4315.71,
+  "text": "It's largely unsupervised."
+ },
+ {
+  "start": 4315.71,
+  "end": 4319.95,
+  "text": "They have both text and text and image."
+ },
+ {
+  "start": 4319.95,
+  "end": 4324.95,
+  "text": "And then stage 2, they mix in high quality data."
+ },
+ {
+  "start": 4324.95,
+  "end": 4329.43,
+  "text": "OK, so this is really great and elegant."
+ },
+ {
+  "start": 4329.43,
+  "end": 4331.75,
+  "text": "There's a few problems with this."
+ },
+ {
+  "start": 4331.75,
+  "end": 4336.51,
+  "text": "One is that they found that the training was not stable."
+ },
+ {
+  "start": 4336.51,
+  "end": 4340.11,
+  "text": "And the reason is that text and images,"
+ },
+ {
+  "start": 4340.11,
+  "end": 4342.55,
+  "text": "despite occupying the same space,"
+ },
+ {
+  "start": 4342.55,
+  "end": 4345.23,
+  "text": "just behave very differently."
+ },
+ {
+  "start": 4345.23,
+  "end": 4350.53,
+  "text": "So just calling things discrete tokens"
+ },
+ {
+  "start": 4350.53,
+  "end": 4353.63,
+  "text": "isn't hiding the fact that there's an image living there."
+ },
+ {
+  "start": 4353.63,
+  "end": 4356.59,
+  "text": "And in particular, text tokens, if you"
+ },
+ {
+  "start": 4356.59,
+  "end": 4358.41,
+  "text": "think about predicting the next word,"
+ },
+ {
+  "start": 4358.41,
+  "end": 4360.89,
+  "text": "this has relatively lower entropy."
+ },
+ {
+  "start": 4360.89,
+  "end": 4365.51,
+  "text": "Most words are predictable, whereas image tokens"
+ },
+ {
+  "start": 4365.51,
+  "end": 4366.81,
+  "text": "have very high entropy."
+ },
+ {
+  "start": 4366.81,
+  "end": 4370.97,
+  "text": "I don't know what shade of blue this exact token is going to be."
+ },
+ {
+  "start": 4370.97,
+  "end": 4375.89,
+  "text": "And so as a result, they found that training with this mixture"
+ },
+ {
+  "start": 4375.89,
+  "end": 4379.97,
+  "text": "led to a lot of the norms of the parameters"
+ },
+ {
+  "start": 4379.97,
+  "end": 4385.89,
+  "text": "to grow and to generate loss instability."
+ },
+ {
+  "start": 4385.89,
+  "end": 4388.29,
+  "text": "They were able to mitigate or fix this"
+ },
+ {
+  "start": 4388.29,
+  "end": 4392.81,
+  "text": "to some extent via QK norm and z-loss regularization, which"
+ },
+ {
+  "start": 4392.81,
+  "end": 4396.87,
+  "text": "controls the norm growth."
+ },
+ {
+  "start": 4396.87,
+  "end": 4400.31,
+  "text": "So I'm not even going to show the results."
+ },
+ {
+  "start": 4400.31,
+  "end": 4404.21,
+  "text": "But I wanted to highlight this work because there's"
+ },
+ {
+  "start": 4404.21,
+  "end": 4408.21,
+  "text": "a certain elegance here because it's just one model that treats"
+ },
+ {
+  "start": 4408.21,
+  "end": 4411.33,
+  "text": "really all modalities the same."
+ },
+ {
+  "start": 4411.33,
+  "end": 4415.01,
+  "text": "But the downside is that it turned out"
+ },
+ {
+  "start": 4415.01,
+  "end": 4418.21,
+  "text": "this model was not really as performant,"
+ },
+ {
+  "start": 4418.21,
+  "end": 4422.89,
+  "text": "and the discretization does definitely lose its information."
+ },
+ {
+  "start": 4422.89,
+  "end": 4426.59,
+  "text": "So think about OCR."
+ },
+ {
+  "start": 4426.59,
+  "end": 4431.09,
+  "text": "Again, if you discretize very small print,"
+ },
+ {
+  "start": 4431.09,
+  "end": 4434.03,
+  "text": "you're not going to be able to read it anymore."
+ },
+ {
+  "start": 4434.03,
+  "end": 4437.57,
+  "text": "And finally, training with multi modalities is also tricky."
+ },
+ {
+  "start": 4437.57,
+  "end": 4439.87,
+  "text": "We saw this a little bit with the Qwen models"
+ },
+ {
+  "start": 4439.87,
+  "end": 4442.13,
+  "text": "and we had to play around with the weights."
+ },
+ {
+  "start": 4442.13,
+  "end": 4445.35,
+  "text": "But this is more exacerbated here."
+ },
+ {
+  "start": 4445.35,
+  "end": 4450.43,
+  "text": "So VQ-VAEs were popular for a while."
+ },
+ {
+  "start": 4450.43,
+  "end": 4455.69,
+  "text": "And in fact, many people were using this for image generation."
+ },
+ {
+  "start": 4455.69,
+  "end": 4459.525,
+  "text": "The main reason to do that is, well, you have a transformer."
+ },
+ {
+  "start": 4459.525,
+  "end": 4461.15,
+  "text": "How do you generate from a transformer?"
+ },
+ {
+  "start": 4461.15,
+  "end": 4462.99,
+  "text": "Well, you have to generate discrete things"
+ },
+ {
+  "start": 4462.99,
+  "end": 4468.51,
+  "text": "and you basically put all your data into this discrete form."
+ },
+ {
+  "start": 4468.51,
+  "end": 4472.23,
+  "text": "But then diffusion models came out"
+ },
+ {
+  "start": 4472.23,
+  "end": 4475.41,
+  "text": "and became popular and viable for generation."
+ },
+ {
+  "start": 4475.41,
+  "end": 4483.07,
+  "text": "So this flavor of method is less popular than it used to be."
+ },
+ {
+  "start": 4483.07,
+  "end": 4488.56,
+  "text": "OK, so maybe just reflect and summarize here."
+ },
+ {
+  "start": 4488.56,
+  "end": 4490.92,
+  "text": "Frontier models these days are expected"
+ },
+ {
+  "start": 4490.92,
+  "end": 4495.64,
+  "text": "to be multimodal or even more strongly natively multimodal"
+ },
+ {
+  "start": 4495.64,
+  "end": 4498.0,
+  "text": "or omni models."
+ },
+ {
+  "start": 4498.0,
+  "end": 4501.56,
+  "text": "Unfortunately, I think when Gemini comes out"
+ },
+ {
+  "start": 4501.56,
+  "end": 4504.44,
+  "text": "or GPT comes out, they tout or touted"
+ },
+ {
+  "start": 4504.44,
+  "end": 4507.9,
+  "text": "as being natively multimodal and handle all these modalities."
+ },
+ {
+  "start": 4507.9,
+  "end": 4509.425,
+  "text": "And in fact, they do."
+ },
+ {
+  "start": 4509.425,
+  "end": 4514.24,
+  "text": "But of course, there's no details about how these are built."
+ },
+ {
+  "start": 4514.24,
+  "end": 4518.84,
+  "text": "I think that it's probably combination"
+ },
+ {
+  "start": 4518.84,
+  "end": 4522.84,
+  "text": "of having a continuous encoder because you don't want"
+ },
+ {
+  "start": 4522.84,
+  "end": 4526.4,
+  "text": "to lose information and then diffusion for the generation"
+ },
+ {
+  "start": 4526.4,
+  "end": 4531.0,
+  "text": "because-- but that's my speculation."
+ },
+ {
+  "start": 4531.0,
+  "end": 4532.897,
+  "text": "The fundamental challenge, I think,"
+ },
+ {
+  "start": 4532.897,
+  "end": 4534.48,
+  "text": "when you're dealing with multimodality"
+ },
+ {
+  "start": 4534.48,
+  "end": 4539.36,
+  "text": "is how do you handle non-text modalities?"
+ },
+ {
+  "start": 4539.36,
+  "end": 4540.92,
+  "text": "It's also interesting that there's"
+ },
+ {
+  "start": 4540.92,
+  "end": 4544.26,
+  "text": "a asymmetry between understanding the modality"
+ },
+ {
+  "start": 4544.26,
+  "end": 4545.54,
+  "text": "and generation."
+ },
+ {
+  "start": 4545.54,
+  "end": 4549.7,
+  "text": "And there's no one universal encoder let's say."
+ },
+ {
+  "start": 4549.7,
+  "end": 4553.06,
+  "text": "For example, when we looked at CLIP,"
+ },
+ {
+  "start": 4553.06,
+  "end": 4555.3,
+  "text": "you only cared for classification"
+ },
+ {
+  "start": 4555.3,
+  "end": 4557.08,
+  "text": "to capture high level semantics."
+ },
+ {
+  "start": 4557.08,
+  "end": 4559.92,
+  "text": "So these vectors could be fairly small"
+ },
+ {
+  "start": 4559.92,
+  "end": 4562.38,
+  "text": "and capture the high level semantics."
+ },
+ {
+  "start": 4562.38,
+  "end": 4565.98,
+  "text": "Whereas if you wanted to do OCR or whether you wanted"
+ },
+ {
+  "start": 4565.98,
+  "end": 4569.78,
+  "text": "to generate an image, then you need really fine-grained detail."
+ },
+ {
+  "start": 4569.78,
+  "end": 4572.74,
+  "text": "You need to-- that's why diffusion is so good because it"
+ },
+ {
+  "start": 4572.74,
+  "end": 4580.673,
+  "text": "can really micro optimize the low-high frequency information."
+ },
+ {
+  "start": 4580.673,
+  "end": 4582.34,
+  "text": "I think, in general, when you're dealing"
+ },
+ {
+  "start": 4582.34,
+  "end": 4586.02,
+  "text": "with multiple modalities, you have to think carefully"
+ },
+ {
+  "start": 4586.02,
+  "end": 4590.82,
+  "text": "about weighing them properly."
+ },
+ {
+  "start": 4590.82,
+  "end": 4594.22,
+  "text": "For example, video certainly has lower information density"
+ },
+ {
+  "start": 4594.22,
+  "end": 4595.74,
+  "text": "than text."
+ },
+ {
+  "start": 4595.74,
+  "end": 4601.59,
+  "text": "So you don't want a video to overwhelm your text."
+ },
+ {
+  "start": 4601.59,
+  "end": 4607.71,
+  "text": "And like I said before, at least the current best thing"
+ },
+ {
+  "start": 4607.71,
+  "end": 4612.19,
+  "text": "is having continuous encoders."
+ },
+ {
+  "start": 4612.19,
+  "end": 4615.27,
+  "text": "It seems even CLIP, even though it's five years old,"
+ },
+ {
+  "start": 4615.27,
+  "end": 4619.51,
+  "text": "or similar ideas are still the go-to way"
+ },
+ {
+  "start": 4619.51,
+  "end": 4623.63,
+  "text": "to capture semantics of images."
+ },
+ {
+  "start": 4623.63,
+  "end": 4625.59,
+  "text": "Transformers are still there."
+ },
+ {
+  "start": 4625.59,
+  "end": 4628.35,
+  "text": "And then diffusion models, which I didn't talk about,"
+ },
+ {
+  "start": 4628.35,
+  "end": 4632.91,
+  "text": "are great for generation."
+ },
+ {
+  "start": 4632.91,
+  "end": 4636.43,
+  "text": "OK, so I will stop there."
+ },
+ {
+  "start": 4636.43,
+  "end": 4642.87,
+  "text": "That's it for the lecture on multimodality."
+ },
+ {
+  "start": 4642.87,
+  "end": 4645.73,
+  "text": "I guess we don't have any homework on doing this."
+ },
+ {
+  "start": 4645.73,
+  "end": 4649.43,
+  "text": "But if you're curious, I think I encourage"
+ },
+ {
+  "start": 4649.43,
+  "end": 4654.06,
+  "text": "you to play around with training some of these models."
+ }
+]

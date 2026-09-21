@@ -1,0 +1,4947 @@
+1
+00:00:05,000 --> 00:00:08,200
+So originally, the plan was to talk more
+
+2
+00:00:08,200 --> 00:00:09,660
+about reinforcement learning.
+
+3
+00:00:09,660 --> 00:00:12,340
+But I thought since I only had one lecture to give,
+
+4
+00:00:12,340 --> 00:00:14,640
+I think this class would be a little bit
+
+5
+00:00:14,640 --> 00:00:17,780
+incomplete without saying something about multimodality,
+
+6
+00:00:17,780 --> 00:00:21,880
+which is so pervasive if you look at all the major models.
+
+7
+00:00:21,880 --> 00:00:27,040
+So this will be an overview of multimodal models.
+
+8
+00:00:27,040 --> 00:00:29,960
+Of course, this could be a whole class in itself,
+
+9
+00:00:29,960 --> 00:00:32,759
+and I'll try to do what I can in one lecture.
+
+10
+00:00:32,759 --> 00:00:35,500
+OK, so let's dive into multimodal models.
+
+11
+00:00:35,500 --> 00:00:38,280
+So far in this class, we have exclusively
+
+12
+00:00:38,280 --> 00:00:40,240
+focused on language models.
+
+13
+00:00:40,240 --> 00:00:43,300
+And language models are already pretty general.
+
+14
+00:00:43,300 --> 00:00:45,760
+They give you the ability to go from any piece of text
+
+15
+00:00:45,760 --> 00:00:47,180
+to any text.
+
+16
+00:00:47,180 --> 00:00:53,340
+So this could be any language, code, poetry, anything you like,
+
+17
+00:00:53,340 --> 00:00:57,680
+even, let's say, DNA, for example.
+
+18
+00:00:57,680 --> 00:01:00,380
+But the world is multimodal.
+
+19
+00:01:00,380 --> 00:01:05,260
+You have text, you have images, audio, video.
+
+20
+00:01:05,260 --> 00:01:09,820
+And if you think about a North Star of where we want to be
+
+21
+00:01:09,820 --> 00:01:12,580
+is what people call omni model, which
+
+22
+00:01:12,580 --> 00:01:17,220
+is ability to take any combination of these modalities
+
+23
+00:01:17,220 --> 00:01:20,860
+and output any combination of any of these modalities.
+
+24
+00:01:20,860 --> 00:01:24,500
+So, for example, I can give you an image and a video
+
+25
+00:01:24,500 --> 00:01:29,920
+and I can ask a question about the image and the video.
+
+26
+00:01:29,920 --> 00:01:31,080
+I can generate images.
+
+27
+00:01:31,080 --> 00:01:34,400
+I can convert the audio into an image.
+
+28
+00:01:34,400 --> 00:01:37,140
+You can imagine all sorts of different applications
+
+29
+00:01:37,140 --> 00:01:39,000
+by having an omni model.
+
+30
+00:01:39,000 --> 00:01:41,620
+So in this class, I'm not going to build up
+
+31
+00:01:41,620 --> 00:01:42,920
+to a whole omni model.
+
+32
+00:01:42,920 --> 00:01:47,900
+But I'll give you some of the pieces that at least allow
+
+33
+00:01:47,900 --> 00:01:52,900
+you to ingest a little bit of images, which we'll mostly
+
+34
+00:01:52,900 --> 00:01:55,900
+focus on today.
+
+35
+00:01:55,900 --> 00:01:57,990
+So how do you build such a thing?
+
+36
+00:01:57,990 --> 00:02:02,210
+Well, this is a weird way to motivate this,
+
+37
+00:02:02,210 --> 00:02:06,070
+but the reality is that transformers work really well.
+
+38
+00:02:06,070 --> 00:02:10,630
+And despite the best efforts of people to try other things,
+
+39
+00:02:10,630 --> 00:02:14,410
+those are across all of these modalities still at scale
+
+40
+00:02:14,410 --> 00:02:15,690
+the best thing we have.
+
+41
+00:02:15,690 --> 00:02:17,910
+所以我们必须弄清楚如何使用它们。
+
+42
+00:02:17,910 --> 00:02:21,190
+而如今，Transformer 是为文本设计的。
+
+43
+00:02:21,190 --> 00:02:24,910
+所以它们具有这样的特性：它们使用 token。
+
+44
+00:02:24,910 --> 00:02:27,990
+它们接收一堆 token 作为输入，
+
+45
+00:02:27,990 --> 00:02:30,310
+然后输出一些 token。
+
+46
+00:02:30,310 --> 00:02:34,070
+在这里，我扩展了
+
+47
+00:02:34,070 --> 00:02:36,950
+tokenization 的概念，使其不只是我们
+
+48
+00:02:36,950 --> 00:02:40,730
+在文本中见过的离散 token，还可以是连续的 token。
+
+49
+00:02:40,730 --> 00:02:44,830
+你可以把它们看作 token 的嵌入。
+
+50
+00:02:44,830 --> 00:02:46,750
+关键在于，一个 token
+
+51
+00:02:46,750 --> 00:02:51,350
+应该表示某种语义单元的信息。
+
+52
+00:02:51,350 --> 00:02:55,390
+例如，在自然语言中，token 是 subword。
+
+53
+00:02:55,390 --> 00:02:58,050
+它们有一定意义。
+
+54
+00:02:58,050 --> 00:03:02,090
+而例如，一个像素本身当然不是
+
+55
+00:03:02,090 --> 00:03:04,890
+有意义的。
+
+56
+00:03:04,890 --> 00:03:07,430
+所以我们必须以某种方式把所有东西，
+
+57
+00:03:07,430 --> 00:03:13,530
+包括音频和图像，转换成离散或连续的
+
+58
+00:03:13,530 --> 00:03:15,370
+token。
+
+59
+00:03:15,370 --> 00:03:18,450
+现在请注意，即使是文本，我们也已经不得不这样做了。
+
+60
+00:03:18,450 --> 00:03:21,570
+在第一讲中，我们讨论了 tokenization。
+
+61
+00:03:21,570 --> 00:03:24,830
+在那里，这还不算太糟。
+
+62
+00:03:24,830 --> 00:03:26,750
+我的意思是，我们有一个 BP tokenizer。
+
+63
+00:03:26,750 --> 00:03:30,010
+你们实现了它。
+
+64
+00:03:30,010 --> 00:03:31,210
+这没问题。
+
+65
+00:03:31,210 --> 00:03:37,690
+人们可能会希望有更好的 tokenizer，或者某种
+
+66
+00:03:37,690 --> 00:03:39,590
+根本不需要 tokenizer 的东西。
+
+67
+00:03:39,590 --> 00:03:43,810
+但这也不是世界上最糟糕的事情。
+
+68
+00:03:43,810 --> 00:03:46,530
+现在，对于非文本模态，我们
+
+69
+00:03:46,530 --> 00:03:49,410
+需要更加绞尽脑汁，弄清楚
+
+70
+00:03:49,410 --> 00:03:51,810
+BP tokenizer 的等价物是什么，它
+
+71
+00:03:51,810 --> 00:03:54,020
+能接收一张图像并生成
+
+72
+00:03:54,020 --> 00:03:57,340
+Transformer 可以消化的东西。
+
+73
+00:03:57,340 --> 00:04:01,280
+好，所以这里你必须回答两个问题。
+
+74
+00:04:01,280 --> 00:04:04,460
+一是，对于非文本数据，例如图像或视频
+
+75
+00:04:04,460 --> 00:04:09,700
+或音频，如何将它们输入到 Transformer 中？
+
+76
+00:04:09,700 --> 00:04:12,740
+然后如何将它们生成出来？
+
+77
+00:04:12,740 --> 00:04:17,579
+本讲将主要关注第一个问题。
+
+78
+00:04:17,579 --> 00:04:25,860
+好，那么让我们回到过去，把时间倒回到 21 年。
+
+79
+00:04:25,860 --> 00:04:28,980
+所以 CLIP 模型，你们中一些人可能熟悉，
+
+80
+00:04:28,980 --> 00:04:34,260
+是现代视觉语言模型的许多基础。
+
+81
+00:04:34,260 --> 00:04:39,780
+And so we can go through this a bit in more detail.
+
+82
+00:04:39,780 --> 00:04:43,500
+So CLIP stands for Contrastive Language Image Pre-Training.
+
+83
+00:04:43,500 --> 00:04:46,460
+And a bit of historical context is around
+
+84
+00:04:46,460 --> 00:04:52,040
+that time GPT-3 had already happened.
+
+85
+00:04:52,040 --> 00:04:52,840
+GPT-2.
+
+86
+00:04:52,840 --> 00:04:55,480
+All the language models had already
+
+87
+00:04:55,480 --> 00:04:59,200
+gone into this foundation model era.
+
+88
+00:04:59,200 --> 00:05:03,220
+Neovision was still-- there were some efforts,
+
+89
+00:05:03,220 --> 00:05:08,980
+but traditionally had been based on large annotated data
+
+90
+00:05:08,980 --> 00:05:12,760
+sets, such as ImageNet, and training models,
+
+91
+00:05:12,760 --> 00:05:15,920
+such as the ResNet, on these data sets
+
+92
+00:05:15,920 --> 00:05:19,160
+and doing a bunch of other things, like data augmentation,
+
+93
+00:05:19,160 --> 00:05:21,720
+and getting really good performance.
+
+94
+00:05:21,720 --> 00:05:25,960
+And so the researchers at OpenAI were wondering,
+
+95
+00:05:25,960 --> 00:05:29,520
+is it possible to leverage the large amount of image
+
+96
+00:05:29,520 --> 00:05:32,480
+and textual captions out there?
+
+97
+00:05:32,480 --> 00:05:35,840
+So inspired by this idea in language where you could just
+
+98
+00:05:35,840 --> 00:05:39,460
+scrape the internet, you have all this text, it's very noisy.
+
+99
+00:05:39,460 --> 00:05:42,180
+But somehow if you train a large enough model,
+
+100
+00:05:42,180 --> 00:05:45,680
+you can make sense out of this and generate something useful.
+
+101
+00:05:45,680 --> 00:05:49,720
+So what was the equivalent of that for images?
+
+102
+00:05:49,720 --> 00:05:53,420
+So as a result, CLIP was born.
+
+103
+00:05:53,420 --> 00:05:58,900
+And the idea of CLIP is fairly simple and straightforward.
+
+104
+00:05:58,900 --> 00:06:02,380
+So the idea here is that suppose I give you
+
+105
+00:06:02,380 --> 00:06:05,980
+a bunch of image-text pairs.
+
+106
+00:06:05,980 --> 00:06:09,220
+So let's say I give you 32,000 of these.
+
+107
+00:06:09,220 --> 00:06:13,140
+OK, so what I'm going to do is for each image
+
+108
+00:06:13,140 --> 00:06:16,900
+I'm going to encode it using an image encoder, which I'll
+
+109
+00:06:16,900 --> 00:06:20,380
+explain later, into a vector.
+
+110
+00:06:20,380 --> 00:06:26,380
+So I'm going to have 32,000 of these image encodings.
+
+111
+00:06:26,380 --> 00:06:27,940
+I'm going to also do the same thing
+
+112
+00:06:27,940 --> 00:06:30,400
+with the corresponding text.
+
+113
+00:06:30,400 --> 00:06:33,960
+So that will give me T1 through TN.
+
+114
+00:06:33,960 --> 00:06:36,240
+So these are the embeddings of the text.
+
+115
+00:06:36,240 --> 00:06:39,100
+These are embedding of the images.
+
+116
+00:06:39,100 --> 00:06:41,220
+Now, the objective I want to set up
+
+117
+00:06:41,220 --> 00:06:48,550
+is that I want the image-- let's take I1.
+
+118
+00:06:48,550 --> 00:06:52,410
+So I1 is aligned with T1.
+
+119
+00:06:52,410 --> 00:06:57,670
+So I want this alignment, the dot product between these two
+
+120
+00:06:57,670 --> 00:07:01,750
+embeddings to be much larger than the dot product between I1
+
+121
+00:07:01,750 --> 00:07:04,590
+and all the other texts, OK.
+
+122
+00:07:04,590 --> 00:07:08,830
+And conversely, I also want for this text
+
+123
+00:07:08,830 --> 00:07:11,110
+to say that this dot product is larger
+
+124
+00:07:11,110 --> 00:07:14,590
+than the dot product between T1 and all the other images.
+
+125
+00:07:14,590 --> 00:07:18,930
+So that, in a nutshell, is the CLIP objective.
+
+126
+00:07:18,930 --> 00:07:22,270
+And you can imagine doing—there's basically
+
+127
+00:07:22,270 --> 00:07:30,350
+2 times N different softmax classification problems.
+
+128
+00:07:30,350 --> 00:07:33,990
+So here's the code.
+
+129
+00:07:33,990 --> 00:07:40,470
+So you get an n by d matrix for the image encodings
+
+130
+00:07:40,470 --> 00:07:43,870
+and n by d for the textual embeddings.
+
+131
+00:07:43,870 --> 00:07:48,570
+You normalize and you take this dot product
+
+132
+00:07:48,570 --> 00:07:50,370
+with some temperature.
+
+133
+00:07:50,370 --> 00:07:56,970
+And then you compute the cross entropy, OK.
+
+134
+00:07:56,970 --> 00:08:00,210
+So it's basically a multi-class classification problem,
+
+135
+00:08:00,210 --> 00:08:09,050
+where the examples are structured in this m by n matrix form.
+
+136
+00:08:09,050 --> 00:08:11,390
+OK, any questions about that?
+
+137
+00:08:15,210 --> 00:08:24,050
+All right, so some more details about how CLIP was built.
+
+138
+00:08:24,050 --> 00:08:26,610
+So where does the data come from?
+
+139
+00:08:26,610 --> 00:08:32,890
+There are not too many details in the paper about the data.
+
+140
+00:08:32,890 --> 00:08:39,490
+Roughly, you take a bunch of queries from somewhere
+
+141
+00:08:39,490 --> 00:08:43,250
+and then you go search online for these
+
+142
+00:08:43,250 --> 00:08:47,630
+and you mine a bunch of image and text pairs.
+
+143
+00:08:47,630 --> 00:08:53,590
+And this resulted in 400 million image-text pairs.
+
+144
+00:08:53,590 --> 00:08:55,990
+The data set wasn't released, but there
+
+145
+00:08:55,990 --> 00:09:00,270
+was an effort by this paper called
+
+146
+00:09:00,270 --> 00:09:09,110
+OpenCLIP, which replicated and further extended the CLIP ideas.
+
+147
+00:09:09,110 --> 00:09:12,090
+So there was a data set called LAION-5B,
+
+148
+00:09:12,090 --> 00:09:14,430
+which was released 5 billion images
+
+149
+00:09:14,430 --> 00:09:16,350
+with textual descriptions.
+
+150
+00:09:16,350 --> 00:09:19,470
+And there was a bunch of processing that happened.
+
+151
+00:09:19,470 --> 00:09:22,030
+Interestingly, they actually used CLIP for the data filtering
+
+152
+00:09:22,030 --> 00:09:24,310
+and then train OpenCLIP.
+
+153
+00:09:24,310 --> 00:09:26,530
+So there's some bootstrapping happening.
+
+154
+00:09:26,530 --> 00:09:28,390
+But at least this is a model where
+
+155
+00:09:28,390 --> 00:09:31,350
+you can point to the data set that it was trained
+
+156
+00:09:31,350 --> 00:09:34,290
+on and the code as well.
+
+157
+00:09:36,950 --> 00:09:41,630
+So a few other details.
+
+158
+00:09:41,630 --> 00:09:45,320
+So images come in all sorts of resolutions.
+
+159
+00:09:45,320 --> 00:09:47,680
+If you find an internet image, it
+
+160
+00:09:47,680 --> 00:09:52,960
+might be long and skinny or tall—sorry.
+
+161
+00:09:52,960 --> 00:09:55,000
+Long and skinny or the other way.
+
+162
+00:09:55,000 --> 00:09:57,240
+So, arbitrary dimensions.
+
+163
+00:09:57,240 --> 00:10:01,800
+And one thing that you learn about neural nets
+
+164
+00:10:01,800 --> 00:10:03,820
+is that they don't like things to be dynamic.
+
+165
+00:10:03,820 --> 00:10:06,840
+They want things to be fixed size.
+
+166
+00:10:06,840 --> 00:10:11,560
+So there is a somewhat heuristic processing
+
+167
+00:10:11,560 --> 00:10:16,600
+that happens is they resize the image so that the shorter side
+
+168
+00:10:16,600 --> 00:10:20,000
+is 336 or whatever target size.
+
+169
+00:10:20,000 --> 00:10:23,000
+It could be 224 as well.
+
+170
+00:10:23,000 --> 00:10:27,520
+And then they center crop to get a square.
+
+171
+00:10:27,520 --> 00:10:29,660
+OK, this is obviously for convenience.
+
+172
+00:10:29,660 --> 00:10:32,580
+Later, we'll see that you can do better than this.
+
+173
+00:10:32,580 --> 00:10:35,000
+But this is just for expediency.
+
+174
+00:10:35,000 --> 00:10:39,560
+And also at this time the CLIP authors
+
+175
+00:10:39,560 --> 00:10:42,400
+were thinking about ImageNet and classification.
+
+176
+00:10:42,400 --> 00:10:46,140
+So usually, the object is in the middle
+
+177
+00:10:46,140 --> 00:10:48,040
+and you're just trimming off some background.
+
+178
+00:10:48,040 --> 00:10:49,760
+So it doesn't matter too much.
+
+179
+00:10:55,840 --> 00:10:57,720
+So what is the vision encoder?
+
+180
+00:10:57,720 --> 00:10:59,520
+So this is the general algorithm.
+
+181
+00:10:59,520 --> 00:11:05,520
+But I haven't specified what the image and text encoders are.
+
+182
+00:11:05,520 --> 00:11:06,020
+Yeah.
+
+183
+00:11:24,700 --> 00:11:28,100
+So the question I think is why they train on image-text pairs
+
+184
+00:11:28,100 --> 00:11:29,560
+as opposed to images.
+
+185
+00:11:29,560 --> 00:11:36,380
+So there is a line of work that tries
+
+186
+00:11:36,380 --> 00:11:41,110
+to encode images into representations
+
+187
+00:11:41,110 --> 00:11:43,650
+based on data augmentation.
+
+188
+00:11:43,650 --> 00:11:46,830
+So, for example, if you take an image-- and I think
+
+189
+00:11:46,830 --> 00:11:48,090
+this idea called SimCLR.
+
+190
+00:11:48,090 --> 00:11:49,590
+You augment it.
+
+191
+00:11:49,590 --> 00:11:50,410
+You crop it.
+
+192
+00:11:50,410 --> 00:11:52,630
+You randomly perturb it.
+
+193
+00:11:52,630 --> 00:11:53,570
+Rotate it.
+
+194
+00:11:53,570 --> 00:11:56,850
+And you want to say that that is the same image.
+
+195
+00:11:56,850 --> 00:11:58,610
+They should have similar embeddings.
+
+196
+00:12:01,496 --> 00:12:05,410
+And that's useful for low level details.
+
+197
+00:12:05,410 --> 00:12:09,710
+But the problem is that you won't data
+
+198
+00:12:09,710 --> 00:12:14,390
+augment your way from one type of dog to another dog.
+
+199
+00:12:14,390 --> 00:12:16,910
+So by using the text, it gives you
+
+200
+00:12:16,910 --> 00:12:23,830
+a higher level semantic representations of images.
+
+201
+00:12:23,830 --> 00:12:25,930
+And, yeah, that's a good question.
+
+202
+00:12:25,930 --> 00:12:29,590
+And later, we'll see how these semantic representations are
+
+203
+00:12:29,590 --> 00:12:31,510
+useful if you look at the types of tasks
+
+204
+00:12:31,510 --> 00:12:33,850
+that people are trying to solve.
+
+205
+00:12:36,870 --> 00:12:41,450
+OK, so what is the vision encoder that CLIP uses?
+
+206
+00:12:41,450 --> 00:12:44,930
+They actually experimented with a bunch of different ones,
+
+207
+00:12:44,930 --> 00:12:49,290
+ResNets and vision transformers, which had just come out.
+
+208
+00:12:49,290 --> 00:12:51,990
+They found out that vision transformers performed the best.
+
+209
+00:12:51,990 --> 00:12:56,770
+So when people say CLIP, they usually mean the VIT version.
+
+210
+00:12:56,770 --> 00:13:03,130
+And so a vision transformer does the following.
+
+211
+00:13:03,130 --> 00:13:10,930
+So you take an image and you break it up into these patches.
+
+212
+00:13:10,930 --> 00:13:15,250
+I think the original paper was 16 by 16
+
+213
+00:13:15,250 --> 00:13:18,850
+and the CLIP used 14 by 14.
+
+214
+00:13:18,850 --> 00:13:21,730
+But anyway, you have these little patches,
+
+215
+00:13:21,730 --> 00:13:24,850
+which are basically vectors.
+
+216
+00:13:24,850 --> 00:13:27,970
+So each patch is in some sense a--
+
+217
+00:13:27,970 --> 00:13:31,930
+well, a token for this vision transformer.
+
+218
+00:13:31,930 --> 00:13:33,490
+You add the positional embeddings
+
+219
+00:13:33,490 --> 00:13:36,630
+just like you would if you were training a language model,
+
+220
+00:13:36,630 --> 00:13:42,310
+and then you just put it through a standard transformer.
+
+221
+00:13:42,310 --> 00:13:50,190
+And if you want to classify, then you would--
+
+222
+00:13:50,190 --> 00:13:55,230
+well, you would usually want to--OK, sorry.
+
+223
+00:13:55,230 --> 00:14:03,550
+The transformer encoder produces a sequence of vectors.
+
+224
+00:14:03,550 --> 00:14:07,530
+And the CLIP paper does something a little bit different.
+
+225
+00:14:07,530 --> 00:14:08,947
+You can average all these vectors.
+
+226
+00:14:08,947 --> 00:14:10,350
+That gives you a single vector.
+
+227
+00:14:10,350 --> 00:14:14,230
+But they thought it was better to do attention pooling, which
+
+228
+00:14:14,230 --> 00:14:17,830
+means that you take the global average of all the activations,
+
+229
+00:14:17,830 --> 00:14:22,630
+but then you also do another round of attention
+
+230
+00:14:22,630 --> 00:14:27,590
+with that query against the key and values of each position.
+
+231
+00:14:27,590 --> 00:14:29,530
+And that gives you another vector,
+
+232
+00:14:29,530 --> 00:14:32,310
+which is maybe a little bit more informed
+
+233
+00:14:32,310 --> 00:14:37,080
+rather than just a straight up average.
+
+234
+00:14:37,080 --> 00:14:40,280
+OK, so that's the VIT.
+
+235
+00:14:40,280 --> 00:14:45,720
+And the CLIP paper found that the best model is what is called
+
+236
+00:14:45,720 --> 00:14:46,320
+VIT-L/14.
+
+237
+00:14:49,360 --> 00:14:54,040
+So to decipher, this is a large VIT.
+
+238
+00:14:54,040 --> 00:14:58,760
+I think it has 24 layers or so.
+
+239
+00:14:58,760 --> 00:15:00,880
+Not quite sure about that.
+
+240
+00:15:00,880 --> 00:15:03,960
+And 14 by 14 patches.
+
+241
+00:15:03,960 --> 00:15:07,320
+Each patch is RGB, so it has three channels.
+
+242
+00:15:07,320 --> 00:15:13,420
+And they trained on 336 by 336 resolution images.
+
+243
+00:15:13,420 --> 00:15:19,120
+Actually, they trained on a lower res
+
+244
+00:15:19,120 --> 00:15:23,452
+I guess for speed because high resolution images take longer.
+
+245
+00:15:23,452 --> 00:15:25,160
+And then for the latter part of training,
+
+246
+00:15:25,160 --> 00:15:27,720
+they train on higher res.
+
+247
+00:15:27,720 --> 00:15:29,000
+Yeah.
+
+248
+00:15:29,000 --> 00:15:31,040
+For the position embedding, would it
+
+249
+00:15:31,040 --> 00:15:33,440
+be more complicated than the task?
+
+250
+00:15:33,440 --> 00:15:36,140
+For example, task only has [INAUDIBLE].
+
+251
+00:15:40,660 --> 00:15:44,670
+Yeah, so the question is, can you
+
+252
+00:15:44,670 --> 00:15:46,420
+be smarter about the positional embeddings
+
+253
+00:15:46,420 --> 00:15:51,060
+because this is just linear 0 through 9?
+
+254
+00:15:51,060 --> 00:15:54,220
+I think in this paper, they actually-- in the CLIP paper,
+
+255
+00:15:54,220 --> 00:15:57,500
+I believe they tried some 2D version of this.
+
+256
+00:15:57,500 --> 00:16:02,300
+And the one DNA found that it doesn't really matter that much.
+
+257
+00:16:02,300 --> 00:16:05,440
+I think it's also--
+
+258
+00:16:05,440 --> 00:16:09,260
+I always have to take these results with the idea
+
+259
+00:16:09,260 --> 00:16:11,480
+that they're interested in classification in mind.
+
+260
+00:16:11,480 --> 00:16:13,560
+So for classification, maybe it doesn't matter.
+
+261
+00:16:13,560 --> 00:16:16,540
+Later, we'll see a fancier positional embeddings
+
+262
+00:16:16,540 --> 00:16:20,840
+that do take into account the spatial structure.
+
+263
+00:16:24,740 --> 00:16:30,200
+OK, so the text encoder is a standard transformer.
+
+264
+00:16:30,200 --> 00:16:33,270
+It's a GPT-2 style transformer since that
+
+265
+00:16:33,270 --> 00:16:37,070
+was from the same group that developed GPT-2.
+
+266
+00:16:37,070 --> 00:16:42,830
+And in order to get a single vector out of a sequence,
+
+267
+00:16:42,830 --> 00:16:47,230
+they prepended BOS and appended EOS.
+
+268
+00:16:47,230 --> 00:16:51,390
+And then they took EOS, the activation at the highest layer
+
+269
+00:16:51,390 --> 00:16:57,830
+as the representation of that whole sequence.
+
+270
+00:16:57,830 --> 00:16:59,290
+OK, so you have the vision encoder.
+
+271
+00:16:59,290 --> 00:17:00,830
+You have the text encoder.
+
+272
+00:17:00,830 --> 00:17:06,349
+And then you can do this process to train.
+
+273
+00:17:06,349 --> 00:17:07,369
+You pick a batch.
+
+274
+00:17:07,369 --> 00:17:08,650
+You encode all the text.
+
+275
+00:17:08,650 --> 00:17:10,250
+You decode all the images.
+
+276
+00:17:10,250 --> 00:17:14,990
+And then you form these two end cross-entropy losses.
+
+277
+00:17:14,990 --> 00:17:18,270
+And then you go from there.
+
+278
+00:17:18,270 --> 00:17:21,710
+OK, so the headline result, which
+
+279
+00:17:21,710 --> 00:17:25,910
+got a lot of people excited about CLIP back in 2021,
+
+280
+00:17:25,910 --> 00:17:28,690
+is that on the ImageNet benchmark,
+
+281
+00:17:28,690 --> 00:17:32,330
+zero-shot CLIP outperforms a ResNet that was trained
+
+282
+00:17:32,330 --> 00:17:36,090
+on 1.2 million ImageNet images.
+
+283
+00:17:36,090 --> 00:17:39,270
+So if you think about this, 1.2 million ImageNet images,
+
+284
+00:17:39,270 --> 00:17:44,650
+this was many, many hours of Amazon Mechanical Turk worker
+
+285
+00:17:44,650 --> 00:17:48,490
+time to do this annotation.
+
+286
+00:17:48,490 --> 00:17:52,890
+And now you have CLIP that was trained on more organic web
+
+287
+00:17:52,890 --> 00:17:54,410
+data.
+
+288
+00:17:54,410 --> 00:17:57,030
+Of course, this was the labor of a bunch of people on the web.
+
+289
+00:17:57,030 --> 00:18:01,730
+But if you're able to leverage that or existing data already,
+
+290
+00:18:01,730 --> 00:18:04,650
+then you can just zero-shot it.
+
+291
+00:18:04,650 --> 00:18:07,770
+And the zero-shot technique is basically
+
+292
+00:18:07,770 --> 00:18:10,870
+to explain—I don't have slide support here.
+
+293
+00:18:10,870 --> 00:18:14,230
+But you take an image and then you have a bunch of text.
+
+294
+00:18:14,230 --> 00:18:16,130
+And then you basically take the dot product
+
+295
+00:18:16,130 --> 00:18:19,790
+with the various labels and see which one's the highest.
+
+296
+00:18:23,630 --> 00:18:24,130
+Oh, yeah.
+
+297
+00:18:24,130 --> 00:18:24,710
+It is.
+
+298
+00:18:24,710 --> 00:18:25,250
+Sorry.
+
+299
+00:18:25,250 --> 00:18:26,930
+It is on this part of the slide.
+
+300
+00:18:26,930 --> 00:18:28,970
+OK, good point.
+
+301
+00:18:28,970 --> 00:18:32,850
+So this is a zero-shot prediction,
+
+302
+00:18:32,850 --> 00:18:35,450
+where you take an image and then you—yeah, what I said.
+
+303
+00:18:40,870 --> 00:18:41,410
+Cool.
+
+304
+00:18:41,410 --> 00:18:43,370
+Any questions?
+
+305
+00:18:43,370 --> 00:18:43,870
+Yeah.
+
+306
+00:19:00,470 --> 00:19:02,230
+Yeah, so the question is if you have a dog
+
+307
+00:19:02,230 --> 00:19:05,270
+and there's maybe other captions that also have dogs,
+
+308
+00:19:05,270 --> 00:19:08,670
+would that confuse the model?
+
+309
+00:19:08,670 --> 00:19:13,430
+In general, this process is going to be noisy.
+
+310
+00:19:13,430 --> 00:19:18,172
+It's OK if there's another dog because, on average, it's
+
+311
+00:19:18,172 --> 00:19:20,130
+unlikely that there's always going to be a dog.
+
+312
+00:19:20,130 --> 00:19:23,950
+Sometimes it's going to be an apple or a cat or something.
+
+313
+00:19:23,950 --> 00:19:29,040
+But also another point is that these images are basically
+
+314
+00:19:29,040 --> 00:19:34,060
+scraped from images on the web with textual text next to them
+
+315
+00:19:34,060 --> 00:19:36,860
+or in the alt image.
+
+316
+00:19:36,860 --> 00:19:38,900
+And so they're extremely noisy.
+
+317
+00:19:38,900 --> 00:19:41,280
+There's been studies that look at when
+
+318
+00:19:41,280 --> 00:19:45,160
+you have a caption of an image, it doesn't necessarily just
+
+319
+00:19:45,160 --> 00:19:48,547
+Verbatim say what's in the image.
+
+320
+00:19:48,547 --> 00:19:50,380
+Because if you have an image and it's a dog,
+
+321
+00:19:50,380 --> 00:19:52,760
+you don't need to say a dog.
+
+322
+00:19:52,760 --> 00:19:55,220
+So this process is very noisy.
+
+323
+00:19:55,220 --> 00:20:02,517
+So it's maybe somewhat surprising but also interesting
+
+324
+00:20:02,517 --> 00:20:03,100
+that it works.
+
+325
+00:20:03,100 --> 00:20:06,060
+I mean, there was a lot of data filtering that is needed.
+
+326
+00:20:06,060 --> 00:20:09,300
+So if you take arbitrary images and text on the web,
+
+327
+00:20:09,300 --> 00:20:12,920
+it's probably going to be way too noisy.
+
+328
+00:20:12,920 --> 00:20:15,840
+One other thing to note, which relates
+
+329
+00:20:15,840 --> 00:20:18,120
+to a point I'll come back to at the very end,
+
+330
+00:20:18,120 --> 00:20:21,560
+is they also try this alternative where
+
+331
+00:20:21,560 --> 00:20:24,180
+instead of doing this ranking, they can
+
+332
+00:20:24,180 --> 00:20:26,520
+predict a text from the images.
+
+333
+00:20:26,520 --> 00:20:28,100
+So they can set an objective where
+
+334
+00:20:28,100 --> 00:20:30,180
+they try to take the images and predict
+
+335
+00:20:30,180 --> 00:20:38,980
+the text, either as a bag of words or as a language model.
+
+336
+00:20:38,980 --> 00:20:43,780
+And they show that maybe, I don't know, somewhat
+
+337
+00:20:43,780 --> 00:20:47,080
+surprisingly, that if you use a stronger model,
+
+338
+00:20:47,080 --> 00:20:49,500
+it actually does worse or at least
+
+339
+00:20:49,500 --> 00:20:55,980
+is less efficient compared to using bag of words, CLIP.
+
+340
+00:20:55,980 --> 00:21:00,620
+So this is saying that--
+
+341
+00:21:00,620 --> 00:21:05,420
+I think saying that for actually the representations
+
+342
+00:21:05,420 --> 00:21:09,120
+that you're trying to learn-- or, again, this ImageNet accuracy.
+
+343
+00:21:09,120 --> 00:21:10,900
+So it's classification.
+
+344
+00:21:10,900 --> 00:21:15,180
+Actually modeling the exact token sequences of the caption
+
+345
+00:21:15,180 --> 00:21:20,340
+isn't so important for getting the rough representation
+
+346
+00:21:20,340 --> 00:21:21,200
+of the image.
+
+347
+00:21:24,484 --> 00:21:29,670
+OK, we'll come back to this point at the end.
+
+348
+00:21:29,670 --> 00:21:32,430
+So what did we learn so far?
+
+349
+00:21:32,430 --> 00:21:35,550
+So we've encoded images using CLIP.
+
+350
+00:21:35,550 --> 00:21:38,990
+And it captures the semantics of the image
+
+351
+00:21:38,990 --> 00:21:40,650
+because it's paired with text.
+
+352
+00:21:40,650 --> 00:21:44,830
+And generally, text talks about the semantics.
+
+353
+00:21:44,830 --> 00:21:48,030
+It is important to note that the design decisions here are
+
+354
+00:21:48,030 --> 00:21:50,190
+based on image classification.
+
+355
+00:21:50,190 --> 00:21:53,150
+So it's not very fine-grained.
+
+356
+00:21:53,150 --> 00:21:56,430
+But yet, it's still, as we'll see, serves
+
+357
+00:21:56,430 --> 00:21:58,990
+as a robust starting point for everything
+
+358
+00:21:58,990 --> 00:22:01,350
+we're going to do later.
+
+359
+00:22:01,350 --> 00:22:07,750
+One technical downside of CLIP is that it does require large
+
+360
+00:22:07,750 --> 00:22:10,510
+batch sizes, like 30,000.
+
+361
+00:22:10,510 --> 00:22:12,350
+If you have a batch size of 1, clearly, it
+
+362
+00:22:12,350 --> 00:22:14,830
+doesn't work, or even 10, it doesn't work.
+
+363
+00:22:14,830 --> 00:22:17,590
+And furthermore, the softmax operation
+
+364
+00:22:17,590 --> 00:22:20,290
+operates over the full batch.
+
+365
+00:22:20,290 --> 00:22:22,970
+So it's not really very decomposable.
+
+366
+00:22:22,970 --> 00:22:25,090
+Whereas if you think about normal language model
+
+367
+00:22:25,090 --> 00:22:30,250
+training, a batch of examples, all the sequences parallelize
+
+368
+00:22:30,250 --> 00:22:37,810
+and you just do aggregation at the end.
+
+369
+00:22:37,810 --> 00:22:42,930
+So this point will be addressed by another paper from Google
+
+370
+00:22:42,930 --> 00:22:45,930
+that came out called SigLIP.
+
+371
+00:22:45,930 --> 00:22:49,770
+And so think about this as basically an improved version
+
+372
+00:22:49,770 --> 00:22:50,430
+of CLIP.
+
+373
+00:22:50,430 --> 00:22:56,490
+So it stands for Sigmoid Loss for Language Image Pre-training.
+
+374
+00:22:56,490 --> 00:23:00,890
+And here, the main difference is that CLIP does
+
+375
+00:23:00,890 --> 00:23:02,830
+multi-class classification.
+
+376
+00:23:02,830 --> 00:23:05,250
+It says, I have this aligned text and image.
+
+377
+00:23:05,250 --> 00:23:09,170
+And I'm going to say this is positive against all
+
+378
+00:23:09,170 --> 00:23:11,890
+the other alternative images or against all
+
+379
+00:23:11,890 --> 00:23:13,930
+the alternative text.
+
+380
+00:23:13,930 --> 00:23:16,270
+SigLIP, in some sense, is a lot simpler.
+
+381
+00:23:16,270 --> 00:23:21,070
+It basically says for any given image text pair,
+
+382
+00:23:21,070 --> 00:23:23,190
+are they aligned or not?
+
+383
+00:23:23,190 --> 00:23:27,030
+So if I reference this diagram up here,
+
+384
+00:23:27,030 --> 00:23:28,870
+it's basically binary classification
+
+385
+00:23:28,870 --> 00:23:31,030
+where the diagonals are positive examples
+
+386
+00:23:31,030 --> 00:23:33,630
+and the off-diagonals are negative examples.
+
+387
+00:23:33,630 --> 00:23:36,070
+That's it.
+
+388
+00:23:36,070 --> 00:23:39,190
+So here's the algorithm.
+
+389
+00:23:39,190 --> 00:23:40,930
+You take the embeddings.
+
+390
+00:23:40,930 --> 00:23:41,970
+You normalize.
+
+391
+00:23:41,970 --> 00:23:44,230
+You take the dot product as usual.
+
+392
+00:23:44,230 --> 00:23:50,390
+But now you're forming the labels which are minus 1
+
+393
+00:23:50,390 --> 00:23:53,950
+on the off-diagonal, and diagonals you have one.
+
+394
+00:23:53,950 --> 00:24:00,030
+And then you do log_sigmoid.
+
+395
+00:24:00,030 --> 00:24:02,050
+So the objective is very simple.
+
+396
+00:24:17,320 --> 00:24:19,000
+Yeah, so the question is, does this
+
+397
+00:24:19,000 --> 00:24:23,680
+require any sophisticated sampling strategies?
+
+398
+00:24:23,680 --> 00:24:26,120
+At least in the initial paper, they
+
+399
+00:24:26,120 --> 00:24:31,280
+were just operating on literally the same type of matrix.
+
+400
+00:24:31,280 --> 00:24:34,520
+You could imagine, I think you're probably thinking in general
+
+401
+00:24:34,520 --> 00:24:37,840
+for these contrastive methods.
+
+402
+00:24:37,840 --> 00:24:40,280
+The negative examples need to be—sometimes
+
+403
+00:24:40,280 --> 00:24:42,500
+you need to balance the positives and the negatives,
+
+404
+00:24:42,500 --> 00:24:45,160
+or the negatives need to be like tight negatives
+
+405
+00:24:45,160 --> 00:24:46,700
+so that you're not biased.
+
+406
+00:24:46,700 --> 00:24:49,180
+But at least in the initial version,
+
+407
+00:24:49,180 --> 00:24:54,280
+this was fairly straightforward.
+
+408
+00:24:54,280 --> 00:25:01,903
+So to speak about the data, this was done at Google.
+
+409
+00:25:01,903 --> 00:25:02,820
+This was the data set.
+
+410
+00:25:02,820 --> 00:25:06,280
+They used another paper, which was another language image
+
+411
+00:25:06,280 --> 00:25:11,880
+model around 2022, which got a WebLI data set with order
+
+412
+00:25:11,880 --> 00:25:14,660
+billion image text pairs.
+
+413
+00:25:14,660 --> 00:25:16,480
+They also did some extra work.
+
+414
+00:25:16,480 --> 00:25:18,400
+For example, images that have text in them.
+
+415
+00:25:18,400 --> 00:25:19,620
+They did OCR.
+
+416
+00:25:19,620 --> 00:25:23,140
+And that's another way to form text image pairs
+
+417
+00:25:23,140 --> 00:25:24,640
+and did some filtering.
+
+418
+00:25:24,640 --> 00:25:26,920
+This was multilingual.
+
+419
+00:25:26,920 --> 00:25:33,780
+The main point of this paper was that it was much more
+
+420
+00:25:33,780 --> 00:25:36,460
+efficient to train than CLIP.
+
+421
+00:25:36,460 --> 00:25:42,540
+So CLIP was trained 10 days on 256 TPUv3,
+
+422
+00:25:42,540 --> 00:25:46,260
+and CLIP was five days on 32v4s.
+
+423
+00:25:46,260 --> 00:25:48,140
+And you might think, oh, v4s actually
+
+424
+00:25:48,140 --> 00:25:49,700
+should be faster than v3.
+
+425
+00:25:49,700 --> 00:25:53,140
+In terms of flops per second, they're actually not.
+
+426
+00:25:53,140 --> 00:25:56,140
+They're better because you can put more of them in a pod
+
+427
+00:25:56,140 --> 00:25:57,560
+and the interconnect is better.
+
+428
+00:25:57,560 --> 00:26:04,500
+But at this scale, it's really actually not faster.
+
+429
+00:26:04,500 --> 00:26:09,660
+Actually, 60% slower or something.
+
+430
+00:26:09,660 --> 00:26:15,700
+So the way that this is faster—and, of course,
+
+431
+00:26:15,700 --> 00:26:17,160
+I think CLIP probably did not try
+
+432
+00:26:17,160 --> 00:26:21,180
+to optimize the code for the maximum throughput.
+
+433
+00:26:21,180 --> 00:26:24,560
+It was just let's get this thing to work.
+
+434
+00:26:24,560 --> 00:26:30,640
+But the SigLIP paper showed that you can parallelize this
+
+435
+00:26:30,640 --> 00:26:31,420
+as follows.
+
+436
+00:26:31,420 --> 00:26:36,500
+So you have—basically, if you recall your systems lecture,
+
+437
+00:26:36,500 --> 00:26:41,400
+so this is you can think about it as DDP if you like,
+
+438
+00:26:41,400 --> 00:26:51,880
+where each device stores a subset of the image text pairs.
+
+439
+00:26:51,880 --> 00:26:55,780
+However, there's interactions between the examples,
+
+440
+00:26:55,780 --> 00:26:58,360
+unlike in language model training, where everything just
+
+441
+00:26:58,360 --> 00:26:59,440
+factors.
+
+442
+00:26:59,440 --> 00:27:02,560
+So in the first pass, each device
+
+443
+00:27:02,560 --> 00:27:09,840
+just computes all the losses on whatever image text
+
+444
+00:27:09,840 --> 00:27:11,410
+pairs it has locally.
+
+445
+00:27:15,296 --> 00:27:19,150
+And then you send the text.
+
+446
+00:27:19,150 --> 00:27:24,570
+So basically, device 1 gets T5 through T8.
+
+447
+00:27:24,570 --> 00:27:27,270
+And now it's able to compute the negatives here.
+
+448
+00:27:27,270 --> 00:27:30,110
+And then it gets T9 through T12.
+
+449
+00:27:30,110 --> 00:27:35,290
+So you rotate around until you cover all the off-diagonal block
+
+450
+00:27:35,290 --> 00:27:38,210
+entries.
+
+451
+00:27:38,210 --> 00:27:42,850
+Another thing that was nice about SigLIP
+
+452
+00:27:42,850 --> 00:27:48,250
+is that you effectively decouple batch size from the loss.
+
+453
+00:27:48,250 --> 00:27:51,430
+Whereas in CLIP, the loss is tied to the batch size.
+
+454
+00:27:51,430 --> 00:27:54,930
+If you change the batch size, it's a different loss function.
+
+455
+00:27:54,930 --> 00:27:59,010
+So they were able to experiment with much smaller batch sizes
+
+456
+00:27:59,010 --> 00:28:00,890
+less than 16K.
+
+457
+00:28:00,890 --> 00:28:03,690
+And in that regime, it's much better than CLIP
+
+458
+00:28:03,690 --> 00:28:05,210
+because the loss function, if you
+
+459
+00:28:05,210 --> 00:28:10,490
+have too many, too small a batch size, it just degrades.
+
+460
+00:28:10,490 --> 00:28:16,450
+Whereas for smaller batch size for CLIP, you have more variance
+
+461
+00:28:16,450 --> 00:28:18,770
+but it's the same in expectation.
+
+462
+00:28:18,770 --> 00:28:21,030
+It's the same loss.
+
+463
+00:28:21,030 --> 00:28:24,730
+They also say, well, you can go up to much larger batch sizes.
+
+464
+00:28:24,730 --> 00:28:26,390
+But that doesn't really help.
+
+465
+00:28:26,390 --> 00:28:30,670
+And we saw that critical batch sizes at some limit.
+
+466
+00:28:30,670 --> 00:28:34,370
+And 32K was essentially their critical batch size.
+
+467
+00:28:37,070 --> 00:28:40,670
+OK, so now we have CLIP and SigLIP.
+
+468
+00:28:40,670 --> 00:28:44,790
+These are image encoders that take an image, in this version,
+
+469
+00:28:44,790 --> 00:28:49,510
+just a fixed size image, 336 by 336, let's say, and maps it
+
+470
+00:28:49,510 --> 00:28:56,790
+into a vector, OK, which contains some semantics.
+
+471
+00:28:56,790 --> 00:29:03,470
+So now let's start building VLMs, Vision Language Models.
+
+472
+00:29:03,470 --> 00:29:08,000
+And I'm going to talk about two families of models, LLaVA
+
+473
+00:29:08,000 --> 00:29:09,920
+and Qwen.
+
+474
+00:29:09,920 --> 00:29:13,830
+The two are very similar in the broad template.
+
+475
+00:29:13,830 --> 00:29:15,580
+There are some details that are different,
+
+476
+00:29:15,580 --> 00:29:18,800
+which we'll go through, and the basic idea
+
+477
+00:29:18,800 --> 00:29:20,760
+is that we're going to take these embeddings
+
+478
+00:29:20,760 --> 00:29:23,640
+and then just inject them into our language model.
+
+479
+00:29:23,640 --> 00:29:26,840
+So this is going to be more of a flavor of mid-training
+
+480
+00:29:26,840 --> 00:29:30,420
+or post-training, where we take an existing image encoder.
+
+481
+00:29:30,420 --> 00:29:33,040
+We take an existing LLM, and then we're
+
+482
+00:29:33,040 --> 00:29:37,360
+going to stitch it together rather than training something
+
+483
+00:29:37,360 --> 00:29:40,680
+from scratch.
+
+484
+00:29:40,680 --> 00:29:46,680
+So the LLaVA paper came out in 2023.
+
+485
+00:29:46,680 --> 00:29:51,080
+And this got people excited because around this time,
+
+486
+00:29:51,080 --> 00:29:55,760
+the closed models, like GPT, I think it was GPT-4,
+
+487
+00:29:55,760 --> 00:29:58,480
+was able to do visual reasoning.
+
+488
+00:29:58,480 --> 00:30:02,240
+And they were able to show that they could do
+
+489
+00:30:02,240 --> 00:30:03,660
+some visual reasoning as well.
+
+490
+00:30:03,660 --> 00:30:07,320
+It wasn't as good as GPT-4, of course,
+
+491
+00:30:07,320 --> 00:30:09,380
+but I think it was an open model and people
+
+492
+00:30:09,380 --> 00:30:12,260
+got to see what went under the hood.
+
+493
+00:30:12,260 --> 00:30:19,780
+So for VLMs, there's essentially a few pieces here.
+
+494
+00:30:19,780 --> 00:30:21,340
+There's the vision encoder.
+
+495
+00:30:21,340 --> 00:30:23,260
+They use CLIP here.
+
+496
+00:30:23,260 --> 00:30:26,740
+For the text decoder, they use a language model called Vicuna,
+
+497
+00:30:26,740 --> 00:30:30,500
+which is the first Llama model that was fine-tuned
+
+498
+00:30:30,500 --> 00:30:33,040
+on some shared GPT conversations.
+
+499
+00:30:33,040 --> 00:30:36,740
+So these are conversations that people have with ChatGPT
+
+500
+00:30:36,740 --> 00:30:38,400
+and share them on this website.
+
+501
+00:30:38,400 --> 00:30:42,340
+I don't think this is up anymore.
+
+502
+00:30:42,340 --> 00:30:50,080
+So the data that they used was based on MS COCO.
+
+503
+00:30:50,080 --> 00:30:51,700
+So this was an annotated data set
+
+504
+00:30:51,700 --> 00:30:55,300
+where they had Mechanical Turk workers go and annotate
+
+505
+00:30:55,300 --> 00:30:59,020
+a bunch of images with bounding boxes and captions describing
+
+506
+00:30:59,020 --> 00:31:01,260
+what was in the image.
+
+507
+00:31:01,260 --> 00:31:07,020
+So they basically synthesized a data set for their model.
+
+508
+00:31:07,020 --> 00:31:11,600
+So they prompted GPT-4 with the captions or the detected objects
+
+509
+00:31:11,600 --> 00:31:15,800
+and GPT-4 to generate questions or conversations.
+
+510
+00:31:15,800 --> 00:31:20,800
+For example, this is an image in the MS COCO data set.
+
+511
+00:31:20,800 --> 00:31:24,660
+This was an annotated caption done by a human.
+
+512
+00:31:24,660 --> 00:31:31,120
+And also here is also annotated by a human.
+
+513
+00:31:31,120 --> 00:31:37,120
+And then you ask GPT-4, generate me a conversation
+
+514
+00:31:37,120 --> 00:31:41,080
+and you might get a question and an answer.
+
+515
+00:31:41,080 --> 00:31:44,780
+You might ask GPT-4 generate me a detailed description.
+
+516
+00:31:44,780 --> 00:31:47,660
+It generates something, I guess, similar to the caption.
+
+517
+00:31:47,660 --> 00:31:50,980
+And then you can ask GPT-4 to generate complex reasoning.
+
+518
+00:31:50,980 --> 00:31:54,532
+And it does something like that.
+
+519
+00:31:54,532 --> 00:32:03,390
+OK, so those are synthesized data, 158,000 examples.
+
+520
+00:32:03,390 --> 00:32:06,310
+And then they trained a model on this.
+
+521
+00:32:06,310 --> 00:32:12,610
+So the model-- so they use CLIP, in particular,
+
+522
+00:32:12,610 --> 00:32:18,090
+the highest performing CLIP version, ViT-L/14.
+
+523
+00:32:18,090 --> 00:32:21,770
+So 14 by 14 patches.
+
+524
+00:32:21,770 --> 00:32:25,850
+And then they-- let's just look at this image.
+
+525
+00:32:25,850 --> 00:32:28,110
+So they take images.
+
+526
+00:32:28,110 --> 00:32:30,410
+They send it through this vision encoder CLIP.
+
+527
+00:32:30,410 --> 00:32:32,410
+That gives you a vector.
+
+528
+00:32:32,410 --> 00:32:35,990
+But this vector isn't really in the same space,
+
+529
+00:32:35,990 --> 00:32:38,770
+so to speak, as the text.
+
+530
+00:32:38,770 --> 00:32:43,330
+So then they multiply by a matrix W
+
+531
+00:32:43,330 --> 00:32:47,890
+to get another vector, which is in the same space as the text
+
+532
+00:32:47,890 --> 00:32:49,010
+embeddings.
+
+533
+00:32:49,010 --> 00:32:52,330
+And for text, you basically just use your standard embeddings
+
+534
+00:32:52,330 --> 00:32:54,850
+to get vectors.
+
+535
+00:32:54,850 --> 00:32:58,810
+So what's basically happening is that the text gets encoded
+
+536
+00:32:58,810 --> 00:33:01,270
+into these vectors and the image also gets
+
+537
+00:33:01,270 --> 00:33:04,030
+encoded into these vectors.
+
+538
+00:33:04,030 --> 00:33:06,670
+And then this whole sequence of vectors
+
+539
+00:33:06,670 --> 00:33:11,682
+just goes through a standard Transformer and produces output.
+
+540
+00:33:11,682 --> 00:33:14,550
+OK, so we're in some sense converting these images
+
+541
+00:33:14,550 --> 00:33:18,750
+into textual tokens.
+
+542
+00:33:18,750 --> 00:33:21,770
+So I can leverage the pre-trained language model.
+
+543
+00:33:24,510 --> 00:33:30,890
+So to train this model, they do it in two stages.
+
+544
+00:33:30,890 --> 00:33:33,670
+The first stage is that they freeze the vision
+
+545
+00:33:33,670 --> 00:33:39,070
+encoder and the language model and only train this matrix W.
+
+546
+00:33:39,070 --> 00:33:42,150
+And this is what they call the alignment phase, which
+
+547
+00:33:42,150 --> 00:33:46,830
+is essentially making sure that the image gets
+
+548
+00:33:46,830 --> 00:33:50,090
+mapped into the same space.
+
+549
+00:33:50,090 --> 00:33:54,890
+Because if you just use a random W,
+
+550
+00:33:54,890 --> 00:33:58,520
+these images are not going to be--
+
+551
+00:33:58,520 --> 00:34:00,320
+I mean, certainly, they're not embeddings,
+
+552
+00:34:00,320 --> 00:34:03,760
+representing any natural language token.
+
+553
+00:34:03,760 --> 00:34:06,040
+So the goal of training W is that they
+
+554
+00:34:06,040 --> 00:34:09,840
+look like natural language token embeddings.
+
+555
+00:34:09,840 --> 00:34:12,840
+And the second stage is that they now
+
+556
+00:34:12,840 --> 00:34:15,000
+still freeze a vision encoder and then train
+
+557
+00:34:15,000 --> 00:34:16,219
+W and the language model.
+
+558
+00:34:16,219 --> 00:34:22,520
+So they're fine-tuning the language model on their data.
+
+559
+00:34:22,520 --> 00:34:26,040
+So remember, their data is basically here's an image
+
+560
+00:34:26,040 --> 00:34:28,400
+and here is a conversation or a description
+
+561
+00:34:28,400 --> 00:34:32,080
+or a complex reasoning example.
+
+562
+00:34:32,080 --> 00:34:37,960
+So this is all image plus text to text.
+
+563
+00:34:37,960 --> 00:34:43,440
+OK, so this is one example from their paper.
+
+564
+00:34:43,440 --> 00:34:44,659
+It's interesting.
+
+565
+00:34:44,659 --> 00:34:48,543
+So you have an input image and a conversation.
+
+566
+00:34:48,543 --> 00:34:50,460
+The user says what's unusual about this image.
+
+567
+00:34:50,460 --> 00:34:54,239
+And their model is able to tell you that you don't usually
+
+568
+00:34:54,239 --> 00:34:57,380
+iron on the back of a minivan.
+
+569
+00:34:57,380 --> 00:35:00,900
+And they also make a point that their model is pretty good
+
+570
+00:35:00,900 --> 00:35:06,940
+because even if your user prompt is not really
+
+571
+00:35:06,940 --> 00:35:12,180
+prompting the unusualness, it still talks about it, whereas--
+
+572
+00:35:12,180 --> 00:35:14,520
+GPT-4, obviously, is able to do this,
+
+573
+00:35:14,520 --> 00:35:20,650
+but other models at the time were not able to.
+
+574
+00:35:20,650 --> 00:35:25,200
+OK, any questions about LLaVA?
+
+575
+00:35:25,200 --> 00:35:29,100
+OK, so that was 2023.
+
+576
+00:35:29,100 --> 00:35:35,800
+And I'm going to skip forward to LLaVA OneVision, which is 2024.
+
+577
+00:35:35,800 --> 00:35:39,340
+There is a sequence of papers after the LLaVA paper came out
+
+578
+00:35:39,340 --> 00:35:44,220
+of LLaVA 1.5, LLaVA-Next.
+
+579
+00:35:44,220 --> 00:35:47,080
+But I'll capture all of these innovations, I think,
+
+580
+00:35:47,080 --> 00:35:51,100
+in what I'll describe next.
+
+581
+00:35:51,100 --> 00:35:55,000
+The main thing that they did is it's essentially
+
+582
+00:35:55,000 --> 00:35:56,960
+the same recipe, but they are trying
+
+583
+00:35:56,960 --> 00:35:59,120
+to be more ambitious in terms of the types
+
+584
+00:35:59,120 --> 00:36:02,880
+of multimodal applications they could do.
+
+585
+00:36:02,880 --> 00:36:06,680
+So they were able to handle multiple images and videos.
+
+586
+00:36:06,680 --> 00:36:10,060
+So here's the same diagram.
+
+587
+00:36:10,060 --> 00:36:15,400
+Now they can take a single image or multiple images
+
+588
+00:36:15,400 --> 00:36:19,520
+or a video, which is essentially a sequence of images
+
+589
+00:36:19,520 --> 00:36:23,920
+corresponding to a sampling of the frames.
+
+590
+00:36:23,920 --> 00:36:26,060
+And here are the vision encoder.
+
+591
+00:36:26,060 --> 00:36:28,920
+They upgrade it to SigLIP.
+
+592
+00:36:28,920 --> 00:36:31,980
+The text decoder, they use Qwen-2 now,
+
+593
+00:36:31,980 --> 00:36:36,440
+which was probably the best language model
+
+594
+00:36:36,440 --> 00:36:38,400
+that was out at that time.
+
+595
+00:36:38,400 --> 00:36:42,160
+And then for the projector or the adapter, which
+
+596
+00:36:42,160 --> 00:36:46,200
+is the thing that takes the output of the vision encoder
+
+597
+00:36:46,200 --> 00:36:49,680
+and turns it into the input of the language model
+
+598
+00:36:49,680 --> 00:36:55,170
+is a two-layer MLP instead of a linear projection.
+
+599
+00:36:55,170 --> 00:36:58,730
+OK, so it's like you have a system
+
+600
+00:36:58,730 --> 00:37:01,090
+and you're just upgrading the parts.
+
+601
+00:37:01,090 --> 00:37:05,370
+But it's the same rough system.
+
+602
+00:37:05,370 --> 00:37:10,210
+So let's talk a little bit about data processing.
+
+603
+00:37:10,210 --> 00:37:14,290
+So one thing that they wanted to do is to do OCR.
+
+604
+00:37:14,290 --> 00:37:16,490
+And the thing with OCR is that you
+
+605
+00:37:16,490 --> 00:37:20,130
+need to preserve very fine-grained information.
+
+606
+00:37:20,130 --> 00:37:24,730
+Otherwise, a J looks like an I, and that's not good.
+
+607
+00:37:24,730 --> 00:37:30,170
+So remember that CLIP resizes and crops to 336 by 336.
+
+608
+00:37:30,170 --> 00:37:32,930
+And clearly, if you have a document
+
+609
+00:37:32,930 --> 00:37:36,690
+and you crop to 336 by 336, you can't read it.
+
+610
+00:37:36,690 --> 00:37:40,730
+So their solution is this idea called
+
+611
+00:37:40,730 --> 00:37:46,210
+AnyRes, which was actually introduced in the LLaVA 1.5 paper.
+
+612
+00:37:46,210 --> 00:37:49,870
+And the idea is basically, I mean,
+
+613
+00:37:49,870 --> 00:37:51,150
+it's fairly straightforward.
+
+614
+00:37:51,150 --> 00:37:56,830
+You break up an image into multiple pieces.
+
+615
+00:37:56,830 --> 00:38:00,790
+And the idea is that each piece is the resolution of whatever
+
+616
+00:38:00,790 --> 00:38:05,590
+the vision encoder is going to take, 336 by 336, for example.
+
+617
+00:38:05,590 --> 00:38:09,890
+So you're going to code all the pieces into a bunch of vectors.
+
+618
+00:38:09,890 --> 00:38:12,230
+And then you concatenate the vectors.
+
+619
+00:38:12,230 --> 00:38:15,950
+OK, so you're basically noticing that your vision encoder
+
+620
+00:38:15,950 --> 00:38:18,310
+can't handle high resolution.
+
+621
+00:38:18,310 --> 00:38:20,710
+So rather than downsampling, you're
+
+622
+00:38:20,710 --> 00:38:25,590
+just going to crop and look at different parts of image.
+
+623
+00:38:25,590 --> 00:38:29,710
+And now if you have really super high resolution images or videos
+
+624
+00:38:29,710 --> 00:38:31,330
+then, you get too many tokens.
+
+625
+00:38:31,330 --> 00:38:35,230
+So then they downsample.
+
+626
+00:38:35,230 --> 00:38:38,990
+But the idea behind AnyRes is that it's adaptive.
+
+627
+00:38:38,990 --> 00:38:43,130
+And this is nice because the transformer is already adaptive.
+
+628
+00:38:43,130 --> 00:38:46,230
+Language can be-- your sentences can be any length
+
+629
+00:38:46,230 --> 00:38:48,750
+and the transformer already handles that pretty well.
+
+630
+00:38:48,750 --> 00:38:51,660
+So it turns out images can be any resolution.
+
+631
+00:38:51,660 --> 00:38:58,040
+So that's picking back on the same dynamic ability.
+
+632
+00:38:58,040 --> 00:39:02,920
+So here is what they actually do for images here.
+
+633
+00:39:02,920 --> 00:39:07,360
+So let's say you have this image of a paper.
+
+634
+00:39:07,360 --> 00:39:11,560
+They do downsample and have one path,
+
+635
+00:39:11,560 --> 00:39:15,480
+which is basically a downsampled encoding of the entire paper.
+
+636
+00:39:15,480 --> 00:39:17,760
+But then they break it up into these chunks,
+
+637
+00:39:17,760 --> 00:39:19,560
+where each chunk is the resolution
+
+638
+00:39:19,560 --> 00:39:24,160
+that the vision encoder expects, and then encodes each of these separately.
+
+639
+00:39:24,160 --> 00:39:26,860
+And then you concatenate all these patches.
+
+640
+00:39:26,860 --> 00:39:28,760
+And if you have too many, then you
+
+641
+00:39:28,760 --> 00:39:33,740
+reduce the number of patches by interpolation.
+
+642
+00:39:36,800 --> 00:39:42,080
+OK, so then they're able to handle images, multiple images,
+
+643
+00:39:42,080 --> 00:39:43,560
+and video.
+
+644
+00:39:43,560 --> 00:39:46,800
+So you think about, well, all of these
+
+645
+00:39:46,800 --> 00:39:49,940
+are technically all reducible to images,
+
+646
+00:39:49,940 --> 00:39:52,300
+but they put their thumb on the scale a little bit
+
+647
+00:39:52,300 --> 00:39:59,260
+because they want to make sure all the modalities are roughly
+
+648
+00:39:59,260 --> 00:40:00,638
+comparable.
+
+649
+00:40:00,638 --> 00:40:02,180
+Because videos can be very long, they
+
+650
+00:40:02,180 --> 00:40:04,260
+don't want their data set to be dominated
+
+651
+00:40:04,260 --> 00:40:07,180
+by a bunch of repetitive frames.
+
+652
+00:40:07,180 --> 00:40:09,420
+So here's what they do here.
+
+653
+00:40:09,420 --> 00:40:11,980
+So for a single image, they basically
+
+654
+00:40:11,980 --> 00:40:14,900
+have the full image downsampled and then
+
+655
+00:40:14,900 --> 00:40:20,260
+a bunch of crops up to N crops there, up to 9.
+
+656
+00:40:20,260 --> 00:40:23,460
+And if you are presented with multiple images,
+
+657
+00:40:23,460 --> 00:40:28,880
+then they just use the base resolution.
+
+658
+00:40:28,880 --> 00:40:30,380
+So if you have a single image, I get
+
+659
+00:40:30,380 --> 00:40:31,882
+to look at it more carefully.
+
+660
+00:40:31,882 --> 00:40:33,340
+If I have multiple images, I'm just
+
+661
+00:40:33,340 --> 00:40:37,780
+going to look at it from afar.
+
+662
+00:40:37,780 --> 00:40:43,100
+And for video, we're going to use even lower resolution
+
+663
+00:40:43,100 --> 00:40:46,920
+or fewer tokens to represent each frame because the idea is
+
+664
+00:40:46,920 --> 00:40:54,160
+that, well, videos can be-- they only use up to 32 frames,
+
+665
+00:40:54,160 --> 00:40:58,320
+but you start running into context length
+
+666
+00:40:58,320 --> 00:41:01,280
+problems for viewing.
+
+667
+00:41:01,280 --> 00:41:04,760
+And later, we'll see how a big part
+
+668
+00:41:04,760 --> 00:41:06,960
+of being able to handle multimodal
+
+669
+00:41:06,960 --> 00:41:09,220
+is to deal with longer context.
+
+670
+00:41:11,960 --> 00:41:22,400
+OK, so the data here that they use is, I would say,
+
+671
+00:41:22,400 --> 00:41:26,120
+the state of philosophy is they want to curate high quality data
+
+672
+00:41:26,120 --> 00:41:27,120
+and quantity.
+
+673
+00:41:27,120 --> 00:41:31,020
+Another way to interpret this is that it's very targeted data.
+
+674
+00:41:31,020 --> 00:41:34,860
+If you look at many of these, it's very task-based
+
+675
+00:41:34,860 --> 00:41:40,040
+whether you're doing visual question answering or answering
+
+676
+00:41:40,040 --> 00:41:41,760
+questions about tables.
+
+677
+00:41:41,760 --> 00:41:45,570
+So this is definitely post-training territory,
+
+678
+00:41:45,570 --> 00:41:49,850
+where you're trying to get your model to do these tasks,
+
+679
+00:41:49,850 --> 00:41:52,210
+and therefore, you create a bunch of these tasks.
+
+680
+00:41:52,210 --> 00:41:57,970
+And this work is also unabashedly, basically,
+
+681
+00:41:57,970 --> 00:42:01,890
+distilling GPT-4 models so that they
+
+682
+00:42:01,890 --> 00:42:07,070
+can get the best performance, which is, I guess, not ideal.
+
+683
+00:42:07,070 --> 00:42:14,530
+But this is what you do if you don't have an annotation budget.
+
+684
+00:42:14,530 --> 00:42:20,390
+And so they have single images, multiple images, and videos.
+
+685
+00:42:20,390 --> 00:42:24,870
+So there's a lot of different pieces.
+
+686
+00:42:24,870 --> 00:42:26,630
+Some of these are very specific.
+
+687
+00:42:26,630 --> 00:42:31,050
+You give two images and you're trying to spot the difference.
+
+688
+00:42:31,050 --> 00:42:33,050
+But one thing that--
+
+689
+00:42:33,050 --> 00:42:36,470
+OK, I'll come back to this at this point later.
+
+690
+00:42:36,470 --> 00:42:42,550
+So for training, it's roughly the same idea as before,
+
+691
+00:42:42,550 --> 00:42:48,190
+where the first stage is that you're focused on alignment.
+
+692
+00:42:48,190 --> 00:42:54,830
+So in particular, you only train the projector,
+
+693
+00:42:54,830 --> 00:42:58,510
+which is the adapter.
+
+694
+00:42:58,510 --> 00:43:02,990
+And then in the second stage and the third stages
+
+695
+00:43:02,990 --> 00:43:04,710
+you train the full model.
+
+696
+00:43:04,710 --> 00:43:06,170
+And before, we had two stages.
+
+697
+00:43:06,170 --> 00:43:09,950
+Now, we have three stages.
+
+698
+00:43:09,950 --> 00:43:14,390
+I'm not sure there's any particular principled reason
+
+699
+00:43:14,390 --> 00:43:16,230
+for this, except for this second stage is
+
+700
+00:43:16,230 --> 00:43:19,810
+trying to put high quality data but more focused on knowledge.
+
+701
+00:43:19,810 --> 00:43:24,110
+And the final stage is focusing on examples that look
+
+702
+00:43:24,110 --> 00:43:25,890
+like your downstream tasks.
+
+703
+00:43:30,230 --> 00:43:34,030
+OK, so one thing that they found in this paper, which
+
+704
+00:43:34,030 --> 00:43:41,010
+was interesting, is that you get transfer between modalities.
+
+705
+00:43:41,010 --> 00:43:44,570
+So even though they have only single image data
+
+706
+00:43:44,570 --> 00:43:47,370
+for diagrams and charts, but this actually
+
+707
+00:43:47,370 --> 00:43:49,070
+generalizes to multiple images.
+
+708
+00:43:49,070 --> 00:43:54,130
+So at training time, you never saw an example
+
+709
+00:43:54,130 --> 00:43:56,168
+where you have a table and a chart
+
+710
+00:43:56,168 --> 00:43:57,710
+and you're asking questions about it.
+
+711
+00:43:57,710 --> 00:44:04,130
+But at test time, you have two images, one for the table
+
+712
+00:44:04,130 --> 00:44:05,270
+and one for the chart.
+
+713
+00:44:05,270 --> 00:44:09,650
+And you're able to have some of conversation about it.
+
+714
+00:44:09,650 --> 00:44:14,290
+At training time, you only have OCR data on single image data,
+
+715
+00:44:14,290 --> 00:44:18,850
+and you only have relational reasoning from multiple images.
+
+716
+00:44:18,850 --> 00:44:23,010
+But you can generalize to these cases which
+
+717
+00:44:23,010 --> 00:44:25,430
+are useful for powering GUI agents,
+
+718
+00:44:25,430 --> 00:44:28,150
+where you show it a bunch of screenshots.
+
+719
+00:44:28,150 --> 00:44:32,410
+This is multiple images and it can generate a description
+
+720
+00:44:32,410 --> 00:44:36,770
+of the screenshots.
+
+721
+00:44:36,770 --> 00:44:39,220
+Another example is that they have
+
+722
+00:44:39,220 --> 00:44:42,460
+this idea of visual prompting, where
+
+723
+00:44:42,460 --> 00:44:45,640
+you have this circle, which is a part of the image,
+
+724
+00:44:45,640 --> 00:44:48,180
+but that's meant to highlight the part of the image
+
+725
+00:44:48,180 --> 00:44:51,860
+that you're supposed to do something about.
+
+726
+00:44:51,860 --> 00:44:54,660
+And this type of data only exists for single images.
+
+727
+00:44:54,660 --> 00:44:59,420
+And now it can generalize to videos
+
+728
+00:44:59,420 --> 00:45:02,620
+where the user says describe the player highlighted in the video.
+
+729
+00:45:02,620 --> 00:45:06,860
+And this player is across multiple frames.
+
+730
+00:45:06,860 --> 00:45:11,940
+So when you first look at this and say, oh, boy.
+
+731
+00:45:11,940 --> 00:45:14,120
+You're basically targeting each of these tasks.
+
+732
+00:45:14,120 --> 00:45:16,600
+It's supervised learning.
+
+733
+00:45:16,600 --> 00:45:19,020
+But if you have enough tasks, these models
+
+734
+00:45:19,020 --> 00:45:26,560
+seem to do some transfer, which is, I guess, reassuring.
+
+735
+00:45:29,300 --> 00:45:33,660
+OK, so again, this is a fairly standard VLM
+
+736
+00:45:33,660 --> 00:45:37,680
+template, vision encoder plus the projector into the language
+
+737
+00:45:37,680 --> 00:45:39,800
+model.
+
+738
+00:45:39,800 --> 00:45:43,540
+There's a lot of work that goes into the data curation.
+
+739
+00:45:43,540 --> 00:45:48,120
+They lean pretty heavily into synthesizing task-specific data.
+
+740
+00:45:48,120 --> 00:45:49,960
+The nice thing about the LLaVA series
+
+741
+00:45:49,960 --> 00:45:53,780
+is that it's one of the few works that open sources.
+
+742
+00:45:53,780 --> 00:45:56,620
+They're not just the model weights, but also the data.
+
+743
+00:45:56,620 --> 00:46:01,120
+So you can really replicate and study this stuff.
+
+744
+00:46:01,120 --> 00:46:06,680
+OK, now let's talk about the Qwen Models.
+
+745
+00:46:06,680 --> 00:46:11,860
+So Qwen started also training in 2023 multimodal models.
+
+746
+00:46:11,860 --> 00:46:14,480
+So the first version was Qwen-VL.
+
+747
+00:46:14,480 --> 00:46:17,360
+And hopefully, I'll go through this
+
+748
+00:46:17,360 --> 00:46:19,780
+quickly because you hopefully see the pattern.
+
+749
+00:46:19,780 --> 00:46:23,560
+The vision encoder, they use OpenCLIP.
+
+750
+00:46:23,560 --> 00:46:27,960
+Remember, OpenCLIP was the open reproductions of the CLIP model.
+
+751
+00:46:27,960 --> 00:46:31,760
+So it's basically a CLIP encoder.
+
+752
+00:46:31,760 --> 00:46:39,250
+And for the adapter, they did one layer of cross-attention,
+
+753
+00:46:39,250 --> 00:46:42,970
+incorporate 2D positional embeddings and maps to a fixed
+
+754
+00:46:42,970 --> 00:46:47,850
+size of 256, which is a little bit--
+
+755
+00:46:51,210 --> 00:46:54,090
+I guess this will be changed later because this is definitely
+
+756
+00:46:54,090 --> 00:46:56,730
+not very dynamic, but neither is the vision encoder
+
+757
+00:46:56,730 --> 00:46:58,490
+at this point.
+
+758
+00:46:58,490 --> 00:47:00,740
+I guess this got cut off.
+
+759
+00:47:00,740 --> 00:47:03,810
+But the special tokens, they have
+
+760
+00:47:03,810 --> 00:47:06,390
+an image tag and a box tag for bounding box,
+
+761
+00:47:06,390 --> 00:47:10,450
+and a ref tag for descriptions.
+
+762
+00:47:10,450 --> 00:47:14,410
+This is what happens when your slides are in HTML.
+
+763
+00:47:14,410 --> 00:47:18,090
+So for training, they have three stages, just
+
+764
+00:47:18,090 --> 00:47:19,830
+like with the LLaVA models.
+
+765
+00:47:19,830 --> 00:47:23,090
+In the first stage, the idea is to--
+
+766
+00:47:23,090 --> 00:47:26,930
+I mean, they call it pre-training but you're not
+
+767
+00:47:26,930 --> 00:47:29,490
+pre-training from scratch.
+
+768
+00:47:29,490 --> 00:47:33,350
+This is generally large-scale, low quality data.
+
+769
+00:47:33,350 --> 00:47:38,150
+They freeze the language model and train
+
+770
+00:47:38,150 --> 00:47:41,070
+the vision encoder and adapter.
+
+771
+00:47:41,070 --> 00:47:45,390
+So this is a bit different from the LLaVA models, in
+
+772
+00:47:45,390 --> 00:47:51,550
+that, they train the vision encoder at this point.
+
+773
+00:47:51,550 --> 00:47:55,830
+And you can see some of the data sets that they are training on,
+
+774
+00:47:55,830 --> 00:47:58,430
+1.4 billion examples.
+
+775
+00:47:58,430 --> 00:48:02,770
+Stage 2, they move to higher quality task-specific data.
+
+776
+00:48:02,770 --> 00:48:08,550
+And you can see some of the usual suspects of VQA data sets,
+
+777
+00:48:08,550 --> 00:48:11,790
+chart question answering, and so on.
+
+778
+00:48:11,790 --> 00:48:13,850
+And then they train all the parameters here.
+
+779
+00:48:13,850 --> 00:48:19,790
+And finally, stage 3 is instruction tuning data.
+
+780
+00:48:19,790 --> 00:48:25,710
+You freeze the visual encoder and you train the adapter
+
+781
+00:48:25,710 --> 00:48:27,590
+and the language model.
+
+782
+00:48:27,590 --> 00:48:29,670
+Here are some examples of the type of things
+
+783
+00:48:29,670 --> 00:48:30,890
+that they're able to do.
+
+784
+00:48:30,890 --> 00:48:33,110
+So, of course, this is Qwen.
+
+785
+00:48:33,110 --> 00:48:37,570
+So some of these examples are in Chinese.
+
+786
+00:48:37,570 --> 00:48:40,090
+Their interest is also making a model
+
+787
+00:48:40,090 --> 00:48:44,350
+that is supposed to be subsuming a language model.
+
+788
+00:48:44,350 --> 00:48:46,250
+So a language model can do code.
+
+789
+00:48:46,250 --> 00:48:51,890
+So we want the vision model to be good at code as well.
+
+790
+00:48:51,890 --> 00:48:56,630
+And you can have this example, if you can see it, is an image.
+
+791
+00:48:56,630 --> 00:48:58,450
+And can you find Spider-Man and the Hulk.
+
+792
+00:48:58,450 --> 00:49:01,770
+And it can output bounding boxes as well.
+
+793
+00:49:01,770 --> 00:49:03,270
+It doesn't actually output an image.
+
+794
+00:49:03,270 --> 00:49:07,070
+It just outputs a bounding box.
+
+795
+00:49:10,090 --> 00:49:11,730
+And then you can do OCR.
+
+796
+00:49:11,730 --> 00:49:16,730
+You can compare-- so usual stuff.
+
+797
+00:49:16,730 --> 00:49:22,150
+OK, so then Qwen-2 was, again, an upgrade.
+
+798
+00:49:22,150 --> 00:49:25,650
+There's some new ideas here, which I'll go through.
+
+799
+00:49:25,650 --> 00:49:29,010
+So use a larger vision encoder.
+
+800
+00:49:29,010 --> 00:49:32,900
+They also started doing dynamic resolution.
+
+801
+00:49:32,900 --> 00:49:34,540
+I think this was the main thing.
+
+802
+00:49:34,540 --> 00:49:37,420
+We remember when we went from LLaVA to LLaVA OneVision,
+
+803
+00:49:37,420 --> 00:49:39,980
+they realized, oh, we need to handle
+
+804
+00:49:39,980 --> 00:49:42,440
+images of different sizes.
+
+805
+00:49:42,440 --> 00:49:44,620
+And if you try to do video, it's clear
+
+806
+00:49:44,620 --> 00:49:47,700
+that you need some dynamic resolution.
+
+807
+00:49:47,700 --> 00:49:54,940
+So the model is basically-- so let's say you have this picture
+
+808
+00:49:54,940 --> 00:50:00,660
+here, that might be mapped to 11,000 tokens.
+
+809
+00:50:00,660 --> 00:50:06,140
+This tiny picture of an equation might be only mapped to 8 tokens
+
+810
+00:50:06,140 --> 00:50:09,380
+and so on and so forth.
+
+811
+00:50:09,380 --> 00:50:13,220
+So how do they do this?
+
+812
+00:50:13,220 --> 00:50:18,620
+Well, basically each-- it's the same idea AnyRes idea
+
+813
+00:50:18,620 --> 00:50:26,980
+from LLaVA, where each 224 by 224 patch is encoded with a ViT.
+
+814
+00:50:26,980 --> 00:50:30,480
+And remember the ViT that they started
+
+815
+00:50:30,480 --> 00:50:32,920
+with is the OpenCLIP bit.
+
+816
+00:50:32,920 --> 00:50:36,880
+But this gets fine-tuned.
+
+817
+00:50:36,880 --> 00:50:40,060
+And then trying to reduce the context size,
+
+818
+00:50:40,060 --> 00:50:43,200
+they compress every 2 by 2 into 1
+
+819
+00:50:43,200 --> 00:50:50,280
+so that they ultimately each every patch generates 66 tokens.
+
+820
+00:50:50,280 --> 00:50:54,640
+For eight videos, they sample 2 frames a second but max out
+
+821
+00:50:54,640 --> 00:50:59,600
+at 16,000 tokens.
+
+822
+00:50:59,600 --> 00:51:01,800
+OK, so one thing coming back to this question
+
+823
+00:51:01,800 --> 00:51:05,840
+about positional embeddings, so they did
+
+824
+00:51:05,840 --> 00:51:09,360
+do something different here with Qwen-2.
+
+825
+00:51:09,360 --> 00:51:14,320
+So they used this idea called multimodal rotary, multimodal
+
+826
+00:51:14,320 --> 00:51:15,200
+RoPE.
+
+827
+00:51:15,200 --> 00:51:17,640
+So remember, we saw RoPE before.
+
+828
+00:51:17,640 --> 00:51:22,400
+And the idea behind RoPE is that you have embedding such
+
+829
+00:51:22,400 --> 00:51:26,930
+that the inner product between the vectors
+
+830
+00:51:26,930 --> 00:51:29,490
+depends only on the distance.
+
+831
+00:51:29,490 --> 00:51:34,790
+So the distance is defined in 1D by just the number of tokens.
+
+832
+00:51:34,790 --> 00:51:36,450
+You're away from it.
+
+833
+00:51:36,450 --> 00:51:39,130
+So now, the multidimensional version
+
+834
+00:51:39,130 --> 00:51:41,030
+is essentially the same thing.
+
+835
+00:51:41,030 --> 00:51:44,490
+Except for now you have 3D.
+
+836
+00:51:44,490 --> 00:51:45,630
+So you have height.
+
+837
+00:51:45,630 --> 00:51:47,690
+You have width and you have time.
+
+838
+00:51:47,690 --> 00:51:53,610
+So each position, each patch now is a triple
+
+839
+00:51:53,610 --> 00:51:56,050
+defined by the coordinates.
+
+840
+00:51:56,050 --> 00:52:01,850
+And then to compute the M-RoPE, basically, for every dimension,
+
+841
+00:52:01,850 --> 00:52:04,610
+you compute the RoPE and then you concatenate.
+
+842
+00:52:04,610 --> 00:52:09,290
+So it's a fairly straightforward idea.
+
+843
+00:52:09,290 --> 00:52:11,610
+Although, later, with Qwen-3, we'll
+
+844
+00:52:11,610 --> 00:52:17,330
+see how this is actually a bit suboptimal.
+
+845
+00:52:17,330 --> 00:52:22,170
+So they initialize the language model with--
+
+846
+00:52:22,170 --> 00:52:23,790
+this is the Qwen-VL model.
+
+847
+00:52:23,790 --> 00:52:26,510
+So, of course, they're initializing with Qwen.
+
+848
+00:52:26,510 --> 00:52:30,190
+And then they have three stages of training,
+
+849
+00:52:30,190 --> 00:52:34,670
+which is very similar to what we did before.
+
+850
+00:52:34,670 --> 00:52:37,150
+And then they were able to show a bunch
+
+851
+00:52:37,150 --> 00:52:41,990
+of different capabilities, some video understanding.
+
+852
+00:52:41,990 --> 00:52:46,790
+It can do math and code, function calling,
+
+853
+00:52:46,790 --> 00:52:50,590
+and so on and so forth.
+
+854
+00:52:50,590 --> 00:52:53,310
+OK, so quickly, I'll talk about Qwen-3.
+
+855
+00:52:56,110 --> 00:52:59,950
+So again, there's a few changes here.
+
+856
+00:52:59,950 --> 00:53:03,010
+I wouldn't say these are structural big changes,
+
+857
+00:53:03,010 --> 00:53:05,830
+but they're probably changes that do impact
+
+858
+00:53:05,830 --> 00:53:07,210
+the quality of the model.
+
+859
+00:53:07,210 --> 00:53:11,470
+So this is from last year Qwen3-VL report.
+
+860
+00:53:11,470 --> 00:53:16,710
+And so it's roughly the same diagram here.
+
+861
+00:53:16,710 --> 00:53:20,770
+I'll point out maybe--I'll come back to this diagram.
+
+862
+00:53:20,770 --> 00:53:24,190
+I'll go through some of the changes.
+
+863
+00:53:24,190 --> 00:53:26,830
+So one is that now they're using Qwen-3 models.
+
+864
+00:53:26,830 --> 00:53:29,270
+They have a series of dense and MoE models.
+
+865
+00:53:29,270 --> 00:53:32,350
+And the Qwen-3 models are really, really good,
+
+866
+00:53:32,350 --> 00:53:35,890
+and it really helps the quality of the final model.
+
+867
+00:53:35,890 --> 00:53:39,430
+One thing that they're invested in is long context understanding.
+
+868
+00:53:39,430 --> 00:53:42,770
+So their context length can go up to 256K,
+
+869
+00:53:42,770 --> 00:53:48,290
+which is really important if you're trying to do long video.
+
+870
+00:53:48,290 --> 00:53:50,730
+Let's talk about the vision encoder.
+
+871
+00:53:50,730 --> 00:53:53,610
+So they use SigLIP-2, which is basically
+
+872
+00:53:53,610 --> 00:53:55,350
+an improved version of SigLIP.
+
+873
+00:53:55,350 --> 00:53:56,970
+It's actually identical architecture,
+
+874
+00:53:56,970 --> 00:54:00,650
+is designed to be backward compatible.
+
+875
+00:54:00,650 --> 00:54:04,490
+And then they improved their RoPE.
+
+876
+00:54:04,490 --> 00:54:10,250
+And the way to explain this is, before, you
+
+877
+00:54:10,250 --> 00:54:13,490
+Had the three dimensions: time, width, and height.
+
+878
+00:54:13,490 --> 00:54:20,330
+And basically, when to basically allocate
+
+879
+00:54:20,330 --> 00:54:24,460
+the first block of dimensions to the time,
+
+880
+00:54:24,460 --> 00:54:28,060
+then the next block to width and the next to height.
+
+881
+00:54:28,060 --> 00:54:31,320
+And the problem, if you remember RoPE
+
+882
+00:54:31,320 --> 00:54:34,740
+is that each component represents
+
+883
+00:54:34,740 --> 00:54:36,980
+a different frequency.
+
+884
+00:54:36,980 --> 00:54:39,860
+So this would mean that maybe all the temporal dimensions
+
+885
+00:54:39,860 --> 00:54:42,220
+are low frequency and all the high dimensions
+
+886
+00:54:42,220 --> 00:54:43,940
+are high frequency.
+
+887
+00:54:43,940 --> 00:54:48,920
+So they basically interleave them when they realize that.
+
+888
+00:54:48,920 --> 00:54:55,660
+And now all the axes are exposed
+
+889
+00:54:55,660 --> 00:54:59,300
+to both low and high frequency.
+
+890
+00:54:59,300 --> 00:55:04,740
+Another thing they did was explicit video timestamps.
+
+891
+00:55:04,740 --> 00:55:08,840
+So if you look closely at this--
+
+892
+00:55:12,020 --> 00:55:12,900
+wait.
+
+893
+00:55:12,900 --> 00:55:14,900
+OK, this is Qwen-3.
+
+894
+00:55:14,900 --> 00:55:16,300
+Oops.
+
+895
+00:55:16,300 --> 00:55:19,580
+So if you look--this is probably a little bit too small.
+
+896
+00:55:19,580 --> 00:55:25,000
+But before, the timestamp was implicit
+
+897
+00:55:25,000 --> 00:55:28,280
+in the positional encodings.
+
+898
+00:55:28,280 --> 00:55:30,600
+Each frame in the video intrinsically
+
+899
+00:55:30,600 --> 00:55:33,920
+gets a different-- there's a notion of time
+
+900
+00:55:33,920 --> 00:55:37,120
+just because it's in a different position.
+
+901
+00:55:37,120 --> 00:55:39,620
+But here, they made the time explicit.
+
+902
+00:55:39,620 --> 00:55:42,040
+So these are actually tokens: zero seconds
+
+903
+00:55:42,040 --> 00:55:45,640
+is a token--now you have a token that
+
+904
+00:55:45,640 --> 00:55:47,880
+represents the time.
+
+905
+00:55:47,880 --> 00:55:51,812
+And they found this to be helpful, presumably because it's
+
+906
+00:55:51,812 --> 00:55:53,520
+something that you can directly refer to,
+
+907
+00:55:53,520 --> 00:55:56,300
+like what happened after two seconds.
+
+908
+00:55:59,080 --> 00:56:05,520
+So that is one of the main changes.
+
+909
+00:56:05,520 --> 00:56:10,440
+They also did this square root normalized per token loss.
+
+910
+00:56:10,440 --> 00:56:14,320
+So the idea is that some examples that
+
+911
+00:56:14,320 --> 00:56:18,260
+involve video are very long and some examples that involve
+
+912
+00:56:18,260 --> 00:56:20,460
+a single image are very short.
+
+913
+00:56:20,460 --> 00:56:24,780
+And the normal thing is that every token is treated the same.
+
+914
+00:56:24,780 --> 00:56:26,940
+And this would mean that the video examples
+
+915
+00:56:26,940 --> 00:56:29,700
+are going to dominate.
+
+916
+00:56:29,700 --> 00:56:33,000
+So they basically-- the details aren't too clear.
+
+917
+00:56:33,000 --> 00:56:35,860
+But I believe they normalized each example
+
+918
+00:56:35,860 --> 00:56:41,940
+by the square root of the length to basically downweight
+
+919
+00:56:41,940 --> 00:56:46,500
+the impact of really long examples.
+
+920
+00:56:46,500 --> 00:56:49,600
+The final thing that is worth noting, which is interesting,
+
+921
+00:56:49,600 --> 00:56:51,900
+is that they did something interesting with adapter.
+
+922
+00:56:51,900 --> 00:56:53,820
+So remember we started the adapter is
+
+923
+00:56:53,820 --> 00:56:56,260
+the thing that connects the vision encoder to the language
+
+924
+00:56:56,260 --> 00:56:56,980
+model.
+
+925
+00:56:56,980 --> 00:56:58,407
+And LLaVA was the simplest.
+
+926
+00:56:58,407 --> 00:56:59,740
+It was just a linear projection.
+
+927
+00:56:59,740 --> 00:57:01,180
+And then we got an MLP.
+
+928
+00:57:01,180 --> 00:57:03,100
+And then we got some cross-attention.
+
+929
+00:57:03,100 --> 00:57:08,060
+And DeepStack, which is actually a paper from the DeepSeek team,
+
+930
+00:57:08,060 --> 00:57:14,020
+but when used here is more sophisticated.
+
+931
+00:57:14,020 --> 00:57:18,030
+They noticed that, well, the vision encoder already computes
+
+932
+00:57:18,030 --> 00:57:23,350
+a stack of vision embeddings.
+
+933
+00:57:23,350 --> 00:57:26,870
+And we're basically going to basically add
+
+934
+00:57:26,870 --> 00:57:34,790
+these directly into the residual stream of the language model.
+
+935
+00:57:34,790 --> 00:57:42,630
+OK, so this is a bit more of a deep fusion of the vision
+
+936
+00:57:42,630 --> 00:57:47,750
+encoder into the language model as opposed to the vision encoder
+
+937
+00:57:47,750 --> 00:57:51,410
+is a black box that just outputs a sequence of vectors.
+
+938
+00:57:54,430 --> 00:58:00,390
+OK, so training is--so they have two phases.
+
+939
+00:58:00,390 --> 00:58:02,718
+Pre-training has actually four stages.
+
+940
+00:58:02,718 --> 00:58:04,010
+Post-training has three stages.
+
+941
+00:58:04,010 --> 00:58:06,510
+So you can see that this pipelines are
+
+942
+00:58:06,510 --> 00:58:10,430
+getting quite complicated now.
+
+943
+00:58:10,430 --> 00:58:11,890
+So they first train the adapter.
+
+944
+00:58:11,890 --> 00:58:14,850
+This is the same as all of these models.
+
+945
+00:58:14,850 --> 00:58:18,170
+And then they have three stages where they progressively train
+
+946
+00:58:18,170 --> 00:58:25,290
+on longer and longer sequences, from 8K, to 32K, to 256K.
+
+947
+00:58:25,290 --> 00:58:32,090
+Most of the tokens are in the stages 2 and 3.
+
+948
+00:58:32,090 --> 00:58:34,530
+And then for post-training, they do
+
+949
+00:58:34,530 --> 00:58:39,430
+SFT on long chain of thought data, knowledge distillation,
+
+950
+00:58:39,430 --> 00:58:43,730
+and then some reinforcement learning.
+
+951
+00:58:43,730 --> 00:58:46,070
+At this point, it's really a systems paper.
+
+952
+00:58:46,070 --> 00:58:51,190
+There's a bunch of--I highlighted the core new ideas,
+
+953
+00:58:51,190 --> 00:58:54,610
+but there's a lot of details that are different.
+
+954
+00:58:54,610 --> 00:58:56,230
+And if you look at the final results,
+
+955
+00:58:56,230 --> 00:58:59,150
+this is a pretty good model.
+
+956
+00:58:59,150 --> 00:59:01,690
+I mean, if you look at these benchmarks as compared
+
+957
+00:59:01,690 --> 00:59:09,136
+to the closed models Gemini, GPT-5, and Opus 4.1,
+
+958
+00:59:09,136 --> 00:59:11,090
+these numbers are--
+
+959
+00:59:11,090 --> 00:59:15,140
+the bold means that it's the best number in that row.
+
+960
+00:59:15,140 --> 00:59:18,320
+So the Qwen models are actually quite strong.
+
+961
+00:59:21,340 --> 00:59:25,450
+OK, maybe the-- yeah, a question.
+
+962
+00:59:54,900 --> 00:59:59,860
+Yeah, so the question is what about video generation
+
+963
+00:59:59,860 --> 01:00:02,480
+and how do you know whether there should be a video or text?
+
+964
+01:00:02,480 --> 01:00:07,260
+So first of all, these models don't generate videos or images.
+
+965
+01:00:07,260 --> 01:00:09,660
+All the multimodal stuff is on the input side.
+
+966
+01:00:09,660 --> 01:00:11,900
+You're always generating text.
+
+967
+01:00:16,200 --> 01:00:21,760
+And then you're always in most of these stages, except for RL,
+
+968
+01:00:21,760 --> 01:00:24,040
+you're supervising every token.
+
+969
+01:00:24,040 --> 01:00:31,040
+So there's no LLM as a judge or quality on how well
+
+970
+01:00:31,040 --> 01:00:32,220
+the description is working.
+
+971
+01:00:32,220 --> 01:00:34,800
+It's just basically whatever is in your data set.
+
+972
+01:00:34,800 --> 01:00:39,520
+Now, with RL, you can play around with different rewards.
+
+973
+01:00:39,520 --> 01:00:41,040
+Yeah.
+
+974
+01:00:41,040 --> 01:00:45,280
+I'll ask is the training of multimodal models
+
+975
+01:00:45,280 --> 01:00:51,780
+harder than training a pure LLM from a system perspective?
+
+976
+01:01:16,860 --> 01:01:22,500
+Yeah, so the two questions are trained multimodal models harder
+
+977
+01:01:22,500 --> 01:01:24,020
+on the system side?
+
+978
+01:01:24,020 --> 01:01:27,820
+And, I mean, certainly, it's not easier.
+
+979
+01:01:27,820 --> 01:01:32,120
+I think you pointed out that the data sets are larger.
+
+980
+01:01:32,120 --> 01:01:36,000
+Video data is just-- even loading it can be a bottleneck.
+
+981
+01:01:36,000 --> 01:01:38,580
+Whereas generally, we have not really
+
+982
+01:01:38,580 --> 01:01:41,700
+focused on data loading for talking about language models
+
+983
+01:01:41,700 --> 01:01:44,600
+because it's very, very cheap.
+
+984
+01:01:44,600 --> 01:01:47,360
+So that needs to be taken into account.
+
+985
+01:01:47,360 --> 01:01:49,740
+And all the same principles of making sure
+
+986
+01:01:49,740 --> 01:01:51,420
+that your data loading is happening
+
+987
+01:01:51,420 --> 01:01:56,300
+async with actual computation needs to be taken into account.
+
+988
+01:01:56,300 --> 01:01:59,300
+And the second part was--
+
+989
+01:01:59,300 --> 01:02:01,200
+sorry, what was the second question?
+
+990
+01:02:01,200 --> 01:02:03,560
+Oh, yeah.
+
+991
+01:02:03,560 --> 01:02:07,950
+So the videos and images can have more-- especially
+
+992
+01:02:07,950 --> 01:02:09,590
+video have more tokens.
+
+993
+01:02:09,590 --> 01:02:14,270
+So that's one reason we saw this normalization
+
+994
+01:02:14,270 --> 01:02:19,192
+to make sure that we're not giving more weight to video.
+
+995
+01:02:19,192 --> 01:02:20,650
+I mean, you can always down weight.
+
+996
+01:02:20,650 --> 01:02:22,775
+So if you have more tokens, if you don't like that,
+
+997
+01:02:22,775 --> 01:02:24,110
+you can down weight.
+
+998
+01:02:24,110 --> 01:02:29,110
+We talked in the last or two weeks ago about data mixtures.
+
+999
+01:02:29,110 --> 01:02:31,390
+So you can always weight things according
+
+1000
+01:02:31,390 --> 01:02:35,750
+to whatever makes sense.
+
+1001
+01:02:35,750 --> 01:02:38,870
+But there's also a lot of text tokens out there.
+
+1002
+01:02:38,870 --> 01:02:44,090
+So I think, in general, if you look at, yeah,
+
+1003
+01:02:44,090 --> 01:02:48,550
+the models are trained on tens of trillions of tokens.
+
+1004
+01:02:48,550 --> 01:02:50,310
+I think there's a-- yeah, I wouldn't
+
+1005
+01:02:50,310 --> 01:02:52,990
+say that the number of multimodal tokens
+
+1006
+01:02:52,990 --> 01:02:56,470
+vastly outnumbers text tokens.
+
+1007
+01:02:56,470 --> 01:03:00,370
+Yeah, oh, I think you were first.
+
+1008
+01:03:23,010 --> 01:03:26,170
+So the question is, when you do this alignment,
+
+1009
+01:03:26,170 --> 01:03:29,530
+how does it know what the language-- is the model language
+
+1010
+01:03:29,530 --> 01:03:31,350
+model pre-trained?
+
+1011
+01:03:31,350 --> 01:03:34,930
+And it definitely has to be pre-trained because otherwise it
+
+1012
+01:03:34,930 --> 01:03:36,710
+doesn't make sense to align it.
+
+1013
+01:03:36,710 --> 01:03:38,510
+So the language model is frozen.
+
+1014
+01:03:38,510 --> 01:03:40,370
+And you're just training the adapter
+
+1015
+01:03:40,370 --> 01:03:47,330
+to connect the given vision encoder with a given language
+
+1016
+01:03:47,330 --> 01:03:48,210
+model.
+
+1017
+01:03:48,210 --> 01:03:50,350
+And the way you train it is, well,
+
+1018
+01:03:50,350 --> 01:03:54,810
+you pick a token budget, 67 billion tokens
+
+1019
+01:03:54,810 --> 01:03:56,150
+and you just train.
+
+1020
+01:03:56,150 --> 01:04:00,090
+There's not an adaptive threshold here.
+
+1021
+01:04:00,090 --> 01:04:00,610
+Yeah.
+
+1022
+01:04:32,340 --> 01:04:36,220
+Yeah, so the question is, is the number
+
+1023
+01:04:36,220 --> 01:04:39,220
+of parameters in the vision encoder much smaller?
+
+1024
+01:04:39,220 --> 01:04:41,820
+And the answer is yes, in general.
+
+1025
+01:04:41,820 --> 01:04:45,520
+I'm trying to find--where is the other place I--
+
+1026
+01:04:48,820 --> 01:04:49,640
+not here.
+
+1027
+01:04:49,640 --> 01:04:54,580
+OK, the reason is that the vision encoder
+
+1028
+01:04:54,580 --> 01:04:57,960
+is in some sense doing a very local operation.
+
+1029
+01:04:57,960 --> 01:04:58,960
+It's looking at a patch.
+
+1030
+01:04:58,960 --> 01:05:00,460
+A patch is very small.
+
+1031
+01:05:00,460 --> 01:05:03,500
+And it's just trying to understand the patches.
+
+1032
+01:05:03,500 --> 01:05:05,480
+There's not much knowledge.
+
+1033
+01:05:05,480 --> 01:05:07,460
+So the patch, we're not reasoning.
+
+1034
+01:05:07,460 --> 01:05:10,200
+So most of the capabilities of the model
+
+1035
+01:05:10,200 --> 01:05:14,560
+are still in the language model.
+
+1036
+01:05:14,560 --> 01:05:19,240
+I'm trying to find the--OK, where?
+
+1037
+01:05:19,240 --> 01:05:21,440
+Maybe it was up here.
+
+1038
+01:05:21,440 --> 01:05:23,680
+OK, I can't-- oh, yeah.
+
+1039
+01:05:23,680 --> 01:05:28,160
+So if you look at the LLaVA model, so the full--
+
+1040
+01:05:28,160 --> 01:05:30,720
+so 72 billion parameter language model.
+
+1041
+01:05:35,640 --> 01:05:36,160
+Sorry.
+
+1042
+01:05:36,160 --> 01:05:46,220
+What-- OK, I don't know why this number is so-- oh, sorry.
+
+1043
+01:05:46,220 --> 01:05:47,700
+This is 72 million, OK.
+
+1044
+01:05:47,700 --> 01:05:49,980
+So this is much smaller.
+
+1045
+01:05:49,980 --> 01:05:51,380
+The projector is much smaller.
+
+1046
+01:05:51,380 --> 01:05:58,680
+And the ViT is generally less than a billion parameters.
+
+1047
+01:05:58,680 --> 01:06:05,000
+Yeah, I guess mostly because it's fairly a local operation.
+
+1048
+01:06:05,000 --> 01:06:07,380
+I guess that's the easy way to say it.
+
+1049
+01:06:07,380 --> 01:06:09,400
+OK, I'm going to think some other questions.
+
+1050
+01:06:09,400 --> 01:06:11,360
+I'm going to try to move on now.
+
+1051
+01:06:13,870 --> 01:06:18,860
+So Qwen-3 is the last vision language model.
+
+1052
+01:06:18,860 --> 01:06:24,340
+I'll talk about this SOTA, Save Our Performance.
+
+1053
+01:06:24,340 --> 01:06:28,660
+There's a lot of data work that happens.
+
+1054
+01:06:28,660 --> 01:06:31,060
+Not too many details about the data
+
+1055
+01:06:31,060 --> 01:06:35,580
+and the data mix in these later Qwen models.
+
+1056
+01:06:35,580 --> 01:06:41,580
+So you'll have to look at the LLaVA paper or the--
+
+1057
+01:06:41,580 --> 01:06:43,620
+AI2 has a [INAUDIBLE] paper, which
+
+1058
+01:06:43,620 --> 01:06:45,980
+I didn't get a chance to talk about that
+
+1059
+01:06:45,980 --> 01:06:49,420
+has more details here.
+
+1060
+01:06:49,420 --> 01:06:56,660
+And from Qwen to Qwen-2, Qwen-3, many of these changes were
+
+1061
+01:06:56,660 --> 01:07:01,910
+mostly--there's some changes there.
+
+1062
+01:07:01,910 --> 01:07:06,110
+But the overall framework remains the same.
+
+1063
+01:07:06,110 --> 01:07:09,690
+And mostly, it's scaling up, curating more data sets,
+
+1064
+01:07:09,690 --> 01:07:13,630
+noticing that your context isn't-- you have to handle long
+
+1065
+01:07:13,630 --> 01:07:18,990
+context and maybe sharpening your image processing and so on.
+
+1066
+01:07:18,990 --> 01:07:26,550
+OK, so I'm going to now jump to something quite different.
+
+1067
+01:07:26,550 --> 01:07:32,110
+So there's this paper called Chameleon from Meta in 2024.
+
+1068
+01:07:32,110 --> 01:07:37,370
+So, so far, VLMs encode images into these vectors
+
+1069
+01:07:37,370 --> 01:07:40,550
+and then they inject them into a language model.
+
+1070
+01:07:40,550 --> 01:07:42,430
+And because it's a language model,
+
+1071
+01:07:42,430 --> 01:07:44,890
+you can only generate text.
+
+1072
+01:07:44,890 --> 01:07:49,550
+You can't generate images.
+
+1073
+01:07:49,550 --> 01:07:53,850
+So there's many ways you can go about fixing this.
+
+1074
+01:07:53,850 --> 01:07:55,530
+You can just take a VLM.
+
+1075
+01:07:55,530 --> 01:07:57,570
+You can also attach a diffusion head.
+
+1076
+01:07:57,570 --> 01:08:00,170
+And now you can generate images or—
+
+1077
+01:08:00,170 --> 01:08:04,170
+but I want to talk about this idea here,
+
+1078
+01:08:04,170 --> 01:08:07,570
+which is Chameleon says, what if we mapped everything
+
+1079
+01:08:07,570 --> 01:08:10,450
+into discrete tokens?
+
+1080
+01:08:10,450 --> 01:08:14,210
+And in some ways aesthetically this is—
+
+1081
+01:08:14,210 --> 01:08:16,430
+well, maybe this reflects that I'm a language person.
+
+1082
+01:08:16,430 --> 01:08:22,170
+This is appealing because now you can analyze and generate
+
+1083
+01:08:22,170 --> 01:08:23,569
+images in the same way.
+
+1084
+01:08:23,569 --> 01:08:25,370
+Everything is a discrete token.
+
+1085
+01:08:25,370 --> 01:08:30,410
+If you want to do what—
+
+1086
+01:08:30,410 --> 01:08:33,550
+let's say you want to generate images.
+
+1087
+01:08:33,550 --> 01:08:37,229
+You can say, here's a text prompt.
+
+1088
+01:08:37,229 --> 01:08:40,649
+And then you can just— these are more just
+
+1089
+01:08:40,649 --> 01:08:42,330
+tokens that you can generate.
+
+1090
+01:08:42,330 --> 01:08:49,330
+Or you can flip the language and the text around as well.
+
+1091
+01:08:49,330 --> 01:08:52,770
+They have these examples from the Chameleon paper
+
+1092
+01:08:52,770 --> 01:08:55,319
+you can prompt in say I'm bored.
+
+1093
+01:08:55,319 --> 01:08:56,479
+Can you show me some birds?
+
+1094
+01:08:56,479 --> 01:08:58,220
+And then it would be text, and then it
+
+1095
+01:08:58,220 --> 01:09:01,439
+would be images, and then some more text and some images.
+
+1096
+01:09:01,439 --> 01:09:03,979
+So it's interleaved.
+
+1097
+01:09:03,979 --> 01:09:06,899
+So in some sense, the vision of an omni model
+
+1098
+01:09:06,899 --> 01:09:10,800
+is that text and images truly live in the same space.
+
+1099
+01:09:10,800 --> 01:09:15,000
+And this is accomplished by making everything look like text.
+
+1100
+01:09:15,000 --> 01:09:16,620
+That's one way to do it.
+
+1101
+01:09:16,620 --> 01:09:20,120
+OK, so I'll talk a little bit about how this is done.
+
+1102
+01:09:20,120 --> 01:09:28,380
+So the thing you need to do now is to map images
+
+1103
+01:09:28,380 --> 01:09:30,740
+into discrete tokens.
+
+1104
+01:09:30,740 --> 01:09:38,460
+So there's this idea rather old from Oord 2017,
+
+1105
+01:09:38,460 --> 01:09:41,740
+which is called vector quantized variational autoencoder.
+
+1106
+01:09:41,740 --> 01:09:47,180
+And the basic idea here is to map an image
+
+1107
+01:09:47,180 --> 01:09:51,060
+into a discrete code.
+
+1108
+01:09:51,060 --> 01:09:54,080
+And what you learn is a mapping that maps this
+
+1109
+01:09:54,080 --> 01:09:57,080
+into a continuous vector.
+
+1110
+01:09:57,080 --> 01:10:00,840
+And this gets rounded to the nearest code.
+
+1111
+01:10:00,840 --> 01:10:06,060
+So you have a codebook which has, let's say, 8,000 codes.
+
+1112
+01:10:06,060 --> 01:10:11,040
+So these are prototypical vectors that correspond to what
+
+1113
+01:10:11,040 --> 01:10:12,320
+patches.
+
+1114
+01:10:12,320 --> 01:10:16,600
+And then so you pick one of these that's the closest.
+
+1115
+01:10:16,600 --> 01:10:19,120
+And that would be your representation.
+
+1116
+01:10:19,120 --> 01:10:20,163
+So that's your encoder.
+
+1117
+01:10:20,163 --> 01:10:21,580
+It goes through a continuous phase
+
+1118
+01:10:21,580 --> 01:10:25,080
+and then you round it to the nearest code.
+
+1119
+01:10:25,080 --> 01:10:27,640
+And now the decoder is you take that code
+
+1120
+01:10:27,640 --> 01:10:29,800
+and you try to reconstruct the image.
+
+1121
+01:10:29,800 --> 01:10:36,480
+And then you train these VQ-VAEs by basically minimizing
+
+1122
+01:10:36,480 --> 01:10:38,680
+the reconstruction loss.
+
+1123
+01:10:38,680 --> 01:10:40,240
+There are some other terms that you
+
+1124
+01:10:40,240 --> 01:10:43,160
+add because this is not differentiable, which
+
+1125
+01:10:43,160 --> 01:10:46,640
+I won't have time to get into.
+
+1126
+01:10:46,640 --> 01:10:52,500
+OK, but, at the end of the day, you have 512 by 512 images that
+
+1127
+01:10:52,500 --> 01:10:59,980
+are converted into 1,024 tokens, and each token comes from
+
+1128
+01:10:59,980 --> 01:11:03,140
+a vocabulary of 8,000.
+
+1129
+01:11:03,140 --> 01:11:06,440
+OK, so now you have basically text.
+
+1130
+01:11:06,440 --> 01:11:12,020
+You have your images, which are basically these codes.
+
+1131
+01:11:12,020 --> 01:11:16,820
+They train a new tokenizer because now you
+
+1132
+01:11:16,820 --> 01:11:19,460
+have different-- your data looks different than if it were
+
+1133
+01:11:19,460 --> 01:11:24,060
+just normal natural language.
+
+1134
+01:11:24,060 --> 01:11:29,520
+The training is now actually very straightforward.
+
+1135
+01:11:29,520 --> 01:11:31,880
+This is just normal language model training.
+
+1136
+01:11:31,880 --> 01:11:32,920
+There's no adapter.
+
+1137
+01:11:32,920 --> 01:11:36,860
+There's no turn the vision encoder.
+
+1138
+01:11:36,860 --> 01:11:39,940
+There's just a language model now.
+
+1139
+01:11:39,940 --> 01:11:44,020
+So this is the part that's appealing.
+
+1140
+01:11:44,020 --> 01:11:46,560
+So there's still two stages.
+
+1141
+01:11:46,560 --> 01:11:48,420
+But even for language model training,
+
+1142
+01:11:48,420 --> 01:11:51,030
+there's usually two or more stages,
+
+1143
+01:11:51,030 --> 01:11:53,690
+where the first stage is the bulk of training.
+
+1144
+01:11:53,690 --> 01:11:55,710
+It's largely unsupervised.
+
+1145
+01:11:55,710 --> 01:11:59,950
+They have both text and text and image.
+
+1146
+01:11:59,950 --> 01:12:04,950
+And then stage 2, they mix in high quality data.
+
+1147
+01:12:04,950 --> 01:12:09,430
+OK, so this is really great and elegant.
+
+1148
+01:12:09,430 --> 01:12:11,750
+There's a few problems with this.
+
+1149
+01:12:11,750 --> 01:12:16,510
+One is that they found that the training was not stable.
+
+1150
+01:12:16,510 --> 01:12:20,110
+And the reason is that text and images,
+
+1151
+01:12:20,110 --> 01:12:22,550
+despite occupying the same space,
+
+1152
+01:12:22,550 --> 01:12:25,230
+just behave very differently.
+
+1153
+01:12:25,230 --> 01:12:30,530
+So just calling things discrete tokens
+
+1154
+01:12:30,530 --> 01:12:33,630
+isn't hiding the fact that there's an image living there.
+
+1155
+01:12:33,630 --> 01:12:36,590
+And in particular, text tokens, if you
+
+1156
+01:12:36,590 --> 01:12:38,410
+think about predicting the next word,
+
+1157
+01:12:38,410 --> 01:12:40,890
+this has relatively lower entropy.
+
+1158
+01:12:40,890 --> 01:12:45,510
+Most words are predictable, whereas image tokens
+
+1159
+01:12:45,510 --> 01:12:46,810
+have very high entropy.
+
+1160
+01:12:46,810 --> 01:12:50,970
+I don't know what shade of blue this exact token is going to be.
+
+1161
+01:12:50,970 --> 01:12:55,890
+And so as a result, they found that training with this mixture
+
+1162
+01:12:55,890 --> 01:12:59,970
+led to a lot of the norms of the parameters
+
+1163
+01:12:59,970 --> 01:13:05,890
+to grow and to generate loss instability.
+
+1164
+01:13:05,890 --> 01:13:08,290
+They were able to mitigate or fix this
+
+1165
+01:13:08,290 --> 01:13:12,810
+to some extent via QK norm and z-loss regularization, which
+
+1166
+01:13:12,810 --> 01:13:16,870
+controls the norm growth.
+
+1167
+01:13:16,870 --> 01:13:20,310
+So I'm not even going to show the results.
+
+1168
+01:13:20,310 --> 01:13:24,210
+But I wanted to highlight this work because there's
+
+1169
+01:13:24,210 --> 01:13:28,210
+a certain elegance here because it's just one model that treats
+
+1170
+01:13:28,210 --> 01:13:31,330
+really all modalities the same.
+
+1171
+01:13:31,330 --> 01:13:35,010
+But the downside is that it turned out
+
+1172
+01:13:35,010 --> 01:13:38,210
+this model was not really as performant,
+
+1173
+01:13:38,210 --> 01:13:42,890
+and the discretization does definitely lose its information.
+
+1174
+01:13:42,890 --> 01:13:46,590
+So think about OCR.
+
+1175
+01:13:46,590 --> 01:13:51,090
+Again, if you discretize very small print,
+
+1176
+01:13:51,090 --> 01:13:54,030
+you're not going to be able to read it anymore.
+
+1177
+01:13:54,030 --> 01:13:57,570
+And finally, training with multi modalities is also tricky.
+
+1178
+01:13:57,570 --> 01:13:59,870
+We saw this a little bit with the Qwen models
+
+1179
+01:13:59,870 --> 01:14:02,130
+and we had to play around with the weights.
+
+1180
+01:14:02,130 --> 01:14:05,350
+But this is more exacerbated here.
+
+1181
+01:14:05,350 --> 01:14:10,430
+So VQ-VAEs were popular for a while.
+
+1182
+01:14:10,430 --> 01:14:15,690
+And in fact, many people were using this for image generation.
+
+1183
+01:14:15,690 --> 01:14:19,525
+The main reason to do that is, well, you have a transformer.
+
+1184
+01:14:19,525 --> 01:14:21,150
+How do you generate from a transformer?
+
+1185
+01:14:21,150 --> 01:14:22,990
+Well, you have to generate discrete things
+
+1186
+01:14:22,990 --> 01:14:28,510
+and you basically put all your data into this discrete form.
+
+1187
+01:14:28,510 --> 01:14:32,230
+But then diffusion models came out
+
+1188
+01:14:32,230 --> 01:14:35,410
+and became popular and viable for generation.
+
+1189
+01:14:35,410 --> 01:14:43,070
+So this flavor of method is less popular than it used to be.
+
+1190
+01:14:43,070 --> 01:14:48,560
+OK, so maybe just reflect and summarize here.
+
+1191
+01:14:48,560 --> 01:14:50,920
+Frontier models these days are expected
+
+1192
+01:14:50,920 --> 01:14:55,640
+to be multimodal or even more strongly natively multimodal
+
+1193
+01:14:55,640 --> 01:14:58,000
+or omni models.
+
+1194
+01:14:58,000 --> 01:15:01,560
+Unfortunately, I think when Gemini comes out
+
+1195
+01:15:01,560 --> 01:15:04,440
+or GPT comes out, they tout or touted
+
+1196
+01:15:04,440 --> 01:15:07,900
+as being natively multimodal and handle all these modalities.
+
+1197
+01:15:07,900 --> 01:15:09,425
+And in fact, they do.
+
+1198
+01:15:09,425 --> 01:15:14,240
+But of course, there's no details about how these are built.
+
+1199
+01:15:14,240 --> 01:15:18,840
+I think that it's probably combination
+
+1200
+01:15:18,840 --> 01:15:22,840
+of having a continuous encoder because you don't want
+
+1201
+01:15:22,840 --> 01:15:26,400
+to lose information and then diffusion for the generation
+
+1202
+01:15:26,400 --> 01:15:31,000
+because-- but that's my speculation.
+
+1203
+01:15:31,000 --> 01:15:32,897
+The fundamental challenge, I think,
+
+1204
+01:15:32,897 --> 01:15:34,480
+when you're dealing with multimodality
+
+1205
+01:15:34,480 --> 01:15:39,360
+is how do you handle non-text modalities?
+
+1206
+01:15:39,360 --> 01:15:40,920
+It's also interesting that there's
+
+1207
+01:15:40,920 --> 01:15:44,260
+a asymmetry between understanding the modality
+
+1208
+01:15:44,260 --> 01:15:45,540
+and generation.
+
+1209
+01:15:45,540 --> 01:15:49,700
+And there's no one universal encoder let's say.
+
+1210
+01:15:49,700 --> 01:15:53,060
+For example, when we looked at CLIP,
+
+1211
+01:15:53,060 --> 01:15:55,300
+you only cared for classification
+
+1212
+01:15:55,300 --> 01:15:57,080
+to capture high level semantics.
+
+1213
+01:15:57,080 --> 01:15:59,920
+So these vectors could be fairly small
+
+1214
+01:15:59,920 --> 01:16:02,380
+and capture the high level semantics.
+
+1215
+01:16:02,380 --> 01:16:05,980
+Whereas if you wanted to do OCR or whether you wanted
+
+1216
+01:16:05,980 --> 01:16:09,780
+to generate an image, then you need really fine-grained detail.
+
+1217
+01:16:09,780 --> 01:16:12,740
+You need to-- that's why diffusion is so good because it
+
+1218
+01:16:12,740 --> 01:16:20,673
+can really micro optimize the low-high frequency information.
+
+1219
+01:16:20,673 --> 01:16:22,340
+I think, in general, when you're dealing
+
+1220
+01:16:22,340 --> 01:16:26,020
+with multiple modalities, you have to think carefully
+
+1221
+01:16:26,020 --> 01:16:30,820
+about weighing them properly.
+
+1222
+01:16:30,820 --> 01:16:34,220
+For example, video certainly has lower information density
+
+1223
+01:16:34,220 --> 01:16:35,740
+than text.
+
+1224
+01:16:35,740 --> 01:16:41,590
+So you don't want a video to overwhelm your text.
+
+1225
+01:16:41,590 --> 01:16:47,710
+And like I said before, at least the current best thing
+
+1226
+01:16:47,710 --> 01:16:52,190
+is having continuous encoders.
+
+1227
+01:16:52,190 --> 01:16:55,270
+It seems even CLIP, even though it's five years old,
+
+1228
+01:16:55,270 --> 01:16:59,510
+or similar ideas are still the go-to way
+
+1229
+01:16:59,510 --> 01:17:03,630
+to capture semantics of images.
+
+1230
+01:17:03,630 --> 01:17:05,590
+Transformers are still there.
+
+1231
+01:17:05,590 --> 01:17:08,350
+And then diffusion models, which I didn't talk about,
+
+1232
+01:17:08,350 --> 01:17:12,910
+are great for generation.
+
+1233
+01:17:12,910 --> 01:17:16,430
+OK, so I will stop there.
+
+1234
+01:17:16,430 --> 01:17:22,870
+That's it for the lecture on multimodality.
+
+1235
+01:17:22,870 --> 01:17:25,730
+I guess we don't have any homework on doing this.
+
+1236
+01:17:25,730 --> 01:17:29,430
+But if you're curious, I think I encourage
+
+1237
+01:17:29,430 --> 01:17:34,060
+you to play around with training some of these models.

@@ -1,0 +1,8962 @@
+[
+ {
+  "start": 5.08,
+  "end": 9.32,
+  "text": "OK, we are going to continue our scaling journey."
+ },
+ {
+  "start": 9.32,
+  "end": 11.645,
+  "text": "Today's a bit of a grab bag of stuff."
+ },
+ {
+  "start": 11.645,
+  "end": 13.52,
+  "text": "I mean, we're really going to talk about some"
+ },
+ {
+  "start": 13.52,
+  "end": 17.48,
+  "text": "of the more advanced details of scaling laws"
+ },
+ {
+  "start": 17.48,
+  "end": 19.68,
+  "text": "and how we scale up models."
+ },
+ {
+  "start": 19.68,
+  "end": 21.48,
+  "text": "And in doing so, we're going to cover"
+ },
+ {
+  "start": 21.48,
+  "end": 24.96,
+  "text": "what I feel like are some important details in how"
+ },
+ {
+  "start": 24.96,
+  "end": 27.28,
+  "text": "you would scale up a language model in practice."
+ },
+ {
+  "start": 27.28,
+  "end": 32.64,
+  "text": "So we might want to ask some questions, like the scaling law"
+ },
+ {
+  "start": 32.64,
+  "end": 35.32,
+  "text": "stuff that you talked about two lectures ago,"
+ },
+ {
+  "start": 35.32,
+  "end": 39.0,
+  "text": "does that actually work at real building open-source model"
+ },
+ {
+  "start": 39.0,
+  "end": 40.6,
+  "text": "scales?"
+ },
+ {
+  "start": 40.6,
+  "end": 42.98,
+  "text": "It would be nice if we could optimize some of this."
+ },
+ {
+  "start": 42.98,
+  "end": 45.24,
+  "text": "There's a lot of learning rate tricks and other things"
+ },
+ {
+  "start": 45.24,
+  "end": 47.8,
+  "text": "that people do that I think you should know"
+ },
+ {
+  "start": 47.8,
+  "end": 49.6,
+  "text": "as people that are informed about how"
+ },
+ {
+  "start": 49.6,
+  "end": 51.26,
+  "text": "to build language models."
+ },
+ {
+  "start": 51.26,
+  "end": 54.4,
+  "text": "So we'll talk about some of these optimization details."
+ },
+ {
+  "start": 54.4,
+  "end": 56.84,
+  "text": "And then I think the last thing I want to talk about"
+ },
+ {
+  "start": 56.84,
+  "end": 59.98,
+  "text": "is, when we scale up, there are certain things that"
+ },
+ {
+  "start": 59.98,
+  "end": 62.74,
+  "text": "are going to be a little bit trickier to tune."
+ },
+ {
+  "start": 62.74,
+  "end": 65.58,
+  "text": "We know that optimizers and optimizer behavior"
+ },
+ {
+  "start": 65.58,
+  "end": 68.06,
+  "text": "is going to be actually pretty scale sensitive."
+ },
+ {
+  "start": 68.06,
+  "end": 70.52,
+  "text": "And because of that, things like initializations,"
+ },
+ {
+  "start": 70.52,
+  "end": 72.26,
+  "text": "learning rates, batch size, those"
+ },
+ {
+  "start": 72.26,
+  "end": 75.2,
+  "text": "we need to carefully think about as a function of scale."
+ },
+ {
+  "start": 75.2,
+  "end": 80.1,
+  "text": "So we will talk about how to think about those carefully."
+ },
+ {
+  "start": 80.1,
+  "end": 84.14,
+  "text": "So up until now, most of our discussions"
+ },
+ {
+  "start": 84.14,
+  "end": 87.3,
+  "text": "is what I would call the classical scaling laws cannon."
+ },
+ {
+  "start": 87.3,
+  "end": 88.68,
+  "text": "We talked about Kaplan."
+ },
+ {
+  "start": 88.68,
+  "end": 92.3,
+  "text": "We talked about, oh, even Hestness and then the Chinchilla"
+ },
+ {
+  "start": 92.3,
+  "end": 92.84,
+  "text": "paper."
+ },
+ {
+  "start": 92.84,
+  "end": 96.78,
+  "text": "So we're up to date with, I don't know, 2022 or something."
+ },
+ {
+  "start": 96.78,
+  "end": 98.86,
+  "text": "Since then, there have been a number"
+ },
+ {
+  "start": 98.86,
+  "end": 100.62,
+  "text": "of scaling papers that are published"
+ },
+ {
+  "start": 100.62,
+  "end": 104.02799999999999,
+  "text": "by people who train big models."
+ },
+ {
+  "start": 104.02799999999999,
+  "end": 105.82,
+  "text": "Although, I think the number of such papers"
+ },
+ {
+  "start": 105.82,
+  "end": 108.02000000000001,
+  "text": "have decreased in recent years, and most of them"
+ },
+ {
+  "start": 108.02000000000001,
+  "end": 111.34,
+  "text": "have come out of the open-source community in China."
+ },
+ {
+  "start": 111.34,
+  "end": 114.66,
+  "text": "And so today, I want to talk about a number of these"
+ },
+ {
+  "start": 114.66,
+  "end": 118.67,
+  "text": "that I've curated and selected to give you a sense of,"
+ },
+ {
+  "start": 118.67,
+  "end": 120.95,
+  "text": "what does scaling at the frontier, at least"
+ },
+ {
+  "start": 120.95,
+  "end": 122.648,
+  "text": "open frontier, look like?"
+ },
+ {
+  "start": 122.648,
+  "end": 124.19,
+  "text": "What are the things that these people"
+ },
+ {
+  "start": 124.19,
+  "end": 125.57,
+  "text": "care about or worry about?"
+ },
+ {
+  "start": 125.57,
+  "end": 128.43,
+  "text": "And what would you need to do to speedrun"
+ },
+ {
+  "start": 128.43,
+  "end": 130.99,
+  "text": "your way from Chinchilla all the way to, let's say,"
+ },
+ {
+  "start": 130.99,
+  "end": 135.79,
+  "text": "Kimi K2, the most recent release that has some scaling details."
+ },
+ {
+  "start": 135.79,
+  "end": 138.09,
+  "text": "So that's going to be the first part of this lecture."
+ },
+ {
+  "start": 138.09,
+  "end": 139.31,
+  "text": "We're going to go through a couple of papers,"
+ },
+ {
+  "start": 139.31,
+  "end": 141.15,
+  "text": "and we're going to go through the details."
+ },
+ {
+  "start": 141.15,
+  "end": 144.31,
+  "text": "The second part is going to be a discussion of optimizers"
+ },
+ {
+  "start": 144.31,
+  "end": 146.19,
+  "text": "and initializations."
+ },
+ {
+  "start": 146.19,
+  "end": 149.07,
+  "text": "And remember, I spent a nontrivial amount of time"
+ },
+ {
+  "start": 149.07,
+  "end": 152.585,
+  "text": "two lectures ago on the selection of batch sizes."
+ },
+ {
+  "start": 152.585,
+  "end": 154.21,
+  "text": "That's going to be an important factor."
+ },
+ {
+  "start": 154.21,
+  "end": 155.99,
+  "text": "And it's also going to be important"
+ },
+ {
+  "start": 155.99,
+  "end": 157.43,
+  "text": "thinking about how we're going to tune things"
+ },
+ {
+  "start": 157.43,
+  "end": 158.37,
+  "text": "like learning rates."
+ },
+ {
+  "start": 158.37,
+  "end": 161.69,
+  "text": "Those are very sensitive, very important to get right."
+ },
+ {
+  "start": 161.69,
+  "end": 163.67000000000002,
+  "text": "And so it turns out that a lot of effort"
+ },
+ {
+  "start": 163.67000000000002,
+  "end": 165.85,
+  "text": "has been invested into getting those things right."
+ },
+ {
+  "start": 165.85,
+  "end": 168.348,
+  "text": "And we will talk about some of the techniques to do so."
+ },
+ {
+  "start": 168.348,
+  "end": 170.39,
+  "text": "And this may, in fact, even be useful in your day"
+ },
+ {
+  "start": 170.39,
+  "end": 172.845,
+  "text": "to day lives of training various language models"
+ },
+ {
+  "start": 172.845,
+  "end": 174.47,
+  "text": "because they'll give you a sense of how"
+ },
+ {
+  "start": 174.47,
+  "end": 176.595,
+  "text": "to change your hyperparameters and your experiments"
+ },
+ {
+  "start": 176.595,
+  "end": 178.57,
+  "text": "as you scale up or down."
+ },
+ {
+  "start": 178.57,
+  "end": 182.69,
+  "text": "So I'm going to spend a nontrivial amount of time"
+ },
+ {
+  "start": 182.69,
+  "end": 185.49,
+  "text": "talking about two papers in particular."
+ },
+ {
+  "start": 185.49,
+  "end": 188.21,
+  "text": "They're not the newest papers."
+ },
+ {
+  "start": 188.21,
+  "end": 190.29,
+  "text": "They're not necessarily the most-- actually,"
+ },
+ {
+  "start": 190.29,
+  "end": 192.97,
+  "text": "the DeepSeek one might be one of the more detailed ones--"
+ },
+ {
+  "start": 192.97,
+  "end": 194.95,
+  "text": "most detailed scaling paper in general."
+ },
+ {
+  "start": 194.95,
+  "end": 196.95,
+  "text": "But I think this hits a sweet spot."
+ },
+ {
+  "start": 196.95,
+  "end": 201.53,
+  "text": "So both of these papers are serious scaling investigations"
+ },
+ {
+  "start": 201.53,
+  "end": 205.16,
+  "text": "from people who build reasonably high-performance models."
+ },
+ {
+  "start": 205.16,
+  "end": 207.41,
+  "text": "And importantly, they take pretty different approaches"
+ },
+ {
+  "start": 207.41,
+  "end": 209.995,
+  "text": "to some of the key questions that we will ask today."
+ },
+ {
+  "start": 209.995,
+  "end": 211.37,
+  "text": "And so I think they're a good way"
+ },
+ {
+  "start": 211.37,
+  "end": 213.87,
+  "text": "to motivate a lot of the rest of the lecture."
+ },
+ {
+  "start": 213.87,
+  "end": 215.51,
+  "text": "So I'm going to talk about these two."
+ },
+ {
+  "start": 215.51,
+  "end": 217.73,
+  "text": "First one is MiniCPM."
+ },
+ {
+  "start": 217.73,
+  "end": 221.53,
+  "text": "This was, I think, back in 2024, high-performance small language"
+ },
+ {
+  "start": 221.53,
+  "end": 222.267,
+  "text": "model."
+ },
+ {
+  "start": 222.267,
+  "end": 224.35,
+  "text": "And DeepSeek-- you all are now familiar with this."
+ },
+ {
+  "start": 224.35,
+  "end": 226.142,
+  "text": "I no longer have to justify why I'm talking"
+ },
+ {
+  "start": 226.142,
+  "end": 228.37,
+  "text": "about DeepSeek, which is great."
+ },
+ {
+  "start": 228.37,
+  "end": 230.73,
+  "text": "We'll start by talking about MiniCPM, though."
+ },
+ {
+  "start": 230.73,
+  "end": 233.63,
+  "text": "I do like this paper, especially when it first came out."
+ },
+ {
+  "start": 233.63,
+  "end": 237.82999999999998,
+  "text": "It felt very fresh and new and at the cutting edge."
+ },
+ {
+  "start": 237.82999999999998,
+  "end": 239.91,
+  "text": "Even in 2026, I feel a lot of the things"
+ },
+ {
+  "start": 239.91,
+  "end": 243.71,
+  "text": "that the CPM folks did has been informative to us."
+ },
+ {
+  "start": 243.71,
+  "end": 246.61,
+  "text": "I'll talk about this later as I get to the newer papers."
+ },
+ {
+  "start": 246.61,
+  "end": 248.15,
+  "text": "But I think it's becoming the case"
+ },
+ {
+  "start": 248.15,
+  "end": 250.99,
+  "text": "that a lot of this classic scaling"
+ },
+ {
+  "start": 250.99,
+  "end": 254.15,
+  "text": "stuff, how you set learning rates, how do you do Chinchilla?"
+ },
+ {
+  "start": 254.15,
+  "end": 256.649,
+  "text": "those kinds of things I think are now taken for granted."
+ },
+ {
+  "start": 256.649,
+  "end": 259.105,
+  "text": "Everyone just assumes that you know how to do those things."
+ },
+ {
+  "start": 259.105,
+  "end": 261.23,
+  "text": "And so people don't really talk about those as much"
+ },
+ {
+  "start": 261.23,
+  "end": 264.35,
+  "text": "anymore in the paper, so it's really nice to talk about some"
+ },
+ {
+  "start": 264.35,
+  "end": 268.44,
+  "text": "of these older papers for that reason."
+ },
+ {
+  "start": 268.44,
+  "end": 271.11,
+  "text": "So MiniCPM is an effort by a bunch"
+ },
+ {
+  "start": 271.11,
+  "end": 274.77,
+  "text": "of industry academic partnerships folks over"
+ },
+ {
+  "start": 274.77,
+  "end": 276.27,
+  "text": "in the Chinese open-source community"
+ },
+ {
+  "start": 276.27,
+  "end": 280.40999999999997,
+  "text": "to come up with a high-performance, small-ish language model."
+ },
+ {
+  "start": 280.40999999999997,
+  "end": 282.23,
+  "text": "And at the time when this came out,"
+ },
+ {
+  "start": 282.23,
+  "end": 284.88,
+  "text": "it was basically state of the art for the 1 to 2"
+ },
+ {
+  "start": 284.88,
+  "end": 286.47,
+  "text": "billion parameter bracket."
+ },
+ {
+  "start": 286.47,
+  "end": 288.73,
+  "text": "Nowadays, Gemma and other models--"
+ },
+ {
+  "start": 288.73,
+  "end": 291.95,
+  "text": "Gemma-- and other models at 2D or 3D are going to be higher"
+ },
+ {
+  "start": 291.95,
+  "end": 292.53,
+  "text": "performance."
+ },
+ {
+  "start": 292.53,
+  "end": 295.34000000000003,
+  "text": "But these are competitive, well-trained models,"
+ },
+ {
+  "start": 295.34000000000003,
+  "end": 298.52,
+  "text": "at least as at 2024 standards."
+ },
+ {
+  "start": 298.52,
+  "end": 299.9,
+  "text": "So how do you train these models?"
+ },
+ {
+  "start": 299.9,
+  "end": 305.72,
+  "text": "As I said before, we have to get some of these scaling parameters"
+ },
+ {
+  "start": 305.72,
+  "end": 306.22,
+  "text": "right."
+ },
+ {
+  "start": 306.22,
+  "end": 308.8,
+  "text": "And one of the things that I'll talk about today that I'll"
+ },
+ {
+  "start": 308.8,
+  "end": 312.84,
+  "text": "emphasize quite a bit is, initializations are very important."
+ },
+ {
+  "start": 312.84,
+  "end": 314.84,
+  "text": "Initializations are important because they"
+ },
+ {
+  "start": 314.84,
+  "end": 319.16,
+  "text": "allow you to make certain hyperparameters less scale"
+ },
+ {
+  "start": 319.16,
+  "end": 320.58299999999997,
+  "text": "dependent."
+ },
+ {
+  "start": 320.58299999999997,
+  "end": 322.0,
+  "text": "So the first technique that I want"
+ },
+ {
+  "start": 322.0,
+  "end": 325.16,
+  "text": "to talk about from this MiniCPM paper"
+ },
+ {
+  "start": 325.16,
+  "end": 329.68,
+  "text": "is a special class of initializations called muP."
+ },
+ {
+  "start": 329.68,
+  "end": 332.86,
+  "text": "So muP, the whole point of this approach is to say,"
+ },
+ {
+  "start": 332.86,
+  "end": 335.48,
+  "text": "I want to make sure that my optimal learning"
+ },
+ {
+  "start": 335.48,
+  "end": 338.0,
+  "text": "rate is the same as I scale up and down."
+ },
+ {
+  "start": 338.0,
+  "end": 341.735,
+  "text": "I talked about this very briefly in the two lectures ago,"
+ },
+ {
+  "start": 341.735,
+  "end": 343.86,
+  "text": "so you should hopefully remember that a little bit."
+ },
+ {
+  "start": 343.86,
+  "end": 346.04,
+  "text": "But this is the first real instantiation"
+ },
+ {
+  "start": 346.04,
+  "end": 347.88,
+  "text": "that we're going to talk about."
+ },
+ {
+  "start": 347.88,
+  "end": 349.68,
+  "text": "What does that look like specifically?"
+ },
+ {
+  "start": 349.68,
+  "end": 353.54,
+  "text": "The MiniCPM paper has a nice list of things to do,"
+ },
+ {
+  "start": 353.54,
+  "end": 355.96,
+  "text": "so they scale the embedding output."
+ },
+ {
+  "start": 355.96,
+  "end": 357.5,
+  "text": "They scale the residual connections"
+ },
+ {
+  "start": 357.5,
+  "end": 359.86,
+  "text": "by the square root of the number of layers."
+ },
+ {
+  "start": 359.86,
+  "end": 361.7,
+  "text": "They scale the initialization of all"
+ },
+ {
+  "start": 361.7,
+  "end": 365.94,
+  "text": "of their matrix-shaped tensors by the fan-in, fan-out ratio."
+ },
+ {
+  "start": 365.94,
+  "end": 367.753,
+  "text": "They scale the learning rates of tensors."
+ },
+ {
+  "start": 367.753,
+  "end": 369.42,
+  "text": "And you should pay attention to this one"
+ },
+ {
+  "start": 369.42,
+  "end": 371.34,
+  "text": "because this is exotic if you aren't"
+ },
+ {
+  "start": 371.34,
+  "end": 374.06,
+  "text": "used to per parameter learning rates."
+ },
+ {
+  "start": 374.06,
+  "end": 376.132,
+  "text": "And then they also scale the LM heads."
+ },
+ {
+  "start": 376.132,
+  "end": 377.84,
+  "text": "We'll talk about why you do these things,"
+ },
+ {
+  "start": 377.84,
+  "end": 380.9,
+  "text": "or how you derive this particular set of scalings."
+ },
+ {
+  "start": 380.9,
+  "end": 383.228,
+  "text": "Suffice to say that you're just going to change up"
+ },
+ {
+  "start": 383.228,
+  "end": 385.02,
+  "text": "how you're going to do your initializations"
+ },
+ {
+  "start": 385.02,
+  "end": 386.52,
+  "text": "and your learning rates a little bit"
+ },
+ {
+  "start": 386.52,
+  "end": 392.02,
+  "text": "in the hopes of stabilizing your learning rates a little bit."
+ },
+ {
+  "start": 392.02,
+  "end": 394.08,
+  "text": "And of course, we're training a small model here,"
+ },
+ {
+  "start": 394.08,
+  "end": 396.36,
+  "text": "but we're still wanting to do a nice scaling strategy."
+ },
+ {
+  "start": 396.36,
+  "end": 399.18,
+  "text": "Part of the point of this study is not"
+ },
+ {
+  "start": 399.18,
+  "end": 401.88,
+  "text": "that you want to brute force a 1.5 model,"
+ },
+ {
+  "start": 401.88,
+  "end": 403.218,
+  "text": "like training hundreds of them."
+ },
+ {
+  "start": 403.218,
+  "end": 405.26,
+  "text": "You want to get the hyperparameters exactly right"
+ },
+ {
+  "start": 405.26,
+  "end": 405.885,
+  "text": "the first time."
+ },
+ {
+  "start": 405.885,
+  "end": 409.38,
+  "text": "So you're going to train a bunch much smaller models and then get"
+ },
+ {
+  "start": 409.38,
+  "end": 414.24,
+  "text": "a scaling ladder up all the way to your target size of 5x or so."
+ },
+ {
+  "start": 414.24,
+  "end": 417.618,
+  "text": "And so there's about a 5x gap between the biggest model they"
+ },
+ {
+  "start": 417.618,
+  "end": 420.16,
+  "text": "train on their ladder and the actual model that they're going"
+ },
+ {
+  "start": 420.16,
+  "end": 421.3,
+  "text": "to finally release."
+ },
+ {
+  "start": 421.3,
+  "end": 424.42,
+  "text": "And their goal is going to nail down,"
+ },
+ {
+  "start": 424.42,
+  "end": 425.92,
+  "text": "I think, what most people consider"
+ },
+ {
+  "start": 425.92,
+  "end": 428.62,
+  "text": "to be the sensitive parameters, like optimal batch size,"
+ },
+ {
+  "start": 428.62,
+  "end": 429.672,
+  "text": "learning rate."
+ },
+ {
+  "start": 429.672,
+  "end": 431.88,
+  "text": "And then the token-to-size ratio that we talked about"
+ },
+ {
+  "start": 431.88,
+  "end": 433.04,
+  "text": "at Chinchilla."
+ },
+ {
+  "start": 433.04,
+  "end": 435.7,
+  "text": "They also want to replicate a Chinchilla analysis,"
+ },
+ {
+  "start": 435.7,
+  "end": 438.8,
+  "text": "much less important to us now and probably to you"
+ },
+ {
+  "start": 438.8,
+  "end": 439.825,
+  "text": "even if you're training."
+ },
+ {
+  "start": 439.825,
+  "end": 442.2,
+  "text": "But I'm going to talk about it regardless because there's"
+ },
+ {
+  "start": 442.2,
+  "end": 443.76,
+  "text": "one important thing in the way they"
+ },
+ {
+  "start": 443.76,
+  "end": 446.92,
+  "text": "do that and that I think has been informative and useful."
+ },
+ {
+  "start": 446.92,
+  "end": 450.96,
+  "text": "So as I said earlier, the whole point"
+ },
+ {
+  "start": 450.96,
+  "end": 453.08,
+  "text": "of going through this weird initialization"
+ },
+ {
+  "start": 453.08,
+  "end": 454.84000000000003,
+  "text": "or nonstandard initialization called"
+ },
+ {
+  "start": 454.84000000000003,
+  "end": 458.8,
+  "text": "muP is to try to make the optimal learning rate stable."
+ },
+ {
+  "start": 458.8,
+  "end": 459.72,
+  "text": "Is it?"
+ },
+ {
+  "start": 459.72,
+  "end": 462.92,
+  "text": "At least in the MiniCPM case, the answer is yes."
+ },
+ {
+  "start": 462.92,
+  "end": 465.42,
+  "text": "In fact, it's very, very clean in their experiments."
+ },
+ {
+  "start": 465.42,
+  "end": 468.14,
+  "text": "They sweep learning rate across a variety of models,"
+ },
+ {
+  "start": 468.14,
+  "end": 470.09000000000003,
+  "text": "so each line is a model size."
+ },
+ {
+  "start": 470.09000000000003,
+  "end": 474.17,
+  "text": "The minimal loss is basically right on 10 to the negative 2."
+ },
+ {
+  "start": 474.17,
+  "end": 476.99,
+  "text": "I guess the minima slightly shifted for the smallest model."
+ },
+ {
+  "start": 476.99,
+  "end": 479.89,
+  "text": "But even then, it's quite close to the minimum."
+ },
+ {
+  "start": 479.89,
+  "end": 483.27,
+  "text": "So this is a nice success case of the muP approach."
+ },
+ {
+  "start": 483.27,
+  "end": 484.93,
+  "text": "We will talk about several other models"
+ },
+ {
+  "start": 484.93,
+  "end": 487.29,
+  "text": "and other papers that use muP."
+ },
+ {
+  "start": 487.29,
+  "end": 488.71,
+  "text": "This is not the only way to do it,"
+ },
+ {
+  "start": 488.71,
+  "end": 490.71,
+  "text": "but this is one effective way to do it."
+ },
+ {
+  "start": 490.71,
+  "end": 492.33,
+  "text": "And if you can get something like this"
+ },
+ {
+  "start": 492.33,
+  "end": 496.21,
+  "text": "now you've removed the need to tune the learning rate."
+ },
+ {
+  "start": 496.21,
+  "end": 499.45,
+  "text": "But of course, even if you have a nice parameterization that"
+ },
+ {
+  "start": 499.45,
+  "end": 502.31,
+  "text": "fixes your learning rate to a single of optimum,"
+ },
+ {
+  "start": 502.31,
+  "end": 506.19,
+  "text": "your optimal batch size is still not going to be the same."
+ },
+ {
+  "start": 506.19,
+  "end": 508.73,
+  "text": "So the batch size actually varies"
+ },
+ {
+  "start": 508.73,
+  "end": 514.01,
+  "text": "as a function of both data set size and model size."
+ },
+ {
+  "start": 514.01,
+  "end": 517.47,
+  "text": "So in their case, they run these model training runs."
+ },
+ {
+  "start": 517.47,
+  "end": 520.57,
+  "text": "So each column of points that you see on these plots"
+ },
+ {
+  "start": 520.57,
+  "end": 522.27,
+  "text": "is a training run."
+ },
+ {
+  "start": 522.27,
+  "end": 524.168,
+  "text": "So they have a fixed batch size, and they"
+ },
+ {
+  "start": 524.168,
+  "end": 526.21,
+  "text": "increase the number of tokens processed, I guess,"
+ },
+ {
+  "start": 526.21,
+  "end": 527.87,
+  "text": "from bottom to top."
+ },
+ {
+  "start": 527.87,
+  "end": 529.31,
+  "text": "And then they ask, OK, we've done"
+ },
+ {
+  "start": 529.31,
+  "end": 530.61,
+  "text": "many of these training runs."
+ },
+ {
+  "start": 530.61,
+  "end": 534.51,
+  "text": "What is the optimal batch size fitting these quadratic curves"
+ },
+ {
+  "start": 534.51,
+  "end": 539.99,
+  "text": "onto each of these lines over here, this equal loss contour?"
+ },
+ {
+  "start": 539.99,
+  "end": 543.07,
+  "text": "What they find is this kind of optimal batch size"
+ },
+ {
+  "start": 543.07,
+  "end": 545.49,
+  "text": "scaling as a function of the number of tokens processed,"
+ },
+ {
+  "start": 545.49,
+  "end": 548.99,
+  "text": "and they do this across different model sizes."
+ },
+ {
+  "start": 548.99,
+  "end": 553.23,
+  "text": "Maybe you would not be surprised by this, given the nice scalings"
+ },
+ {
+  "start": 553.23,
+  "end": 556.57,
+  "text": "that we saw in the Kaplan paper for critical batch sizes."
+ },
+ {
+  "start": 556.57,
+  "end": 560.03,
+  "text": "But the optimal batch size does have a power law structure"
+ },
+ {
+  "start": 560.03,
+  "end": 562.83,
+  "text": "with respect to the target loss."
+ },
+ {
+  "start": 562.83,
+  "end": 565.95,
+  "text": "And so we see exactly the Kaplan-style analysis"
+ },
+ {
+  "start": 565.95,
+  "end": 568.61,
+  "text": "of, if your loss is lower on the left,"
+ },
+ {
+  "start": 568.61,
+  "end": 570.07,
+  "text": "your batch size should be bigger,"
+ },
+ {
+  "start": 570.07,
+  "end": 571.95,
+  "text": "critical batch size scaling."
+ },
+ {
+  "start": 571.95,
+  "end": 574.35,
+  "text": "And so now given a particular loss"
+ },
+ {
+  "start": 574.35,
+  "end": 577.83,
+  "text": "target, which you can back out from the scaling laws,"
+ },
+ {
+  "start": 577.83,
+  "end": 581.023,
+  "text": "you can basically set what the optimal or critical batch sizes"
+ },
+ {
+  "start": 581.023,
+  "end": 582.69,
+  "text": "that would give you the best trade-offs."
+ },
+ {
+  "start": 582.69,
+  "end": 584.57,
+  "text": "So there's a nice clean trend here."
+ },
+ {
+  "start": 584.57,
+  "end": 588.37,
+  "text": "This will let you set batch size very easily and precisely."
+ },
+ {
+  "start": 588.37,
+  "end": 592.232,
+  "text": "So those two, the batch size and the learning rate scaling,"
+ },
+ {
+  "start": 592.232,
+  "end": 594.19,
+  "text": "they're going to come back over and over again."
+ },
+ {
+  "start": 594.19,
+  "end": 596.65,
+  "text": "Those are arguably the most important and sensitive"
+ },
+ {
+  "start": 596.65,
+  "end": 599.65,
+  "text": "parameters to do scaling laws on."
+ },
+ {
+  "start": 599.65,
+  "end": 603.13,
+  "text": "But I'll talk about one last thing in the MiniCPM paper"
+ },
+ {
+  "start": 603.13,
+  "end": 605.29,
+  "text": "that I think is important."
+ },
+ {
+  "start": 605.29,
+  "end": 608.25,
+  "text": "So remember, to do Chinchilla, we"
+ },
+ {
+  "start": 608.25,
+  "end": 610.07,
+  "text": "need to train a lot of different models."
+ },
+ {
+  "start": 610.07,
+  "end": 611.99,
+  "text": "So we're going to, let's say, do IsoFLOPs."
+ },
+ {
+  "start": 611.99,
+  "end": 614.15,
+  "text": "That means I'm going to fix a FLOPs budget,"
+ },
+ {
+  "start": 614.15,
+  "end": 616.53,
+  "text": "and I'm going to vary my trade-offs between number"
+ },
+ {
+  "start": 616.53,
+  "end": 618.952,
+  "text": "of tokens and model size."
+ },
+ {
+  "start": 618.952,
+  "end": 620.41,
+  "text": "And to do that, I'm going to, let's"
+ },
+ {
+  "start": 620.41,
+  "end": 622.243,
+  "text": "say, increase the amount of data I train on,"
+ },
+ {
+  "start": 622.243,
+  "end": 624.31,
+  "text": "so increase the number of sequences."
+ },
+ {
+  "start": 624.31,
+  "end": 626.07,
+  "text": "但当我增加序列数量，"
+ },
+ {
+  "start": 626.07,
+  "end": 628.653,
+  "text": "记住每一个都会得到不同的学习率"
+ },
+ {
+  "start": 628.653,
+  "end": 629.49,
+  "text": "调度。"
+ },
+ {
+  "start": 629.49,
+  "end": 631.55,
+  "text": "你们都在用余弦学习率训练。"
+ },
+ {
+  "start": 631.55,
+  "end": 633.27,
+  "text": "余弦学习率看起来不太一样。"
+ },
+ {
+  "start": 633.27,
+  "end": 635.29,
+  "text": "你需要知道最终的总"
+ },
+ {
+  "start": 635.29,
+  "end": 637.87,
+  "text": "预算，才能用余弦调度来训练。"
+ },
+ {
+  "start": 637.87,
+  "end": 641.59,
+  "text": "所以这就引出一个烦人的事实，"
+ },
+ {
+  "start": 641.59,
+  "end": 644.21,
+  "text": "那就是你得一直重新训练你的模型。"
+ },
+ {
+  "start": 644.21,
+  "end": 647.51,
+  "text": "如果你想训练一个 800 万序列的模型，"
+ },
+ {
+  "start": 647.51,
+  "end": 651.39,
+  "text": "你不能从 400 万序列模型的末尾重新开始。"
+ },
+ {
+  "start": 651.39,
+  "end": 652.95,
+  "text": "你必须从头开始，"
+ },
+ {
+  "start": 652.95,
+  "end": 654.742,
+  "text": "因为你的学习率调度"
+ },
+ {
+  "start": 654.742,
+  "end": 655.75,
+  "text": "从根本上就不同。"
+ },
+ {
+  "start": 655.75,
+  "end": 656.93,
+  "text": "这真的很烦人。"
+ },
+ {
+  "start": 656.93,
+  "end": 660.11,
+  "text": "从某种意义上说，这就像二次方的成本，"
+ },
+ {
+  "start": 660.11,
+  "end": 662.75,
+  "text": "因为你得一直重新开始你的运行，"
+ },
+ {
+  "start": 662.75,
+  "end": 664.67,
+  "text": "从起点开始。"
+ },
+ {
+  "start": 664.67,
+  "end": 667.87,
+  "text": "这看起来很浪费，我想很多其他人"
+ },
+ {
+  "start": 667.87,
+  "end": 669.19,
+  "text": "也这么觉得。"
+ },
+ {
+  "start": 669.19,
+  "end": 673.87,
+  "text": "我认为 MiniCPM 论文中一个不错的解决方案"
+ },
+ {
+  "start": 673.87,
+  "end": 676.787,
+  "text": "就是现在所谓的 warmup stable decay"
+ },
+ {
+  "start": 676.787,
+  "end": 677.37,
+  "text": "学习率。"
+ },
+ {
+  "start": 677.37,
+  "end": 679.91,
+  "text": "或者这是这个的流行叫法，"
+ },
+ {
+  "start": 679.91,
+  "end": 682.23,
+  "text": "它基本上就是一个大梯形。"
+ },
+ {
+  "start": 682.23,
+  "end": 683.93,
+  "text": "所以你有一个预热阶段。"
+ },
+ {
+  "start": 683.93,
+  "end": 685.43,
+  "text": "预热阶段通常被定义为"
+ },
+ {
+  "start": 685.43,
+  "end": 687.75,
+  "text": "一个恒定的步数，而不是"
+ },
+ {
+  "start": 687.75,
+  "end": 689.25,
+  "text": "你训练目标的一个比例。"
+ },
+ {
+  "start": 689.25,
+  "end": 692.39,
+  "text": "所以这与你的训练时长无关。"
+ },
+ {
+  "start": 692.39,
+  "end": 694.87,
+  "text": "你有一段相当长的运行，在这期间你保持"
+ },
+ {
+  "start": 694.87,
+  "end": 696.09,
+  "text": "学习率恒定。"
+ },
+ {
+  "start": 696.09,
+  "end": 697.815,
+  "text": "这就是稳定阶段。"
+ },
+ {
+  "start": 697.815,
+  "end": 700.19,
+  "text": "然后在最后，你会相当快速地衰减"
+ },
+ {
+  "start": 700.19,
+  "end": 700.97,
+  "text": "到 0。"
+ },
+ {
+  "start": 700.97,
+  "end": 702.45,
+  "text": "这就是衰减阶段。"
+ },
+ {
+  "start": 702.45,
+  "end": 706.68,
+  "text": "一般来说，衰减阶段大约是你"
+ },
+ {
+  "start": 706.68,
+  "end": 708.08,
+  "text": "整个训练运行的 10% 到 20%。"
+ },
+ {
+  "start": 708.08,
+  "end": 710.4,
+  "text": "所以你会在绝大部分训练"
+ },
+ {
+  "start": 710.4,
+  "end": 713.04,
+  "text": "运行期间保持稳定，然后做一个非常快速的衰减，"
+ },
+ {
+  "start": 713.04,
+  "end": 716.08,
+  "text": "to usually about 10% of your maximum"
+ },
+ {
+  "start": 716.08,
+  "end": 717.82,
+  "text": "learning rate at the very end here."
+ },
+ {
+  "start": 717.82,
+  "end": 722.0,
+  "text": "And that's a very typical warmup, stable,"
+ },
+ {
+  "start": 722.0,
+  "end": 723.96,
+  "text": "decay learning rate."
+ },
+ {
+  "start": 723.96,
+  "end": 724.98,
+  "text": "And why do we do this?"
+ },
+ {
+  "start": 724.98,
+  "end": 726.272,
+  "text": "What's the point of doing this?"
+ },
+ {
+  "start": 726.272,
+  "end": 728.84,
+  "text": "Well, we do WSD because now we can"
+ },
+ {
+  "start": 728.84,
+  "end": 732.22,
+  "text": "restart a run at any point at the end of the stable phase."
+ },
+ {
+  "start": 732.22,
+  "end": 735.16,
+  "text": "So if I want to reuse a run and train it for longer,"
+ },
+ {
+  "start": 735.16,
+  "end": 738.787,
+  "text": "I'll just roll back my training to the last stable checkpoint."
+ },
+ {
+  "start": 738.787,
+  "end": 741.12,
+  "text": "And then I'll just run the stable learning rates forward"
+ },
+ {
+  "start": 741.12,
+  "end": 743.34,
+  "text": "and then decay the model down to 0."
+ },
+ {
+  "start": 743.34,
+  "end": 745.92,
+  "text": "So this provides a very easy way for us"
+ },
+ {
+  "start": 745.92,
+  "end": 749.52,
+  "text": "to essentially run scale in data experiments"
+ },
+ {
+  "start": 749.52,
+  "end": 752.38,
+  "text": "without constantly rerunning your experiments."
+ },
+ {
+  "start": 752.38,
+  "end": 755.58,
+  "text": "So you do have to redecay every time,"
+ },
+ {
+  "start": 755.58,
+  "end": 757.68,
+  "text": "but that's maybe 10% of the total cost."
+ },
+ {
+  "start": 757.68,
+  "end": 760.72,
+  "text": "It's a much better situation to be repeatedly decaying"
+ },
+ {
+  "start": 760.72,
+  "end": 764.44,
+  "text": "than to repeatedly rerun your pre-training runs."
+ },
+ {
+  "start": 764.44,
+  "end": 768.58,
+  "text": "And this is a very common trick that's used in many places."
+ },
+ {
+  "start": 768.58,
+  "end": 772.02,
+  "text": "I'll show, I guess, a performance comparison."
+ },
+ {
+  "start": 772.02,
+  "end": 774.14,
+  "text": "There have been many plots of this form."
+ },
+ {
+  "start": 774.14,
+  "end": 778.9,
+  "text": "I think, who was the most recent folks that were--"
+ },
+ {
+  "start": 778.9,
+  "end": 781.26,
+  "text": "maybe it was Martin Jaggi and others,"
+ },
+ {
+  "start": 781.26,
+  "end": 783.82,
+  "text": "I think, over at ETH had an extensive study"
+ },
+ {
+  "start": 783.82,
+  "end": 786.16,
+  "text": "of WSD performance."
+ },
+ {
+  "start": 786.16,
+  "end": 788.58,
+  "text": "But I think a lot of papers have shown similar things of,"
+ },
+ {
+  "start": 788.58,
+  "end": 791.52,
+  "text": "you have a well-tuned cosine learning curve."
+ },
+ {
+  "start": 791.52,
+  "end": 793.68,
+  "text": "This is the orange line over here."
+ },
+ {
+  "start": 793.68,
+  "end": 795.68,
+  "text": "And then you've got various WSD curves."
+ },
+ {
+  "start": 795.68,
+  "end": 798.06,
+  "text": "And WSD curves always look a little bit funky"
+ },
+ {
+  "start": 798.06,
+  "end": 800.5,
+  "text": "because it looks like you're way underperforming until you"
+ },
+ {
+  "start": 800.5,
+  "end": 802.14,
+  "text": "hit the decay phase, where suddenly you"
+ },
+ {
+  "start": 802.14,
+  "end": 804.36,
+  "text": "reclaim all of your gains."
+ },
+ {
+  "start": 804.36,
+  "end": 807.02,
+  "text": "And then you match or even sometimes exceed"
+ },
+ {
+  "start": 807.02,
+  "end": 809.5,
+  "text": "the cosine learning rate performance."
+ },
+ {
+  "start": 809.5,
+  "end": 812.205,
+  "text": "Anecdotally, I think if you talk to a bunch of people training"
+ },
+ {
+  "start": 812.205,
+  "end": 813.58,
+  "text": "networks, I think a lot of people"
+ },
+ {
+  "start": 813.58,
+  "end": 816.5,
+  "text": "will say the cosine is slightly better in many cases."
+ },
+ {
+  "start": 816.5,
+  "end": 820.04,
+  "text": "But WSD is basically as good in many other situations."
+ },
+ {
+  "start": 820.04,
+  "end": 822.76,
+  "text": "It is a very versatile default learning rate."
+ },
+ {
+  "start": 822.76,
+  "end": 825.0,
+  "text": "It doesn't necessarily suffer from having"
+ },
+ {
+  "start": 825.0,
+  "end": 829.56,
+  "text": "to rerun if you want to just continue runs."
+ },
+ {
+  "start": 829.56,
+  "end": 832.4,
+  "text": "It is very cool though, to see just how much of an impact"
+ },
+ {
+  "start": 832.4,
+  "end": 835.54,
+  "text": "learning rate decay has if you haven't played with that before."
+ },
+ {
+  "start": 835.54,
+  "end": 837.76,
+  "text": "This part of decaying the learning rate"
+ },
+ {
+  "start": 837.76,
+  "end": 842.32,
+  "text": "is just incredibly important to getting the final annealing"
+ },
+ {
+  "start": 842.32,
+  "end": 846.0,
+  "text": "parts of your training together."
+ },
+ {
+  "start": 846.0,
+  "end": 849.44,
+  "text": "OK, so that's the comparison there."
+ },
+ {
+  "start": 849.44,
+  "end": 853.04,
+  "text": "So now that we're equipped with WSD SGD style learning rates,"
+ },
+ {
+  "start": 853.04,
+  "end": 855.385,
+  "text": "Chinchilla style analyses are actually very easy."
+ },
+ {
+  "start": 855.385,
+  "end": 856.76,
+  "text": "What you're going to do is you're"
+ },
+ {
+  "start": 856.76,
+  "end": 859.02,
+  "text": "going to essentially run one long run,"
+ },
+ {
+  "start": 859.02,
+  "end": 862.2,
+  "text": "and then you'll just rewind the checkpoints and then repeatedly"
+ },
+ {
+  "start": 862.2,
+  "end": 862.7,
+  "text": "decay."
+ },
+ {
+  "start": 862.7,
+  "end": 865.54,
+  "text": "And that will give you sweeps along the data dimension."
+ },
+ {
+  "start": 865.54,
+  "end": 868.06,
+  "text": "And then you'll also do sweeps along the model dimension."
+ },
+ {
+  "start": 868.06,
+  "end": 870.36,
+  "text": "You can do flops or any other kind of analysis"
+ },
+ {
+  "start": 870.36,
+  "end": 871.64,
+  "text": "that you would like."
+ },
+ {
+  "start": 871.64,
+  "end": 873.7,
+  "text": "The MiniCPM authors, for whatever reason,"
+ },
+ {
+  "start": 873.7,
+  "end": 875.44,
+  "text": "choose to try to replicate methods"
+ },
+ {
+  "start": 875.44,
+  "end": 878.93,
+  "text": "1 and 3, which, to me, are the least reliable"
+ },
+ {
+  "start": 878.93,
+  "end": 880.63,
+  "text": "of the Chinchilla methods."
+ },
+ {
+  "start": 880.63,
+  "end": 884.09,
+  "text": "But they do get fairly nice looking scaling curves."
+ },
+ {
+  "start": 884.09,
+  "end": 888.15,
+  "text": "If you look at the MiniCPM Chinchilla method 1,"
+ },
+ {
+  "start": 888.15,
+  "end": 892.01,
+  "text": "they see nice, lower envelopes that look mostly linear"
+ },
+ {
+  "start": 892.01,
+  "end": 894.77,
+  "text": "across these, which is good."
+ },
+ {
+  "start": 894.77,
+  "end": 898.25,
+  "text": "And then method 3, they get nice, smooth scaling"
+ },
+ {
+  "start": 898.25,
+  "end": 901.13,
+  "text": "for the most part in both the compute"
+ },
+ {
+  "start": 901.13,
+  "end": 903.11,
+  "text": "to non-embedding parameter trade-off."
+ },
+ {
+  "start": 903.11,
+  "end": 905.87,
+  "text": "So it seems like, for the most part,"
+ },
+ {
+  "start": 905.87,
+  "end": 907.71,
+  "text": "they get reasonable Chinchilla-looking fits."
+ },
+ {
+  "start": 907.71,
+  "end": 910.57,
+  "text": "One thing I will point out is that they"
+ },
+ {
+  "start": 910.57,
+  "end": 914.97,
+  "text": "get pretty different exponents for their overall joint fit"
+ },
+ {
+  "start": 914.97,
+  "end": 917.01,
+  "text": "compared to Chinchilla."
+ },
+ {
+  "start": 917.01,
+  "end": 919.21,
+  "text": "They claim in the paper that this"
+ },
+ {
+  "start": 919.21,
+  "end": 921.53,
+  "text": "means that they should be training with way more"
+ },
+ {
+  "start": 921.53,
+  "end": 923.55,
+  "text": "pieces of text than Chinchilla."
+ },
+ {
+  "start": 923.55,
+  "end": 926.608,
+  "text": "It is highly unclear to me whether this is really true"
+ },
+ {
+  "start": 926.608,
+  "end": 928.65,
+  "text": "or whether their Chinchilla fits are a little bit"
+ },
+ {
+  "start": 928.65,
+  "end": 933.13,
+  "text": "strange relative to the Chinchilla paper."
+ },
+ {
+  "start": 933.13,
+  "end": 935.29,
+  "text": "OK, I'll stop here for a moment in case someone"
+ },
+ {
+  "start": 935.29,
+  "end": 936.99,
+  "text": "has questions about MiniCPM."
+ },
+ {
+  "start": 936.99,
+  "end": 938.99,
+  "text": "Maybe the main couple things to take away"
+ },
+ {
+  "start": 938.99,
+  "end": 942.69,
+  "text": "is, one is the use of muP is a useful trick,"
+ },
+ {
+  "start": 942.69,
+  "end": 945.35,
+  "text": "I guess, to try to stabilize how your learning rate changes"
+ },
+ {
+  "start": 945.35,
+  "end": 946.398,
+  "text": "over scales."
+ },
+ {
+  "start": 946.398,
+  "end": 948.19,
+  "text": "And then the second thing maybe to remember"
+ },
+ {
+  "start": 948.19,
+  "end": 949.317,
+  "text": "is the WSD learning rate."
+ },
+ {
+  "start": 949.317,
+  "end": 950.65,
+  "text": "That's just a very common trick."
+ },
+ {
+  "start": 950.65,
+  "end": 952.73,
+  "text": "You should all know about this learning rate."
+ },
+ {
+  "start": 952.73,
+  "end": 955.11,
+  "text": "That's a basic thing to know."
+ },
+ {
+  "start": 955.11,
+  "end": 957.69,
+  "text": "OK, good."
+ },
+ {
+  "start": 957.69,
+  "end": 961.59,
+  "text": "All right, so then I'll move on to DeepSeek."
+ },
+ {
+  "start": 961.59,
+  "end": 964.55,
+  "text": "This is the original DeepSeek paper,"
+ },
+ {
+  "start": 964.55,
+  "end": 967.15,
+  "text": "before they started talking about MOEs and all"
+ },
+ {
+  "start": 967.15,
+  "end": 969.35,
+  "text": "these other very cool things."
+ },
+ {
+  "start": 969.35,
+  "end": 971.65,
+  "text": "And I think, even at the very first DeepSeek paper,"
+ },
+ {
+  "start": 971.65,
+  "end": 974.23,
+  "text": "you could tell that these were very serious people"
+ },
+ {
+  "start": 974.23,
+  "end": 976.83,
+  "text": "because I think DeepSeek LLM, even now, is,"
+ },
+ {
+  "start": 976.83,
+  "end": 980.55,
+  "text": "I think, one of the more nicely executed scaling analyses"
+ },
+ {
+  "start": 980.55,
+  "end": 981.53,
+  "text": "in the open world."
+ },
+ {
+  "start": 981.53,
+  "end": 983.915,
+  "text": "And I feel like they have lots of great taste"
+ },
+ {
+  "start": 983.915,
+  "end": 985.29,
+  "text": "in the experiments that they run."
+ },
+ {
+  "start": 985.29,
+  "end": 988.37,
+  "text": "So even before R1 and so on came out,"
+ },
+ {
+  "start": 988.37,
+  "end": 991.89,
+  "text": "it was kind of clear that these people were going places."
+ },
+ {
+  "start": 991.89,
+  "end": 997.41,
+  "text": "All right, so DeepSeek takes a very different scaling strategy"
+ },
+ {
+  "start": 997.41,
+  "end": 1002.25,
+  "text": "than MiniCPM and several others in trying to optimize"
+ },
+ {
+  "start": 1002.25,
+  "end": 1003.33,
+  "text": "their hyperparameters."
+ },
+ {
+  "start": 1003.33,
+  "end": 1004.99,
+  "text": "They're not going to really do muP."
+ },
+ {
+  "start": 1004.99,
+  "end": 1008.69,
+  "text": "They're not going to do this interesting scaling adjustments."
+ },
+ {
+  "start": 1008.69,
+  "end": 1013.05,
+  "text": "Instead, they're going to try to fit a scaling law"
+ },
+ {
+  "start": 1013.05,
+  "end": 1015.05,
+  "text": "to estimate both the optimal batch size"
+ },
+ {
+  "start": 1015.05,
+  "end": 1016.59,
+  "text": "and the optimal learning rate."
+ },
+ {
+  "start": 1016.59,
+  "end": 1020.05,
+  "text": "So we that the learning rate and batch sizes"
+ },
+ {
+  "start": 1020.05,
+  "end": 1021.912,
+  "text": "should actually change with scale."
+ },
+ {
+  "start": 1021.912,
+  "end": 1023.37,
+  "text": "But if the way in which they change"
+ },
+ {
+  "start": 1023.37,
+  "end": 1025.329,
+  "text": "are predictable, just like a scaling law,"
+ },
+ {
+  "start": 1025.329,
+  "end": 1026.29,
+  "text": "then we're good to go."
+ },
+ {
+  "start": 1026.29,
+  "end": 1029.97,
+  "text": "We don't really need to worry about very much."
+ },
+ {
+  "start": 1029.97,
+  "end": 1032.89,
+  "text": "So what they do is they basically run extensive grid"
+ },
+ {
+  "start": 1032.89,
+  "end": 1035.175,
+  "text": "searches at various different scales,"
+ },
+ {
+  "start": 1035.175,
+  "end": 1036.55,
+  "text": "and they try to find the optimum."
+ },
+ {
+  "start": 1036.55,
+  "end": 1039.377,
+  "text": "So this is an example of the kind of thing they're doing."
+ },
+ {
+  "start": 1039.377,
+  "end": 1040.71,
+  "text": "They're sweeping learning rates."
+ },
+ {
+  "start": 1040.71,
+  "end": 1042.109,
+  "text": "They're sweeping batch sizes."
+ },
+ {
+  "start": 1042.109,
+  "end": 1044.77,
+  "text": "And they're looking at the terminal loss"
+ },
+ {
+  "start": 1044.77,
+  "end": 1047.89,
+  "text": "if they're processing a particular number of tokens."
+ },
+ {
+  "start": 1047.89,
+  "end": 1051.57,
+  "text": "So they fixed the compute, and then they vary these two."
+ },
+ {
+  "start": 1051.57,
+  "end": 1054.23,
+  "text": "They'll do this across several different scales,"
+ },
+ {
+  "start": 1054.23,
+  "end": 1055.98,
+  "text": "and then they'll basically try to identify"
+ },
+ {
+  "start": 1055.98,
+  "end": 1058.7,
+  "text": "what the lowest loss is, so in this case, the lightest color."
+ },
+ {
+  "start": 1058.7,
+  "end": 1060.74,
+  "text": "So they'll put a little star there,"
+ },
+ {
+  "start": 1060.74,
+  "end": 1062.48,
+  "text": "and then they'll do this across scales."
+ },
+ {
+  "start": 1062.48,
+  "end": 1065.7,
+  "text": "So if you do this across sufficiently many scales,"
+ },
+ {
+  "start": 1065.7,
+  "end": 1068.8,
+  "text": "you will get a plot that looks a little like this."
+ },
+ {
+  "start": 1068.8,
+  "end": 1071.86,
+  "text": "And this plot is saying, OK, I'm going"
+ },
+ {
+  "start": 1071.86,
+  "end": 1076.24,
+  "text": "to vary my nonembedding training FLOPs across some range."
+ },
+ {
+  "start": 1076.24,
+  "end": 1078.12,
+  "text": "And you can see these gray dots over here."
+ },
+ {
+  "start": 1078.12,
+  "end": 1083.98,
+  "text": "And as I vary this, my optimal batch size will change."
+ },
+ {
+  "start": 1083.98,
+  "end": 1086.1,
+  "text": "Remember, the optimal batch size is"
+ },
+ {
+  "start": 1086.1,
+  "end": 1091.98,
+  "text": "derived by looking at these big grids and finding the minimizer."
+ },
+ {
+  "start": 1091.98,
+  "end": 1094.84,
+  "text": "And I will get something that looks like a line."
+ },
+ {
+  "start": 1094.84,
+  "end": 1096.58,
+  "text": "The optimal batch size should scale"
+ },
+ {
+  "start": 1096.58,
+  "end": 1098.54,
+  "text": "with my nonembedding FLOPs."
+ },
+ {
+  "start": 1098.54,
+  "end": 1101.06,
+  "text": "And similarly for my optimal learning rate,"
+ },
+ {
+  "start": 1101.06,
+  "end": 1106.26,
+  "text": "I'll get a bunch of gray dots in my nonembedding FLOPs range."
+ },
+ {
+  "start": 1106.26,
+  "end": 1107.9,
+  "text": "And then I can fit a line to that"
+ },
+ {
+  "start": 1107.9,
+  "end": 1109.82,
+  "text": "to try to estimate what my optimal learning"
+ },
+ {
+  "start": 1109.82,
+  "end": 1110.96,
+  "text": "rate should look like."
+ },
+ {
+  "start": 1110.96,
+  "end": 1115.98,
+  "text": "So this is fairly nice."
+ },
+ {
+  "start": 1115.98,
+  "end": 1117.48,
+  "text": "And I guess one thing I'll point out"
+ },
+ {
+  "start": 1117.48,
+  "end": 1120.82,
+  "text": "is, their full runs are on the star."
+ },
+ {
+  "start": 1120.82,
+  "end": 1123.08,
+  "text": "These are the runs that they chose."
+ },
+ {
+  "start": 1123.08,
+  "end": 1126.32,
+  "text": "At higher FLOPs, they have much higher batch sizes"
+ },
+ {
+  "start": 1126.32,
+  "end": 1127.66,
+  "text": "and much lower learning rates."
+ },
+ {
+  "start": 1127.66,
+  "end": 1132.0,
+  "text": "The stars are the things they actually ran for their big runs."
+ },
+ {
+  "start": 1132.0,
+  "end": 1135.92,
+  "text": "These fits look reasonable for the batches."
+ },
+ {
+  "start": 1135.92,
+  "end": 1137.92,
+  "text": "This does look like a line."
+ },
+ {
+  "start": 1137.92,
+  "end": 1139.96,
+  "text": "The one on the learning rate--"
+ },
+ {
+  "start": 1139.96,
+  "end": 1142.76,
+  "text": "I'm not quite sure that constitutes"
+ },
+ {
+  "start": 1142.76,
+  "end": 1145.92,
+  "text": "the best linear fits that I've seen in my life,"
+ },
+ {
+  "start": 1145.92,
+  "end": 1147.14,
+  "text": "but I guess it works."
+ },
+ {
+  "start": 1147.14,
+  "end": 1148.48,
+  "text": "It's probably fine."
+ },
+ {
+  "start": 1148.48,
+  "end": 1149.54,
+  "text": "The models do train."
+ },
+ {
+  "start": 1149.54,
+  "end": 1151.158,
+  "text": "The models do get reasonable things."
+ },
+ {
+  "start": 1151.158,
+  "end": 1152.7,
+  "text": "I think this is the one, I would say,"
+ },
+ {
+  "start": 1152.7,
+  "end": 1154.575,
+  "text": "like drawback of the learning rates approach."
+ },
+ {
+  "start": 1154.575,
+  "end": 1157.08,
+  "text": "It's not really clear that if you try to do this grid search"
+ },
+ {
+  "start": 1157.08,
+  "end": 1159.82,
+  "text": "kind of thing, unless your grid is in the right place,"
+ },
+ {
+  "start": 1159.82,
+  "end": 1161.68,
+  "text": "you've got a lot of quantization error."
+ },
+ {
+  "start": 1161.68,
+  "end": 1165.183,
+  "text": "And then you're not getting very good scaling law fits,"
+ },
+ {
+  "start": 1165.183,
+  "end": 1167.6,
+  "text": "and you end up with something that looks like an arbitrary"
+ },
+ {
+  "start": 1167.6,
+  "end": 1170.16,
+  "text": "linear thing going on."
+ },
+ {
+  "start": 1170.16,
+  "end": 1173.94,
+  "text": "OK, oh, yeah, sorry."
+ },
+ {
+  "start": 1173.94,
+  "end": 1177.84,
+  "text": "How come for the same number of training steps there,"
+ },
+ {
+  "start": 1177.84,
+  "end": 1180.7,
+  "text": "you get multiple data points with a large range"
+ },
+ {
+  "start": 1180.7,
+  "end": 1183.18,
+  "text": "of optimal values?"
+ },
+ {
+  "start": 1183.18,
+  "end": 1186.1,
+  "text": "Why is it that you get a large range of optimal learning rates"
+ },
+ {
+  "start": 1186.1,
+  "end": 1187.36,
+  "text": "for different training FLOPs?"
+ },
+ {
+  "start": 1187.36,
+  "end": 1189.66,
+  "text": "Is that the question on the y-axis over here?"
+ },
+ {
+  "start": 1189.66,
+  "end": 1193.06,
+  "text": "Yeah, so the reason I think there"
+ },
+ {
+  "start": 1193.06,
+  "end": 1195.98,
+  "text": "is because of the changes to the model sizes"
+ },
+ {
+  "start": 1195.98,
+  "end": 1197.0,
+  "text": "and things like this."
+ },
+ {
+  "start": 1202.62,
+  "end": 1205.86,
+  "text": "So 2024 was back in the era where"
+ },
+ {
+  "start": 1205.86,
+  "end": 1209.3,
+  "text": "I think every open model builder was replicating"
+ },
+ {
+  "start": 1209.3,
+  "end": 1211.5,
+  "text": "the entire scaling law stack."
+ },
+ {
+  "start": 1211.5,
+  "end": 1218.02,
+  "text": "And so DeepSeek also complements the learning rate analysis"
+ },
+ {
+  "start": 1218.02,
+  "end": 1221.66,
+  "text": "with basically a Chinchilla replication."
+ },
+ {
+  "start": 1221.66,
+  "end": 1223.58,
+  "text": "And to do that, they're also going to do"
+ },
+ {
+  "start": 1223.58,
+  "end": 1224.84,
+  "text": "the same thing as MiniCPM."
+ },
+ {
+  "start": 1224.84,
+  "end": 1227.5,
+  "text": "They're going to follow the WSD-style learning rate."
+ },
+ {
+  "start": 1227.5,
+  "end": 1229.06,
+  "text": "They have a weird little variation"
+ },
+ {
+  "start": 1229.06,
+  "end": 1232.15,
+  "text": "where they do two decay phases instead of one."
+ },
+ {
+  "start": 1232.15,
+  "end": 1235.51,
+  "text": "I am not really sure why this is."
+ },
+ {
+  "start": 1235.51,
+  "end": 1238.01,
+  "text": "It hasn't really been a thing that has taken off afterwards,"
+ },
+ {
+  "start": 1238.01,
+  "end": 1239.21,
+  "text": "but it is a thing that they do."
+ },
+ {
+  "start": 1239.21,
+  "end": 1241.03,
+  "text": "Regardless, the whole point here is to say,"
+ },
+ {
+  "start": 1241.03,
+  "end": 1243.31,
+  "text": "WSD is an effective approach."
+ },
+ {
+  "start": 1243.31,
+  "end": 1246.31,
+  "text": "And you can use that to replicate Chinchilla."
+ },
+ {
+  "start": 1246.31,
+  "end": 1250.47,
+  "text": "And DeepSeek has much nicer scaling curves"
+ },
+ {
+  "start": 1250.47,
+  "end": 1253.41,
+  "text": "than MiniCPM because of their choice to go IsoFLOPs."
+ },
+ {
+  "start": 1253.41,
+  "end": 1256.83,
+  "text": "So they get these very nice, clean sweeps"
+ },
+ {
+  "start": 1256.83,
+  "end": 1259.05,
+  "text": "across the fixed FLOPs ranges."
+ },
+ {
+  "start": 1259.05,
+  "end": 1261.91,
+  "text": "And then they also get fairly nice and clean"
+ },
+ {
+  "start": 1261.91,
+  "end": 1265.95,
+  "text": "Chinchilla-style trade-offs as before."
+ },
+ {
+  "start": 1265.95,
+  "end": 1267.83,
+  "text": "So this allows them to essentially replicate"
+ },
+ {
+  "start": 1267.83,
+  "end": 1272.67,
+  "text": "the Chinchilla results and get a similar kind of data model"
+ },
+ {
+  "start": 1272.67,
+  "end": 1273.717,
+  "text": "scaling law."
+ },
+ {
+  "start": 1273.717,
+  "end": 1277.83,
+  "text": "Really, the point that I'm showing with this is just to say, look, the Chinchilla laws have"
+ },
+ {
+  "start": 1277.83,
+  "end": 1281.91,
+  "text": "been replicated by other people at large-ish compute ranges."
+ },
+ {
+  "start": 1281.91,
+  "end": 1285.27,
+  "text": "So that analysis is generally sound."
+ },
+ {
+  "start": 1285.27,
+  "end": 1288.053,
+  "text": "Finally, I think, this is the--"
+ },
+ {
+  "start": 1288.053,
+  "end": 1289.97,
+  "text": "I'm a little bit sad that these kinds of plots"
+ },
+ {
+  "start": 1289.97,
+  "end": 1293.39,
+  "text": "are now somewhat rare in open-source release papers,"
+ },
+ {
+  "start": 1293.39,
+  "end": 1295.45,
+  "text": "but this is really the final punchline"
+ },
+ {
+  "start": 1295.45,
+  "end": 1297.05,
+  "text": "of a lot of scaling law work."
+ },
+ {
+  "start": 1297.05,
+  "end": 1300.21,
+  "text": "You train a bunch of small, curated models"
+ },
+ {
+  "start": 1300.21,
+  "end": 1304.63,
+  "text": "at smaller compute ranges, and then you draw out the power law."
+ },
+ {
+  "start": 1304.63,
+  "end": 1306.37,
+  "text": "And then in the end, you get something"
+ },
+ {
+  "start": 1306.37,
+  "end": 1309.19,
+  "text": "pretty close to reality if you scale out enough."
+ },
+ {
+  "start": 1309.19,
+  "end": 1311.67,
+  "text": "So the two stars are the models that they actually trained."
+ },
+ {
+  "start": 1311.67,
+  "end": 1314.25,
+  "text": "The gray dots are their scaling law fits."
+ },
+ {
+  "start": 1314.25,
+  "end": 1317.31,
+  "text": "And they're getting pretty good predictions on their star."
+ },
+ {
+  "start": 1317.31,
+  "end": 1319.65,
+  "text": "I mean, it could be better, but it's not bad at all."
+ },
+ {
+  "start": 1319.65,
+  "end": 1322.97,
+  "text": "And so they're able to get some pretty accurate scaling law"
+ },
+ {
+  "start": 1322.97,
+  "end": 1328.33,
+  "text": "predictions on real open-source models that they've trained."
+ },
+ {
+  "start": 1328.33,
+  "end": 1330.37,
+  "text": "OK, I'll actually stop here."
+ },
+ {
+  "start": 1330.37,
+  "end": 1332.85,
+  "text": "If people have questions about the DeepSeek stuff,"
+ },
+ {
+  "start": 1332.85,
+  "end": 1333.95,
+  "text": "feel free to ask them."
+ },
+ {
+  "start": 1333.95,
+  "end": 1336.89,
+  "text": "I think my one-line summary here is to say,"
+ },
+ {
+  "start": 1336.89,
+  "end": 1338.732,
+  "text": "this is the other approach to dealing"
+ },
+ {
+  "start": 1338.732,
+  "end": 1340.19,
+  "text": "with the sensitive hyperparameters."
+ },
+ {
+  "start": 1340.19,
+  "end": 1342.05,
+  "text": "You can either attempt to stabilize them,"
+ },
+ {
+  "start": 1342.05,
+  "end": 1343.99,
+  "text": "or you can attempt to just scaling law"
+ },
+ {
+  "start": 1343.99,
+  "end": 1346.27,
+  "text": "fit them and then just go with the scaling law."
+ },
+ {
+  "start": 1346.27,
+  "end": 1349.75,
+  "text": "And DeepSeek represents the more fit the scaling law approach"
+ },
+ {
+  "start": 1349.75,
+  "end": 1352.55,
+  "text": "to this problem."
+ },
+ {
+  "start": 1352.55,
+  "end": 1354.87,
+  "text": "Good, OK."
+ },
+ {
+  "start": 1354.87,
+  "end": 1359.11,
+  "text": "So there are other models, more recent ones"
+ },
+ {
+  "start": 1359.11,
+  "end": 1362.91,
+  "text": "that have nice scaling laws that they talk about."
+ },
+ {
+  "start": 1362.91,
+  "end": 1366.63,
+  "text": "As I said before, though, I think a lot of this work is now--"
+ },
+ {
+  "start": 1366.63,
+  "end": 1370.73,
+  "text": "what's the-- it's all known to everybody."
+ },
+ {
+  "start": 1370.73,
+  "end": 1373.07,
+  "text": "And so no one is really putting a lot of this stuff"
+ },
+ {
+  "start": 1373.07,
+  "end": 1374.89,
+  "text": "into big sections into the paper."
+ },
+ {
+  "start": 1374.89,
+  "end": 1377.53,
+  "text": "So if you look at Qwen 2.5, they say something like,"
+ },
+ {
+  "start": 1377.53,
+  "end": 1380.23,
+  "text": "OK, well, we need to tune some optimal hyperparameters,"
+ },
+ {
+  "start": 1380.23,
+  "end": 1382.245,
+  "text": "like batch sizes and learning rates."
+ },
+ {
+  "start": 1382.245,
+  "end": 1383.87,
+  "text": "So we do a bunch of scaling experiments"
+ },
+ {
+  "start": 1383.87,
+  "end": 1385.392,
+  "text": "to figure out what the optimum are."
+ },
+ {
+  "start": 1385.392,
+  "end": 1387.85,
+  "text": "And then we have a scaling law, and we predict the optimum."
+ },
+ {
+  "start": 1387.85,
+  "end": 1389.97,
+  "text": "And then we're able to do that even for MoEs."
+ },
+ {
+  "start": 1389.97,
+  "end": 1394.35,
+  "text": "So this is basically the same thing as the DeepSeek analysis"
+ },
+ {
+  "start": 1394.35,
+  "end": 1396.79,
+  "text": "that they're talking about in Qwen 2.5."
+ },
+ {
+  "start": 1396.79,
+  "end": 1397.89,
+  "text": "Same thing with Qwen 3."
+ },
+ {
+  "start": 1397.89,
+  "end": 1400.23,
+  "text": "By the time it's Qwen 3, they say,"
+ },
+ {
+  "start": 1400.23,
+  "end": 1402.73,
+  "text": "all right, we've already figured out what to do in Qwen 2.5."
+ },
+ {
+  "start": 1402.73,
+  "end": 1404.397,
+  "text": "We're just doing exactly the same thing."
+ },
+ {
+  "start": 1404.397,
+  "end": 1407.24,
+  "text": "So this has become part of a very standard recipe"
+ },
+ {
+  "start": 1407.24,
+  "end": 1410.52,
+  "text": "that you use in order to nail down the optimal learning"
+ },
+ {
+  "start": 1410.52,
+  "end": 1411.58,
+  "text": "rates and batches."
+ },
+ {
+  "start": 1414.12,
+  "end": 1417.76,
+  "text": "Kimi K2 is probably the newest paper"
+ },
+ {
+  "start": 1417.76,
+  "end": 1419.688,
+  "text": "that I'll talk about of the series."
+ },
+ {
+  "start": 1419.688,
+  "end": 1421.48,
+  "text": "At this point, I'm just going to quickly go"
+ },
+ {
+  "start": 1421.48,
+  "end": 1424.0,
+  "text": "through several papers maybe to give you"
+ },
+ {
+  "start": 1424.0,
+  "end": 1426.64,
+  "text": "an overview of what people are doing"
+ },
+ {
+  "start": 1426.64,
+  "end": 1431.36,
+  "text": "in terms of scaling work in the open-source model releases."
+ },
+ {
+  "start": 1431.36,
+  "end": 1436.4,
+  "text": "So Kimi K2 and a few others have focused on essentially MoE"
+ },
+ {
+  "start": 1436.4,
+  "end": 1437.44,
+  "text": "scaling laws."
+ },
+ {
+  "start": 1437.44,
+  "end": 1439.1,
+  "text": "So it's 2026."
+ },
+ {
+  "start": 1439.1,
+  "end": 1442.12,
+  "text": "Most people know how to do a Chinchilla scaling law or even"
+ },
+ {
+  "start": 1442.12,
+  "end": 1443.6,
+  "text": "a learning rate scaling law."
+ },
+ {
+  "start": 1443.6,
+  "end": 1444.58,
+  "text": "What things are new?"
+ },
+ {
+  "start": 1444.58,
+  "end": 1447.3,
+  "text": "Well, a lot of these companies are now switching to MoEs,"
+ },
+ {
+  "start": 1447.3,
+  "end": 1448.38,
+  "text": "fully switching to MoEs."
+ },
+ {
+  "start": 1448.38,
+  "end": 1451.28,
+  "text": "And if you're doing that, you really want to know,"
+ },
+ {
+  "start": 1451.28,
+  "end": 1453.727,
+  "text": "am I training the right amount of active parameters?"
+ },
+ {
+  "start": 1453.727,
+  "end": 1455.56,
+  "text": "And so they're doing things, like, OK, we're"
+ },
+ {
+  "start": 1455.56,
+  "end": 1458.66,
+  "text": "going to vary the flops and look at my losses."
+ },
+ {
+  "start": 1458.66,
+  "end": 1461.32,
+  "text": "And I'm going to do so for different levels of sparsity"
+ },
+ {
+  "start": 1461.32,
+  "end": 1465.06,
+  "text": "so that I can figure out how much sparsity helps or hurts"
+ },
+ {
+  "start": 1465.06,
+  "end": 1466.042,
+  "text": "my losses."
+ },
+ {
+  "start": 1466.042,
+  "end": 1467.5,
+  "text": "And their conclusion, of course, is"
+ },
+ {
+  "start": 1467.5,
+  "end": 1470.1,
+  "text": "if you look at the different sparsity levels, the more sparse"
+ },
+ {
+  "start": 1470.1,
+  "end": 1473.64,
+  "text": "your network, the better your validation loss,"
+ },
+ {
+  "start": 1473.64,
+  "end": 1475.76,
+  "text": "given a FLOP—unsurprising."
+ },
+ {
+  "start": 1475.76,
+  "end": 1478.06,
+  "text": "But now the fact that they can quantitatively"
+ },
+ {
+  "start": 1478.06,
+  "end": 1481.3,
+  "text": "know what the relationship is between sparsity and loss"
+ },
+ {
+  "start": 1481.3,
+  "end": 1483.98,
+  "text": "means that they can make more rational decisions"
+ },
+ {
+  "start": 1483.98,
+  "end": 1486.853,
+  "text": "about how much sparsity to put into their model."
+ },
+ {
+  "start": 1486.853,
+  "end": 1488.52,
+  "text": "And they look at this, and they say, OK,"
+ },
+ {
+  "start": 1488.52,
+  "end": 1491.02,
+  "text": "what we're going to do is we're going to use sparsity of 48,"
+ },
+ {
+  "start": 1491.02,
+  "end": 1493.312,
+  "text": "because at that point we're hitting diminishing returns"
+ },
+ {
+  "start": 1493.312,
+  "end": 1494.4,
+  "text": "on our scaling loss."
+ },
+ {
+  "start": 1494.4,
+  "end": 1501.54,
+  "text": "So you can see how this kind of analysis used to justify different architectural decisions"
+ },
+ {
+  "start": 1501.54,
+  "end": 1504.28,
+  "text": "across different open-source releases."
+ },
+ {
+  "start": 1504.28,
+  "end": 1508.74,
+  "text": "Hunyuan, which is another open-source MoE from a few years"
+ },
+ {
+  "start": 1508.74,
+  "end": 1511.86,
+  "text": "ago now, they do a very similar thing."
+ },
+ {
+  "start": 1511.86,
+  "end": 1514.5,
+  "text": "I think every company, once they switch to the MoE,"
+ },
+ {
+  "start": 1514.5,
+  "end": 1517.38,
+  "text": "has to do this kind of MoE scaling law"
+ },
+ {
+  "start": 1517.38,
+  "end": 1519.62,
+  "text": "to figure out how the number of activated"
+ },
+ {
+  "start": 1519.62,
+  "end": 1521.92,
+  "text": "parameters or the amount of sparsity"
+ },
+ {
+  "start": 1521.92,
+  "end": 1522.92,
+  "text": "changes training loss."
+ },
+ {
+  "start": 1522.92,
+  "end": 1525.74,
+  "text": "And then they redo a lot of these analyses."
+ },
+ {
+  "start": 1525.74,
+  "end": 1527.56,
+  "text": "So for example, in Hunyuan's case,"
+ },
+ {
+  "start": 1527.56,
+  "end": 1532.138,
+  "text": "they end up with a 96 data point per active parameter ratio."
+ },
+ {
+  "start": 1532.138,
+  "end": 1534.18,
+  "text": "In their case, they're fixing the sparsity level."
+ },
+ {
+  "start": 1534.18,
+  "end": 1537.88,
+  "text": "And so that's not a thing that they're searching over."
+ },
+ {
+  "start": 1537.88,
+  "end": 1540.84,
+  "text": "LLaMA 3 also has some nice scaling laws."
+ },
+ {
+  "start": 1540.84,
+  "end": 1544.6,
+  "text": "Unfortunately, they're not particularly useful ones."
+ },
+ {
+  "start": 1544.6,
+  "end": 1546.88,
+  "text": "They do IsoFLOP-style scaling and get"
+ },
+ {
+  "start": 1546.88,
+  "end": 1550.88,
+  "text": "slightly different but similar ratios for token-to-model."
+ },
+ {
+  "start": 1550.88,
+  "end": 1553.92,
+  "text": "The most interesting thing that they do in terms of scaling"
+ },
+ {
+  "start": 1553.92,
+  "end": 1556.92,
+  "text": "in LLaMA 3 is the plot on the right"
+ },
+ {
+  "start": 1556.92,
+  "end": 1560.0,
+  "text": "here, which is, they have the usual scaling"
+ },
+ {
+  "start": 1560.0,
+  "end": 1561.34,
+  "text": "law, which is the left panel."
+ },
+ {
+  "start": 1561.34,
+  "end": 1563.86,
+  "text": "That's saying, if I have more compute,"
+ },
+ {
+  "start": 1563.86,
+  "end": 1568.4,
+  "text": "then the logprob on the answer for a benchmark"
+ },
+ {
+  "start": 1568.4,
+  "end": 1570.3,
+  "text": "decays consistently."
+ },
+ {
+  "start": 1570.3,
+  "end": 1573.08,
+  "text": "And on the right side, they show, OK, well,"
+ },
+ {
+  "start": 1573.08,
+  "end": 1575.96,
+  "text": "if you have better log loss, then"
+ },
+ {
+  "start": 1575.96,
+  "end": 1578.163,
+  "text": "the downstream accuracy also goes up."
+ },
+ {
+  "start": 1578.163,
+  "end": 1579.58,
+  "text": "So they're basically saying, well,"
+ },
+ {
+  "start": 1579.58,
+  "end": 1582.15,
+  "text": "we can just fit a sigmoid on these purple points."
+ },
+ {
+  "start": 1582.15,
+  "end": 1584.41,
+  "text": "And that might give us a sense of how good"
+ },
+ {
+  "start": 1584.41,
+  "end": 1586.01,
+  "text": "these different models are."
+ },
+ {
+  "start": 1586.01,
+  "end": 1588.67,
+  "text": "You can see their systematic deviations from the curve."
+ },
+ {
+  "start": 1588.67,
+  "end": 1590.49,
+  "text": "So I don't really know if I would really"
+ },
+ {
+  "start": 1590.49,
+  "end": 1593.23,
+  "text": "buy that this curve is like the one truth that's going on."
+ },
+ {
+  "start": 1593.23,
+  "end": 1594.605,
+  "text": "But you can certainly see that it"
+ },
+ {
+  "start": 1594.605,
+  "end": 1597.53,
+  "text": "is consistent with a sigmoidal scaling"
+ },
+ {
+  "start": 1597.53,
+  "end": 1599.73,
+  "text": "mapping from the loss to the accuracy, which I think"
+ },
+ {
+  "start": 1599.73,
+  "end": 1601.97,
+  "text": "is very useful because we've been talking only"
+ },
+ {
+  "start": 1601.97,
+  "end": 1603.79,
+  "text": "about log losses."
+ },
+ {
+  "start": 1603.79,
+  "end": 1607.21,
+  "text": "But there is a tight coupling in some cases, or in many cases,"
+ },
+ {
+  "start": 1607.21,
+  "end": 1610.55,
+  "text": "between log losses and downstream accuracy."
+ },
+ {
+  "start": 1613.65,
+  "end": 1619.13,
+  "text": "And then for one last paper that I"
+ },
+ {
+  "start": 1619.13,
+  "end": 1623.51,
+  "text": "want to talk about for scaling, MiniMax-01 from last year"
+ },
+ {
+  "start": 1623.51,
+  "end": 1625.335,
+  "text": "had this nice set of scaling experiments"
+ },
+ {
+  "start": 1625.335,
+  "end": 1627.21,
+  "text": "where they were doing the exact kind of thing"
+ },
+ {
+  "start": 1627.21,
+  "end": 1630.77,
+  "text": "I was saying is a useful affordance of scaling"
+ },
+ {
+  "start": 1630.77,
+  "end": 1633.99,
+  "text": "from two lectures ago, and that is architecture variations."
+ },
+ {
+  "start": 1633.99,
+  "end": 1635.55,
+  "text": "And so they wanted to understand,"
+ },
+ {
+  "start": 1635.55,
+  "end": 1637.25,
+  "text": "OK, I have lightning attention, which"
+ },
+ {
+  "start": 1637.25,
+  "end": 1640.33,
+  "text": "is some kind of a linear attention architecture."
+ },
+ {
+  "start": 1640.33,
+  "end": 1642.61,
+  "text": "I have a softmax version like full attention,"
+ },
+ {
+  "start": 1642.61,
+  "end": 1644.89,
+  "text": "and I have a hybrid version that mixes the two."
+ },
+ {
+  "start": 1644.89,
+  "end": 1646.553,
+  "text": "How do these things scale?"
+ },
+ {
+  "start": 1646.553,
+  "end": 1648.47,
+  "text": "Is it the case that if I scale up, one of them"
+ },
+ {
+  "start": 1648.47,
+  "end": 1650.55,
+  "text": "will get much worse than the other?"
+ },
+ {
+  "start": 1650.55,
+  "end": 1654.75,
+  "text": "And so you can see, they're replicating essentially"
+ },
+ {
+  "start": 1654.75,
+  "end": 1658.63,
+  "text": "the Kaplan plots of, as I increase FLOPs,"
+ },
+ {
+  "start": 1658.63,
+  "end": 1660.55,
+  "text": "how do the learning curves change?"
+ },
+ {
+  "start": 1660.55,
+  "end": 1662.99,
+  "text": "And is the number of parameters that I"
+ },
+ {
+  "start": 1662.99,
+  "end": 1665.35,
+  "text": "need different for different levels of compute"
+ },
+ {
+  "start": 1665.35,
+  "end": 1666.97,
+  "text": "for these different architectures?"
+ },
+ {
+  "start": 1666.97,
+  "end": 1669.63,
+  "text": "And the answer is, for the most part, no,"
+ },
+ {
+  "start": 1669.63,
+  "end": 1672.07,
+  "text": "that hybrid and lightning and softmax"
+ },
+ {
+  "start": 1672.07,
+  "end": 1673.85,
+  "text": "are all comparable for the most part."
+ },
+ {
+  "start": 1673.85,
+  "end": 1676.29,
+  "text": "And they require similar model sizes."
+ },
+ {
+  "start": 1676.29,
+  "end": 1678.99,
+  "text": "And this set of plots is used to justify"
+ },
+ {
+  "start": 1678.99,
+  "end": 1680.71,
+  "text": "their use of the hybrid architecture"
+ },
+ {
+  "start": 1680.71,
+  "end": 1682.11,
+  "text": "in the actual deployed system."
+ },
+ {
+  "start": 1682.11,
+  "end": 1684.83,
+  "text": "So this is exactly the kind of decision making that you would"
+ },
+ {
+  "start": 1684.83,
+  "end": 1689.33,
+  "text": "do based upon a scaling law."
+ },
+ {
+  "start": 1689.33,
+  "end": 1691.39,
+  "text": "So that's basically what I wanted"
+ },
+ {
+  "start": 1691.39,
+  "end": 1694.71,
+  "text": "to cover for the recent scaling law recipes"
+ },
+ {
+  "start": 1694.71,
+  "end": 1696.43,
+  "text": "from the various companies."
+ },
+ {
+  "start": 1696.43,
+  "end": 1700.05,
+  "text": "So the two things, as I said before, for the DeepSeek recipe."
+ },
+ {
+  "start": 1700.05,
+  "end": 1701.978,
+  "text": "Really, the key thing is the scaling analysis"
+ },
+ {
+  "start": 1701.978,
+  "end": 1703.27,
+  "text": "on the batch and learning rate."
+ },
+ {
+  "start": 1703.27,
+  "end": 1705.25,
+  "text": "This is the scaling-based approach."
+ },
+ {
+  "start": 1705.25,
+  "end": 1708.09,
+  "text": "And MiniCPM follows more of a muP-style approach"
+ },
+ {
+  "start": 1708.09,
+  "end": 1710.81,
+  "text": "to try to get invariances."
+ },
+ {
+  "start": 1710.81,
+  "end": 1712.59,
+  "text": "And then we see some trends."
+ },
+ {
+  "start": 1712.59,
+  "end": 1715.81,
+  "text": "We see that Kimi and Qwen and others, or in Hunyuan,"
+ },
+ {
+  "start": 1715.81,
+  "end": 1718.37,
+  "text": "are doing these MoE scaling experiments"
+ },
+ {
+  "start": 1718.37,
+  "end": 1719.73,
+  "text": "as they switch to MoEs."
+ },
+ {
+  "start": 1719.73,
+  "end": 1722.61,
+  "text": "We see some architecture work by MiniMax,"
+ },
+ {
+  "start": 1722.61,
+  "end": 1725.17,
+  "text": "and we also see some IsoFLOPs analysis being"
+ },
+ {
+  "start": 1725.17,
+  "end": 1727.89,
+  "text": "replicated by several others."
+ },
+ {
+  "start": 1727.89,
+  "end": 1729.735,
+  "text": "And to return to our previous point,"
+ },
+ {
+  "start": 1729.735,
+  "end": 1731.61,
+  "text": "the point here is, I think a lot of companies"
+ },
+ {
+  "start": 1731.61,
+  "end": 1734.09,
+  "text": "are now less detailed because the core scaling"
+ },
+ {
+  "start": 1734.09,
+  "end": 1737.63,
+  "text": "machinery, like doing Chinchilla or doing learning rate scaling,"
+ },
+ {
+  "start": 1737.63,
+  "end": 1739.75,
+  "text": "is now fairly well understood by everybody."
+ },
+ {
+  "start": 1739.75,
+  "end": 1743.89,
+  "text": "So there's no necessarily extra value"
+ },
+ {
+  "start": 1743.89,
+  "end": 1746.992,
+  "text": "in showing those experiments for some of these releases."
+ },
+ {
+  "start": 1746.992,
+  "end": 1748.45,
+  "text": "Or at least that's my guess for why"
+ },
+ {
+  "start": 1748.45,
+  "end": 1750.73,
+  "text": "we have much fewer of these kinds of experiments"
+ },
+ {
+  "start": 1750.73,
+  "end": 1752.49,
+  "text": "in the release."
+ },
+ {
+  "start": 1752.49,
+  "end": 1755.73,
+  "text": "OK, I'll take one minute and then pause"
+ },
+ {
+  "start": 1755.73,
+  "end": 1758.39,
+  "text": "and let you digest and ask a question or two, in case you"
+ },
+ {
+  "start": 1758.39,
+  "end": 1759.61,
+  "text": "have questions for this part."
+ },
+ {
+  "start": 1766.95,
+  "end": 1771.65,
+  "text": "OK, so all these cover the proofing stage."
+ },
+ {
+  "start": 1771.65,
+  "end": 1774.31,
+  "text": "So my question is, what changes and what"
+ },
+ {
+  "start": 1774.31,
+  "end": 1778.51,
+  "text": "do not change when post training is a standardized process"
+ },
+ {
+  "start": 1778.51,
+  "end": 1780.79,
+  "text": "for model development?"
+ },
+ {
+  "start": 1780.79,
+  "end": 1783.563,
+  "text": "Yeah, so the question was about, what"
+ },
+ {
+  "start": 1783.563,
+  "end": 1785.23,
+  "text": "changes about this when you do-- or when"
+ },
+ {
+  "start": 1785.23,
+  "end": 1787.99,
+  "text": "you think about post training, I guess, broadly?"
+ },
+ {
+  "start": 1787.99,
+  "end": 1790.91,
+  "text": "I think that's still a big, open question."
+ },
+ {
+  "start": 1790.91,
+  "end": 1794.43,
+  "text": "There's no great way to do fully integrated scaling"
+ },
+ {
+  "start": 1794.43,
+  "end": 1796.37,
+  "text": "with post-training accounted for,"
+ },
+ {
+  "start": 1796.37,
+  "end": 1798.95,
+  "text": "because post-training can sometimes really change"
+ },
+ {
+  "start": 1798.95,
+  "end": 1802.63,
+  "text": "the nature of what pre-training you should do."
+ },
+ {
+  "start": 1802.63,
+  "end": 1804.39,
+  "text": "The closest things that I can think"
+ },
+ {
+  "start": 1804.39,
+  "end": 1807.27,
+  "text": "of to thinking about post-training"
+ },
+ {
+  "start": 1807.27,
+  "end": 1810.75,
+  "text": "is there's been some work on understanding coverage"
+ },
+ {
+  "start": 1810.75,
+  "end": 1814.6,
+  "text": "or diversity notions in pre-training that would help"
+ },
+ {
+  "start": 1814.6,
+  "end": 1816.22,
+  "text": "predict what happens in post-training,"
+ },
+ {
+  "start": 1816.22,
+  "end": 1817.34,
+  "text": "but it's still pretty nascent work."
+ },
+ {
+  "start": 1817.34,
+  "end": 1819.88,
+  "text": "I don't think there's any good answer to the question of,"
+ },
+ {
+  "start": 1819.88,
+  "end": 1825.6,
+  "text": "what do we do about synergy with post-training?"
+ },
+ {
+  "start": 1825.6,
+  "end": 1826.52,
+  "text": "Cool."
+ },
+ {
+  "start": 1826.52,
+  "end": 1831.84,
+  "text": "OK, so now we're going to talk about the other piece."
+ },
+ {
+  "start": 1831.84,
+  "end": 1835.4,
+  "text": "So I think the two remaining parts of this lecture"
+ },
+ {
+  "start": 1835.4,
+  "end": 1838.1,
+  "text": "map on cleanly to the two examples."
+ },
+ {
+  "start": 1838.1,
+  "end": 1841.7,
+  "text": "So I'm going to talk about one approach, one set of approaches,"
+ },
+ {
+  "start": 1841.7,
+  "end": 1844.02,
+  "text": "which is about scaling laws for learning rates,"
+ },
+ {
+  "start": 1844.02,
+  "end": 1845.58,
+  "text": "batch sizes, and optimizers."
+ },
+ {
+  "start": 1845.58,
+  "end": 1850.08,
+  "text": "That corresponds to the DeepSeek approach to the world."
+ },
+ {
+  "start": 1850.08,
+  "end": 1852.86,
+  "text": "And then I'm going to talk about the muP stuff."
+ },
+ {
+  "start": 1852.86,
+  "end": 1855.82,
+  "text": "That's the MiniCPM approach to the world."
+ },
+ {
+  "start": 1855.82,
+  "end": 1858.16,
+  "text": "Can we just reparameterize everything"
+ },
+ {
+  "start": 1858.16,
+  "end": 1860.86,
+  "text": "to make it so that we don't have to worry about scale?"
+ },
+ {
+  "start": 1860.86,
+  "end": 1864.4,
+  "text": "So we're going to now talk about the DeepSeek approach."
+ },
+ {
+  "start": 1864.4,
+  "end": 1867.24,
+  "text": "How do we scale learning rate properly?"
+ },
+ {
+  "start": 1867.24,
+  "end": 1869.48,
+  "text": "And so there's going to be a hyperparameter part"
+ },
+ {
+  "start": 1869.48,
+  "end": 1871.485,
+  "text": "and an optimizer choice part."
+ },
+ {
+  "start": 1871.485,
+  "end": 1872.86,
+  "text": "And I'm going to draw quite a bit"
+ },
+ {
+  "start": 1872.86,
+  "end": 1877.7,
+  "text": "from this pretty recent preprint from the StepFun folks."
+ },
+ {
+  "start": 1877.7,
+  "end": 1881.42,
+  "text": "I don't think there's a great, really, truly"
+ },
+ {
+  "start": 1881.42,
+  "end": 1886.16,
+  "text": "reliable, robust study on hyperparameters,"
+ },
+ {
+  "start": 1886.16,
+  "end": 1888.3,
+  "text": "especially learning rates."
+ },
+ {
+  "start": 1888.3,
+  "end": 1890.56,
+  "text": "But this is probably getting somewhat close."
+ },
+ {
+  "start": 1890.56,
+  "end": 1895.4,
+  "text": "The StepFun folks train credible large models and release them."
+ },
+ {
+  "start": 1895.4,
+  "end": 1897.86,
+  "text": "And they burned a ton of compute in grid"
+ },
+ {
+  "start": 1897.86,
+  "end": 1900.66,
+  "text": "searching the space of hyperparameters in this scaling"
+ },
+ {
+  "start": 1900.66,
+  "end": 1901.24,
+  "text": "law study."
+ },
+ {
+  "start": 1901.24,
+  "end": 1903.18,
+  "text": "So I'll go through this and show you"
+ },
+ {
+  "start": 1903.18,
+  "end": 1905.46,
+  "text": "some intriguing empirical phenomena"
+ },
+ {
+  "start": 1905.46,
+  "end": 1908.06,
+  "text": "about how learning rates, batch size, and all of those"
+ },
+ {
+  "start": 1908.06,
+  "end": 1911.3,
+  "text": "affect downstream losses."
+ },
+ {
+  "start": 1911.3,
+  "end": 1916.74,
+  "text": "So lots of people have talked about lots of different ways"
+ },
+ {
+  "start": 1916.74,
+  "end": 1919.66,
+  "text": "of scaling, learning rate and batch sizes as roughly"
+ },
+ {
+  "start": 1919.66,
+  "end": 1921.82,
+  "text": "as a function of compute."
+ },
+ {
+  "start": 1921.82,
+  "end": 1924.76,
+  "text": "And the StepFun survey-- not survey paper,"
+ },
+ {
+  "start": 1924.76,
+  "end": 1927.42,
+  "text": "the hyperparameter tuning paper has this very nice table"
+ },
+ {
+  "start": 1927.42,
+  "end": 1930.22,
+  "text": "that captures a lot of this."
+ },
+ {
+  "start": 1930.22,
+  "end": 1932.92,
+  "text": "And I'll point out a couple of different things."
+ },
+ {
+  "start": 1932.92,
+  "end": 1934.4,
+  "text": "Some of this we already know."
+ },
+ {
+  "start": 1934.4,
+  "end": 1938.76,
+  "text": "So the very top row, this OpenAI scaling law-- this from Kaplan."
+ },
+ {
+  "start": 1938.76,
+  "end": 1940.5,
+  "text": "If you look at the batch size over there,"
+ },
+ {
+  "start": 1940.5,
+  "end": 1945.7,
+  "text": "notice how it says 2e18, capital L to the exponent."
+ },
+ {
+  "start": 1945.7,
+  "end": 1947.22,
+  "text": "That's critical batch sizes, right."
+ },
+ {
+  "start": 1947.22,
+  "end": 1949.84,
+  "text": "It's basically saying, you should scale your batch size"
+ },
+ {
+  "start": 1949.84,
+  "end": 1951.74,
+  "text": "as a function of your terminal loss."
+ },
+ {
+  "start": 1951.74,
+  "end": 1953.2,
+  "text": "Great."
+ },
+ {
+  "start": 1953.2,
+  "end": 1954.54,
+  "text": "DeepSeek we just saw."
+ },
+ {
+  "start": 1954.54,
+  "end": 1958.84,
+  "text": "This is the compute-based scaling loss for both learning"
+ },
+ {
+  "start": 1958.84,
+  "end": 1960.013,
+  "text": "rate and batch size."
+ },
+ {
+  "start": 1960.013,
+  "end": 1961.68,
+  "text": "And there's been a couple of other folks"
+ },
+ {
+  "start": 1961.68,
+  "end": 1964.86,
+  "text": "that have proposed various kinds of scaling, including MiniCPM,"
+ },
+ {
+  "start": 1964.86,
+  "end": 1967.84,
+  "text": "which we talked about as well."
+ },
+ {
+  "start": 1967.84,
+  "end": 1969.84,
+  "text": "Another important thing that I want to point out"
+ },
+ {
+  "start": 1969.84,
+  "end": 1973.06,
+  "text": "is that these formulas for learning rate and batch sizes,"
+ },
+ {
+  "start": 1973.06,
+  "end": 1974.76,
+  "text": "they don't even have the same inputs."
+ },
+ {
+  "start": 1974.76,
+  "end": 1976.88,
+  "text": "People don't even seem to agree, what"
+ },
+ {
+  "start": 1976.88,
+  "end": 1979.34,
+  "text": "are the variables that should affect these learning rates?"
+ },
+ {
+  "start": 1979.34,
+  "end": 1981.96,
+  "text": "Like, the OpenAI one is terminal loss."
+ },
+ {
+  "start": 1981.96,
+  "end": 1985.0,
+  "text": "Whereas, the StepFun folks, they claim"
+ },
+ {
+  "start": 1985.0,
+  "end": 1988.36,
+  "text": "that the right batch size scaling is a function of the data."
+ },
+ {
+  "start": 1988.36,
+  "end": 1992.01,
+  "text": "So there's a lot of different disagreements about the nature"
+ },
+ {
+  "start": 1992.01,
+  "end": 1994.81,
+  "text": "of scaling for hyperparameters."
+ },
+ {
+  "start": 1994.81,
+  "end": 2001.73,
+  "text": "And I think one thing I'll say as I go through this: not to take even this last row as gospel."
+ },
+ {
+  "start": 2001.73,
+  "end": 2004.988,
+  "text": "A lot of these things are pretty brittle in many ways,"
+ },
+ {
+  "start": 2004.988,
+  "end": 2006.53,
+  "text": "but the experiments and the phenomena"
+ },
+ {
+  "start": 2006.53,
+  "end": 2008.197,
+  "text": "are things that you can learn well from."
+ },
+ {
+  "start": 2008.197,
+  "end": 2011.21,
+  "text": "So I'll do that."
+ },
+ {
+  "start": 2011.21,
+  "end": 2014.93,
+  "text": "So the design of this paper is very similar to the DeepSeek"
+ },
+ {
+  "start": 2014.93,
+  "end": 2015.43,
+  "text": "one."
+ },
+ {
+  "start": 2015.43,
+  "end": 2018.05,
+  "text": "They're just going to train a ton of models"
+ },
+ {
+  "start": 2018.05,
+  "end": 2022.17,
+  "text": "to grid out both the learning rate space and the batch size"
+ },
+ {
+  "start": 2022.17,
+  "end": 2024.81,
+  "text": "space and do them across a range of models and range"
+ },
+ {
+  "start": 2024.81,
+  "end": 2027.03,
+  "text": "of data set sizes."
+ },
+ {
+  "start": 2027.03,
+  "end": 2029.69,
+  "text": "And by doing so, they hope to essentially saturate"
+ },
+ {
+  "start": 2029.69,
+  "end": 2032.73,
+  "text": "the hyperparameter space for a set of small models"
+ },
+ {
+  "start": 2032.73,
+  "end": 2035.47,
+  "text": "and then nail down what the optimum is."
+ },
+ {
+  "start": 2035.47,
+  "end": 2037.47,
+  "text": "And much like in the DeepSeek design,"
+ },
+ {
+  "start": 2037.47,
+  "end": 2039.49,
+  "text": "they're going to be-- after they grid up"
+ },
+ {
+  "start": 2039.49,
+  "end": 2041.99,
+  "text": "the space-- in this case, they have a contour plot."
+ },
+ {
+  "start": 2041.99,
+  "end": 2043.49,
+  "text": "But the underlying objects are just,"
+ },
+ {
+  "start": 2043.49,
+  "end": 2045.37,
+  "text": "they run a bunch of models."
+ },
+ {
+  "start": 2045.37,
+  "end": 2048.01,
+  "text": "They aim to try to minimize the losses."
+ },
+ {
+  "start": 2048.01,
+  "end": 2049.57,
+  "text": "And the contour plots are quite nice."
+ },
+ {
+  "start": 2049.57,
+  "end": 2053.31,
+  "text": "I feel like they give a good visualization."
+ },
+ {
+  "start": 2053.31,
+  "end": 2056.67,
+  "text": "They ran a pretty high resolution grid."
+ },
+ {
+  "start": 2056.67,
+  "end": 2059.67,
+  "text": "And thanks to that, one of the things that we can see"
+ },
+ {
+  "start": 2059.67,
+  "end": 2061.389,
+  "text": "is that they can actually plot out"
+ },
+ {
+  "start": 2061.389,
+  "end": 2064.989,
+  "text": "a fairly high-resolution contour of what the hyperparameter"
+ },
+ {
+  "start": 2064.989,
+  "end": 2065.77,
+  "text": "space looks like."
+ },
+ {
+  "start": 2065.77,
+  "end": 2070.61,
+  "text": "In this case, this is a slice at 1b parameters and 100b tokens,"
+ },
+ {
+  "start": 2070.61,
+  "end": 2071.83,
+  "text": "I believe."
+ },
+ {
+  "start": 2071.83,
+  "end": 2073.949,
+  "text": "And you can see on the right side,"
+ },
+ {
+  "start": 2073.949,
+  "end": 2077.19,
+  "text": "that surface is the hyperparameter landscape."
+ },
+ {
+  "start": 2077.19,
+  "end": 2080.23,
+  "text": "As a function of the batch size, which is one axis, and learning"
+ },
+ {
+  "start": 2080.23,
+  "end": 2082.469,
+  "text": "rate, which is the other axis, how does the loss"
+ },
+ {
+  "start": 2082.469,
+  "end": 2086.71,
+  "text": "change if you fix the total amount of data in the model?"
+ },
+ {
+  "start": 2086.71,
+  "end": 2089.71,
+  "text": "Now, we see that each slice, if you"
+ },
+ {
+  "start": 2089.71,
+  "end": 2092.19,
+  "text": "fix a batch size or you fix a learning rate--"
+ },
+ {
+  "start": 2092.19,
+  "end": 2094.389,
+  "text": "each slice is kind of nice and convex."
+ },
+ {
+  "start": 2094.389,
+  "end": 2096.55,
+  "text": "And it's almost even smooth."
+ },
+ {
+  "start": 2096.55,
+  "end": 2097.95,
+  "text": "And this is quite nice because it"
+ },
+ {
+  "start": 2097.95,
+  "end": 2101.967,
+  "text": "means that you can search for the optimal hyperparameter"
+ },
+ {
+  "start": 2101.967,
+  "end": 2104.55,
+  "text": "fairly nicely, and you can be confident that the minima is not"
+ },
+ {
+  "start": 2104.55,
+  "end": 2105.25,
+  "text": "too far off."
+ },
+ {
+  "start": 2105.25,
+  "end": 2106.67,
+  "text": "This was very jaggedy."
+ },
+ {
+  "start": 2106.67,
+  "end": 2108.97,
+  "text": "You might have some very serious doubts"
+ },
+ {
+  "start": 2108.97,
+  "end": 2111.77,
+  "text": "about whether this kind of program of gridding the space"
+ },
+ {
+  "start": 2111.77,
+  "end": 2113.283,
+  "text": "is even viable."
+ },
+ {
+  "start": 2113.283,
+  "end": 2115.45,
+  "text": "Also, this should maybe give you some nice intuition"
+ },
+ {
+  "start": 2115.45,
+  "end": 2120.29,
+  "text": "about the smoothness of the hyperparameter space in general."
+ },
+ {
+  "start": 2120.29,
+  "end": 2123.05,
+  "text": "And I think there's actually one really interesting"
+ },
+ {
+  "start": 2123.05,
+  "end": 2124.73,
+  "text": "general scaling trend."
+ },
+ {
+  "start": 2124.73,
+  "end": 2128.083,
+  "text": "And looking at other related papers to this topic, I think,"
+ },
+ {
+  "start": 2128.083,
+  "end": 2130.25,
+  "text": "I don't know if I've seen any contradicting evidence"
+ },
+ {
+  "start": 2130.25,
+  "end": 2132.89,
+  "text": "to this observation."
+ },
+ {
+  "start": 2132.89,
+  "end": 2136.03,
+  "text": "So I think the one thing that seems very interesting"
+ },
+ {
+  "start": 2136.03,
+  "end": 2137.93,
+  "text": "and one of the key takeaways of this work"
+ },
+ {
+  "start": 2137.93,
+  "end": 2141.01,
+  "text": "is, essentially, if you're looking at the optimal batch"
+ },
+ {
+  "start": 2141.01,
+  "end": 2143.77,
+  "text": "size, the only thing that seems to depend on"
+ },
+ {
+  "start": 2143.77,
+  "end": 2146.65,
+  "text": "is the total amount of data that you're training on."
+ },
+ {
+  "start": 2146.65,
+  "end": 2149.87,
+  "text": "So this right-hand plot is the one to look at."
+ },
+ {
+  "start": 2149.87,
+  "end": 2152.61,
+  "text": "So x-axis here is the amount of data that you're training on."
+ },
+ {
+  "start": 2152.61,
+  "end": 2155.39,
+  "text": "The different colored dots-- those are different models."
+ },
+ {
+  "start": 2155.39,
+  "end": 2157.29,
+  "text": "Notice how the different colored dots seem"
+ },
+ {
+  "start": 2157.29,
+  "end": 2159.81,
+  "text": "to follow roughly the same trend line here,"
+ },
+ {
+  "start": 2159.81,
+  "end": 2161.73,
+  "text": "fairly predictable one."
+ },
+ {
+  "start": 2161.73,
+  "end": 2163.53,
+  "text": "And this is in log-log scale, so you"
+ },
+ {
+  "start": 2163.53,
+  "end": 2167.78,
+  "text": "should expect some of a power law that's a function of D."
+ },
+ {
+  "start": 2167.78,
+  "end": 2171.56,
+  "text": "On the left panel, we have the dependence of learning rate."
+ },
+ {
+  "start": 2171.56,
+  "end": 2175.44,
+  "text": "And we see that this is a very different behavior."
+ },
+ {
+  "start": 2175.44,
+  "end": 2178.5,
+  "text": "So if you go from blue all the way to this pink color right,"
+ },
+ {
+  "start": 2178.5,
+  "end": 2181.86,
+  "text": "bigger models have smaller optimal learning rate."
+ },
+ {
+  "start": 2181.86,
+  "end": 2186.88,
+  "text": "And larger amounts of data have higher optimal learning rate,"
+ },
+ {
+  "start": 2186.88,
+  "end": 2190.62,
+  "text": "which is counterintuitive, actually."
+ },
+ {
+  "start": 2190.62,
+  "end": 2193.44,
+  "text": "And so this might be a little fragile."
+ },
+ {
+  "start": 2193.44,
+  "end": 2194.94,
+  "text": "There are other kinds of papers that"
+ },
+ {
+  "start": 2194.94,
+  "end": 2197.953,
+  "text": "argue that the dependence on D should be reversed."
+ },
+ {
+  "start": 2197.953,
+  "end": 2200.12,
+  "text": "But the trends here are at least on this experiment,"
+ },
+ {
+  "start": 2200.12,
+  "end": 2200.92,
+  "text": "are quite clear."
+ },
+ {
+  "start": 2205.12,
+  "end": 2208.94,
+  "text": "And one final thing that I want to point out"
+ },
+ {
+  "start": 2208.94,
+  "end": 2211.96,
+  "text": "is, the learning rates are actually pretty robust."
+ },
+ {
+  "start": 2211.96,
+  "end": 2214.46,
+  "text": "And I think this is backed up by a lot of experiences"
+ },
+ {
+  "start": 2214.46,
+  "end": 2216.26,
+  "text": "and experiments that people have."
+ },
+ {
+  "start": 2216.26,
+  "end": 2219.7,
+  "text": "I think people have a sense of-- actually as a poll,"
+ },
+ {
+  "start": 2219.7,
+  "end": 2222.32,
+  "text": "do people know what a good hyperparameter is?"
+ },
+ {
+  "start": 2222.32,
+  "end": 2224.66,
+  "text": "If you were told to train a language model tomorrow,"
+ },
+ {
+  "start": 2224.66,
+  "end": 2227.64,
+  "text": "would it be 1e negative 3, 1e negative 4?"
+ },
+ {
+  "start": 2227.64,
+  "end": 2230.12,
+  "text": "I feel like we roughly have a sense of, actually,"
+ },
+ {
+  "start": 2230.12,
+  "end": 2233.48,
+  "text": "this range of hyperparameters for learning rates is generally"
+ },
+ {
+  "start": 2233.48,
+  "end": 2235.44,
+  "text": "a good starting point."
+ },
+ {
+  "start": 2235.44,
+  "end": 2237.18,
+  "text": "And that is generally true."
+ },
+ {
+  "start": 2237.18,
+  "end": 2241.0,
+  "text": "So the scaling laws that they got actually"
+ },
+ {
+  "start": 2241.0,
+  "end": 2244.72,
+  "text": "transfer over to, for example, MoEs to a certain extent."
+ },
+ {
+  "start": 2244.72,
+  "end": 2247.4,
+  "text": "The yellow stars, which might be a little harder to see,"
+ },
+ {
+  "start": 2247.4,
+  "end": 2249.34,
+  "text": "are the predictions from their scaling laws."
+ },
+ {
+  "start": 2249.34,
+  "end": 2253.72,
+  "text": "The red x's are the optima that are derived directly"
+ },
+ {
+  "start": 2253.72,
+  "end": 2254.78,
+  "text": "on the MoEs."
+ },
+ {
+  "start": 2254.78,
+  "end": 2257.44,
+  "text": "And so you switch to an MoE."
+ },
+ {
+  "start": 2257.44,
+  "end": 2259.49,
+  "text": "You don't end up with a very different scaling"
+ },
+ {
+  "start": 2259.49,
+  "end": 2261.24,
+  "text": "law, as long as you're roughly controlling"
+ },
+ {
+  "start": 2261.24,
+  "end": 2263.6,
+  "text": "for active parameters."
+ },
+ {
+  "start": 2263.6,
+  "end": 2266.12,
+  "text": "The one thing that does seem a little bit more"
+ },
+ {
+  "start": 2266.12,
+  "end": 2268.16,
+  "text": "potentially dicey is, as you shift"
+ },
+ {
+  "start": 2268.16,
+  "end": 2270.6,
+  "text": "the training data, the optimal learning"
+ },
+ {
+  "start": 2270.6,
+  "end": 2273.48,
+  "text": "rates and the optimal batch sizes do shift a little bit,"
+ },
+ {
+  "start": 2273.48,
+  "end": 2277.02,
+  "text": "which means that all of these phenomena are likely contingent."
+ },
+ {
+  "start": 2277.02,
+  "end": 2280.337,
+  "text": "The specific numbers that are in these scaling laws and so on"
+ },
+ {
+  "start": 2280.337,
+  "end": 2281.92,
+  "text": "are potentially contingent to the data"
+ },
+ {
+  "start": 2281.92,
+  "end": 2284.12,
+  "text": "that you train on more so than others."
+ },
+ {
+  "start": 2284.12,
+  "end": 2288.66,
+  "text": "And so I want to flash this back up before I move on."
+ },
+ {
+  "start": 2288.66,
+  "end": 2291.66,
+  "text": "So you end up with some of simple scaling"
+ },
+ {
+  "start": 2291.66,
+  "end": 2294.54,
+  "text": "law at the end, which says, OK, batch size maybe"
+ },
+ {
+  "start": 2294.54,
+  "end": 2297.14,
+  "text": "should be roughly square root of the number of data"
+ },
+ {
+  "start": 2297.14,
+  "end": 2298.52,
+  "text": "times some constant."
+ },
+ {
+  "start": 2298.52,
+  "end": 2302.1,
+  "text": "Your learning rate should scale upwards"
+ },
+ {
+  "start": 2302.1,
+  "end": 2304.2,
+  "text": "with batch size or upwards with data"
+ },
+ {
+  "start": 2304.2,
+  "end": 2307.12,
+  "text": "but downwards with the model size."
+ },
+ {
+  "start": 2307.12,
+  "end": 2311.58,
+  "text": "And that's a surprising effect but not maybe crazy,"
+ },
+ {
+  "start": 2311.58,
+  "end": 2314.3,
+  "text": "because these experiments often, in many cases,"
+ },
+ {
+  "start": 2314.3,
+  "end": 2316.3,
+  "text": "are assuming Chinchilla-like scaling, in which"
+ },
+ {
+  "start": 2316.3,
+  "end": 2318.102,
+  "text": "case, those two would cancel."
+ },
+ {
+  "start": 2318.102,
+  "end": 2320.06,
+  "text": "And as you increase compute, your learning rate"
+ },
+ {
+  "start": 2320.06,
+  "end": 2321.78,
+  "text": "should go down."
+ },
+ {
+  "start": 2321.78,
+  "end": 2324.278,
+  "text": "And hopefully, that Chinchilla comment was clear."
+ },
+ {
+  "start": 2324.278,
+  "end": 2326.32,
+  "text": "What I mean is when you're scaling by Chinchilla,"
+ },
+ {
+  "start": 2326.32,
+  "end": 2329.052,
+  "text": "N and D are both driven by compute."
+ },
+ {
+  "start": 2329.052,
+  "end": 2331.26,
+  "text": "And as compute goes up, you expect your learning rate"
+ },
+ {
+  "start": 2331.26,
+  "end": 2331.808,
+  "text": "to go down."
+ },
+ {
+  "start": 2331.808,
+  "end": 2334.1,
+  "text": "And so you will end up with something like the DeepSeek"
+ },
+ {
+  "start": 2334.1,
+  "end": 2336.5,
+  "text": "Law, where the learning rate decreases with compute,"
+ },
+ {
+  "start": 2336.5,
+  "end": 2338.42,
+  "text": "and the batch size increases with compute,"
+ },
+ {
+  "start": 2338.42,
+  "end": 2343.07,
+  "text": "albeit with different exponents than the DeepSeek Law."
+ },
+ {
+  "start": 2343.07,
+  "end": 2345.07,
+  "text": "Cool."
+ },
+ {
+  "start": 2345.07,
+  "end": 2349.99,
+  "text": "OK, so in some sense, this is the newest and most"
+ },
+ {
+  "start": 2349.99,
+  "end": 2352.93,
+  "text": "large-scale version of the DeepSeek analysis."
+ },
+ {
+  "start": 2352.93,
+  "end": 2354.67,
+  "text": "And this is one way that, if you were"
+ },
+ {
+  "start": 2354.67,
+  "end": 2356.57,
+  "text": "doing the scaling-law-style approach,"
+ },
+ {
+  "start": 2356.57,
+  "end": 2362.89,
+  "text": "you would approach this problem of fitting a learning rate."
+ },
+ {
+  "start": 2362.89,
+  "end": 2365.13,
+  "text": "So that's the hyperparameter story."
+ },
+ {
+  "start": 2365.13,
+  "end": 2367.75,
+  "text": "If someone has questions, feel free to stop me."
+ },
+ {
+  "start": 2367.75,
+  "end": 2370.23,
+  "text": "And then next, right after, I'm going to move on"
+ },
+ {
+  "start": 2370.23,
+  "end": 2372.29,
+  "text": "to talking about optimizers."
+ },
+ {
+  "start": 2372.29,
+  "end": 2375.99,
+  "text": "I think this is one thing I didn't have time to talk about"
+ },
+ {
+  "start": 2375.99,
+  "end": 2378.81,
+  "text": "in the architectures lecture."
+ },
+ {
+  "start": 2378.81,
+  "end": 2380.91,
+  "text": "That was already a pretty packed lecture."
+ },
+ {
+  "start": 2380.91,
+  "end": 2384.03,
+  "text": "But I think it would be a disservice if I"
+ },
+ {
+  "start": 2384.03,
+  "end": 2385.73,
+  "text": "don't talk about optimizers."
+ },
+ {
+  "start": 2385.73,
+  "end": 2387.338,
+  "text": "And optimizers are scale dependent,"
+ },
+ {
+  "start": 2387.338,
+  "end": 2389.63,
+  "text": "so this is a good place to put them and talk about some"
+ },
+ {
+  "start": 2389.63,
+  "end": 2392.63,
+  "text": "of the latest and greatest developments in optimizers"
+ },
+ {
+  "start": 2392.63,
+  "end": 2395.55,
+  "text": "and their relationship with scale."
+ },
+ {
+  "start": 2395.55,
+  "end": 2397.51,
+  "text": "Oh, yeah?"
+ },
+ {
+  "start": 2397.51,
+  "end": 2401.11,
+  "text": "So I guess I'm trying to figure out how to interpret this."
+ },
+ {
+  "start": 2401.11,
+  "end": 2404.25,
+  "text": "Does that mean we should just take the scaling laws that we"
+ },
+ {
+  "start": 2404.25,
+  "end": 2408.01,
+  "text": "have and then apply them, rather than running our own grid"
+ },
+ {
+  "start": 2408.01,
+  "end": 2409.21,
+  "text": "search?"
+ },
+ {
+  "start": 2409.21,
+  "end": 2411.678,
+  "text": "Yeah, I mean, I think it depends what regime you're in."
+ },
+ {
+  "start": 2411.678,
+  "end": 2413.136,
+  "text": "The question is like-- oh, sorry, I"
+ },
+ {
+  "start": 2413.136,
+  "end": 2416.052,
+  "text": "have to repeat it for the online folks-- is should we just take"
+ },
+ {
+  "start": 2416.052,
+  "end": 2418.01,
+  "text": "the scaling law and run them, or should we just"
+ },
+ {
+  "start": 2418.01,
+  "end": 2420.13,
+  "text": "do our own grid search?"
+ },
+ {
+  "start": 2420.13,
+  "end": 2424.13,
+  "text": "It does depend on the amount of compute budget that you have"
+ },
+ {
+  "start": 2424.13,
+  "end": 2426.41,
+  "text": "and how much you need to nail it."
+ },
+ {
+  "start": 2426.41,
+  "end": 2429.83,
+  "text": "I do think, for example, maybe the StepFun law--"
+ },
+ {
+  "start": 2429.83,
+  "end": 2431.43,
+  "text": "if you're in the right compute regime,"
+ },
+ {
+  "start": 2431.43,
+  "end": 2433.388,
+  "text": "like close to where they were running the grid,"
+ },
+ {
+  "start": 2433.388,
+  "end": 2435.09,
+  "text": "these are probably really good defaults."
+ },
+ {
+  "start": 2435.09,
+  "end": 2438.97,
+  "text": "I would bet on these over something I pull out of my hat."
+ },
+ {
+  "start": 2438.97,
+  "end": 2442.57,
+  "text": "That said, if you were doing your own big pre-training run,"
+ },
+ {
+  "start": 2442.57,
+  "end": 2444.73,
+  "text": "you're probably going to have minor differences."
+ },
+ {
+  "start": 2444.73,
+  "end": 2446.53,
+  "text": "Someone might say, I really believe"
+ },
+ {
+  "start": 2446.53,
+  "end": 2448.25,
+  "text": "we should have a big weight decay."
+ },
+ {
+  "start": 2448.25,
+  "end": 2450.29,
+  "text": "My architecture has a big weight decay."
+ },
+ {
+  "start": 2450.29,
+  "end": 2453.29,
+  "text": "We don't know necessarily that those things"
+ },
+ {
+  "start": 2453.29,
+  "end": 2455.142,
+  "text": "are going to scale the same."
+ },
+ {
+  "start": 2455.142,
+  "end": 2457.35,
+  "text": "And so you might want to actually redo a lot of this."
+ },
+ {
+  "start": 2457.35,
+  "end": 2460.35,
+  "text": "And this is why I think a lot of the reports I showed"
+ },
+ {
+  "start": 2460.35,
+  "end": 2462.15,
+  "text": "you were redoing Chinchilla, redoing all"
+ },
+ {
+  "start": 2462.15,
+  "end": 2465.07,
+  "text": "these things, because there's enough minor differences"
+ },
+ {
+  "start": 2465.07,
+  "end": 2466.99,
+  "text": "that people want to check and make sure"
+ },
+ {
+  "start": 2466.99,
+  "end": 2471.55,
+  "text": "that they're roughly first-order correct with these results."
+ },
+ {
+  "start": 2471.55,
+  "end": 2474.487,
+  "text": "I think this will come up again in this next optimizer part."
+ },
+ {
+  "start": 2474.487,
+  "end": 2476.57,
+  "text": "And I was talking about this with [MUTED] earlier,"
+ },
+ {
+  "start": 2476.57,
+  "end": 2480.13,
+  "text": "which is, scaling laws have this very scientific feel to them."
+ },
+ {
+  "start": 2480.13,
+  "end": 2482.53,
+  "text": "It's like, yes, fit these lines and extrapolate them."
+ },
+ {
+  "start": 2482.53,
+  "end": 2485.99,
+  "text": "But ultimately, a big part of scaling laws is still vibes."
+ },
+ {
+  "start": 2485.99,
+  "end": 2488.63,
+  "text": "It's like, do I really believe that the experiment setting"
+ },
+ {
+  "start": 2488.63,
+  "end": 2491.71,
+  "text": "of this StepFun survey is similar enough to mine"
+ },
+ {
+  "start": 2491.71,
+  "end": 2492.95,
+  "text": "that they will transfer?"
+ },
+ {
+  "start": 2492.95,
+  "end": 2494.21,
+  "text": "We can't possibly, right."
+ },
+ {
+  "start": 2494.21,
+  "end": 2495.93,
+  "text": "There are always tiny differences."
+ },
+ {
+  "start": 2499.87,
+  "end": 2503.41,
+  "text": "Good, OK, so now I get to talk about optimizers."
+ },
+ {
+  "start": 2503.41,
+  "end": 2505.87,
+  "text": "And I think there's been some really exciting developments"
+ },
+ {
+  "start": 2505.87,
+  "end": 2507.67,
+  "text": "in LLM optimizers, and maybe even"
+ },
+ {
+  "start": 2507.67,
+  "end": 2509.67,
+  "text": "deep learning optimizers in general"
+ },
+ {
+  "start": 2509.67,
+  "end": 2511.79,
+  "text": "over the past year or two."
+ },
+ {
+  "start": 2511.79,
+  "end": 2514.67,
+  "text": "And so this is an exciting time to talk about them."
+ },
+ {
+  "start": 2514.67,
+  "end": 2517.88,
+  "text": "And so a story that I want to start with"
+ },
+ {
+  "start": 2517.88,
+  "end": 2521.76,
+  "text": "and one that should maybe motivate this subsection"
+ },
+ {
+  "start": 2521.76,
+  "end": 2524.08,
+  "text": "is this comparison over here, or maybe we'll"
+ },
+ {
+  "start": 2524.08,
+  "end": 2525.24,
+  "text": "start on this left panel."
+ },
+ {
+  "start": 2525.24,
+  "end": 2528.52,
+  "text": "So this is from NanoGPT speedrun, which"
+ },
+ {
+  "start": 2528.52,
+  "end": 2530.24,
+  "text": "inspired our assignment 1."
+ },
+ {
+  "start": 2530.24,
+  "end": 2532.64,
+  "text": "And there you have a really teeny, tiny model"
+ },
+ {
+  "start": 2532.64,
+  "end": 2535.68,
+  "text": "that you're training on a fairly short amount of time,"
+ },
+ {
+  "start": 2535.68,
+  "end": 2538.48,
+  "text": "and you want to get the, I forget, 3 point-some loss"
+ },
+ {
+  "start": 2538.48,
+  "end": 2541.16,
+  "text": "as quickly as possible."
+ },
+ {
+  "start": 2541.16,
+  "end": 2544.34,
+  "text": "And many people have been hill climbing on this benchmark."
+ },
+ {
+  "start": 2544.34,
+  "end": 2547.08,
+  "text": "And I think one of the more remarkable things that"
+ },
+ {
+  "start": 2547.08,
+  "end": 2549.92,
+  "text": "have happened on the benchmark is as a benchmark called"
+ },
+ {
+  "start": 2549.92,
+  "end": 2554.92,
+  "text": "muon in purple over here came and got really significant gains"
+ },
+ {
+  "start": 2554.92,
+  "end": 2556.46,
+  "text": "over Adam, which is blue."
+ },
+ {
+  "start": 2556.46,
+  "end": 2558.945,
+  "text": "It's right underneath the green line over there."
+ },
+ {
+  "start": 2558.945,
+  "end": 2560.32,
+  "text": "So you can just look at the green"
+ },
+ {
+  "start": 2560.32,
+  "end": 2561.487,
+  "text": "and the purple and that gap."
+ },
+ {
+  "start": 2561.487,
+  "end": 2563.84,
+  "text": "And you say, wow, lots of big gains"
+ },
+ {
+  "start": 2563.84,
+  "end": 2566.84,
+  "text": "from just changing the optimizer to this muon thing."
+ },
+ {
+  "start": 2566.84,
+  "end": 2569.3,
+  "text": "And it's not even slower than Adam, much slower than Adam."
+ },
+ {
+  "start": 2569.3,
+  "end": 2571.44,
+  "text": "That's great."
+ },
+ {
+  "start": 2571.44,
+  "end": 2573.84,
+  "text": "But then there's a question of, well,"
+ },
+ {
+  "start": 2573.84,
+  "end": 2576.46,
+  "text": "is this thing actually good at scale?"
+ },
+ {
+  "start": 2576.46,
+  "end": 2578.34,
+  "text": "And then you go and run some scaling studies,"
+ },
+ {
+  "start": 2578.34,
+  "end": 2580.22,
+  "text": "and maybe they're not quite as good."
+ },
+ {
+  "start": 2580.22,
+  "end": 2583.14,
+  "text": "This is a really tricky and important part"
+ },
+ {
+  "start": 2583.14,
+  "end": 2584.54,
+  "text": "of how we do research."
+ },
+ {
+  "start": 2584.54,
+  "end": 2586.395,
+  "text": "We have a small-scale experiment."
+ },
+ {
+  "start": 2586.395,
+  "end": 2588.52,
+  "text": "We have something that's scale-dependent, for sure,"
+ },
+ {
+  "start": 2588.52,
+  "end": 2590.1,
+  "text": "like an optimizer."
+ },
+ {
+  "start": 2590.1,
+  "end": 2592.44,
+  "text": "And then we see really big gains in the small scale."
+ },
+ {
+  "start": 2592.44,
+  "end": 2594.86,
+  "text": "What do we do about the large scale?"
+ },
+ {
+  "start": 2594.86,
+  "end": 2598.44,
+  "text": "And more than providing a solid, concrete prescription,"
+ },
+ {
+  "start": 2598.44,
+  "end": 2601.62,
+  "text": "I want us to maybe almost even provide a story here so"
+ },
+ {
+  "start": 2601.62,
+  "end": 2604.18,
+  "text": "that you can get a sense of what we can do"
+ },
+ {
+  "start": 2604.18,
+  "end": 2607.3,
+  "text": "and what things we can't necessarily know."
+ },
+ {
+  "start": 2607.3,
+  "end": 2610.915,
+  "text": "So actually, before I move on to the next slide,"
+ },
+ {
+  "start": 2610.915,
+  "end": 2613.54,
+  "text": "and this kind of thing happens all the time, where you're like,"
+ },
+ {
+  "start": 2613.54,
+  "end": 2615.34,
+  "text": "come up with a great thing small scale."
+ },
+ {
+  "start": 2615.34,
+  "end": 2617.72,
+  "text": "And it just doesn't maybe pan out large scale."
+ },
+ {
+  "start": 2617.72,
+  "end": 2619.22,
+  "text": "So what's the difference?"
+ },
+ {
+  "start": 2619.22,
+  "end": 2624.22,
+  "text": "I'm going to spend a few slides talking about Kaiyue and Tengyu"
+ },
+ {
+  "start": 2624.22,
+  "end": 2627.26,
+  "text": "and Percy and David's paper on basically doing"
+ },
+ {
+  "start": 2627.26,
+  "end": 2631.18,
+  "text": "a large-scale set of experiments on comparing optimizers"
+ },
+ {
+  "start": 2631.18,
+  "end": 2633.505,
+  "text": "and trying to do that comparison better."
+ },
+ {
+  "start": 2633.505,
+  "end": 2635.88,
+  "text": "And there's a lot to learn about scaling and other things"
+ },
+ {
+  "start": 2635.88,
+  "end": 2639.0,
+  "text": "from that, but also just standard deep learning stuff."
+ },
+ {
+  "start": 2639.0,
+  "end": 2640.44,
+  "text": "There's really basic things."
+ },
+ {
+  "start": 2640.44,
+  "end": 2643.762,
+  "text": "Like, the hyperparameters for different models are different."
+ },
+ {
+  "start": 2643.762,
+  "end": 2645.72,
+  "text": "So if you're scaling things up, maybe they even"
+ },
+ {
+  "start": 2645.72,
+  "end": 2647.34,
+  "text": "have different scaling exponents."
+ },
+ {
+  "start": 2647.34,
+  "end": 2649.78,
+  "text": "So you have to tune Adam really well."
+ },
+ {
+  "start": 2649.78,
+  "end": 2653.483,
+  "text": "So if you tune it badly you get this darker, brown line."
+ },
+ {
+  "start": 2653.483,
+  "end": 2655.4,
+  "text": "And you're like, wow, this thing is much worse"
+ },
+ {
+  "start": 2655.4,
+  "end": 2657.608,
+  "text": "than all these other algorithms that I have over here"
+ },
+ {
+  "start": 2657.608,
+  "end": 2658.275,
+  "text": "on the left."
+ },
+ {
+  "start": 2658.275,
+  "end": 2660.4,
+  "text": "But then you change the learning rate a little bit."
+ },
+ {
+  "start": 2660.4,
+  "end": 2663.64,
+  "text": "And you're like, wow, actually, all my gains went away."
+ },
+ {
+  "start": 2663.64,
+  "end": 2666.88,
+  "text": "Similarly on the right, you can have cases where maybe you've"
+ },
+ {
+  "start": 2666.88,
+  "end": 2668.16,
+  "text": "tuned your learning rate well."
+ },
+ {
+  "start": 2668.16,
+  "end": 2670.16,
+  "text": "But now you've got other stuff like weight decay"
+ },
+ {
+  "start": 2670.16,
+  "end": 2671.74,
+  "text": "that is not optimally tuned."
+ },
+ {
+  "start": 2671.74,
+  "end": 2673.76,
+  "text": "And so if you use the same weight decay,"
+ },
+ {
+  "start": 2673.76,
+  "end": 2676.04,
+  "text": "then you're certainly going to get a much worse result"
+ },
+ {
+  "start": 2676.04,
+  "end": 2677.04,
+  "text": "for this green line."
+ },
+ {
+  "start": 2677.04,
+  "end": 2678.66,
+  "text": "If you pick this small weight decay,"
+ },
+ {
+  "start": 2678.66,
+  "end": 2681.56,
+  "text": "you'll get a much worse result for this green line"
+ },
+ {
+  "start": 2681.56,
+  "end": 2683.36,
+  "text": "than if you pick the optimal weight decay."
+ },
+ {
+  "start": 2683.36,
+  "end": 2685.94,
+  "text": "So there's all sorts of pretty tricky things going on,"
+ },
+ {
+  "start": 2685.94,
+  "end": 2688.413,
+  "text": "technically not a scaling thing, but a very important"
+ },
+ {
+  "start": 2688.413,
+  "end": 2690.08,
+  "text": "general empirical machine learning thing"
+ },
+ {
+  "start": 2690.08,
+  "end": 2693.73,
+  "text": "that I want to point out."
+ },
+ {
+  "start": 2693.73,
+  "end": 2697.53,
+  "text": "But maybe more relevant to the discussion in this class right"
+ },
+ {
+  "start": 2697.53,
+  "end": 2700.43,
+  "text": "now is the scale dependence of these things."
+ },
+ {
+  "start": 2700.43,
+  "end": 2704.09,
+  "text": "And I think this is a good case study and example of how"
+ },
+ {
+  "start": 2704.09,
+  "end": 2706.37,
+  "text": "to really think about algorithm development"
+ },
+ {
+  "start": 2706.37,
+  "end": 2709.25,
+  "text": "as a function of scale, because to me, there"
+ },
+ {
+  "start": 2709.25,
+  "end": 2711.97,
+  "text": "are two variables that are always important when"
+ },
+ {
+  "start": 2711.97,
+  "end": 2712.99,
+  "text": "thinking about scale."
+ },
+ {
+  "start": 2712.99,
+  "end": 2717.93,
+  "text": "And this paper exposes, to most extent, both of them."
+ },
+ {
+  "start": 2717.93,
+  "end": 2720.39,
+  "text": "So one axis is compute."
+ },
+ {
+  "start": 2720.39,
+  "end": 2724.73,
+  "text": "And if you're fixing the model size to data ratio,"
+ },
+ {
+  "start": 2724.73,
+  "end": 2726.49,
+  "text": "like the two are coupled together,"
+ },
+ {
+  "start": 2726.49,
+  "end": 2729.55,
+  "text": "then this is essentially a compute axis on the x-axis here."
+ },
+ {
+  "start": 2729.55,
+  "end": 2735.01,
+  "text": "So whenever you're doing a study essentially scale up the compute"
+ },
+ {
+  "start": 2735.01,
+  "end": 2739.39,
+  "text": "and look at the trends as a function of scale."
+ },
+ {
+  "start": 2739.39,
+  "end": 2740.97,
+  "text": "And we see right here that if we look"
+ },
+ {
+  "start": 2740.97,
+  "end": 2744.09,
+  "text": "at the relative speedup between Adam, which"
+ },
+ {
+  "start": 2744.09,
+  "end": 2747.39,
+  "text": "is at 1.0 by definition, and all these other alternatives,"
+ },
+ {
+  "start": 2747.39,
+  "end": 2749.53,
+  "text": "we see that muons are really good at small scale."
+ },
+ {
+  "start": 2749.53,
+  "end": 2753.53,
+  "text": "And that gain diminishes down as we increase in scale."
+ },
+ {
+  "start": 2753.53,
+  "end": 2756.55,
+  "text": "That's not really necessarily the picture"
+ },
+ {
+  "start": 2756.55,
+  "end": 2758.79,
+  "text": "that you want to see."
+ },
+ {
+  "start": 2758.79,
+  "end": 2760.75,
+  "text": "There's another axis that you should always"
+ },
+ {
+  "start": 2760.75,
+  "end": 2763.07,
+  "text": "be vigilant of if you're doing algorithm development,"
+ },
+ {
+  "start": 2763.07,
+  "end": 2765.07,
+  "text": "and the other one that you should be vigilant of"
+ },
+ {
+  "start": 2765.07,
+  "end": 2766.21,
+  "text": "is the Chinchilla ratio."
+ },
+ {
+  "start": 2766.21,
+  "end": 2768.55,
+  "text": "So the Chinchilla ratio can be thought of."
+ },
+ {
+  "start": 2768.55,
+  "end": 2770.95,
+  "text": "It is the ratio between how much data"
+ },
+ {
+  "start": 2770.95,
+  "end": 2772.93,
+  "text": "you have and the amount of model you have."
+ },
+ {
+  "start": 2772.93,
+  "end": 2775.79,
+  "text": "And this is a really, really, really important parameter"
+ },
+ {
+  "start": 2775.79,
+  "end": 2777.67,
+  "text": "because some algorithms work well"
+ },
+ {
+  "start": 2777.67,
+  "end": 2779.55,
+  "text": "in the overparameterized case where"
+ },
+ {
+  "start": 2779.55,
+  "end": 2782.15,
+  "text": "you have a way bigger model than you have lots of data."
+ },
+ {
+  "start": 2782.15,
+  "end": 2785.55,
+  "text": "Maybe your algorithm adds some implicit regularization."
+ },
+ {
+  "start": 2785.55,
+  "end": 2788.99,
+  "text": "Or maybe it is data inefficient, but it works well"
+ },
+ {
+  "start": 2788.99,
+  "end": 2790.75,
+  "text": "because of compute reasons."
+ },
+ {
+  "start": 2790.75,
+  "end": 2793.55,
+  "text": "So some algorithms might work well at the small Chinchilla"
+ },
+ {
+  "start": 2793.55,
+  "end": 2795.03,
+  "text": "ratio case."
+ },
+ {
+  "start": 2795.03,
+  "end": 2797.31,
+  "text": "In contrast, other algorithms might work well"
+ },
+ {
+  "start": 2797.31,
+  "end": 2799.11,
+  "text": "in the large Chinchilla ratio case, where"
+ },
+ {
+  "start": 2799.11,
+  "end": 2803.41,
+  "text": "you have lots of data per unit parameter"
+ },
+ {
+  "start": 2803.41,
+  "end": 2805.91,
+  "text": "because you can pack knowledge more efficiently"
+ },
+ {
+  "start": 2805.91,
+  "end": 2806.89,
+  "text": "into the parameters."
+ },
+ {
+  "start": 2806.89,
+  "end": 2809.75,
+  "text": "So this is a big, big big confounder."
+ },
+ {
+  "start": 2809.75,
+  "end": 2812.89,
+  "text": "Even papers that I think have pretty good hygiene in doing"
+ },
+ {
+  "start": 2812.89,
+  "end": 2817.355,
+  "text": "scaling experiments on the model size axis often neglect"
+ },
+ {
+  "start": 2817.355,
+  "end": 2818.73,
+  "text": "to or just don't have the compute"
+ },
+ {
+  "start": 2818.73,
+  "end": 2822.71,
+  "text": "to study the Chinchilla token to parameter ratio."
+ },
+ {
+  "start": 2822.71,
+  "end": 2825.427,
+  "text": "And this turns out to be surprisingly important"
+ },
+ {
+  "start": 2825.427,
+  "end": 2826.01,
+  "text": "a lot of time."
+ },
+ {
+  "start": 2826.01,
+  "end": 2827.07,
+  "text": "In this case, it's not."
+ },
+ {
+  "start": 2827.07,
+  "end": 2831.49,
+  "text": "In this case, you see that the optimizer gains"
+ },
+ {
+  "start": 2831.49,
+  "end": 2832.713,
+  "text": "are pretty consistent."
+ },
+ {
+  "start": 2832.713,
+  "end": 2834.13,
+  "text": "The ratio is between all the lines"
+ },
+ {
+  "start": 2834.13,
+  "end": 2836.11,
+  "text": "are the same at different Chinchilla ratios."
+ },
+ {
+  "start": 2836.11,
+  "end": 2837.633,
+  "text": "But this is not always the case."
+ },
+ {
+  "start": 2837.633,
+  "end": 2840.05,
+  "text": "You always want to be vigilant about both of these scaling"
+ },
+ {
+  "start": 2840.05,
+  "end": 2840.59,
+  "text": "factors."
+ },
+ {
+  "start": 2840.59,
+  "end": 2843.29,
+  "text": "That's quite important."
+ },
+ {
+  "start": 2843.29,
+  "end": 2845.85,
+  "text": "And then I'm going to also point out,"
+ },
+ {
+  "start": 2845.85,
+  "end": 2849.77,
+  "text": "if you have a new algorithm or a new setting,"
+ },
+ {
+  "start": 2849.77,
+  "end": 2852.11,
+  "text": "establishing scaling is quite nontrivial."
+ },
+ {
+  "start": 2852.11,
+  "end": 2855.57,
+  "text": "So I've taken this from one of--"
+ },
+ {
+  "start": 2855.57,
+  "end": 2857.71,
+  "text": "Will Held was working with Marin,"
+ },
+ {
+  "start": 2857.71,
+  "end": 2861.93,
+  "text": "which was Percy's open-source language model training project."
+ },
+ {
+  "start": 2861.93,
+  "end": 2863.69,
+  "text": "And there they were basically trying"
+ },
+ {
+  "start": 2863.69,
+  "end": 2866.63,
+  "text": "to prove out a particular set of hyperparameters."
+ },
+ {
+  "start": 2866.63,
+  "end": 2868.12,
+  "text": "This is even like a new algorithm."
+ },
+ {
+  "start": 2868.12,
+  "end": 2870.06,
+  "text": "So this is cautious AdamC, which is"
+ },
+ {
+  "start": 2870.06,
+  "end": 2872.82,
+  "text": "like an Adam variant, square root, batch size"
+ },
+ {
+  "start": 2872.82,
+  "end": 2875.88,
+  "text": "scaling and a bunch of other standard-looking things."
+ },
+ {
+  "start": 2875.88,
+  "end": 2879.54,
+  "text": "And they're doing essentially the same Chinchilla analysis"
+ },
+ {
+  "start": 2879.54,
+  "end": 2882.3,
+  "text": "that you've seen all the other papers do."
+ },
+ {
+  "start": 2882.3,
+  "end": 2884.2,
+  "text": "But because this is not necessarily a paper,"
+ },
+ {
+  "start": 2884.2,
+  "end": 2886.52,
+  "text": "this is a bunch of people doing experiments,"
+ },
+ {
+  "start": 2886.52,
+  "end": 2888.46,
+  "text": "you don't just publish the successful one."
+ },
+ {
+  "start": 2888.46,
+  "end": 2891.52,
+  "text": "They have the niceness of publishing their failed runs."
+ },
+ {
+  "start": 2891.52,
+  "end": 2893.02,
+  "text": "And the example here is that they're"
+ },
+ {
+  "start": 2893.02,
+  "end": 2895.38,
+  "text": "doing basically standard Chinchilla stuff,"
+ },
+ {
+  "start": 2895.38,
+  "end": 2896.66,
+  "text": "and it's looking great."
+ },
+ {
+  "start": 2896.66,
+  "end": 2899.02,
+  "text": "If you go up to this dashed vertical line at 10"
+ },
+ {
+  "start": 2899.02,
+  "end": 2902.66,
+  "text": "to the 20 something, this is a really beautiful-looking scaling"
+ },
+ {
+  "start": 2902.66,
+  "end": 2903.56,
+  "text": "loft here."
+ },
+ {
+  "start": 2903.56,
+  "end": 2905.888,
+  "text": "And then, as you scale up, it's like, well, it's"
+ },
+ {
+  "start": 2905.888,
+  "end": 2906.68,
+  "text": "a little bit worse."
+ },
+ {
+  "start": 2906.68,
+  "end": 2907.72,
+  "text": "It's a lot worse."
+ },
+ {
+  "start": 2907.72,
+  "end": 2910.6,
+  "text": "And then, wow, now that run is not so good anymore."
+ },
+ {
+  "start": 2910.6,
+  "end": 2913.9,
+  "text": "So it's totally blown up on you."
+ },
+ {
+  "start": 2913.9,
+  "end": 2916.7,
+  "text": "And the point here is that even good-looking scaling"
+ },
+ {
+  "start": 2916.7,
+  "end": 2920.86,
+  "text": "trends for many orders of magnitude can suddenly bite you."
+ },
+ {
+  "start": 2920.86,
+  "end": 2922.58,
+  "text": "It can deviate from linear, and then it"
+ },
+ {
+  "start": 2922.58,
+  "end": 2924.76,
+  "text": "can then blow up immediately."
+ },
+ {
+  "start": 2924.76,
+  "end": 2927.68,
+  "text": "And in their case, the fix here is just"
+ },
+ {
+  "start": 2927.68,
+  "end": 2931.4,
+  "text": "picking more careful muP-style parameterizations."
+ },
+ {
+  "start": 2931.4,
+  "end": 2932.46,
+  "text": "Optimizer changes."
+ },
+ {
+  "start": 2932.46,
+  "end": 2934.68,
+  "text": "They switch to a different kind of optimizer,"
+ },
+ {
+  "start": 2934.68,
+  "end": 2937.9,
+  "text": "and they get nicer scaling across more orders of magnitude."
+ },
+ {
+  "start": 2937.9,
+  "end": 2941.08,
+  "text": "But the point here is to say, when I go back here,"
+ },
+ {
+  "start": 2941.08,
+  "end": 2943.62,
+  "text": "and I say, OK, well, you should all do scaling experiments,"
+ },
+ {
+  "start": 2943.62,
+  "end": 2945.287,
+  "text": "you should scale all your learning rates"
+ },
+ {
+  "start": 2945.287,
+  "end": 2947.32,
+  "text": "and so on, that's not easy."
+ },
+ {
+  "start": 2947.32,
+  "end": 2950.52,
+  "text": "You end up fairly nontrivial fraction of the time"
+ },
+ {
+  "start": 2950.52,
+  "end": 2952.498,
+  "text": "with plots that look like this."
+ },
+ {
+  "start": 2952.498,
+  "end": 2954.04,
+  "text": "And it's all horrible, and you're not"
+ },
+ {
+  "start": 2954.04,
+  "end": 2955.98,
+  "text": "quite sure what has gone wrong."
+ },
+ {
+  "start": 2958.46,
+  "end": 2958.96,
+  "text": "Good."
+ },
+ {
+  "start": 2958.96,
+  "end": 2961.36,
+  "text": "OK."
+ },
+ {
+  "start": 2961.36,
+  "end": 2964.0,
+  "text": "And then, so the last thing I want to end with"
+ },
+ {
+  "start": 2964.0,
+  "end": 2965.84,
+  "text": "is just talking a little bit about muon"
+ },
+ {
+  "start": 2965.84,
+  "end": 2969.96,
+  "text": "and the closing of the muon story."
+ },
+ {
+  "start": 2969.96,
+  "end": 2973.68,
+  "text": "So I feel like I have to talk about muon in a little bit"
+ },
+ {
+  "start": 2973.68,
+  "end": 2976.92,
+  "text": "more detail than I already have, just because it's"
+ },
+ {
+  "start": 2976.92,
+  "end": 2980.16,
+  "text": "beginning to be integrated into a large scale model"
+ },
+ {
+  "start": 2980.16,
+  "end": 2981.08,
+  "text": "training runs."
+ },
+ {
+  "start": 2981.08,
+  "end": 2984.9,
+  "text": "That's the inclusion criteria for a lot of new research"
+ },
+ {
+  "start": 2984.9,
+  "end": 2986.34,
+  "text": "topics for the class."
+ },
+ {
+  "start": 2986.34,
+  "end": 2988.3,
+  "text": "Has it been in a big training run?"
+ },
+ {
+  "start": 2988.3,
+  "end": 2990.18,
+  "text": "And muon now checks that mark."
+ },
+ {
+  "start": 2990.18,
+  "end": 2992.08,
+  "text": "And it's also just an interesting algorithm,"
+ },
+ {
+  "start": 2992.08,
+  "end": 2994.46,
+  "text": "so I'll mention it and talk about it for a few minutes"
+ },
+ {
+  "start": 2994.46,
+  "end": 2995.86,
+  "text": "and then move on."
+ },
+ {
+  "start": 2995.86,
+  "end": 2998.3,
+  "text": "So in gradient descent, we usually"
+ },
+ {
+  "start": 2998.3,
+  "end": 3001.1,
+  "text": "have a fairly simple thing that's happening."
+ },
+ {
+  "start": 3001.1,
+  "end": 3004.56,
+  "text": "Ignore line for the moment, sorry, line 5 for the moment."
+ },
+ {
+  "start": 3004.56,
+  "end": 3006.06,
+  "text": "And then you're going to get roughly"
+ },
+ {
+  "start": 3006.06,
+  "end": 3009.32,
+  "text": "a standard momentum-based optimizer."
+ },
+ {
+  "start": 3009.32,
+  "end": 3010.54,
+  "text": "I take a gradient."
+ },
+ {
+  "start": 3010.54,
+  "end": 3012.4,
+  "text": "I add it to B of t."
+ },
+ {
+  "start": 3012.4,
+  "end": 3016.1,
+  "text": "This is my momentum step, so I continue my momentum"
+ },
+ {
+  "start": 3016.1,
+  "end": 3017.76,
+  "text": "from before with parameter mu."
+ },
+ {
+  "start": 3017.76,
+  "end": 3021.16,
+  "text": "And then I update my parameters based on this momentum gradient."
+ },
+ {
+  "start": 3021.16,
+  "end": 3024.42,
+  "text": "Very standard momentum gradient stuff."
+ },
+ {
+  "start": 3024.42,
+  "end": 3028.06,
+  "text": "But then I think the really interesting and, to me at least,"
+ },
+ {
+  "start": 3028.06,
+  "end": 3030.92,
+  "text": "a bit of an out of the box set of ideas is to say,"
+ },
+ {
+  "start": 3030.92,
+  "end": 3033.8,
+  "text": "well, gradients have this property that they treat,"
+ },
+ {
+  "start": 3033.8,
+  "end": 3035.34,
+  "text": "all the parameters are the same."
+ },
+ {
+  "start": 3035.34,
+  "end": 3038.9,
+  "text": "But we know that not all the parameters in a language model,"
+ },
+ {
+  "start": 3038.9,
+  "end": 3040.92,
+  "text": "or even a deep neural network, are the same."
+ },
+ {
+  "start": 3040.92,
+  "end": 3043.86,
+  "text": "Some parameters are like vector parameters."
+ },
+ {
+  "start": 3043.86,
+  "end": 3045.68,
+  "text": "They belong to the RMS norm."
+ },
+ {
+  "start": 3045.68,
+  "end": 3047.58,
+  "text": "Some parameters are matrix parameters,"
+ },
+ {
+  "start": 3047.58,
+  "end": 3049.9,
+  "text": "like for the attention or for MLPs."
+ },
+ {
+  "start": 3049.9,
+  "end": 3052.52,
+  "text": "And matrix parameters are probably"
+ },
+ {
+  "start": 3052.52,
+  "end": 3054.74,
+  "text": "different than vector parameters."
+ },
+ {
+  "start": 3054.74,
+  "end": 3056.74,
+  "text": "And so that's the starting point for this idea"
+ },
+ {
+  "start": 3056.74,
+  "end": 3058.76,
+  "text": "and I think a really interesting one."
+ },
+ {
+  "start": 3058.76,
+  "end": 3062.28,
+  "text": "And so the one thing that you could do about matrix parameters"
+ },
+ {
+  "start": 3062.28,
+  "end": 3064.46,
+  "text": "is you can start to look at their spectra."
+ },
+ {
+  "start": 3064.46,
+  "end": 3065.7,
+  "text": "They are matrices."
+ },
+ {
+  "start": 3065.7,
+  "end": 3068.92,
+  "text": "Matrices have eigenvalues and singular values."
+ },
+ {
+  "start": 3068.92,
+  "end": 3070.98,
+  "text": "And so you can do things to the singular values."
+ },
+ {
+  "start": 3070.98,
+  "end": 3075.06,
+  "text": "And so what you do here in Muon is this fairly simple idea."
+ },
+ {
+  "start": 3075.06,
+  "end": 3076.42,
+  "text": "You compute a gradient."
+ },
+ {
+  "start": 3076.42,
+  "end": 3078.44,
+  "text": "You take a momentum step."
+ },
+ {
+  "start": 3078.44,
+  "end": 3080.64,
+  "text": "And now I take my update B of t."
+ },
+ {
+  "start": 3080.64,
+  "end": 3082.12,
+  "text": "And instead of directly applying it"
+ },
+ {
+  "start": 3082.12,
+  "end": 3084.747,
+  "text": "to my parameters in line 6, what I'm going to do"
+ },
+ {
+  "start": 3084.747,
+  "end": 3086.58,
+  "text": "is I'm going to do this NewtonSchultz thing,"
+ },
+ {
+  "start": 3086.58,
+  "end": 3088.96,
+  "text": "NewtonSchultz 5 to be specific."
+ },
+ {
+  "start": 3088.96,
+  "end": 3093.567,
+  "text": "And what that is it's going to orthogonalize the B of t matrix."
+ },
+ {
+  "start": 3093.567,
+  "end": 3096.32,
+  "text": "And so I've written the operation down there on the bottom."
+ },
+ {
+  "start": 3096.32,
+  "end": 3097.52,
+  "text": "Let's say I take B of t."
+ },
+ {
+  "start": 3097.52,
+  "end": 3102.13,
+  "text": "I write it as singular value decomposition, USV transpose."
+ },
+ {
+  "start": 3102.13,
+  "end": 3105.13,
+  "text": "And then I make all of my singular values 1."
+ },
+ {
+  "start": 3105.13,
+  "end": 3106.91,
+  "text": "So if my singular values are really big,"
+ },
+ {
+  "start": 3106.91,
+  "end": 3108.35,
+  "text": "I'll shrink them back to unit."
+ },
+ {
+  "start": 3108.35,
+  "end": 3110.058,
+  "text": "If they're really small, I'll expand them"
+ },
+ {
+  "start": 3110.058,
+  "end": 3111.11,
+  "text": "back up to being unit."
+ },
+ {
+  "start": 3111.11,
+  "end": 3114.13,
+  "text": "And then I take UV transpose, and that's my new update"
+ },
+ {
+  "start": 3114.13,
+  "end": 3115.43,
+  "text": "that I'm going to apply."
+ },
+ {
+  "start": 3115.43,
+  "end": 3119.25,
+  "text": "If you want intuition for this, and you already"
+ },
+ {
+  "start": 3119.25,
+  "end": 3121.69,
+  "text": "have intuition for something like adagrad or these other,"
+ },
+ {
+  "start": 3121.69,
+  "end": 3123.05,
+  "text": "or Adam even."
+ },
+ {
+  "start": 3123.05,
+  "end": 3125.13,
+  "text": "In adagrad or Adam, you're going to divide"
+ },
+ {
+  "start": 3125.13,
+  "end": 3127.21,
+  "text": "by the size of the gradient."
+ },
+ {
+  "start": 3127.21,
+  "end": 3131.53,
+  "text": "So every coordinate is roughly going to be the same size."
+ },
+ {
+  "start": 3131.53,
+  "end": 3134.91,
+  "text": "In muon, you are operating in the spectral norm instead."
+ },
+ {
+  "start": 3134.91,
+  "end": 3138.625,
+  "text": "So every kind of direction is going to be unit size."
+ },
+ {
+  "start": 3138.625,
+  "end": 3140.75,
+  "text": "And notice that this only makes sense for a matrix."
+ },
+ {
+  "start": 3140.75,
+  "end": 3144.81,
+  "text": "I can only define this notion of a singular value decomposition"
+ },
+ {
+  "start": 3144.81,
+  "end": 3146.79,
+  "text": "for a matrix valued B of t."
+ },
+ {
+  "start": 3146.79,
+  "end": 3148.89,
+  "text": "So the interesting thing about muon"
+ },
+ {
+  "start": 3148.89,
+  "end": 3151.13,
+  "text": "is it's a matrix optimizer, so you apply it"
+ },
+ {
+  "start": 3151.13,
+  "end": 3152.95,
+  "text": "to these matrix valued parameters."
+ },
+ {
+  "start": 3152.95,
+  "end": 3154.77,
+  "text": "And for the vector-valued ones, you"
+ },
+ {
+  "start": 3154.77,
+  "end": 3156.65,
+  "text": "might still use something like AdamW"
+ },
+ {
+  "start": 3156.65,
+  "end": 3158.93,
+  "text": "because those don't really have any interaction"
+ },
+ {
+  "start": 3158.93,
+  "end": 3160.99,
+  "text": "with the NewtonSchultz term."
+ },
+ {
+  "start": 3160.99,
+  "end": 3163.55,
+  "text": "Also, NewtonSchultz is an approximation"
+ },
+ {
+  "start": 3163.55,
+  "end": 3166.39,
+  "text": "to that operation that only uses matrix multiplies."
+ },
+ {
+  "start": 3166.39,
+  "end": 3168.51,
+  "text": "So it's systems efficient and not"
+ },
+ {
+  "start": 3168.51,
+  "end": 3171.67,
+  "text": "exactly the orthogonalization."
+ },
+ {
+  "start": 3171.67,
+  "end": 3175.21,
+  "text": "But OK, why have I spent all this time talking about muon?"
+ },
+ {
+  "start": 3175.21,
+  "end": 3178.99,
+  "text": "Well, first of all, it's very powerful for things"
+ },
+ {
+  "start": 3178.99,
+  "end": 3180.53,
+  "text": "like the NanoGPT speedrun."
+ },
+ {
+  "start": 3180.53,
+  "end": 3183.59,
+  "text": "It was discovered for this set of things."
+ },
+ {
+  "start": 3183.59,
+  "end": 3185.91,
+  "text": "And so you might think that it works well."
+ },
+ {
+  "start": 3185.91,
+  "end": 3188.03,
+  "text": "As I said in the previous slide, there"
+ },
+ {
+  "start": 3188.03,
+  "end": 3189.79,
+  "text": "have been some scaling studies that"
+ },
+ {
+  "start": 3189.79,
+  "end": 3195.43,
+  "text": "have argued that the gain for muon decreases as scale goes up."
+ },
+ {
+  "start": 3195.43,
+  "end": 3199.99,
+  "text": "But then I want to close off this story, which, I think,"
+ },
+ {
+  "start": 3199.99,
+  "end": 3200.99,
+  "text": "initially this came out."
+ },
+ {
+  "start": 3200.99,
+  "end": 3202.97,
+  "text": "And I was like, wow, muon is interesting."
+ },
+ {
+  "start": 3202.97,
+  "end": 3204.53,
+  "text": "I wonder if anyone will scale it up."
+ },
+ {
+  "start": 3204.53,
+  "end": 3206.83,
+  "text": "And then [INAUDIBLE] and others scaled up muon."
+ },
+ {
+  "start": 3206.83,
+  "end": 3209.35,
+  "text": "And they said, well, maybe it doesn't work super well."
+ },
+ {
+  "start": 3209.35,
+  "end": 3211.33,
+  "text": "And I thought the story was closed here."
+ },
+ {
+  "start": 3211.33,
+  "end": 3213.11,
+  "text": "I was like, well, maybe this is done."
+ },
+ {
+  "start": 3213.11,
+  "end": 3216.51,
+  "text": "No one will spend the big compute to scale this guy up"
+ },
+ {
+  "start": 3216.51,
+  "end": 3218.17,
+  "text": "to the full pre-training size."
+ },
+ {
+  "start": 3218.17,
+  "end": 3221.17,
+  "text": "And then Kimi K2 comes out, and that whole model"
+ },
+ {
+  "start": 3221.17,
+  "end": 3223.93,
+  "text": "is trained with muon, fully with muon,"
+ },
+ {
+  "start": 3223.93,
+  "end": 3226.05,
+  "text": "with a few bells and whistles to prevent muon"
+ },
+ {
+  "start": 3226.05,
+  "end": 3227.27,
+  "text": "from blowing up on you."
+ },
+ {
+  "start": 3227.27,
+  "end": 3230.05,
+  "text": "They found a whole bunch of instability issues."
+ },
+ {
+  "start": 3230.05,
+  "end": 3232.93,
+  "text": "But Kimi K2 is an outstandingly good model."
+ },
+ {
+  "start": 3232.93,
+  "end": 3237.93,
+  "text": "It's a very good model, and the training curves look reasonable."
+ },
+ {
+  "start": 3237.93,
+  "end": 3240.43,
+  "text": "And so really, what this suggests is like,"
+ },
+ {
+  "start": 3240.43,
+  "end": 3242.23,
+  "text": "well, muon worked at scale."
+ },
+ {
+  "start": 3242.23,
+  "end": 3243.63,
+  "text": "Is it better than Adam?"
+ },
+ {
+  "start": 3243.63,
+  "end": 3245.55,
+  "text": "Kimi K2 certainly doesn't have any ablation,"
+ },
+ {
+  "start": 3245.55,
+  "end": 3247.35,
+  "text": "so we don't know at that scale."
+ },
+ {
+  "start": 3247.35,
+  "end": 3251.21,
+  "text": "But it is certainly a valid and workable solution."
+ },
+ {
+  "start": 3251.21,
+  "end": 3252.99,
+  "text": "And so what's the point of this story?"
+ },
+ {
+  "start": 3252.99,
+  "end": 3255.25,
+  "text": "It's to say, it's really hard to tell whether something"
+ },
+ {
+  "start": 3255.25,
+  "end": 3256.25,
+  "text": "works at scale."
+ },
+ {
+  "start": 3256.25,
+  "end": 3258.41,
+  "text": "It's very, very hard."
+ },
+ {
+  "start": 3258.41,
+  "end": 3261.13,
+  "text": "But thus far, a lot of small scale experiments"
+ },
+ {
+  "start": 3261.13,
+  "end": 3263.09,
+  "text": "and transferring them up to large scale"
+ },
+ {
+  "start": 3263.09,
+  "end": 3265.03,
+  "text": "has been the way by which we do science."
+ },
+ {
+  "start": 3265.03,
+  "end": 3266.77,
+  "text": "And so you still want to respect things"
+ },
+ {
+  "start": 3266.77,
+  "end": 3268.43,
+  "text": "like the NanoGPT speedrun."
+ },
+ {
+  "start": 3268.43,
+  "end": 3270.852,
+  "text": "We learn quite a bit from that and get good ideas."
+ },
+ {
+  "start": 3270.852,
+  "end": 3273.31,
+  "text": "And then eventually, they make their way to the big models."
+ },
+ {
+  "start": 3273.31,
+  "end": 3276.45,
+  "text": "We'll see if people continue to do ablations at big scale"
+ },
+ {
+  "start": 3276.45,
+  "end": 3279.7,
+  "text": "and really nail down, is muon better than AdamW at scale"
+ },
+ {
+  "start": 3279.7,
+  "end": 3280.2,
+  "text": "and so on?"
+ },
+ {
+  "start": 3280.2,
+  "end": 3282.46,
+  "text": "Those are interesting questions to which we don't yet"
+ },
+ {
+  "start": 3282.46,
+  "end": 3284.62,
+  "text": "have the answers."
+ },
+ {
+  "start": 3284.62,
+  "end": 3286.813,
+  "text": "OK, I'll pause here for a moment."
+ },
+ {
+  "start": 3286.813,
+  "end": 3288.48,
+  "text": "This is the end of my optimizer section."
+ },
+ {
+  "start": 3288.48,
+  "end": 3291.082,
+  "text": "I want to make sure everyone's good, also especially because I"
+ },
+ {
+  "start": 3291.082,
+  "end": 3292.04,
+  "text": "was talking about muon."
+ },
+ {
+  "start": 3292.04,
+  "end": 3294.42,
+  "text": "And that's a whole new can of worms"
+ },
+ {
+  "start": 3294.42,
+  "end": 3296.9,
+  "text": "that I haven't talked about much before."
+ },
+ {
+  "start": 3296.9,
+  "end": 3298.02,
+  "text": "Yeah?"
+ },
+ {
+  "start": 3298.02,
+  "end": 3302.46,
+  "text": "[INAUDIBLE] letter [INAUDIBLE] faster on GPU?"
+ },
+ {
+  "start": 3302.46,
+  "end": 3303.26,
+  "text": "OK, [INAUDIBLE]."
+ },
+ {
+  "start": 3303.26,
+  "end": 3303.76,
+  "text": "Great."
+ },
+ {
+  "start": 3303.76,
+  "end": 3306.5,
+  "text": "Yeah, the question was, is SVD fast on GPUs?"
+ },
+ {
+  "start": 3306.5,
+  "end": 3309.44,
+  "text": "SVD is not fast on GPUs, but they're not doing SVD."
+ },
+ {
+  "start": 3309.44,
+  "end": 3311.08,
+  "text": "What they're doing is NewtonSchultz."
+ },
+ {
+  "start": 3311.08,
+  "end": 3314.42,
+  "text": "NewtonSchultz is a matrix multiply only finite iteration"
+ },
+ {
+  "start": 3314.42,
+  "end": 3317.46,
+  "text": "algorithm that approximates the process of orthogonalizing"
+ },
+ {
+  "start": 3317.46,
+  "end": 3318.94,
+  "text": "a matrix."
+ },
+ {
+  "start": 3318.94,
+  "end": 3321.94,
+  "text": "So there's several clever pieces here."
+ },
+ {
+  "start": 3321.94,
+  "end": 3324.66,
+  "text": "One of them is the idea of treating it"
+ },
+ {
+  "start": 3324.66,
+  "end": 3326.205,
+  "text": "as a matrix on its own."
+ },
+ {
+  "start": 3326.205,
+  "end": 3328.08,
+  "text": "And then there's this orthogonalization idea,"
+ },
+ {
+  "start": 3328.08,
+  "end": 3329.58,
+  "text": "and then there's the systems piece"
+ },
+ {
+  "start": 3329.58,
+  "end": 3330.92,
+  "text": "of doing it with Newton-Schulz."
+ },
+ {
+  "start": 3330.92,
+  "end": 3333.84,
+  "text": "So those are all important, interesting pieces?"
+ },
+ {
+  "start": 3333.84,
+  "end": 3334.82,
+  "text": "Yeah, back there?"
+ },
+ {
+  "start": 3334.82,
+  "end": 3340.12,
+  "text": "Are hyperparameters for nontrivial [INAUDIBLE] ones?"
+ },
+ {
+  "start": 3340.12,
+  "end": 3343.04,
+  "text": "Are the hyperparameters here-- no, they're different, yeah."
+ },
+ {
+  "start": 3343.04,
+  "end": 3345.24,
+  "text": "I think there are several people that"
+ },
+ {
+  "start": 3345.24,
+  "end": 3348.2,
+  "text": "have been working on this Muon-style line of work."
+ },
+ {
+  "start": 3348.2,
+  "end": 3350.64,
+  "text": "And one of them, I think, like Jeremy Bernstein,"
+ },
+ {
+  "start": 3350.64,
+  "end": 3352.52,
+  "text": "I think he's been saying, actually"
+ },
+ {
+  "start": 3352.52,
+  "end": 3354.84,
+  "text": "every layer should have its own learning rate."
+ },
+ {
+  "start": 3354.84,
+  "end": 3359.52,
+  "text": "I think the ultimate limit of this, like, you go from-- or even, sorry,"
+ },
+ {
+  "start": 3359.52,
+  "end": 3361.96,
+  "text": "every layer should have its own optimizer."
+ },
+ {
+  "start": 3361.96,
+  "end": 3363.52,
+  "text": "The ultimate limit of this is to say,"
+ },
+ {
+  "start": 3363.52,
+  "end": 3366.26,
+  "text": "every parameter in a transformer is different."
+ },
+ {
+  "start": 3366.26,
+  "end": 3368.66,
+  "text": "Why not have a different optimizer for each one of them?"
+ },
+ {
+  "start": 3368.66,
+  "end": 3370.535,
+  "text": "And so you would have to tune hyperparameters"
+ },
+ {
+  "start": 3370.535,
+  "end": 3373.66,
+  "text": "for each one of them as well, which I do not want to do."
+ },
+ {
+  "start": 3373.66,
+  "end": 3376.02,
+  "text": "But that's maybe the future of optimization."
+ },
+ {
+  "start": 3376.02,
+  "end": 3377.16,
+  "text": "Yes?"
+ },
+ {
+  "start": 3377.16,
+  "end": 3380.0,
+  "text": "What's the validity of like--"
+ },
+ {
+  "start": 3380.0,
+  "end": 3382.98,
+  "text": "like, on the learning rate and batch size,"
+ },
+ {
+  "start": 3382.98,
+  "end": 3385.24,
+  "text": "you just consider these two things."
+ },
+ {
+  "start": 3385.24,
+  "end": 3387.08,
+  "text": "And then you pick the best out of those,"
+ },
+ {
+  "start": 3387.08,
+  "end": 3389.76,
+  "text": "and then you can use it to tune other things."
+ },
+ {
+  "start": 3389.76,
+  "end": 3394.38,
+  "text": "But do these things interact with each other?"
+ },
+ {
+  "start": 3394.38,
+  "end": 3397.5,
+  "text": "Yeah, or maybe the version of the question that I interpreted"
+ },
+ {
+  "start": 3397.5,
+  "end": 3399.62,
+  "text": "was, a lot of these people are just"
+ },
+ {
+  "start": 3399.62,
+  "end": 3401.12,
+  "text": "tuning learning rate and batch size."
+ },
+ {
+  "start": 3401.12,
+  "end": 3402.7,
+  "text": "And they do this on the grid."
+ },
+ {
+  "start": 3402.7,
+  "end": 3404.62,
+  "text": "But presumably, these things interact with a whole bunch"
+ },
+ {
+  "start": 3404.62,
+  "end": 3405.64,
+  "text": "of other hyperparameters."
+ },
+ {
+  "start": 3405.64,
+  "end": 3406.84,
+  "text": "Aren't you worried about that?"
+ },
+ {
+  "start": 3406.84,
+  "end": 3408.22,
+  "text": "And I think, in general, yes, you"
+ },
+ {
+  "start": 3408.22,
+  "end": 3410.88,
+  "text": "are worried about hyperparameter interactions."
+ },
+ {
+  "start": 3410.88,
+  "end": 3413.54,
+  "text": "But realistically, they grow exponentially."
+ },
+ {
+  "start": 3413.54,
+  "end": 3416.94,
+  "text": "This is not a thing where you can grid out the whole space."
+ },
+ {
+  "start": 3416.94,
+  "end": 3419.98,
+  "text": "And so I think the thing that people often do"
+ },
+ {
+  "start": 3419.98,
+  "end": 3423.1,
+  "text": "is they grid the stuff that's most concerning and most"
+ },
+ {
+  "start": 3423.1,
+  "end": 3423.617,
+  "text": "sensitive."
+ },
+ {
+  "start": 3423.617,
+  "end": 3425.2,
+  "text": "And learning rates are very important."
+ },
+ {
+  "start": 3425.2,
+  "end": 3427.158,
+  "text": "I think, if you ever tune stuff, learning rates"
+ },
+ {
+  "start": 3427.158,
+  "end": 3428.88,
+  "text": "are the most important thing to tune."
+ },
+ {
+  "start": 3428.88,
+  "end": 3430.705,
+  "text": "So they very aggressively go on that."
+ },
+ {
+  "start": 3430.705,
+  "end": 3432.08,
+  "text": "And then stuff like weight decay,"
+ },
+ {
+  "start": 3432.08,
+  "end": 3434.26,
+  "text": "they might do a univariate sweep afterwards"
+ },
+ {
+  "start": 3434.26,
+  "end": 3439.16,
+  "text": "to be locally optimal with respect to those parameters."
+ },
+ {
+  "start": 3439.16,
+  "end": 3439.66,
+  "text": "Good."
+ },
+ {
+  "start": 3439.66,
+  "end": 3442.7,
+  "text": "OK."
+ },
+ {
+  "start": 3442.7,
+  "end": 3445.02,
+  "text": "All right, so the final part of this lecture"
+ },
+ {
+  "start": 3445.02,
+  "end": 3447.06,
+  "text": "is I want to talk about muP."
+ },
+ {
+  "start": 3447.06,
+  "end": 3449.44,
+  "text": "muP is a bit of a mysterious object."
+ },
+ {
+  "start": 3449.44,
+  "end": 3452.29,
+  "text": "Even with many papers written about it"
+ },
+ {
+  "start": 3452.29,
+  "end": 3455.47,
+  "text": "and, in fact, even many implementations,"
+ },
+ {
+  "start": 3455.47,
+  "end": 3456.99,
+  "text": "I don't think all of them even agree"
+ },
+ {
+  "start": 3456.99,
+  "end": 3459.23,
+  "text": "on what the underlying math is or what the underlying"
+ },
+ {
+  "start": 3459.23,
+  "end": 3461.03,
+  "text": "implementation should be."
+ },
+ {
+  "start": 3461.03,
+  "end": 3463.65,
+  "text": "But there's a core set of ideas that are shared,"
+ },
+ {
+  "start": 3463.65,
+  "end": 3465.69,
+  "text": "and it does seem generally effective."
+ },
+ {
+  "start": 3465.69,
+  "end": 3468.79,
+  "text": "And so I'll talk about my interpretation"
+ },
+ {
+  "start": 3468.79,
+  "end": 3471.59,
+  "text": "of the whole program, let's call it."
+ },
+ {
+  "start": 3471.59,
+  "end": 3474.13,
+  "text": "So the goal hopefully is very clear."
+ },
+ {
+  "start": 3474.13,
+  "end": 3478.03,
+  "text": "And I think this picture is the goal, the picture being, well,"
+ },
+ {
+  "start": 3478.03,
+  "end": 3479.75,
+  "text": "if we increase the size of our model,"
+ },
+ {
+  "start": 3479.75,
+  "end": 3482.79,
+  "text": "in this case, just width, our optimal learning rate normally"
+ },
+ {
+  "start": 3482.79,
+  "end": 3483.59,
+  "text": "shifts."
+ },
+ {
+  "start": 3483.59,
+  "end": 3485.87,
+  "text": "But ideally, we want the optimal learning rate"
+ },
+ {
+  "start": 3485.87,
+  "end": 3487.83,
+  "text": "to be the same, no matter what."
+ },
+ {
+  "start": 3487.83,
+  "end": 3489.67,
+  "text": "That is the game that we would like to play."
+ },
+ {
+  "start": 3489.67,
+  "end": 3492.23,
+  "text": "And the knobs that I'm willing to tune to do this is I'm"
+ },
+ {
+  "start": 3492.23,
+  "end": 3494.11,
+  "text": "willing to mess with the initializations"
+ },
+ {
+  "start": 3494.11,
+  "end": 3495.568,
+  "text": "at a per-layer basis."
+ },
+ {
+  "start": 3495.568,
+  "end": 3497.11,
+  "text": "I'm willing to mess with the learning"
+ },
+ {
+  "start": 3497.11,
+  "end": 3500.575,
+  "text": "rates on a per-parameter basis as well."
+ },
+ {
+  "start": 3500.575,
+  "end": 3502.95,
+  "text": "And then I'm sometimes willing to scale up or down things"
+ },
+ {
+  "start": 3502.95,
+  "end": 3507.11,
+  "text": "like residual connections based on the size of my model."
+ },
+ {
+  "start": 3507.11,
+  "end": 3509.51,
+  "text": "So that's the game that I'd like to play."
+ },
+ {
+  "start": 3509.51,
+  "end": 3511.31,
+  "text": "And how well does it work in practice?"
+ },
+ {
+  "start": 3511.31,
+  "end": 3514.45,
+  "text": "There's been several papers that have studied these fairly"
+ },
+ {
+  "start": 3514.45,
+  "end": 3516.65,
+  "text": "extensively."
+ },
+ {
+  "start": 3516.65,
+  "end": 3519.89,
+  "text": "Cerebras，一家真正的芯片公司，也"
+ },
+ {
+  "start": 3519.89,
+  "end": 3522.49,
+  "text": "拥有一个语言模型训练部门"
+ },
+ {
+  "start": 3522.49,
+  "end": 3526.41,
+  "text": "由Hestness运营，他因缩放定律论文而闻名。"
+ },
+ {
+  "start": 3526.41,
+  "end": 3529.85,
+  "text": "我觉得他们做的事情很有趣，因为他们"
+ },
+ {
+  "start": 3529.85,
+  "end": 3533.85,
+  "text": "现在正在撰写大量关于语言模型的muP缩放的论文"
+ },
+ {
+  "start": 3533.85,
+  "end": 3538.01,
+  "text": "并且他们几年前就有了Cerebras GPT，"
+ },
+ {
+  "start": 3538.01,
+  "end": 3542.97,
+  "text": "当时他们使用通常的"
+ },
+ {
+  "start": 3542.97,
+  "end": 3547.55,
+  "text": "Chinchilla配方训练0.1到13b模型，但也包括muP变体，"
+ },
+ {
+  "start": 3547.55,
+  "end": 3550.41,
+  "text": "他们用它来尝试更有效地"
+ },
+ {
+  "start": 3550.41,
+  "end": 3552.61,
+  "text": "调优超参数。"
+ },
+ {
+  "start": 3552.61,
+  "end": 3559.25,
+  "text": "我认为其中一个好处是，他们发现如果使用muP参数化，"
+ },
+ {
+  "start": 3559.25,
+  "end": 3562.31,
+  "text": "那么他们的缩放定律拟合通常更稳定。"
+ },
+ {
+  "start": 3562.31,
+  "end": 3566.37,
+  "text": "他们预测的muP趋势几乎完全准确"
+ },
+ {
+  "start": 3566.37,
+  "end": 3567.95,
+  "text": "对于他们的实际模型。"
+ },
+ {
+  "start": 3567.95,
+  "end": 3570.39,
+  "text": "而我认为他们的非muP模型"
+ },
+ {
+  "start": 3570.39,
+  "end": 3574.55,
+  "text": "在损失预测方面波动要大得多"
+ },
+ {
+  "start": 3574.55,
+  "end": 3575.165,
+  "text": "他们所拥有的。"
+ },
+ {
+  "start": 3575.165,
+  "end": 3576.29,
+  "text": "所以他们的主张是，OK。"
+ },
+ {
+  "start": 3576.29,
+  "end": 3578.55,
+  "text": "MuP可能是一个非常好的想法。"
+ },
+ {
+  "start": 3578.55,
+  "end": 3580.25,
+  "text": "所以这在大规模上得到了验证。"
+ },
+ {
+  "start": 3580.25,
+  "end": 3582.15,
+  "text": "你看到了MiniCPM等。"
+ },
+ {
+  "start": 3582.15,
+  "end": 3586.19,
+  "text": "许多人用muP变体训练了模型。"
+ },
+ {
+  "start": 3586.19,
+  "end": 3589.87,
+  "text": "所以我也可以谈论很多关于训练或例子"
+ },
+ {
+  "start": 3589.87,
+  "end": 3591.53,
+  "text": "用muP训练的模型。"
+ },
+ {
+  "start": 3591.53,
+  "end": 3593.99,
+  "text": "但我认为也许对我来说更有趣的事情"
+ },
+ {
+  "start": 3593.99,
+  "end": 3595.83,
+  "text": "现在要做的是实际上谈论"
+ },
+ {
+  "start": 3595.83,
+  "end": 3601.735,
+  "text": "muP的概念基础和数学。"
+ },
+ {
+  "start": 3601.735,
+  "end": 3603.11,
+  "text": "如果你对此感兴趣，"
+ },
+ {
+  "start": 3603.11,
+  "end": 3605.49,
+  "text": "并且你想读一篇相对易懂的论文，"
+ },
+ {
+  "start": 3605.49,
+  "end": 3606.81,
+  "text": "我会推荐这一篇。"
+ },
+ {
+  "start": 3606.81,
+  "end": 3611.11,
+  "text": "这是我认为对我来说最清晰的论文。"
+ },
+ {
+  "start": 3611.11,
+  "end": 3612.21,
+  "text": "有几篇论文。"
+ },
+ {
+  "start": 3612.21,
+  "end": 3614.65,
+  "text": "Greg Yang，他开始了这个研究项目，"
+ },
+ {
+  "start": 3614.65,
+  "end": 3617.73,
+  "text": "有一系列论文，我将称之为张量程序。"
+ },
+ {
+  "start": 3617.73,
+  "end": 3620.11,
+  "text": "我觉得它们有些难以理解。"
+ },
+ {
+  "start": 3620.11,
+  "end": 3623.25,
+  "text": "Jeremy Bernstein，他也参与了muon相关的工作，"
+ },
+ {
+  "start": 3623.25,
+  "end": 3627.68,
+  "text": "写了这篇不错的——不是回顾论文，像是一篇综述"
+ },
+ {
+  "start": 3627.68,
+  "end": 3629.84,
+  "text": "论文，把它放进了不同的框架中，我认为"
+ },
+ {
+  "start": 3629.84,
+  "end": 3631.25,
+  "text": "这非常易懂。"
+ },
+ {
+  "start": 3631.25,
+  "end": 3633.0,
+  "text": "And there are several others by physicists"
+ },
+ {
+  "start": 3633.0,
+  "end": 3636.18,
+  "text": "that are also interesting in terms of explaining what muP is."
+ },
+ {
+  "start": 3636.18,
+  "end": 3639.52,
+  "text": "The Cerebras people actually do a bit of that as well."
+ },
+ {
+  "start": 3639.52,
+  "end": 3644.04,
+  "text": "But anyway, returning to this paper, the core idea of muP"
+ },
+ {
+  "start": 3644.04,
+  "end": 3646.6,
+  "text": "is based off of two kind of assertions."
+ },
+ {
+  "start": 3646.6,
+  "end": 3649.28,
+  "text": "And this is a very physicist way of thinking about this."
+ },
+ {
+  "start": 3649.28,
+  "end": 3651.36,
+  "text": "So if I make my network big-- let's"
+ },
+ {
+  "start": 3651.36,
+  "end": 3653.28,
+  "text": "say I'm only changing the width for now."
+ },
+ {
+  "start": 3653.28,
+  "end": 3655.84,
+  "text": "I'm making the width of my network big."
+ },
+ {
+  "start": 3655.84,
+  "end": 3658.16,
+  "text": "I'm going to assert two invariants that should"
+ },
+ {
+  "start": 3658.16,
+  "end": 3659.94,
+  "text": "hold as I do the scaling limit."
+ },
+ {
+  "start": 3659.94,
+  "end": 3663.58,
+  "text": "First of all, the activations at initialization--"
+ },
+ {
+  "start": 3663.58,
+  "end": 3666.3,
+  "text": "so if I initialize my model, and I put in some random data,"
+ },
+ {
+  "start": 3666.3,
+  "end": 3669.72,
+  "text": "the activations should remain the same size roughly"
+ },
+ {
+  "start": 3669.72,
+  "end": 3671.12,
+  "text": "as a function of the network."
+ },
+ {
+  "start": 3671.12,
+  "end": 3673.5,
+  "text": "So if they blow up with the network size,"
+ },
+ {
+  "start": 3673.5,
+  "end": 3675.62,
+  "text": "or they shrink to 0 with the network size,"
+ },
+ {
+  "start": 3675.62,
+  "end": 3677.54,
+  "text": "I have chosen a wrong parameterization."
+ },
+ {
+  "start": 3677.54,
+  "end": 3678.8,
+  "text": "And that makes sense."
+ },
+ {
+  "start": 3678.8,
+  "end": 3681.92,
+  "text": "My activation should be roughly the same scale, regardless"
+ },
+ {
+  "start": 3681.92,
+  "end": 3683.96,
+  "text": "of the size of my network."
+ },
+ {
+  "start": 3683.96,
+  "end": 3688.22,
+  "text": "Now, after one gradient step, the change in my activation"
+ },
+ {
+  "start": 3688.22,
+  "end": 3689.58,
+  "text": "should be O of 1."
+ },
+ {
+  "start": 3689.58,
+  "end": 3691.56,
+  "text": "So this is what people call feature learning."
+ },
+ {
+  "start": 3691.56,
+  "end": 3694.58,
+  "text": "So feature learning means if I take a gradient step, things"
+ },
+ {
+  "start": 3694.58,
+  "end": 3697.08,
+  "text": "in my network change a significant amount"
+ },
+ {
+  "start": 3697.08,
+  "end": 3699.58,
+  "text": "and that this amount should be a fixed function"
+ },
+ {
+  "start": 3699.58,
+  "end": 3701.42,
+  "text": "of the width of the network."
+ },
+ {
+  "start": 3701.42,
+  "end": 3704.26,
+  "text": "In case some of you are theorists,"
+ },
+ {
+  "start": 3704.26,
+  "end": 3706.92,
+  "text": "you might be familiar with neural tangent kernels."
+ },
+ {
+  "start": 3706.92,
+  "end": 3709.42,
+  "text": "Neural tangent kernels would have a very different behavior."
+ },
+ {
+  "start": 3709.42,
+  "end": 3710.837,
+  "text": "Those would be the kinds of things"
+ },
+ {
+  "start": 3710.837,
+  "end": 3712.66,
+  "text": "where the change in activations actually"
+ },
+ {
+  "start": 3712.66,
+  "end": 3714.767,
+  "text": "vanish as a function of the network width."
+ },
+ {
+  "start": 3714.767,
+  "end": 3717.1,
+  "text": "And you don't want that, because you do want the network"
+ },
+ {
+  "start": 3717.1,
+  "end": 3719.62,
+  "text": "to change and learn features and do things even"
+ },
+ {
+  "start": 3719.62,
+  "end": 3722.58,
+  "text": "in the limit of your big neural networks."
+ },
+ {
+  "start": 3722.58,
+  "end": 3724.16,
+  "text": "So these two are the invariants."
+ },
+ {
+  "start": 3724.16,
+  "end": 3725.0,
+  "text": "They make sense."
+ },
+ {
+  "start": 3725.0,
+  "end": 3727.94,
+  "text": "They're basically saying, activations and the change"
+ },
+ {
+  "start": 3727.94,
+  "end": 3730.58,
+  "text": "in the activations should remain roughly similar"
+ },
+ {
+  "start": 3730.58,
+  "end": 3732.46,
+  "text": "as a function of the width of the network."
+ },
+ {
+  "start": 3732.46,
+  "end": 3735.008,
+  "text": "And then note that I'm going to sometimes"
+ },
+ {
+  "start": 3735.008,
+  "end": 3737.3,
+  "text": "go back and forth between individual activations, which"
+ },
+ {
+  "start": 3737.3,
+  "end": 3737.96,
+  "text": "is this."
+ },
+ {
+  "start": 3737.96,
+  "end": 3739.82,
+  "text": "And then the norm, which--"
+ },
+ {
+  "start": 3739.82,
+  "end": 3741.8,
+  "text": "if each activation is roughly O of 1,"
+ },
+ {
+  "start": 3741.8,
+  "end": 3744.58,
+  "text": "the norm of the whole vector of activation"
+ },
+ {
+  "start": 3744.58,
+  "end": 3746.8,
+  "text": "should be square root of the number"
+ },
+ {
+  "start": 3746.8,
+  "end": 3749.12,
+  "text": "of hidden units in that layer."
+ },
+ {
+  "start": 3749.12,
+  "end": 3751.76,
+  "text": "OK, so that's the main thing."
+ },
+ {
+  "start": 3751.76,
+  "end": 3754.24,
+  "text": "Now, the thing about muP is it's interesting"
+ },
+ {
+  "start": 3754.24,
+  "end": 3758.64,
+  "text": "because it starts with this very simple and palatable set"
+ },
+ {
+  "start": 3758.64,
+  "end": 3759.343,
+  "text": "of assumptions."
+ },
+ {
+  "start": 3759.343,
+  "end": 3761.76,
+  "text": "You might all agree that this is a reasonable thing to do."
+ },
+ {
+  "start": 3761.76,
+  "end": 3764.16,
+  "text": "And then we're going to make a number"
+ },
+ {
+  "start": 3764.16,
+  "end": 3766.34,
+  "text": "of additional strong assumptions."
+ },
+ {
+  "start": 3766.34,
+  "end": 3767.76,
+  "text": "But then, in the end, we're going"
+ },
+ {
+  "start": 3767.76,
+  "end": 3769.36,
+  "text": "to get a very simple set of scaling"
+ },
+ {
+  "start": 3769.36,
+  "end": 3771.8,
+  "text": "rules that drop out of this."
+ },
+ {
+  "start": 3771.8,
+  "end": 3773.888,
+  "text": "So remember, what we want to do is"
+ },
+ {
+  "start": 3773.888,
+  "end": 3775.68,
+  "text": "we want to make sure that the activation is"
+ },
+ {
+  "start": 3775.68,
+  "end": 3777.34,
+  "text": "at init are roughly unit."
+ },
+ {
+  "start": 3777.34,
+  "end": 3778.48,
+  "text": "So what do we do?"
+ },
+ {
+  "start": 3778.48,
+  "end": 3781.12,
+  "text": "Well, if we have a simple deep linear network,"
+ },
+ {
+  "start": 3781.12,
+  "end": 3782.88,
+  "text": "and we initialize all of our weights"
+ },
+ {
+  "start": 3782.88,
+  "end": 3787.04,
+  "text": "as a sigma squared scaled Gaussian,"
+ },
+ {
+  "start": 3787.04,
+  "end": 3790.06,
+  "text": "then what is going to be the spectral norm of this matrix?"
+ },
+ {
+  "start": 3790.06,
+  "end": 3791.32,
+  "text": "Well, you can write that down."
+ },
+ {
+  "start": 3791.32,
+  "end": 3792.987,
+  "text": "I'm not going to ask you to verify that,"
+ },
+ {
+  "start": 3792.987,
+  "end": 3794.88,
+  "text": "but that's standard matrix concentration"
+ },
+ {
+  "start": 3794.88,
+  "end": 3798.72,
+  "text": "arguments for the operator norm of a random Gaussian matrix."
+ },
+ {
+  "start": 3798.72,
+  "end": 3801.88,
+  "text": "And then now note that in certain regimes where"
+ },
+ {
+  "start": 3801.88,
+  "end": 3805.57,
+  "text": "the fan-out is, I think, not much bigger than the fan-in,"
+ },
+ {
+  "start": 3805.57,
+  "end": 3808.21,
+  "text": "you're going to get that the output of the layer"
+ },
+ {
+  "start": 3808.21,
+  "end": 3811.81,
+  "text": "is similar to the product of the input of the layer"
+ },
+ {
+  "start": 3811.81,
+  "end": 3813.37,
+  "text": "times the operator norm."
+ },
+ {
+  "start": 3813.37,
+  "end": 3819.13,
+  "text": "This is always an upper bound, but this approximate in certain high-dimensional regimes."
+ },
+ {
+  "start": 3819.13,
+  "end": 3821.83,
+  "text": "Now, if this is true, now what can we do?"
+ },
+ {
+  "start": 3821.83,
+  "end": 3823.85,
+  "text": "Well, we can solve for sigma to try"
+ },
+ {
+  "start": 3823.85,
+  "end": 3827.09,
+  "text": "to keep our activations the same across all the layers"
+ },
+ {
+  "start": 3827.09,
+  "end": 3828.61,
+  "text": "and across all the width."
+ },
+ {
+  "start": 3828.61,
+  "end": 3831.73,
+  "text": "So imagine that at layer L minus 1,"
+ },
+ {
+  "start": 3831.73,
+  "end": 3835.39,
+  "text": "I have square root of L minus 1 activation."
+ },
+ {
+  "start": 3835.39,
+  "end": 3838.65,
+  "text": "And this is, remember, consistent with this notation"
+ },
+ {
+  "start": 3838.65,
+  "end": 3840.53,
+  "text": "that, at least for this whole vector,"
+ },
+ {
+  "start": 3840.53,
+  "end": 3842.11,
+  "text": "I should have square root of n of L."
+ },
+ {
+  "start": 3842.11,
+  "end": 3844.89,
+  "text": "So this is our base case for induction."
+ },
+ {
+  "start": 3844.89,
+  "end": 3847.53,
+  "text": "And then our inductive case says, well,"
+ },
+ {
+  "start": 3847.53,
+  "end": 3849.69,
+  "text": "remember that I have this operator norm at layer"
+ },
+ {
+  "start": 3849.69,
+  "end": 3852.69,
+  "text": "L, which is this function of the fan in and the fan out."
+ },
+ {
+  "start": 3852.69,
+  "end": 3855.77,
+  "text": "And so this is going to be equal to this"
+ },
+ {
+  "start": 3855.77,
+  "end": 3857.91,
+  "text": "if I pick a particular sigma."
+ },
+ {
+  "start": 3857.91,
+  "end": 3859.757,
+  "text": "So let's say this is the ansatz."
+ },
+ {
+  "start": 3859.757,
+  "end": 3861.59,
+  "text": "I'm going to assume that this is the answer,"
+ },
+ {
+  "start": 3861.59,
+  "end": 3863.632,
+  "text": "and then we'll see what happens to the induction."
+ },
+ {
+  "start": 3863.632,
+  "end": 3867.15,
+  "text": "If I pick this as a hypothesis, and I plug this into the sigma,"
+ },
+ {
+  "start": 3867.15,
+  "end": 3869.83,
+  "text": "notice that I get that the ratio of the operator norm"
+ },
+ {
+  "start": 3869.83,
+  "end": 3871.402,
+  "text": "is this, the ratio of the fan out"
+ },
+ {
+  "start": 3871.402,
+  "end": 3874.11,
+  "text": "over the-- sorry, square root of the fan-out over the square root"
+ },
+ {
+  "start": 3874.11,
+  "end": 3875.11,
+  "text": "of the fan-in."
+ },
+ {
+  "start": 3875.11,
+  "end": 3877.11,
+  "text": "And then I plug this back in here."
+ },
+ {
+  "start": 3877.11,
+  "end": 3879.75,
+  "text": "And then I'm going to get that the norm of the output"
+ },
+ {
+  "start": 3879.75,
+  "end": 3882.31,
+  "text": "is going to be equal to the square root of the number"
+ },
+ {
+  "start": 3882.31,
+  "end": 3884.95,
+  "text": "of units in my layer plus some lower-order terms"
+ },
+ {
+  "start": 3884.95,
+  "end": 3886.89,
+  "text": "that I'm not going to bother to keep track of."
+ },
+ {
+  "start": 3886.89,
+  "end": 3889.43,
+  "text": "So where this sigma came out of--"
+ },
+ {
+  "start": 3889.43,
+  "end": 3891.65,
+  "text": "I mean, this is drawing it out of a hat."
+ },
+ {
+  "start": 3891.65,
+  "end": 3896.67,
+  "text": "But we can verify that if I plug this noise initialization"
+ },
+ {
+  "start": 3896.67,
+  "end": 3900.47,
+  "text": "into my formula, then, essentially, at every layer,"
+ },
+ {
+  "start": 3900.47,
+  "end": 3903.39,
+  "text": "the size of my activations is roughly"
+ },
+ {
+  "start": 3903.39,
+  "end": 3905.47,
+  "text": "equal to the square root of the number of hidden"
+ },
+ {
+  "start": 3905.47,
+  "end": 3907.568,
+  "text": "units at that layer."
+ },
+ {
+  "start": 3907.568,
+  "end": 3909.11,
+  "text": "There are some assumptions made here,"
+ },
+ {
+  "start": 3909.11,
+  "end": 3910.65,
+  "text": "like this approximate equals."
+ },
+ {
+  "start": 3910.65,
+  "end": 3915.27,
+  "text": "But this is mostly a legitimate set of assumptions."
+ },
+ {
+  "start": 3915.27,
+  "end": 3918.55,
+  "text": "So condition A1 is pretty simple."
+ },
+ {
+  "start": 3918.55,
+  "end": 3923.41,
+  "text": "Condition A2 is a little bit hairier, to be honest."
+ },
+ {
+  "start": 3923.41,
+  "end": 3926.41,
+  "text": "So really, we need to deal with the updates now."
+ },
+ {
+  "start": 3926.41,
+  "end": 3930.25,
+  "text": "And I'm only going to consider the case of a single example"
+ },
+ {
+  "start": 3930.25,
+  "end": 3934.45,
+  "text": "in a batch for SGD for linear neural networks, so"
+ },
+ {
+  "start": 3934.45,
+  "end": 3936.212,
+  "text": "deep linear network."
+ },
+ {
+  "start": 3936.212,
+  "end": 3937.67,
+  "text": "So what is this going to look like?"
+ },
+ {
+  "start": 3937.67,
+  "end": 3942.49,
+  "text": "Well, the change in my weights for a particular layer L--"
+ },
+ {
+  "start": 3942.49,
+  "end": 3944.67,
+  "text": "if you think about how this is going to behave,"
+ },
+ {
+  "start": 3944.67,
+  "end": 3948.29,
+  "text": "it's going to be a rank 1 update between my gradient for the loss"
+ },
+ {
+  "start": 3948.29,
+  "end": 3949.91,
+  "text": "and the activations."
+ },
+ {
+  "start": 3949.91,
+  "end": 3953.03,
+  "text": "This is true just because of the behavior of the backwards."
+ },
+ {
+  "start": 3953.03,
+  "end": 3955.75,
+  "text": "The forwards is a rank 1 multiplication."
+ },
+ {
+  "start": 3955.75,
+  "end": 3959.85,
+  "text": "The backwards is going to be a rank 1 outer product."
+ },
+ {
+  "start": 3959.85,
+  "end": 3962.71,
+  "text": "So now this is the change in the weights."
+ },
+ {
+  "start": 3962.71,
+  "end": 3966.57,
+  "text": "And now what is the change in the activations at that layer?"
+ },
+ {
+  "start": 3966.57,
+  "end": 3968.93,
+  "text": "Well, the change in the activations--"
+ },
+ {
+  "start": 3968.93,
+  "end": 3973.71,
+  "text": "I just take h equals W times h l minus 1, and I expand this out."
+ },
+ {
+  "start": 3973.71,
+  "end": 3975.59,
+  "text": "And I expand this out into this formula."
+ },
+ {
+  "start": 3975.59,
+  "end": 3977.33,
+  "text": "This is going to be exactly the change"
+ },
+ {
+  "start": 3977.33,
+  "end": 3978.918,
+  "text": "in the activation at layer L."
+ },
+ {
+  "start": 3978.918,
+  "end": 3980.46,
+  "text": "And it's going to have two terms, one"
+ },
+ {
+  "start": 3980.46,
+  "end": 3983.5,
+  "text": "that is the direct term from changes in the activation at L"
+ },
+ {
+  "start": 3983.5,
+  "end": 3987.32,
+  "text": "minus 1 and the cross term in some sense of what happens"
+ },
+ {
+  "start": 3987.32,
+  "end": 3988.82,
+  "text": "because my weights have changed, not"
+ },
+ {
+  "start": 3988.82,
+  "end": 3991.487,
+  "text": "just because the activations of the previous layer have changed."
+ },
+ {
+  "start": 3991.487,
+  "end": 3994.52,
+  "text": "So there's two terms to this update."
+ },
+ {
+  "start": 3994.52,
+  "end": 3998.46,
+  "text": "And so this is the change in the activation at layer L."
+ },
+ {
+  "start": 3998.46,
+  "end": 4000.9,
+  "text": "And now what I'm going to do is I'm"
+ },
+ {
+  "start": 4000.9,
+  "end": 4002.993,
+  "text": "going to look through each of these three terms."
+ },
+ {
+  "start": 4002.993,
+  "end": 4004.66,
+  "text": "I want each of these three terms to have"
+ },
+ {
+  "start": 4004.66,
+  "end": 4007.74,
+  "text": "the same order of magnitude, and I want that order of magnitude"
+ },
+ {
+  "start": 4007.74,
+  "end": 4010.36,
+  "text": "to be square root of n of L. Why is that?"
+ },
+ {
+  "start": 4010.36,
+  "end": 4012.76,
+  "text": "Remember that, if I go back two slides,"
+ },
+ {
+  "start": 4012.76,
+  "end": 4016.0,
+  "text": "the condition that I want for A2 is that after one gradient step,"
+ },
+ {
+  "start": 4016.0,
+  "end": 4019.36,
+  "text": "the change in activation should be O of 1 or omega of 1."
+ },
+ {
+  "start": 4019.36,
+  "end": 4021.26,
+  "text": "And so if I want that to be true,"
+ },
+ {
+  "start": 4021.26,
+  "end": 4024.86,
+  "text": "then the norm of that layer should be square root of nl."
+ },
+ {
+  "start": 4024.86,
+  "end": 4028.14,
+  "text": "And so to do that, what I want is for each of these three terms"
+ },
+ {
+  "start": 4028.14,
+  "end": 4030.12,
+  "text": "to have that order of magnitude."
+ },
+ {
+  "start": 4030.12,
+  "end": 4032.98,
+  "text": "And if that's true, and there's no cancelations,"
+ },
+ {
+  "start": 4032.98,
+  "end": 4035.68,
+  "text": "then this is going to be the right order of magnitude."
+ },
+ {
+  "start": 4035.68,
+  "end": 4037.96,
+  "text": "You can see the sketchy pieces adding up."
+ },
+ {
+  "start": 4037.96,
+  "end": 4040.52,
+  "text": "We're assuming things like no cancelations and so on,"
+ },
+ {
+  "start": 4040.52,
+  "end": 4042.76,
+  "text": "but this is giving us some interesting ways"
+ },
+ {
+  "start": 4042.76,
+  "end": 4045.74,
+  "text": "of thinking about the magnitude of each of these objects."
+ },
+ {
+  "start": 4045.74,
+  "end": 4050.76,
+  "text": "So at this point, the right way to think about this is not like, OK, Tatsu is sitting here"
+ },
+ {
+  "start": 4050.76,
+  "end": 4052.62,
+  "text": "doing rigorous mathematics."
+ },
+ {
+  "start": 4052.62,
+  "end": 4054.52,
+  "text": "What I am doing here is I'm basically"
+ },
+ {
+  "start": 4054.52,
+  "end": 4058.04,
+  "text": "keeping track of all the orders of magnitude of all the terms."
+ },
+ {
+  "start": 4058.04,
+  "end": 4060.54,
+  "text": "And I am saying that, given our assumptions,"
+ },
+ {
+  "start": 4060.54,
+  "end": 4062.06,
+  "text": "how big should these roughly be?"
+ },
+ {
+  "start": 4062.06,
+  "end": 4063.64,
+  "text": "It's physicist's math."
+ },
+ {
+  "start": 4063.64,
+  "end": 4065.44,
+  "text": "No offense to physicists."
+ },
+ {
+  "start": 4065.44,
+  "end": 4069.76,
+  "text": "This was developed by physicists in this way."
+ },
+ {
+  "start": 4069.76,
+  "end": 4072.56,
+  "text": "OK, so now really-- sorry, go back one slide just"
+ },
+ {
+  "start": 4072.56,
+  "end": 4074.6,
+  "text": "to make all this clear."
+ },
+ {
+  "start": 4074.6,
+  "end": 4077.6,
+  "text": "So the first term, this comes by almost assumption."
+ },
+ {
+  "start": 4077.6,
+  "end": 4079.34,
+  "text": "It's the inductive assumption."
+ },
+ {
+  "start": 4079.34,
+  "end": 4081.6,
+  "text": "We assume that delta h of l minus 1"
+ },
+ {
+  "start": 4081.6,
+  "end": 4083.18,
+  "text": "has the right order of magnitude."
+ },
+ {
+  "start": 4083.18,
+  "end": 4085.16,
+  "text": "So this comes for free."
+ },
+ {
+  "start": 4085.16,
+  "end": 4087.54,
+  "text": "These other two terms-- these are trickier."
+ },
+ {
+  "start": 4087.54,
+  "end": 4089.84,
+  "text": "We have these terms that multiply"
+ },
+ {
+  "start": 4089.84,
+  "end": 4092.84,
+  "text": "the change in my weights in operator norm times"
+ },
+ {
+  "start": 4092.84,
+  "end": 4094.58,
+  "text": "square root of L minus 1."
+ },
+ {
+  "start": 4094.58,
+  "end": 4097.14,
+  "text": "And so because these two are the order of magnitude"
+ },
+ {
+  "start": 4097.14,
+  "end": 4100.02,
+  "text": "of both of these terms, we know how big"
+ },
+ {
+  "start": 4100.02,
+  "end": 4101.245,
+  "text": "this delta L needs to be."
+ },
+ {
+  "start": 4101.245,
+  "end": 4102.787,
+  "text": "We can solve for this because we know"
+ },
+ {
+  "start": 4102.787,
+  "end": 4106.279,
+  "text": "that this left-hand side needs to be square root L."
+ },
+ {
+  "start": 4106.279,
+  "end": 4109.0,
+  "text": "And then we have this term, so we solve for this operator norm."
+ },
+ {
+  "start": 4109.0,
+  "end": 4110.64,
+  "text": "And that's exactly this quantity."
+ },
+ {
+  "start": 4110.64,
+  "end": 4113.5,
+  "text": "So this is going to be the goal for the next slide."
+ },
+ {
+  "start": 4113.5,
+  "end": 4116.62,
+  "text": "I want to try to figure out what kinds of learning rates"
+ },
+ {
+  "start": 4116.62,
+  "end": 4119.74,
+  "text": "are going to give me an update that's roughly scaled"
+ },
+ {
+  "start": 4119.74,
+  "end": 4122.34,
+  "text": "as the square root of the fan-out over the square root"
+ },
+ {
+  "start": 4122.34,
+  "end": 4123.38,
+  "text": "of the fan-in."
+ },
+ {
+  "start": 4123.38,
+  "end": 4124.54,
+  "text": "So that's the goal."
+ },
+ {
+  "start": 4124.54,
+  "end": 4127.279,
+  "text": "As I said, after I pick a learning rate,"
+ },
+ {
+  "start": 4127.279,
+  "end": 4129.24,
+  "text": "this should roughly be true."
+ },
+ {
+  "start": 4129.24,
+  "end": 4130.859,
+  "text": "So how can we do that?"
+ },
+ {
+  "start": 4130.859,
+  "end": 4133.279,
+  "text": "Well, we're going to make yet another assumption."
+ },
+ {
+  "start": 4133.279,
+  "end": 4136.08,
+  "text": "And this is probably the least palatable of the assumptions,"
+ },
+ {
+  "start": 4136.08,
+  "end": 4137.62,
+  "text": "In my opinion, which is that we're"
+ },
+ {
+  "start": 4137.62,
+  "end": 4140.22,
+  "text": "going to assume that the loss update is"
+ },
+ {
+  "start": 4140.22,
+  "end": 4141.64,
+  "text": "going to be scaled by unit."
+ },
+ {
+  "start": 4141.64,
+  "end": 4144.02,
+  "text": "In other words, we're going to assume"
+ },
+ {
+  "start": 4144.02,
+  "end": 4145.74,
+  "text": "that our model is actually making"
+ },
+ {
+  "start": 4145.74,
+  "end": 4149.18,
+  "text": "some appreciable, nontrivial progress as a function of scale"
+ },
+ {
+  "start": 4149.18,
+  "end": 4151.62,
+  "text": "and that that's roughly similar."
+ },
+ {
+  "start": 4151.62,
+  "end": 4153.282,
+  "text": "Not quite sure that's palatable to me,"
+ },
+ {
+  "start": 4153.282,
+  "end": 4154.74,
+  "text": "but that is yet another assumption."
+ },
+ {
+  "start": 4154.74,
+  "end": 4155.8,
+  "text": "So we throw that down."
+ },
+ {
+  "start": 4155.8,
+  "end": 4157.56,
+  "text": "But now the point of this assumption"
+ },
+ {
+  "start": 4157.56,
+  "end": 4159.92,
+  "text": "is that if this is true, the rest of the math"
+ },
+ {
+  "start": 4159.92,
+  "end": 4162.84,
+  "text": "works out quite cleanly, because the change in the loss"
+ },
+ {
+  "start": 4162.84,
+  "end": 4165.04,
+  "text": "is the product of my gradient plus"
+ },
+ {
+  "start": 4165.04,
+  "end": 4166.38,
+  "text": "how much my weights changed."
+ },
+ {
+  "start": 4166.38,
+  "end": 4167.96,
+  "text": "This is Taylor approximation."
+ },
+ {
+  "start": 4167.96,
+  "end": 4169.84,
+  "text": "And then because this is rank 1, I"
+ },
+ {
+  "start": 4169.84,
+  "end": 4171.8,
+  "text": "can rewrite this thing as a Frobenius norm"
+ },
+ {
+  "start": 4171.8,
+  "end": 4173.92,
+  "text": "and as an operator norm."
+ },
+ {
+  "start": 4173.92,
+  "end": 4177.62,
+  "text": "And so this right-hand side now allows us to get what we want."
+ },
+ {
+  "start": 4177.62,
+  "end": 4179.08,
+  "text": "This is O of 1."
+ },
+ {
+  "start": 4179.08,
+  "end": 4182.08,
+  "text": "This term we want to be square root n over square root l"
+ },
+ {
+  "start": 4182.08,
+  "end": 4182.7,
+  "text": "minus 1."
+ },
+ {
+  "start": 4182.7,
+  "end": 4184.16,
+  "text": "That's this term on the right here."
+ },
+ {
+  "start": 4184.16,
+  "end": 4187.56,
+  "text": "And then finally, I have this gradient of L term."
+ },
+ {
+  "start": 4187.56,
+  "end": 4189.64,
+  "text": "And this is going to be square root of NL"
+ },
+ {
+  "start": 4189.64,
+  "end": 4191.56,
+  "text": "minus 1 over square root nl."
+ },
+ {
+  "start": 4191.56,
+  "end": 4194.18,
+  "text": "And then so now what eta do I need?"
+ },
+ {
+  "start": 4194.18,
+  "end": 4196.24,
+  "text": "Well, the eta that I need is going"
+ },
+ {
+  "start": 4196.24,
+  "end": 4197.96,
+  "text": "to be solving for this quantity, which"
+ },
+ {
+  "start": 4197.96,
+  "end": 4202.28,
+  "text": "is the ratio of these two guys, which is nl over nl minus 1."
+ },
+ {
+  "start": 4202.28,
+  "end": 4206.265,
+  "text": "So we made this one assumption that the left-hand side of this O of 1."
+ },
+ {
+  "start": 4206.265,
+  "end": 4208.14,
+  "text": "And then we've solved for all the quantities,"
+ },
+ {
+  "start": 4208.14,
+  "end": 4211.04,
+  "text": "and we've ended up with a fan-out over fan-in ratio"
+ },
+ {
+  "start": 4211.04,
+  "end": 4213.77,
+  "text": "for a learning rate for a layer."
+ },
+ {
+  "start": 4213.77,
+  "end": 4216.31,
+  "text": "One side note that I'll make is that for Adam,"
+ },
+ {
+  "start": 4216.31,
+  "end": 4220.45,
+  "text": "because of the changes in some of this, you're going to get a 1"
+ },
+ {
+  "start": 4220.45,
+  "end": 4224.17,
+  "text": "over nl minus 1 scaling, which I'll mention here."
+ },
+ {
+  "start": 4224.17,
+  "end": 4229.41,
+  "text": "So I've walked through a bunch of hopefully intuitive-looking"
+ },
+ {
+  "start": 4229.41,
+  "end": 4232.057,
+  "text": "scaling arguments for various components."
+ },
+ {
+  "start": 4232.057,
+  "end": 4233.89,
+  "text": "But in the end, maybe you are interested in,"
+ },
+ {
+  "start": 4233.89,
+  "end": 4234.95,
+  "text": "what does this mean?"
+ },
+ {
+  "start": 4234.95,
+  "end": 4237.25,
+  "text": "What does this do for me?"
+ },
+ {
+  "start": 4237.25,
+  "end": 4238.77,
+  "text": "What this means is that we're going"
+ },
+ {
+  "start": 4238.77,
+  "end": 4242.09,
+  "text": "to change how we set our initializations"
+ },
+ {
+  "start": 4242.09,
+  "end": 4244.21,
+  "text": "and learning rates a little bit."
+ },
+ {
+  "start": 4244.21,
+  "end": 4248.29,
+  "text": "So our initialization is going to look like—so for muP,"
+ },
+ {
+  "start": 4248.29,
+  "end": 4249.795,
+  "text": "the blue box is what we do."
+ },
+ {
+  "start": 4249.795,
+  "end": 4251.17,
+  "text": "Our initialization is going to be"
+ },
+ {
+  "start": 4251.17,
+  "end": 4255.01,
+  "text": "1 over square root nl minus 1 times a component that"
+ },
+ {
+  "start": 4255.01,
+  "end": 4257.67,
+  "text": "is 1 over the square root fanout over fanin."
+ },
+ {
+  "start": 4257.67,
+  "end": 4260.81,
+  "text": "So if this is 1, then this is equivalent"
+ },
+ {
+  "start": 4260.81,
+  "end": 4262.27,
+  "text": "to the usual initialization."
+ },
+ {
+  "start": 4262.27,
+  "end": 4264.29,
+  "text": "This is the standard parameterization."
+ },
+ {
+  "start": 4264.29,
+  "end": 4266.998,
+  "text": "But if this ratio is not smaller than 1,"
+ },
+ {
+  "start": 4266.998,
+  "end": 4268.79,
+  "text": "then you get basically something different."
+ },
+ {
+  "start": 4268.79,
+  "end": 4270.873,
+  "text": "You get something that's closer to the square root"
+ },
+ {
+  "start": 4270.873,
+  "end": 4273.03,
+  "text": "fanout over fanin."
+ },
+ {
+  "start": 4273.03,
+  "end": 4274.79,
+  "text": "The learning rate normally you would"
+ },
+ {
+  "start": 4274.79,
+  "end": 4278.022,
+  "text": "set to be a constant as a function of your model size,"
+ },
+ {
+  "start": 4278.022,
+  "end": 4280.23,
+  "text": "but you would want to set this to the ratio of fanout"
+ },
+ {
+  "start": 4280.23,
+  "end": 4281.07,
+  "text": "and fanin."
+ },
+ {
+  "start": 4281.07,
+  "end": 4283.478,
+  "text": "And maybe more interestingly, for Adam, this whole thing"
+ },
+ {
+  "start": 4283.478,
+  "end": 4284.77,
+  "text": "is a little bit more different."
+ },
+ {
+  "start": 4284.77,
+  "end": 4287.39,
+  "text": "I'm not going to even touch the derivation for that, where"
+ },
+ {
+  "start": 4287.39,
+  "end": 4290.15,
+  "text": "you drop this 1 over nl term, and you get 1"
+ },
+ {
+  "start": 4290.15,
+  "end": 4294.27,
+  "text": "over the fanin as the layer specific learning rate."
+ },
+ {
+  "start": 4294.27,
+  "end": 4297.51,
+  "text": "And so basically, layers that have big fanins for Adam"
+ },
+ {
+  "start": 4297.51,
+  "end": 4298.99,
+  "text": "get smaller learning rates."
+ },
+ {
+  "start": 4298.99,
+  "end": 4301.75,
+  "text": "It allows you to have these layer-adaptive learning rates"
+ },
+ {
+  "start": 4301.75,
+  "end": 4304.03,
+  "text": "that are quite interesting."
+ },
+ {
+  "start": 4304.03,
+  "end": 4309.237,
+  "text": "So that was the derivation of muP."
+ },
+ {
+  "start": 4309.237,
+  "end": 4310.57,
+  "text": "I went through a lot of details."
+ },
+ {
+  "start": 4310.57,
+  "end": 4312.39,
+  "text": "I do want to maybe talk about what"
+ },
+ {
+  "start": 4312.39,
+  "end": 4314.21,
+  "text": "the high-level point of that was."
+ },
+ {
+  "start": 4314.21,
+  "end": 4316.47,
+  "text": "And the high-level point of that is, muP"
+ },
+ {
+  "start": 4316.47,
+  "end": 4318.69,
+  "text": "as an argument is very interesting."
+ },
+ {
+  "start": 4318.69,
+  "end": 4321.71,
+  "text": "Not only is there actual useful stuff."
+ },
+ {
+  "start": 4321.71,
+  "end": 4323.55,
+  "text": "The way in which you get to the algorithm"
+ },
+ {
+  "start": 4323.55,
+  "end": 4326.11,
+  "text": "is itself interesting because it's this very different kind"
+ },
+ {
+  "start": 4326.11,
+  "end": 4328.15,
+  "text": "of math in which you're saying, OK,"
+ },
+ {
+  "start": 4328.15,
+  "end": 4330.59,
+  "text": "I'm going to take a scaling limit of my network."
+ },
+ {
+  "start": 4330.59,
+  "end": 4333.027,
+  "text": "And then I assert some invariance about my network,"
+ },
+ {
+  "start": 4333.027,
+  "end": 4335.11,
+  "text": "and then I'm going to make additional assumptions."
+ },
+ {
+  "start": 4335.11,
+  "end": 4336.735,
+  "text": "And then I'm going to try to figure out"
+ },
+ {
+  "start": 4336.735,
+  "end": 4338.743,
+  "text": "what the constraints on my hyperparameters are."
+ },
+ {
+  "start": 4338.743,
+  "end": 4340.41,
+  "text": "And the constraints essentially give you"
+ },
+ {
+  "start": 4340.41,
+  "end": 4344.05,
+  "text": "certain kinds of scaling limits on your hyperparameters as well."
+ },
+ {
+  "start": 4344.05,
+  "end": 4346.77,
+  "text": "So this is a general principle for coming up"
+ },
+ {
+  "start": 4346.77,
+  "end": 4349.25,
+  "text": "with different kinds of algorithms or hyperparameter"
+ },
+ {
+  "start": 4349.25,
+  "end": 4350.85,
+  "text": "scalings, I think, which are probably"
+ },
+ {
+  "start": 4350.85,
+  "end": 4355.33,
+  "text": "very different than what you're used to in CS or ML training."
+ },
+ {
+  "start": 4355.33,
+  "end": 4358.65,
+  "text": "OK, those are the muP derivation."
+ },
+ {
+  "start": 4358.65,
+  "end": 4361.01,
+  "text": "I want to close out on the muP part with just"
+ },
+ {
+  "start": 4361.01,
+  "end": 4363.13,
+  "text": "a few empirical things."
+ },
+ {
+  "start": 4363.13,
+  "end": 4367.41,
+  "text": "There's an interesting paper by an independent researcher"
+ },
+ {
+  "start": 4367.41,
+  "end": 4372.29,
+  "text": "on basically stress testing muP in lots of different ways."
+ },
+ {
+  "start": 4372.29,
+  "end": 4376.41,
+  "text": "And muP can be thought of as a procedure"
+ },
+ {
+  "start": 4376.41,
+  "end": 4378.97,
+  "text": "for tuning hyperparameters."
+ },
+ {
+  "start": 4378.97,
+  "end": 4381.583,
+  "text": "And so depending on how you do things,"
+ },
+ {
+  "start": 4381.583,
+  "end": 4383.25,
+  "text": "Adam is going to have a certain learning"
+ },
+ {
+  "start": 4383.25,
+  "end": 4385.71,
+  "text": "rate as a function of different components of the network."
+ },
+ {
+  "start": 4385.71,
+  "end": 4388.84,
+  "text": "So you have an embedding parameter, attention parameters,"
+ },
+ {
+  "start": 4388.84,
+  "end": 4390.703,
+  "text": "input/output MLPs or softmax linears."
+ },
+ {
+  "start": 4390.703,
+  "end": 4392.62,
+  "text": "All of those are going to have different kinds"
+ },
+ {
+  "start": 4392.62,
+  "end": 4398.54,
+  "text": "of scalings under muP, as well as not muP scaling rules."
+ },
+ {
+  "start": 4398.54,
+  "end": 4403.74,
+  "text": "And the interesting thing here is that particular paper"
+ },
+ {
+  "start": 4403.74,
+  "end": 4405.7,
+  "text": "replicated a bunch of the muP results"
+ },
+ {
+  "start": 4405.7,
+  "end": 4408.88,
+  "text": "for language models trained at different scales."
+ },
+ {
+  "start": 4408.88,
+  "end": 4412.74,
+  "text": "And maybe unsurprisingly, he found almost the headline result"
+ },
+ {
+  "start": 4412.74,
+  "end": 4415.86,
+  "text": "from MiniCPM and others, which is"
+ },
+ {
+  "start": 4415.86,
+  "end": 4418.48,
+  "text": "that if you get the muP right, and you're only scaling with,"
+ },
+ {
+  "start": 4418.48,
+  "end": 4420.74,
+  "text": "in this case, in a very controlled way,"
+ },
+ {
+  "start": 4420.74,
+  "end": 4424.3,
+  "text": "you get exactly the learning rate optimality"
+ },
+ {
+  "start": 4424.3,
+  "end": 4427.18,
+  "text": "invariance that baseline muP--"
+ },
+ {
+  "start": 4427.18,
+  "end": 4429.78,
+  "text": "or just looking at a variant of muP that"
+ },
+ {
+  "start": 4429.78,
+  "end": 4433.5,
+  "text": "tracks projection biases for attention, both of those"
+ },
+ {
+  "start": 4433.5,
+  "end": 4435.38,
+  "text": "transfer very nicely."
+ },
+ {
+  "start": 4435.38,
+  "end": 4439.82,
+  "text": "But then you might ask, basically,"
+ },
+ {
+  "start": 4439.82,
+  "end": 4441.78,
+  "text": "there's a lot of things in the real world"
+ },
+ {
+  "start": 4441.78,
+  "end": 4444.22,
+  "text": "that muP does not handle."
+ },
+ {
+  "start": 4444.22,
+  "end": 4447.68,
+  "text": "Technically, SwiGLU does not fit into muP,"
+ },
+ {
+  "start": 4447.68,
+  "end": 4451.32,
+  "text": "neither does initialize variations, initialization"
+ },
+ {
+  "start": 4451.32,
+  "end": 4452.6,
+  "text": "or RMS norm."
+ },
+ {
+  "start": 4452.6,
+  "end": 4454.42,
+  "text": "Or if you really mess with your optimizer,"
+ },
+ {
+  "start": 4454.42,
+  "end": 4455.8,
+  "text": "that will mess that up, too."
+ },
+ {
+  "start": 4455.8,
+  "end": 4457.175,
+  "text": "And so you might ask, like, which"
+ },
+ {
+  "start": 4457.175,
+  "end": 4459.68,
+  "text": "of these things that are not allowed by the theory"
+ },
+ {
+  "start": 4459.68,
+  "end": 4460.7,
+  "text": "really break muP?"
+ },
+ {
+  "start": 4460.7,
+  "end": 4464.48,
+  "text": "And actually, for the most part, these mostly work with muP."
+ },
+ {
+  "start": 4464.48,
+  "end": 4466.4,
+  "text": "But some of the things that don't work"
+ },
+ {
+  "start": 4466.4,
+  "end": 4470.84,
+  "text": "is if you learn the gain term in RMS norm,"
+ },
+ {
+  "start": 4470.84,
+  "end": 4472.76,
+  "text": "this turns out to break muP."
+ },
+ {
+  "start": 4472.76,
+  "end": 4474.96,
+  "text": "Although, these can be removed in many cases"
+ },
+ {
+  "start": 4474.96,
+  "end": 4478.0,
+  "text": "without necessarily hurting you, and so maybe"
+ },
+ {
+  "start": 4478.0,
+  "end": 4479.38,
+  "text": "it's not such a bad idea."
+ },
+ {
+  "start": 4479.38,
+  "end": 4481.68,
+  "text": "But this does seem to break muP."
+ },
+ {
+  "start": 4481.68,
+  "end": 4484.2,
+  "text": "It also seems to break if you use more exotic optimizers"
+ },
+ {
+  "start": 4484.2,
+  "end": 4487.74,
+  "text": "like Lion, which basically rely on the sign of the gradient."
+ },
+ {
+  "start": 4487.74,
+  "end": 4491.0,
+  "text": "And sign gradient is like a spiritually"
+ },
+ {
+  "start": 4491.0,
+  "end": 4492.523,
+  "text": "similar to muon and other ideas."
+ },
+ {
+  "start": 4492.523,
+  "end": 4494.44,
+  "text": "And so there might be other interesting things"
+ },
+ {
+  "start": 4494.44,
+  "end": 4498.08,
+  "text": "that break with muP as well."
+ },
+ {
+  "start": 4498.08,
+  "end": 4500.96,
+  "text": "Finally, the thing that seems most concerning"
+ },
+ {
+  "start": 4500.96,
+  "end": 4504.36,
+  "text": "is that if you do large decoupled weight decay,"
+ },
+ {
+  "start": 4504.36,
+  "end": 4506.92,
+  "text": "you end up with significant muP failure."
+ },
+ {
+  "start": 4506.92,
+  "end": 4511.14,
+  "text": "So this is maybe the one stress test that it does fail."
+ },
+ {
+  "start": 4511.14,
+  "end": 4514.06,
+  "text": "But to close out this final section, you might, in the end,"
+ },
+ {
+  "start": 4514.06,
+  "end": 4516.3,
+  "text": "ask, like, is muP useful?"
+ },
+ {
+  "start": 4516.3,
+  "end": 4519.28,
+  "text": "And if you really want to stabilize your learning rates,"
+ },
+ {
+  "start": 4519.28,
+  "end": 4521.42,
+  "text": "it is actually pretty useful."
+ },
+ {
+  "start": 4521.42,
+  "end": 4523.62,
+  "text": "There's a lot of experiments of this form, where"
+ },
+ {
+  "start": 4523.62,
+  "end": 4526.34,
+  "text": "if you increase the width, your optimal learning rate shifts"
+ },
+ {
+  "start": 4526.34,
+  "end": 4530.0,
+  "text": "very predictably, but very greatly as a function of scale."
+ },
+ {
+  "start": 4530.0,
+  "end": 4531.32,
+  "text": "Whereas, with muP it doesn't."
+ },
+ {
+  "start": 4531.32,
+  "end": 4534.02,
+  "text": "And so it's one of the many tools in the toolkit"
+ },
+ {
+  "start": 4534.02,
+  "end": 4537.797,
+  "text": "to try to control hyperparameter drift as a function of scale."
+ },
+ {
+  "start": 4537.797,
+  "end": 4539.88,
+  "text": "I think it's an interesting open area of research."
+ },
+ {
+  "start": 4539.88,
+  "end": 4544.04,
+  "text": "It's not really done and dusted, and this the one right thing to do."
+ },
+ {
+  "start": 4544.04,
+  "end": 4546.86,
+  "text": "But there's a lot of promise in the muP-style initialization"
+ },
+ {
+  "start": 4546.86,
+  "end": 4547.443,
+  "text": "program."
+ },
+ {
+  "start": 4547.443,
+  "end": 4549.86,
+  "text": "There's also a lot of promise in just fitting scaling laws"
+ },
+ {
+  "start": 4549.86,
+  "end": 4552.14,
+  "text": "as well."
+ },
+ {
+  "start": 4552.14,
+  "end": 4556.74,
+  "text": "So the final thing I want to close with, scaling in the wild"
+ },
+ {
+  "start": 4556.74,
+  "end": 4557.52,
+  "text": "is very tricky."
+ },
+ {
+  "start": 4557.52,
+  "end": 4560.26,
+  "text": "As I mentioned in one of my replies."
+ },
+ {
+  "start": 4560.26,
+  "end": 4562.78,
+  "text": "I think the initial presentation of scaling laws"
+ },
+ {
+  "start": 4562.78,
+  "end": 4564.55,
+  "text": "makes it sound like a science."
+ },
+ {
+  "start": 4564.55,
+  "end": 4567.11,
+  "text": "It's like, yes, draw this line, do these procedures,"
+ },
+ {
+  "start": 4567.11,
+  "end": 4570.59,
+  "text": "and you will know, for sure, what will happen at scale."
+ },
+ {
+  "start": 4570.59,
+  "end": 4574.27,
+  "text": "But I think, in reality, it's a lot more messy and a lot more"
+ },
+ {
+  "start": 4574.27,
+  "end": 4576.15,
+  "text": "unknown than that."
+ },
+ {
+  "start": 4576.15,
+  "end": 4577.91,
+  "text": "There are lots of things that people"
+ },
+ {
+  "start": 4577.91,
+  "end": 4579.75,
+  "text": "do use in practice scaling laws for,"
+ },
+ {
+  "start": 4579.75,
+  "end": 4582.15,
+  "text": "like picking architectures, picking optimizers, picking"
+ },
+ {
+  "start": 4582.15,
+  "end": 4583.01,
+  "text": "hyperparameters."
+ },
+ {
+  "start": 4583.01,
+  "end": 4584.91,
+  "text": "All of these things are things that people"
+ },
+ {
+  "start": 4584.91,
+  "end": 4587.895,
+  "text": "do with scaling laws, but there is really an art to it"
+ },
+ {
+  "start": 4587.895,
+  "end": 4589.27,
+  "text": "in the sense of, you don't really"
+ },
+ {
+  "start": 4589.27,
+  "end": 4591.65,
+  "text": "if it's truly going to extrapolate forever."
+ },
+ {
+  "start": 4591.65,
+  "end": 4594.59,
+  "text": "You want to do reasonable things to maximize"
+ },
+ {
+  "start": 4594.59,
+  "end": 4595.77,
+  "text": "the chances of success."
+ },
+ {
+  "start": 4595.77,
+  "end": 4598.39,
+  "text": "And so there's lots of solutions that people have."
+ },
+ {
+  "start": 4598.39,
+  "end": 4599.45,
+  "text": "You can use muP."
+ },
+ {
+  "start": 4599.45,
+  "end": 4601.91,
+  "text": "You can search for the optimal learning rate in all"
+ },
+ {
+  "start": 4601.91,
+  "end": 4603.37,
+  "text": "of these other kinds of things."
+ },
+ {
+  "start": 4603.37,
+  "end": 4606.65,
+  "text": "And these are ways of controlling hyperparameter drift."
+ },
+ {
+  "start": 4606.65,
+  "end": 4608.09,
+  "text": "But there's no silver bullet yet."
+ },
+ {
+  "start": 4608.09,
+  "end": 4609.99,
+  "text": "Maybe next year, there will be a module"
+ },
+ {
+  "start": 4609.99,
+  "end": 4613.39,
+  "text": "that's like, we solved it, but not quite yet."
+ },
+ {
+  "start": 4613.39,
+  "end": 4615.27,
+  "text": "Great. Thanks a lot."
+ },
+ {
+  "start": 4615.27,
+  "end": 4618.22,
+  "text": "I can take questions afterwards."
+ }
+]

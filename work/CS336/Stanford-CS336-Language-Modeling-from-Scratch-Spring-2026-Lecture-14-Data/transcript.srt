@@ -1,0 +1,5731 @@
+1
+00:00:05,240 --> 00:00:07,680
+OK, let's get started.
+
+2
+00:00:07,680 --> 00:00:12,640
+So today is the second day on data.
+
+3
+00:00:12,640 --> 00:00:16,320
+Last time we talked about how data doesn't really
+
+4
+00:00:16,320 --> 00:00:17,540
+just fall from the sky.
+
+5
+00:00:17,540 --> 00:00:20,560
+You actually have to think about where it comes from.
+
+6
+00:00:20,560 --> 00:00:23,860
+So in general, the internet consists of live services.
+
+7
+00:00:26,680 --> 00:00:30,720
+That data on those services have to be either dumped or crawled.
+
+8
+00:00:30,720 --> 00:00:32,600
+And then there's an additional step where
+
+9
+00:00:32,600 --> 00:00:35,440
+you have to process the data.
+
+10
+00:00:35,440 --> 00:00:41,680
+And we also talked about various societal considerations,
+
+11
+00:00:41,680 --> 00:00:43,540
+terms of service, copyright.
+
+12
+00:00:43,540 --> 00:00:46,280
+You have to either get a license or appeal to fair use.
+
+13
+00:00:46,280 --> 00:00:50,320
+So there's a lot of complexity that goes into data.
+
+14
+00:00:50,320 --> 00:00:54,280
+So today we're going to look more at the data pipeline
+
+15
+00:00:54,280 --> 00:00:57,120
+from transforming the data, filtering the data,
+
+16
+00:00:57,120 --> 00:01:00,800
+deduplication, and mixing.
+
+17
+00:01:00,800 --> 00:01:02,360
+And then we're going to top it off
+
+18
+00:01:02,360 --> 00:01:06,800
+by talking a bit about post-training data,
+
+19
+00:01:06,800 --> 00:01:11,800
+in particular, how folks are using synthetic data these days.
+
+20
+00:01:11,800 --> 00:01:14,860
+So the first part is going to be mostly about pre-training.
+
+21
+00:01:14,860 --> 00:01:17,800
+That's what you should have in mind.
+
+22
+00:01:17,800 --> 00:01:21,460
+So we talked a little bit about data transformation already,
+
+23
+00:01:21,460 --> 00:01:23,560
+but just as a reminder.
+
+24
+00:01:23,560 --> 00:01:27,920
+So raw data doesn't come as text, even as
+
+25
+00:01:27,920 --> 00:01:30,340
+if you've scraped something.
+
+26
+00:01:30,340 --> 00:01:33,820
+If you ever look inside Common Crawl, it's not text.
+
+27
+00:01:33,820 --> 00:01:35,600
+It's either HTML.
+
+28
+00:01:35,600 --> 00:01:39,440
+Sometimes it could be PDFs or directories
+
+29
+00:01:39,440 --> 00:01:42,240
+in the case of GitHub.
+
+30
+00:01:42,240 --> 00:01:46,560
+So most of the attention on transforming data
+
+31
+00:01:46,560 --> 00:01:51,080
+is dealing with HTML because most of the web is in HTML.
+
+32
+00:01:51,080 --> 00:01:56,600
+And for this processing, a lot of this is fairly heuristic.
+
+33
+00:01:56,600 --> 00:02:01,990
+There's removing of boilerplate, like navigation and ads,
+
+34
+00:02:01,990 --> 00:02:06,030
+and extracting content, which is the main part of the page.
+
+35
+00:02:06,030 --> 00:02:10,770
+And there's some subtleties around what constitutes content.
+
+36
+00:02:10,770 --> 00:02:16,390
+Usually, you get rid of the footers and headers, and maybe
+
+37
+00:02:16,390 --> 00:02:20,470
+menus, and those things, and you try to extract the content.
+
+38
+00:02:20,470 --> 00:02:22,550
+But you could imagine in cases where
+
+39
+00:02:22,550 --> 00:02:25,790
+some of the navigation elements might
+
+40
+00:02:25,790 --> 00:02:28,050
+be helpful to learn what web pages look like.
+
+41
+00:02:28,050 --> 00:02:33,190
+So what is content and what is not content is not always clear.
+
+42
+00:02:33,190 --> 00:02:36,190
+And then what do you do about images and tables that
+
+43
+00:02:36,190 --> 00:02:39,510
+are in web pages?
+
+44
+00:02:39,510 --> 00:02:42,110
+So inherently, this is a lossy process
+
+45
+00:02:42,110 --> 00:02:46,150
+because you need to linearize HTML, which at least is
+
+46
+00:02:46,150 --> 00:02:48,430
+either hierarchical or visual, if you
+
+47
+00:02:48,430 --> 00:02:52,150
+think about the rendered output, and to a sequence of tokens.
+
+48
+00:02:52,150 --> 00:02:56,390
+And particularly tables are a bit tricky to deal with.
+
+49
+00:02:56,390 --> 00:03:00,230
+Simple tables, you can render using Markdown.
+
+50
+00:03:00,230 --> 00:03:02,550
+But if you have nested tables, then that
+
+51
+00:03:02,550 --> 00:03:04,610
+becomes quite challenging.
+
+52
+00:03:04,610 --> 00:03:07,790
+You have to give up at some point
+
+53
+00:03:07,790 --> 00:03:10,750
+or approximate at some point.
+
+54
+00:03:10,750 --> 00:03:16,230
+So, typically, HTML to text processing is rule-based.
+
+55
+00:03:16,230 --> 00:03:20,830
+And the reason for this is that rule-based processors
+
+56
+00:03:20,830 --> 00:03:23,910
+are very fast.
+
+57
+00:03:23,910 --> 00:03:29,588
+And also, you're not trying to do too much here.
+
+58
+00:03:29,588 --> 00:03:31,130
+You don't need too much intelligence.
+
+59
+00:03:31,130 --> 00:03:34,270
+So rule-based generally works.
+
+60
+00:03:34,270 --> 00:03:36,070
+Now, I think there could be a case
+
+61
+00:03:36,070 --> 00:03:39,970
+for model-based interventions at this point.
+
+62
+00:03:39,970 --> 00:03:41,430
+They have to be very fast, and they
+
+63
+00:03:41,430 --> 00:03:45,590
+have to do something more intelligent.
+
+64
+00:03:45,590 --> 00:03:47,750
+But if you ever look at data, you'll
+
+65
+00:03:47,750 --> 00:03:50,490
+notice there are imperfections in the data
+
+66
+00:03:50,490 --> 00:03:56,220
+just because any rule-based processing has some failure
+
+67
+00:03:56,220 --> 00:03:57,300
+rate.
+
+68
+00:03:57,300 --> 00:04:00,260
+As we showed last time, the accuracy
+
+69
+00:04:00,260 --> 00:04:05,620
+does matter, depending on which tool you choose.
+
+70
+00:04:05,620 --> 00:04:08,460
+If you use Resiliparse or Trafilatura, then--
+
+71
+00:04:08,460 --> 00:04:14,900
+I guess Resiliparse on these extended dclm evals
+
+72
+00:04:14,900 --> 00:04:20,100
+works better than the others.
+
+73
+00:04:20,100 --> 00:04:22,360
+I'll talk also briefly about PDFs.
+
+74
+00:04:22,360 --> 00:04:25,900
+So there's Hugging Face work, which released
+
+75
+00:04:25,900 --> 00:04:28,460
+a data set called FinePDFs.
+
+76
+00:04:28,460 --> 00:04:33,900
+So PDF files, if you ever opened them up, not in a PDF reader,
+
+77
+00:04:33,900 --> 00:04:40,300
+looks like this, and this needs to get rendered.
+
+78
+00:04:40,300 --> 00:04:45,320
+So PDFs can be found on just web pages on the internet.
+
+79
+00:04:45,320 --> 00:04:51,020
+And Common Crawl does have some PDFs.
+
+80
+00:04:51,020 --> 00:04:52,880
+Generally, Common Crawl focuses on text,
+
+81
+00:04:52,880 --> 00:04:55,557
+but sometimes, if you're just given a URL,
+
+82
+00:04:55,557 --> 00:04:58,140
+you might not even know before you fetch it whether it's a PDF
+
+83
+00:04:58,140 --> 00:05:00,840
+or not, if it doesn't have the extension.
+
+84
+00:05:03,640 --> 00:05:05,140
+If you read this blog post, there's
+
+85
+00:05:05,140 --> 00:05:08,620
+a lot of details, which I'll spare you of.
+
+86
+00:05:08,620 --> 00:05:12,100
+For example, one thing is that many of the PDFs
+
+87
+00:05:12,100 --> 00:05:15,500
+that are in Common Crawl are truncated because PDFs are big,
+
+88
+00:05:15,500 --> 00:05:19,665
+so then that demands that recrawling is necessary.
+
+89
+00:05:19,665 --> 00:05:22,040
+And then there's a question: once you have the PDF file,
+
+90
+00:05:22,040 --> 00:05:24,620
+how do you actually convert it to text?
+
+91
+00:05:24,620 --> 00:05:28,360
+And some PDFs might be just scans as well.
+
+92
+00:05:28,360 --> 00:05:30,260
+So they're essentially images.
+
+93
+00:05:30,260 --> 00:05:36,100
+So there's a bunch of tools that this paper tried out,
+
+94
+00:05:36,100 --> 00:05:41,540
+but mostly this involves running OCR using a VLM.
+
+95
+00:05:41,540 --> 00:05:45,060
+And this obviously can be much more expensive than what
+
+96
+00:05:45,060 --> 00:05:47,360
+we were doing before with text.
+
+97
+00:05:47,360 --> 00:05:51,300
+Fortunately or unfortunately, the PDFs
+
+98
+00:05:51,300 --> 00:05:54,070
+are a very small fraction of the whole internet.
+
+99
+00:05:54,070 --> 00:05:58,270
+But they are very valuable because generally,
+
+100
+00:05:58,270 --> 00:06:00,730
+if you bother to make a PDF, that means you probably
+
+101
+00:06:00,730 --> 00:06:04,830
+have something interesting to say as opposed to a web page.
+
+102
+00:06:04,830 --> 00:06:09,730
+So the quality of an average PDF is generally higher
+
+103
+00:06:09,730 --> 00:06:14,810
+than for an HTML file.
+
+104
+00:06:14,810 --> 00:06:16,570
+There's a lot of cleanup and filtering.
+
+105
+00:06:16,570 --> 00:06:20,850
+And PDFs, more so even than web pages,
+
+106
+00:06:20,850 --> 00:06:24,250
+a lot of layout information is missing,
+
+107
+00:06:24,250 --> 00:06:28,570
+because in HTML you have various tags like h1 and p
+
+108
+00:06:28,570 --> 00:06:31,030
+that gives you some semantic information.
+
+109
+00:06:31,030 --> 00:06:34,070
+PDFs are, by design, all about layout.
+
+110
+00:06:34,070 --> 00:06:42,370
+So you don't necessarily preserve the semantic structure.
+
+111
+00:06:42,370 --> 00:06:45,210
+So there's a bunch of transformation that happens.
+
+112
+00:06:45,210 --> 00:06:52,750
+At this point, you have text, but you're not done.
+
+113
+00:06:52,750 --> 00:06:54,050
+You're far from done.
+
+114
+00:06:54,050 --> 00:06:56,770
+So the next step is filtering.
+
+115
+00:06:56,770 --> 00:07:01,450
+So I'm going to talk somewhat abstractly about what filtering
+
+116
+00:07:01,450 --> 00:07:02,250
+is.
+
+117
+00:07:02,250 --> 00:07:04,530
+Here's the building block.
+
+118
+00:07:04,530 --> 00:07:09,970
+So suppose you have some target data that you want to get.
+
+119
+00:07:09,970 --> 00:07:13,410
+This is usually a small amount of high-quality data and lots
+
+120
+00:07:13,410 --> 00:07:15,070
+of raw data.
+
+121
+00:07:15,070 --> 00:07:20,050
+This is the fresh shipment of the tokens
+
+122
+00:07:20,050 --> 00:07:23,690
+that you transformed from the previous step.
+
+123
+00:07:23,690 --> 00:07:28,610
+And the goal is to find a subset of this raw data that
+
+124
+00:07:28,610 --> 00:07:30,850
+is similar to target.
+
+125
+00:07:30,850 --> 00:07:33,470
+So this is the general skeleton for filtering,
+
+126
+00:07:33,470 --> 00:07:39,410
+and almost all kinds of filtering falls into this schema.
+
+127
+00:07:39,410 --> 00:07:42,730
+So filtering, there's many reasons you might want to filter.
+
+128
+00:07:42,730 --> 00:07:45,170
+If you're training an English language
+
+129
+00:07:45,170 --> 00:07:47,770
+model or a German language model,
+
+130
+00:07:47,770 --> 00:07:50,920
+you might want to identify the language and filter things that
+
+131
+00:07:50,920 --> 00:07:53,360
+don't match that language.
+
+132
+00:07:53,360 --> 00:07:56,580
+The main reason for filtering is quality filtering.
+
+133
+00:07:56,580 --> 00:07:59,000
+You want to find things that are high quality as opposed
+
+134
+00:07:59,000 --> 00:08:00,180
+to low quality.
+
+135
+00:08:00,180 --> 00:08:02,260
+You don't want just spam.
+
+136
+00:08:02,260 --> 00:08:06,600
+You want encyclopedic information.
+
+137
+00:08:06,600 --> 00:08:10,860
+And then another application is toxicity filtering.
+
+138
+00:08:10,860 --> 00:08:13,642
+Of course, the internet has plenty of nasty content,
+
+139
+00:08:13,642 --> 00:08:15,600
+and maybe you don't want to train your language
+
+140
+00:08:15,600 --> 00:08:18,920
+model on that.
+
+141
+00:08:18,920 --> 00:08:24,400
+So, for a filtering algorithm, you want some generalization
+
+142
+00:08:24,400 --> 00:08:26,600
+from the target data, because you already
+
+143
+00:08:26,600 --> 00:08:27,800
+have the target data.
+
+144
+00:08:27,800 --> 00:08:30,600
+You don't want to only get the target data,
+
+145
+00:08:30,600 --> 00:08:35,159
+but you also want it to be extremely fast
+
+146
+00:08:35,159 --> 00:08:38,140
+because you have to run it on the whole internet.
+
+147
+00:08:38,140 --> 00:08:44,400
+So this could be 100 trillion tokens worth of data.
+
+148
+00:08:44,400 --> 00:08:46,840
+So generally, filtering is you end up
+
+149
+00:08:46,840 --> 00:08:49,400
+with a very small fraction, a single-digit fraction
+
+150
+00:08:49,400 --> 00:08:53,920
+of your entire data.
+
+151
+00:08:53,920 --> 00:08:54,840
+OK.
+
+152
+00:08:54,840 --> 00:08:56,240
+So remember the general framework
+
+153
+00:08:56,240 --> 00:09:02,140
+given the target, and raw, you're trying to find a subset.
+
+154
+00:09:02,140 --> 00:09:07,120
+So the general scheme is that you estimate some model based
+
+155
+00:09:07,120 --> 00:09:09,860
+on R and T and derive a scoring function,
+
+156
+00:09:09,860 --> 00:09:13,840
+and then you keep the examples in R based on their score.
+
+157
+00:09:13,840 --> 00:09:17,540
+So typically, there are two types of classifiers.
+
+158
+00:09:17,540 --> 00:09:20,040
+One are generative models.
+
+159
+00:09:20,040 --> 00:09:25,220
+So this is basically you have your target data.
+
+160
+00:09:25,220 --> 00:09:30,800
+You can just estimate a model of that data.
+
+161
+00:09:30,800 --> 00:09:32,740
+And remember, this has to be cheap,
+
+162
+00:09:32,740 --> 00:09:35,720
+so probably you're not training a big language model.
+
+163
+00:09:35,720 --> 00:09:40,160
+Generally, KenLM basically says I'm going to train a 5-gram
+
+164
+00:09:40,160 --> 00:09:41,920
+model.
+
+165
+00:09:41,920 --> 00:09:44,360
+A more common thing, which I think
+
+166
+00:09:44,360 --> 00:09:48,230
+we're mostly seeing these days, is just training a classifier.
+
+167
+00:09:48,230 --> 00:09:50,510
+And the classifier says, I'm going
+
+168
+00:09:50,510 --> 00:09:54,710
+to predict a positive label, for example,
+
+169
+00:09:54,710 --> 00:09:58,910
+that are in T, my target, and negative labels
+
+170
+00:09:58,910 --> 00:10:03,310
+for things that are in raw but not in T.
+
+171
+00:10:03,310 --> 00:10:08,910
+So basically, it looks like T are your positive examples,
+
+172
+00:10:08,910 --> 00:10:11,890
+some random subset of R are your negative examples.
+
+173
+00:10:11,890 --> 00:10:15,830
+Maybe you balance it, and then you train a classifier.
+
+174
+00:10:15,830 --> 00:10:18,270
+And the tool that people generally use
+
+175
+00:10:18,270 --> 00:10:20,910
+is fastText because it's fast.
+
+176
+00:10:20,910 --> 00:10:24,130
+And generally, it's just a linear classifier--
+
+177
+00:10:24,130 --> 00:10:26,070
+a bag of words.
+
+178
+00:10:26,070 --> 00:10:27,710
+And then once you have this model now
+
+179
+00:10:27,710 --> 00:10:30,790
+for every new document, you can score it,
+
+180
+00:10:30,790 --> 00:10:32,790
+and you set some appropriate threshold,
+
+181
+00:10:32,790 --> 00:10:37,730
+depending on your quality bar, and you keep the examples.
+
+182
+00:10:37,730 --> 00:10:41,710
+Sometimes stochastically, sometimes not.
+
+183
+00:10:41,710 --> 00:10:46,710
+So this is very much a model-based filtering approach.
+
+184
+00:10:46,710 --> 00:10:48,830
+Remember from the last lecture, there
+
+185
+00:10:48,830 --> 00:10:53,070
+are many data sets from generally a few years ago
+
+186
+00:10:53,070 --> 00:10:56,870
+that did not use model-based filtering because they wanted
+
+187
+00:10:56,870 --> 00:10:59,590
+to not bias things too much.
+
+188
+00:10:59,590 --> 00:11:02,470
+These days, I think basically everyone
+
+189
+00:11:02,470 --> 00:11:04,710
+does some amount of model-based filtering
+
+190
+00:11:04,710 --> 00:11:11,247
+because unless you are compute-plentiful, in which case
+
+191
+00:11:11,247 --> 00:11:13,830
+you probably don't need to do as much filtering-- you can just
+
+192
+00:11:13,830 --> 00:11:15,210
+train on everything.
+
+193
+00:11:15,210 --> 00:11:18,550
+Most people are compute-poor.
+
+194
+00:11:18,550 --> 00:11:21,290
+You have to be very smart about how you're filtering;
+
+195
+00:11:21,290 --> 00:11:27,390
+otherwise, you're just wasting flops on low-quality content.
+
+196
+00:11:27,390 --> 00:11:31,650
+OK, so let me talk through some instantiations of filtering.
+
+197
+00:11:31,650 --> 00:11:35,830
+So remember, I mentioned language identification.
+
+198
+00:11:35,830 --> 00:11:39,190
+So the goal is just to find-- given a piece of text,
+
+199
+00:11:39,190 --> 00:11:42,940
+detect whether it's of a particular language.
+
+200
+00:11:42,940 --> 00:11:47,140
+So Meta has trained this set of fastText language identification
+
+201
+00:11:47,140 --> 00:11:50,280
+models, which often you can just use off the shelf.
+
+202
+00:11:50,280 --> 00:11:52,900
+So it supports 176 different languages.
+
+203
+00:11:52,900 --> 00:11:56,440
+It's been trained on a bunch of multilingual sites.
+
+204
+00:11:56,440 --> 00:11:59,160
+So Wikipedia, remember, has a lot of languages.
+
+205
+00:11:59,160 --> 00:12:02,260
+There's also translation sites and sites
+
+206
+00:12:02,260 --> 00:12:03,400
+for different languages.
+
+207
+00:12:03,400 --> 00:12:08,740
+So a language ID is generally a fairly easy problem
+
+208
+00:12:08,740 --> 00:12:12,060
+compared to many other tasks that we're dealing
+
+209
+00:12:12,060 --> 00:12:14,120
+with-- so a simple classifier.
+
+210
+00:12:14,120 --> 00:12:16,260
+If you look at a few words, you can tell
+
+211
+00:12:16,260 --> 00:12:19,180
+that it's Spanish or Japanese.
+
+212
+00:12:19,180 --> 00:12:23,220
+Now, there are subtleties because of code-switching
+
+213
+00:12:23,220 --> 00:12:25,080
+and text, and there's some dialects.
+
+214
+00:12:25,080 --> 00:12:28,600
+So I wouldn't say it absolutely solved problem,
+
+215
+00:12:28,600 --> 00:12:31,260
+but this is not really the bottleneck
+
+216
+00:12:31,260 --> 00:12:32,800
+for training a good language model.
+
+217
+00:12:35,460 --> 00:12:37,980
+And then you can just-- so once you have your classifier,
+
+218
+00:12:37,980 --> 00:12:39,980
+you just choose some threshold.
+
+219
+00:12:39,980 --> 00:12:43,420
+This is generally fairly heuristic.
+
+220
+00:12:43,420 --> 00:12:46,980
+So another thing you can do with filtering is that,
+
+221
+00:12:46,980 --> 00:12:50,480
+suppose you're looking for data of a certain type.
+
+222
+00:12:50,480 --> 00:12:52,840
+So let's say you want to get really good at math,
+
+223
+00:12:52,840 --> 00:12:55,380
+so you want to go and find a bunch of math data.
+
+224
+00:12:55,380 --> 00:13:00,780
+So OpenMathText is this paper from 2023,
+
+225
+00:13:00,780 --> 00:13:04,540
+where the goal is to create a large corpus of math text.
+
+226
+00:13:04,540 --> 00:13:08,860
+This pipeline consists of a few steps.
+
+227
+00:13:08,860 --> 00:13:10,600
+So it's not training a single classifier.
+
+228
+00:13:10,600 --> 00:13:12,820
+So first, you use some rules to filter.
+
+229
+00:13:12,820 --> 00:13:16,340
+Does it contain latex commands?
+
+230
+00:13:16,340 --> 00:13:17,620
+They also use KenLM.
+
+231
+00:13:17,620 --> 00:13:20,460
+So this is a generative approach.
+
+232
+00:13:20,460 --> 00:13:22,220
+And trained it on the ProofPile, which
+
+233
+00:13:22,220 --> 00:13:25,520
+is a known data set of math, and keep it
+
+234
+00:13:25,520 --> 00:13:29,980
+if the perplexity is below some threshold.
+
+235
+00:13:29,980 --> 00:13:33,260
+And then you also train a fastText classifier
+
+236
+00:13:33,260 --> 00:13:38,140
+to predict whether it's mathematical writing or not.
+
+237
+00:13:38,140 --> 00:13:41,350
+And there's two different thresholds
+
+238
+00:13:41,350 --> 00:13:44,410
+if it has latex in it, then it's a higher bar--
+
+239
+00:13:44,410 --> 00:13:48,430
+sorry-- it's a lower bar, but if it doesn't have latex in it,
+
+240
+00:13:48,430 --> 00:13:51,410
+it's a higher bar.
+
+241
+00:13:51,410 --> 00:13:55,450
+And then, as a result, they got 15 billion tokens,
+
+242
+00:13:55,450 --> 00:13:57,550
+which they use to train models.
+
+243
+00:13:57,550 --> 00:14:01,210
+And there's a paper that showed that this more targeted, curated
+
+244
+00:14:01,210 --> 00:14:03,250
+data collection results in models
+
+245
+00:14:03,250 --> 00:14:07,090
+that are better at math than models that were trained
+
+246
+00:14:07,090 --> 00:14:13,110
+on 20 times as much data, which were not filtered in this way.
+
+247
+00:14:13,110 --> 00:14:16,610
+So the quality filtering again, think about it as a tool.
+
+248
+00:14:16,610 --> 00:14:19,850
+You can define quality however you want.
+
+249
+00:14:19,850 --> 00:14:21,630
+There's no universal notion of quality.
+
+250
+00:14:21,630 --> 00:14:23,510
+If you want to define quality to be math,
+
+251
+00:14:23,510 --> 00:14:27,290
+then you can go and get math, and you get better at it.
+
+252
+00:14:27,290 --> 00:14:30,330
+So GPT-3, I think I mentioned this last time,
+
+253
+00:14:30,330 --> 00:14:32,190
+but just to put it in this framework.
+
+254
+00:14:32,190 --> 00:14:36,030
+So positive examples are Wikipedia, WebText.
+
+255
+00:14:36,030 --> 00:14:42,870
+So these are pages that link out from high-star Reddit posts,
+
+256
+00:14:42,870 --> 00:14:43,970
+and some books.
+
+257
+00:14:43,970 --> 00:14:47,450
+And negatives are generally sampled from the web.
+
+258
+00:14:47,450 --> 00:14:49,650
+They train a linear classifier and keep documents
+
+259
+00:14:49,650 --> 00:14:54,090
+if the linear classifier is scored highly enough.
+
+260
+00:14:54,090 --> 00:14:56,450
+There's the first LLaMA paper.
+
+261
+00:14:56,450 --> 00:15:00,370
+The positives were pages referenced by Wikipedia, not
+
+262
+00:15:00,370 --> 00:15:02,970
+Wikipedia articles themselves.
+
+263
+00:15:02,970 --> 00:15:05,890
+And it's this same idea.
+
+264
+00:15:05,890 --> 00:15:15,570
+So phi-1 from Microsoft is interestingly also
+
+265
+00:15:15,570 --> 00:15:17,490
+falls into this framework.
+
+266
+00:15:17,490 --> 00:15:23,530
+So they started with-- the raw data is not already
+
+267
+00:15:23,530 --> 00:15:25,090
+a Python subset of the stack.
+
+268
+00:15:25,090 --> 00:15:28,130
+Remember this is all code.
+
+269
+00:15:28,130 --> 00:15:37,720
+And they define a prompt, which determines educational value.
+
+270
+00:15:37,720 --> 00:15:44,400
+And then they use GPT-4 to classify a subset of R,
+
+271
+00:15:44,400 --> 00:15:50,040
+100k subset of R with this prompt,
+
+272
+00:15:50,040 --> 00:15:55,280
+and the ones that are positive are kept and called the target.
+
+273
+00:15:55,280 --> 00:15:57,960
+So the target here is actually the output
+
+274
+00:15:57,960 --> 00:16:01,920
+of an expensive classifier.
+
+275
+00:16:01,920 --> 00:16:03,702
+And then you train a cheaper classifier,
+
+276
+00:16:03,702 --> 00:16:06,160
+in their case, a Random Forest, but you could have probably
+
+277
+00:16:06,160 --> 00:16:08,260
+used fastText as well.
+
+278
+00:16:10,900 --> 00:16:14,640
+And then you select data that is classified positive
+
+279
+00:16:14,640 --> 00:16:17,240
+by this classifier.
+
+280
+00:16:17,240 --> 00:16:20,160
+And they also showed that using this data set,
+
+281
+00:16:20,160 --> 00:16:25,840
+you do much better than if you're just using the raw data.
+
+282
+00:16:25,840 --> 00:16:29,620
+So this performance goes up in fewer steps to a higher value.
+
+283
+00:16:32,840 --> 00:16:36,683
+So toxicity works the same way.
+
+284
+00:16:36,683 --> 00:16:37,600
+There's this Dataset--
+
+285
+00:16:37,600 --> 00:16:42,600
+Jigsaw Toxic Comments, where it came from this project
+
+286
+00:16:42,600 --> 00:16:45,700
+where the goal is to help people have better discussions online.
+
+287
+00:16:45,700 --> 00:16:50,840
+So here the data is the Wikipedia talk pages, which can,
+
+288
+00:16:50,840 --> 00:16:55,160
+I guess, for controversial sites get quite heated.
+
+289
+00:16:55,160 --> 00:16:58,360
+And this has been annotated with whether there are
+
+290
+00:16:58,360 --> 00:17:01,200
+any toxic comments on there.
+
+291
+00:17:01,200 --> 00:17:04,240
+And you can similarly define positive and negative examples,
+
+292
+00:17:04,240 --> 00:17:08,200
+and you can train a classifier on that.
+
+293
+00:17:08,200 --> 00:17:14,319
+So now I think you have the tools, or some examples
+
+294
+00:17:14,319 --> 00:17:15,339
+and inspiration.
+
+295
+00:17:15,339 --> 00:17:20,520
+You can identify a particular type of data that you want.
+
+296
+00:17:20,520 --> 00:17:22,560
+You build a classifier for it, and then you
+
+297
+00:17:22,560 --> 00:17:25,880
+can go filter Common Crawl for that.
+
+298
+00:17:25,880 --> 00:17:30,360
+I want to talk about one subtlety here,
+
+299
+00:17:30,360 --> 00:17:35,830
+which is that-- no, the notion of what you want for data
+
+300
+00:17:35,830 --> 00:17:38,240
+actually depends on what model you want to train.
+
+301
+00:17:38,240 --> 00:17:39,990
+So in particular, it depends on the number
+
+302
+00:17:39,990 --> 00:17:42,170
+of tokens you're training on.
+
+303
+00:17:42,170 --> 00:17:44,170
+And so there's no optimal threshold.
+
+304
+00:17:44,170 --> 00:17:46,790
+So before, when I looked at the classifier,
+
+305
+00:17:46,790 --> 00:17:49,310
+it gives you a score.
+
+306
+00:17:49,310 --> 00:17:52,030
+You can't say 0.9 and say that's the best because it
+
+307
+00:17:52,030 --> 00:17:53,750
+depends on what you want to do.
+
+308
+00:17:53,750 --> 00:17:56,430
+Intuitively, if you are going to train
+
+309
+00:17:56,430 --> 00:17:59,470
+for a longer period of time, then you
+
+310
+00:17:59,470 --> 00:18:02,350
+can tolerate lower quality data.
+
+311
+00:18:02,350 --> 00:18:07,390
+If you're training for shorter, then you
+
+312
+00:18:07,390 --> 00:18:10,310
+want higher quality data, in general.
+
+313
+00:18:10,310 --> 00:18:15,825
+And of course, if you could wave a magic wand,
+
+314
+00:18:15,825 --> 00:18:18,450
+if you're training for longer, you want more high-quality data,
+
+315
+00:18:18,450 --> 00:18:20,730
+but that's not an option that you're given.
+
+316
+00:18:20,730 --> 00:18:23,910
+The data pool is what it is.
+
+317
+00:18:23,910 --> 00:18:32,190
+So here's a preliminary experiment that Michael Ryan did.
+
+318
+00:18:32,190 --> 00:18:36,310
+So basically, this plot shows for a 157-million parameter
+
+319
+00:18:36,310 --> 00:18:37,470
+model.
+
+320
+00:18:37,470 --> 00:18:40,410
+We're taking a very small pool.
+
+321
+00:18:40,410 --> 00:18:46,150
+So 100 works, which is a tiny fraction of Common Crawl.
+
+322
+00:18:46,150 --> 00:18:53,790
+And we're training and training for more over time.
+
+323
+00:18:53,790 --> 00:18:56,330
+So let's take a look at the blue curve.
+
+324
+00:18:56,330 --> 00:18:58,430
+So the blue curve is dclm.
+
+325
+00:18:58,430 --> 00:19:01,190
+And so the loss starts here.
+
+326
+00:19:01,190 --> 00:19:02,970
+And then it comes down.
+
+327
+00:19:02,970 --> 00:19:07,930
+And each of these lines is when you epoch over the data.
+
+328
+00:19:07,930 --> 00:19:10,230
+So this is one epoch, and then the next blue
+
+329
+00:19:10,230 --> 00:19:12,480
+is the second epoch, and so on and so forth.
+
+330
+00:19:12,480 --> 00:19:13,730
+So there's not that much data.
+
+331
+00:19:13,730 --> 00:19:16,170
+So eventually, you have to repeat your data.
+
+332
+00:19:16,170 --> 00:19:20,190
+And the loss continues going down
+
+333
+00:19:20,190 --> 00:19:22,350
+because the second time you look at the data,
+
+334
+00:19:22,350 --> 00:19:23,930
+you're still learning things.
+
+335
+00:19:23,930 --> 00:19:28,590
+And at some point, you start to overfit.
+
+336
+00:19:28,590 --> 00:19:30,440
+Whereas if you look at Resiliparse,
+
+337
+00:19:30,440 --> 00:19:33,140
+this is basically no filtering.
+
+338
+00:19:33,140 --> 00:19:36,740
+So here, it's much worse in the beginning.
+
+339
+00:19:36,740 --> 00:19:40,260
+But as you continue and continue, at some point,
+
+340
+00:19:40,260 --> 00:19:42,100
+you also epoch.
+
+341
+00:19:42,100 --> 00:19:44,620
+It starts to go down slower.
+
+342
+00:19:44,620 --> 00:19:48,660
+So you see this trend where high-quality data
+
+343
+00:19:48,660 --> 00:19:52,860
+is better in this regime, where you're not epoching.
+
+344
+00:19:52,860 --> 00:19:56,660
+But once you get to lots and lots of tokens,
+
+345
+00:19:56,660 --> 00:20:00,500
+high-quality data is no longer that great.
+
+346
+00:20:00,500 --> 00:20:03,740
+And of course, with high-quality data,
+
+347
+00:20:03,740 --> 00:20:05,540
+you wouldn't want to go into this regime
+
+348
+00:20:05,540 --> 00:20:07,960
+because you're overfitting—you probably stop here.
+
+349
+00:20:07,960 --> 00:20:09,860
+But even at this point, this is worse
+
+350
+00:20:09,860 --> 00:20:14,580
+than if you had trained for longer using low-quality data.
+
+351
+00:20:14,580 --> 00:20:15,620
+Yeah.
+
+352
+00:20:15,620 --> 00:20:19,520
+Just a question about computing the metrics.
+
+353
+00:20:19,520 --> 00:20:22,500
+This is actually not totally about the graph.
+
+354
+00:20:22,500 --> 00:20:26,160
+Each of those dots corresponds with one training run, right?
+
+355
+00:20:26,160 --> 00:20:27,403
+Yes.
+
+356
+00:20:27,403 --> 00:20:29,820
+Do you ever need to do the confidence interval when you're
+
+357
+00:20:29,820 --> 00:20:31,560
+doing these retraining experiments,
+
+358
+00:20:31,560 --> 00:20:34,980
+or is it enough just to do it one time?
+
+359
+00:20:34,980 --> 00:20:37,180
+So the question is, each of these points
+
+360
+00:20:37,180 --> 00:20:42,180
+is a single training run, should you do it multiple times
+
+361
+00:20:42,180 --> 00:20:44,740
+and get confidence intervals?
+
+362
+00:20:44,740 --> 00:20:47,540
+Ideally, that would be a good practice.
+
+363
+00:20:47,540 --> 00:20:49,340
+Often, you'll see in these papers
+
+364
+00:20:49,340 --> 00:20:53,820
+that these are scarce because each training
+
+365
+00:20:53,820 --> 00:20:55,520
+run is fairly expensive.
+
+366
+00:20:58,780 --> 00:21:02,300
+But in reality, when we have done these experiments,
+
+367
+00:21:02,300 --> 00:21:04,840
+it generally tends to be stable,
+
+368
+00:21:04,840 --> 00:21:08,480
+I would say, at least for pretraining.
+
+369
+00:21:09,580 --> 00:21:14,260
+So you mentioned training for longer and high-quality data,
+
+370
+00:21:14,260 --> 00:21:17,160
+is that not a combination that we're considering?
+
+371
+00:21:17,160 --> 00:21:23,860
+But if we are training longer on this high-quality data,
+
+372
+00:21:23,860 --> 00:21:25,860
+would it have diminishing returns
+
+373
+00:21:25,860 --> 00:21:29,590
+compared to training for longer with the high-quality data?
+
+374
+00:21:30,090 --> 00:21:33,290
+So the question is, if you were able to get higher quality data
+
+375
+00:21:33,290 --> 00:21:35,450
+and you trained for longer, would it
+
+376
+00:21:35,450 --> 00:21:37,610
+still have diminishing returns?
+
+377
+00:21:37,610 --> 00:21:41,610
+Every data set is going to have diminishing returns eventually.
+
+378
+00:21:41,610 --> 00:21:43,890
+That's finite.
+
+379
+00:21:43,890 --> 00:21:46,030
+But it would probably be here.
+
+380
+00:21:46,030 --> 00:21:49,430
+It would just be down here and just keep on going down.
+
+381
+00:21:53,290 --> 00:21:54,330
+OK.
+
+382
+00:21:54,330 --> 00:21:54,830
+Great.
+
+383
+00:21:54,830 --> 00:21:56,030
+Let's move on.
+
+384
+00:21:56,030 --> 00:21:59,690
+So summary, filtering is pretty critical for building
+
+385
+00:21:59,690 --> 00:22:02,170
+a good model, especially when you're compute-constrained
+
+386
+00:22:02,170 --> 00:22:05,290
+like most of us.
+
+387
+00:22:05,290 --> 00:22:07,410
+Technically, if you have infinite compute,
+
+388
+00:22:07,410 --> 00:22:08,870
+you don't need to filter.
+
+389
+00:22:08,870 --> 00:22:12,030
+And you can train on everything, and it'll be a giant model.
+
+390
+00:22:12,030 --> 00:22:16,970
+But realistically, everyone has to filter.
+
+391
+00:22:16,970 --> 00:22:21,930
+So the recipe here is figure out what good data looks like.
+
+392
+00:22:21,930 --> 00:22:24,690
+And then you can train a classifier,
+
+393
+00:22:24,690 --> 00:22:28,730
+and that will extrapolate to the rest of your model.
+
+394
+00:22:28,730 --> 00:22:30,790
+And what good data looks like?
+
+395
+00:22:30,790 --> 00:22:32,690
+You can either find it by saying,
+
+396
+00:22:32,690 --> 00:22:35,450
+aha, there's this data set out there that I really like
+
+397
+00:22:35,450 --> 00:22:37,090
+and I just want more of it.
+
+398
+00:22:37,090 --> 00:22:40,050
+Or you can craft a prompt to a language
+
+399
+00:22:40,050 --> 00:22:43,250
+model and then use that to construct,
+
+400
+00:22:43,250 --> 00:22:46,450
+to do a preliminary filter of a large pool,
+
+401
+00:22:46,450 --> 00:22:49,970
+and then use that good quality data to train a smaller
+
+402
+00:22:49,970 --> 00:22:54,970
+classifier and extrapolate to everyone else.
+
+403
+00:22:54,970 --> 00:22:55,730
+OK.
+
+404
+00:22:55,730 --> 00:22:58,190
+Next, I'm going to talk about de-duplication.
+
+405
+00:22:58,190 --> 00:23:02,270
+So at this point, we have filtered our data set.
+
+406
+00:23:02,270 --> 00:23:07,490
+So we only have what we deem to be high-quality data.
+
+407
+00:23:07,490 --> 00:23:14,170
+But often, data still has duplicates in it.
+
+408
+00:23:14,170 --> 00:23:18,470
+And there's two types of duplicates.
+
+409
+00:23:18,470 --> 00:23:20,370
+There's exact duplicates.
+
+410
+00:23:20,370 --> 00:23:23,270
+So this happens when, for example,
+
+411
+00:23:23,270 --> 00:23:26,360
+if you look at these mirror sites,
+
+412
+00:23:26,360 --> 00:23:28,600
+the whole point of a mirror is that it's a duplicate.
+
+413
+00:23:28,600 --> 00:23:32,280
+And sometimes the web crawler isn't smart enough
+
+414
+00:23:32,280 --> 00:23:34,380
+to know that this mirror is exactly this mirror,
+
+415
+00:23:34,380 --> 00:23:38,120
+so it just crawls many sites, and you'll
+
+416
+00:23:38,120 --> 00:23:41,000
+get this exact same content.
+
+417
+00:23:41,000 --> 00:23:47,680
+Also, when you fork a repo, that is also a duplicate,
+
+418
+00:23:47,680 --> 00:23:49,460
+even if you make changes.
+
+419
+00:23:49,460 --> 00:23:51,580
+Probably you're making changes to a few files,
+
+420
+00:23:51,580 --> 00:23:55,520
+so 99% of that repo might be the same.
+
+421
+00:23:55,520 --> 00:23:59,480
+So duplicate is abundant.
+
+422
+00:23:59,480 --> 00:24:02,520
+And yeah, sometimes there's actually
+
+423
+00:24:02,520 --> 00:24:05,820
+near duplicates which are not mirrors or derivative,
+
+424
+00:24:05,820 --> 00:24:08,960
+but they just happen to be the same text differing
+
+425
+00:24:08,960 --> 00:24:11,040
+by a few tokens.
+
+426
+00:24:11,040 --> 00:24:13,160
+Usually, probably this came from--
+
+427
+00:24:13,160 --> 00:24:17,960
+it could be copying or came from a different common source.
+
+428
+00:24:17,960 --> 00:24:22,180
+So here are some examples of near duplicates.
+
+429
+00:24:22,180 --> 00:24:25,320
+So terms of service and licenses.
+
+430
+00:24:25,320 --> 00:24:27,520
+So I guess the MIT license probably
+
+431
+00:24:27,520 --> 00:24:33,460
+shows up on a lot of places.
+
+432
+00:24:33,460 --> 00:24:39,580
+And so in many cases, it is a exact copy,
+
+433
+00:24:39,580 --> 00:24:41,960
+but only of that license, unless someone made a typo
+
+434
+00:24:41,960 --> 00:24:43,520
+when they copied it.
+
+435
+00:24:43,520 --> 00:24:47,600
+But the rest of the page that the license might be part of
+
+436
+00:24:47,600 --> 00:24:49,360
+might be different.
+
+437
+00:24:49,360 --> 00:24:52,000
+And we talked about how a lot of websites
+
+438
+00:24:52,000 --> 00:24:54,900
+have the same headers and footers.
+
+439
+00:24:54,900 --> 00:24:57,640
+Those are also duplicates.
+
+440
+00:24:57,640 --> 00:25:02,160
+There's also cases where, for whatever reason,
+
+441
+00:25:02,160 --> 00:25:06,300
+this is from LM1B, so the 1 billion per benchmark.
+
+442
+00:25:06,300 --> 00:25:08,760
+There's these articles where you just
+
+443
+00:25:08,760 --> 00:25:11,420
+have typographic differences.
+
+444
+00:25:11,420 --> 00:25:15,220
+There's one version with a comma and one version without a comma.
+
+445
+00:25:15,220 --> 00:25:17,860
+I don't really know why, but that happens.
+
+446
+00:25:17,860 --> 00:25:19,520
+And sometimes you see these templates
+
+447
+00:25:19,520 --> 00:25:25,630
+where this is some probably low-quality content, where
+
+448
+00:25:25,630 --> 00:25:27,990
+it essentially looks like an ad or some sort,
+
+449
+00:25:27,990 --> 00:25:34,510
+and someone just templatized and replaced Canada with USA.
+
+450
+00:25:34,510 --> 00:25:38,750
+So if you train on this data, but you are just
+
+451
+00:25:38,750 --> 00:25:42,010
+training on different variations of this with different entities,
+
+452
+00:25:42,010 --> 00:25:45,550
+this is going to be wasting your GPUs.
+
+453
+00:25:45,550 --> 00:25:47,610
+There's a more extreme cases.
+
+454
+00:25:47,610 --> 00:25:49,690
+So this is why it's good to look at your data.
+
+455
+00:25:49,690 --> 00:25:54,590
+So this audit of the C4 data set found this product description
+
+456
+00:25:54,590 --> 00:25:57,870
+61,000 times in the data set.
+
+457
+00:25:57,870 --> 00:26:00,430
+And if you trace back-- this is really bizarre.
+
+458
+00:26:00,430 --> 00:26:02,070
+I don't know why.
+
+459
+00:26:02,070 --> 00:26:06,110
+This is some description of this gas mask.
+
+460
+00:26:06,110 --> 00:26:11,430
+And this just showed up in this data set in Common Crawl 61,000
+
+461
+00:26:11,430 --> 00:26:12,750
+times.
+
+462
+00:26:12,750 --> 00:26:17,190
+So yeah, the web is weird.
+
+463
+00:26:17,190 --> 00:26:19,030
+So why deduplicate?
+
+464
+00:26:19,030 --> 00:26:22,510
+So the first idea is clear because you
+
+465
+00:26:22,510 --> 00:26:24,010
+want to train more efficiently.
+
+466
+00:26:24,010 --> 00:26:26,310
+Deduplication reduces your data set size
+
+467
+00:26:26,310 --> 00:26:30,110
+without really losing information because you're just
+
+468
+00:26:30,110 --> 00:26:31,510
+removing duplicates.
+
+469
+00:26:31,510 --> 00:26:35,690
+And it also has this benefit of avoiding memorization,
+
+470
+00:26:35,690 --> 00:26:39,070
+which this paper talks about.
+
+471
+00:26:39,070 --> 00:26:42,390
+For example, if you have some copyrighted content that's
+
+472
+00:26:42,390 --> 00:26:45,170
+duplicated a lot, then if you train on it,
+
+473
+00:26:45,170 --> 00:26:48,710
+then you'll memorize it, and also privacy concerns.
+
+474
+00:26:48,710 --> 00:26:54,550
+But mostly, I think, it's just to make sure
+
+475
+00:26:54,550 --> 00:26:58,430
+that you're not wasting flops.
+
+476
+00:26:58,430 --> 00:27:01,450
+Related to deduplication is also decontamination,
+
+477
+00:27:01,450 --> 00:27:04,110
+which is arguably even more important, too.
+
+478
+00:27:04,110 --> 00:27:06,910
+And it's the same deal, is that you
+
+479
+00:27:06,910 --> 00:27:14,550
+want to make sure that your test set is not in your training set.
+
+480
+00:27:14,550 --> 00:27:17,420
+So how do we de-dupe?
+
+481
+00:27:17,420 --> 00:27:20,500
+So here's the design space to think about.
+
+482
+00:27:20,500 --> 00:27:23,532
+So first of all, what are the items that you're de-duping?
+
+483
+00:27:23,532 --> 00:27:25,740
+Do you do at the sentence level, the paragraph level,
+
+484
+00:27:25,740 --> 00:27:28,500
+or the document level?
+
+485
+00:27:28,500 --> 00:27:30,160
+How do you determine a match?
+
+486
+00:27:30,160 --> 00:27:31,580
+Is it an exact match?
+
+487
+00:27:31,580 --> 00:27:34,000
+Is it existence of a common subitem?
+
+488
+00:27:34,000 --> 00:27:39,140
+Is it the fraction of common subitems for near de-duplication?
+
+489
+00:27:39,140 --> 00:27:42,740
+And then once you find a duplicate between two pages,
+
+490
+00:27:42,740 --> 00:27:43,740
+what do you do?
+
+491
+00:27:43,740 --> 00:27:47,200
+Do you remove all the instances, or do you remove all but one?
+
+492
+00:27:50,080 --> 00:27:53,580
+And the key algorithmic challenge
+
+493
+00:27:53,580 --> 00:27:56,580
+is that de-duplication is fundamentally
+
+494
+00:27:56,580 --> 00:28:00,260
+about comparing items to other items.
+
+495
+00:28:00,260 --> 00:28:03,620
+And normally, if you're doing filtering,
+
+496
+00:28:03,620 --> 00:28:05,840
+this is about an individual item.
+
+497
+00:28:05,840 --> 00:28:07,440
+Is this item good or not?
+
+498
+00:28:07,440 --> 00:28:09,540
+And this can be parallelized.
+
+499
+00:28:09,540 --> 00:28:12,998
+It's linear time, which is good.
+
+500
+00:28:12,998 --> 00:28:14,540
+And even in linear time, we're trying
+
+501
+00:28:14,540 --> 00:28:18,200
+to make it fast by having rule-based or very small models.
+
+502
+00:28:18,200 --> 00:28:19,645
+But your de-duplication, clearly, you
+
+503
+00:28:19,645 --> 00:28:22,020
+can't do the n-squared thing where you compare everything
+
+504
+00:28:22,020 --> 00:28:23,180
+to everything.
+
+505
+00:28:23,180 --> 00:28:26,540
+You need linear-time algorithms to scale, especially
+
+506
+00:28:26,540 --> 00:28:28,900
+at this web scale.
+
+507
+00:28:28,900 --> 00:28:33,660
+So typically, the de-duplication literature
+
+508
+00:28:33,660 --> 00:28:36,940
+uses hash functions to get around this.
+
+509
+00:28:36,940 --> 00:28:39,600
+So we'll develop some of these ideas.
+
+510
+00:28:39,600 --> 00:28:42,660
+These are quite nice ideas from--
+
+511
+00:28:42,660 --> 00:28:46,900
+thanks to the algorithms community.
+
+512
+00:28:46,900 --> 00:28:49,600
+So I think everyone knows what a hash function is.
+
+513
+00:28:49,600 --> 00:28:52,500
+It takes some value like a string,
+
+514
+00:28:52,500 --> 00:28:56,460
+and maps it into something like a string or an integer.
+
+515
+00:28:56,460 --> 00:28:59,120
+And the hash value is much smaller than item.
+
+516
+00:28:59,120 --> 00:29:01,620
+Hash collisions are when two distinct items
+
+517
+00:29:01,620 --> 00:29:04,660
+map to the same hash.
+
+518
+00:29:04,660 --> 00:29:08,240
+So when you look at hash functions,
+
+519
+00:29:08,240 --> 00:29:10,940
+There are really fancy hash functions which
+
+520
+00:29:10,940 --> 00:29:13,360
+are cryptographic in nature.
+
+521
+00:29:13,360 --> 00:29:19,490
+These are collision-resistant using cryptography and Bitcoin
+
+522
+00:29:19,490 --> 00:29:20,590
+and things like that.
+
+523
+00:29:20,590 --> 00:29:23,770
+And then there are these faster ones,
+
+524
+00:29:23,770 --> 00:29:27,130
+which are used for hash tables, where hash collisions aren't
+
+525
+00:29:27,130 --> 00:29:28,370
+the end of the world.
+
+526
+00:29:28,370 --> 00:29:31,250
+And so we'll be using these.
+
+527
+00:29:31,250 --> 00:29:34,270
+So take a string and map it to some values.
+
+528
+00:29:34,270 --> 00:29:38,310
+That's what hash functions do.
+
+529
+00:29:38,310 --> 00:29:38,810
+OK.
+
+530
+00:29:38,810 --> 00:29:43,370
+So exact duplication is conceptually very simple.
+
+531
+00:29:43,370 --> 00:29:47,930
+You take a string, you see if there's an exact match,
+
+532
+00:29:47,930 --> 00:29:50,510
+and you remove all but one.
+
+533
+00:29:50,510 --> 00:29:56,650
+So here you have a bunch of elements, and you hash them,
+
+534
+00:29:56,650 --> 00:29:59,770
+and you dedupe.
+
+535
+00:29:59,770 --> 00:30:03,670
+And exact duplication is very nice.
+
+536
+00:30:03,670 --> 00:30:06,610
+It's very clear what's happening.
+
+537
+00:30:06,610 --> 00:30:10,010
+But this isn't really good enough for the messy web data
+
+538
+00:30:10,010 --> 00:30:13,810
+because often you have these near duplicates.
+
+539
+00:30:13,810 --> 00:30:18,610
+And one note is that there are many ways to have written this.
+
+540
+00:30:18,610 --> 00:30:24,490
+This is written in a bit of a MapReduce style
+
+541
+00:30:24,490 --> 00:30:30,770
+way, which makes it more easily parallelizable and scale.
+
+542
+00:30:30,770 --> 00:30:39,330
+So, C4, this paper from the T5 paper, which processed Common Crawl,
+
+543
+00:30:39,330 --> 00:30:41,650
+did exact deduplication.
+
+544
+00:30:41,650 --> 00:30:46,250
+The items they operate on were three-sentence spans,
+
+545
+00:30:46,250 --> 00:30:53,290
+and you do an exact match, and they remove all but one.
+
+546
+00:30:53,290 --> 00:30:55,970
+So if you're paying attention, you
+
+547
+00:30:55,970 --> 00:30:58,770
+realize that there's something a bit
+
+548
+00:30:58,770 --> 00:31:01,850
+strange about this because you're looking
+
+549
+00:31:01,850 --> 00:31:03,770
+at three-sentence spans.
+
+550
+00:31:03,770 --> 00:31:06,390
+And if you find two documents with three-sentence spans
+
+551
+00:31:06,390 --> 00:31:10,010
+and you remove all but one, that means
+
+552
+00:31:10,010 --> 00:31:12,400
+you're just going to rip out three sentences
+
+553
+00:31:12,400 --> 00:31:16,087
+from that document, which is a little bit strange,
+
+554
+00:31:16,087 --> 00:31:17,420
+because it breaks the coherence.
+
+555
+00:31:17,420 --> 00:31:21,920
+But this is what they did.
+
+556
+00:31:21,920 --> 00:31:26,640
+So that's exact deduplication.
+
+557
+00:31:26,640 --> 00:31:30,540
+So how do we do near deduplication?
+
+558
+00:31:30,540 --> 00:31:32,720
+So first of all, we have to define what
+
+559
+00:31:32,720 --> 00:31:35,880
+approximate match means here.
+
+560
+00:31:35,880 --> 00:31:40,680
+So to do that, we're going to define this called Jaccard
+
+561
+00:31:40,680 --> 00:31:44,440
+similarity, which is a fairly standard notion.
+
+562
+00:31:44,440 --> 00:31:47,840
+And Jaccard of two sets is basically
+
+563
+00:31:47,840 --> 00:31:50,640
+the size of the intersection over the size of the union.
+
+564
+00:31:50,640 --> 00:31:52,400
+So given these two sets--
+
+565
+00:31:52,400 --> 00:31:57,320
+1, 2, 3, 4, and 1, 2, 3, 5, when you compute Jaccard,
+
+566
+00:31:57,320 --> 00:31:58,860
+you take the intersection.
+
+567
+00:31:58,860 --> 00:32:00,280
+That's 1, 2, 3.
+
+568
+00:32:00,280 --> 00:32:02,880
+You take the union, that's 1, 2, 3, 4, 5,
+
+569
+00:32:02,880 --> 00:32:08,120
+and you divide, and Jaccard is 0.6.
+
+570
+00:32:08,120 --> 00:32:11,000
+So Jaccard is a number between 0 and 1.
+
+571
+00:32:11,000 --> 00:32:15,960
+0 means that they're disjoint, 1 means that they're identical.
+
+572
+00:32:15,960 --> 00:32:18,960
+So a fairly natural notion.
+
+573
+00:32:18,960 --> 00:32:23,280
+And we're going to say that two documents are
+
+574
+00:32:23,280 --> 00:32:25,400
+near duplicates if their Jaccard similarity is
+
+575
+00:32:25,400 --> 00:32:28,840
+above some threshold, let's say 0.99.
+
+576
+00:32:28,840 --> 00:32:31,680
+So now the question is, how do you find near duplicates
+
+577
+00:32:31,680 --> 00:32:33,840
+in linear time?
+
+578
+00:32:33,840 --> 00:32:38,280
+So fortunately, this is a solved algorithms question.
+
+579
+00:32:38,280 --> 00:32:41,380
+And the answer is to use MinHash.
+
+580
+00:32:45,840 --> 00:32:46,500
+Well, OK.
+
+581
+00:32:46,500 --> 00:32:48,340
+So the first step is to use MinHash.
+
+582
+00:32:48,340 --> 00:32:50,400
+That's not the final answer.
+
+583
+00:32:50,400 --> 00:32:54,760
+So MinHash is a random hash function,
+
+584
+00:32:54,760 --> 00:32:57,200
+so that the probability of a hash collision
+
+585
+00:32:57,200 --> 00:33:01,480
+is exactly the Jaccard of A and B.
+
+586
+00:33:01,480 --> 00:33:07,440
+So this is a very nice property because hashing
+
+587
+00:33:07,440 --> 00:33:09,830
+is good for making things linear time.
+
+588
+00:33:09,830 --> 00:33:13,090
+Jaccard is the metric that we want,
+
+589
+00:33:13,090 --> 00:33:18,070
+and we're connecting these two right now in expectation.
+
+590
+00:33:18,070 --> 00:33:20,230
+So what's interesting is normally,
+
+591
+00:33:20,230 --> 00:33:23,230
+you want hash functions to define hash functions
+
+592
+00:33:23,230 --> 00:33:26,527
+so that everything is hashing--
+
+593
+00:33:26,527 --> 00:33:28,610
+distinct elements are hashing to different things.
+
+594
+00:33:28,610 --> 00:33:29,990
+You don't want collisions.
+
+595
+00:33:29,990 --> 00:33:32,615
+But here you actually want collisions--
+
+596
+00:33:32,615 --> 00:33:33,990
+not arbitrary collisions, but you
+
+597
+00:33:33,990 --> 00:33:36,630
+want to control the collisions in a certain way
+
+598
+00:33:36,630 --> 00:33:38,830
+to align with the similarity.
+
+599
+00:33:38,830 --> 00:33:40,550
+So similar things you want to collide
+
+600
+00:33:40,550 --> 00:33:43,250
+more than disparate things.
+
+601
+00:33:46,170 --> 00:33:54,390
+So the MinHash is essentially, actually, let's see.
+
+602
+00:33:54,390 --> 00:33:58,870
+Maybe I will-- so here's the MinHash.
+
+603
+00:33:58,870 --> 00:33:59,930
+It's fairly simple.
+
+604
+00:33:59,930 --> 00:34:03,310
+You take a set, and you hash every element in that set,
+
+605
+00:34:03,310 --> 00:34:05,910
+and you take the minimum element.
+
+606
+00:34:05,910 --> 00:34:10,690
+So if you're seeing this for the first time,
+
+607
+00:34:10,690 --> 00:34:12,250
+it may seem a little bit strange.
+
+608
+00:34:12,250 --> 00:34:14,030
+Why are you taking the min?
+
+609
+00:34:14,030 --> 00:34:15,210
+You can take the max, too.
+
+610
+00:34:15,210 --> 00:34:16,252
+It doesn't really matter.
+
+611
+00:34:16,252 --> 00:34:18,590
+It's just a way to break ties.
+
+612
+00:34:18,590 --> 00:34:22,770
+So here's the picture that you should have in your mind.
+
+613
+00:34:22,770 --> 00:34:29,550
+So if you have A, remember A contains 1, 2, 3,
+
+614
+00:34:29,550 --> 00:34:32,010
+4, and B contains 1, 2, 3, 5.
+
+615
+00:34:32,010 --> 00:34:35,190
+So this is a characteristic matrix representation
+
+616
+00:34:35,190 --> 00:34:38,230
+of these two sets.
+
+617
+00:34:38,230 --> 00:34:43,469
+And so what the random hash function is doing
+
+618
+00:34:43,469 --> 00:34:47,670
+is that it induces a permutation over the items.
+
+619
+00:34:47,670 --> 00:34:52,830
+So it might be 4, 3, 1, 5, 2, or something else.
+
+620
+00:34:52,830 --> 00:34:55,710
+And then you look at which item is first,
+
+621
+00:34:55,710 --> 00:35:00,550
+according to this permutation in A, and which item is first in B.
+
+622
+00:35:00,550 --> 00:35:07,380
+So each item has the same probability of being first.
+
+623
+00:35:07,380 --> 00:35:18,460
+So if the random hash function puts 1 first, then first in A
+
+624
+00:35:18,460 --> 00:35:23,940
+will be equal to first in B. And if it's 2 first,
+
+625
+00:35:23,940 --> 00:35:25,000
+then it's the same.
+
+626
+00:35:25,000 --> 00:35:27,500
+If it's 3 first, it's also the same.
+
+627
+00:35:27,500 --> 00:35:31,380
+But if the random permutation puts 4 first,
+
+628
+00:35:31,380 --> 00:35:33,420
+then the first element in A is going
+
+629
+00:35:33,420 --> 00:35:39,060
+to be different from the first element in B, and same with 5.
+
+630
+00:35:39,060 --> 00:35:41,940
+So look at this representation.
+
+631
+00:35:41,940 --> 00:35:43,580
+Basically, the random hash function
+
+632
+00:35:43,580 --> 00:35:47,420
+says elect one of these rows to be first.
+
+633
+00:35:47,420 --> 00:35:51,620
+And then when the min is just telling me--
+
+634
+00:35:55,060 --> 00:35:58,100
+the min equal of A equal to min of B
+
+635
+00:35:58,100 --> 00:36:03,720
+is basically telling me whether that row is the same.
+
+636
+00:36:08,420 --> 00:36:08,920
+OK.
+
+637
+00:36:08,920 --> 00:36:15,760
+So that is, I guess, the proof of why this property holds,
+
+638
+00:36:15,760 --> 00:36:20,220
+which is that you have a hash function in expectation
+
+639
+00:36:20,220 --> 00:36:23,700
+over your random choice of hash functions,
+
+640
+00:36:23,700 --> 00:36:25,660
+that the probability of collision
+
+641
+00:36:25,660 --> 00:36:29,640
+is the similarity metric you want.
+
+642
+00:36:29,640 --> 00:36:30,140
+OK.
+
+643
+00:36:30,140 --> 00:36:33,140
+So let's just check this in code.
+
+644
+00:36:33,140 --> 00:36:38,760
+So I'm going to generate 100 different hash functions.
+
+645
+00:36:38,760 --> 00:36:41,300
+Each hash function is given by a seed.
+
+646
+00:36:41,300 --> 00:36:43,700
+And I just check whether the MinHash
+
+647
+00:36:43,700 --> 00:36:47,600
+is equal to MinHash, and the estimated Jaccard.
+
+648
+00:36:47,600 --> 00:36:51,380
+So I'm going to just look at the number of the fraction
+
+649
+00:36:51,380 --> 00:36:56,060
+of matches, and you get 0.6.
+
+650
+00:36:56,060 --> 00:36:59,060
+And the key thing with the MinHash
+
+651
+00:36:59,060 --> 00:37:05,430
+is that I don't have to do the n-squared thing.
+
+652
+00:37:05,430 --> 00:37:10,530
+I can compute the MinHash of A and the MinHash of B and MinHash
+
+653
+00:37:10,530 --> 00:37:13,230
+of a different set, and I just look for collisions.
+
+654
+00:37:16,010 --> 00:37:19,910
+Any questions so far about MinHash?
+
+655
+00:37:29,410 --> 00:37:32,930
+So now we can hash our items, but we're not
+
+656
+00:37:32,930 --> 00:37:36,970
+done yet because a collision doesn't tell us
+
+657
+00:37:36,970 --> 00:37:41,170
+the Jaccard is above some threshold, which is what we want.
+
+658
+00:37:41,170 --> 00:37:43,050
+We want to find A and B such that Jaccard
+
+659
+00:37:43,050 --> 00:37:44,850
+is greater than 0.99.
+
+660
+00:37:44,850 --> 00:37:47,190
+All we've done is said, OK, well,
+
+661
+00:37:47,190 --> 00:37:50,650
+if we've got a collision, the probability of that collision
+
+662
+00:37:50,650 --> 00:37:53,130
+of two things colliding is the Jaccard.
+
+663
+00:37:53,130 --> 00:37:56,030
+But that's not really that useful by itself.
+
+664
+00:37:56,030 --> 00:37:57,730
+It's stochastic, and I can't really
+
+665
+00:37:57,730 --> 00:38:00,930
+get anything reliable here.
+
+666
+00:38:00,930 --> 00:38:06,210
+So the next idea is this thing called
+
+667
+00:38:06,210 --> 00:38:09,050
+locality-sensitive hashing, which essentially
+
+668
+00:38:09,050 --> 00:38:10,510
+solves this problem.
+
+669
+00:38:10,510 --> 00:38:13,790
+So this is a very classic idea in theoretical computer science,
+
+670
+00:38:13,790 --> 00:38:17,530
+and it's quite nice.
+
+671
+00:38:17,530 --> 00:38:23,730
+The idea here is that we have A and B colliding with probability
+
+672
+00:38:23,730 --> 00:38:25,170
+equal to the Jaccard.
+
+673
+00:38:25,170 --> 00:38:31,330
+So it is true that more similar items will collide more often,
+
+674
+00:38:31,330 --> 00:38:33,350
+but it's very stochastic.
+
+675
+00:38:33,350 --> 00:38:36,410
+The variance is quite large here.
+
+676
+00:38:36,410 --> 00:38:39,810
+So our goal is to have A and B collide
+
+677
+00:38:39,810 --> 00:38:42,850
+if the Jaccard is greater than some threshold.
+
+678
+00:38:42,850 --> 00:38:47,610
+So we, in some sense, have to sharpen these probabilities
+
+679
+00:38:47,610 --> 00:38:48,610
+somehow.
+
+680
+00:38:48,610 --> 00:38:53,410
+The probability can't just be literally equal to the Jaccard.
+
+681
+00:38:53,410 --> 00:38:58,130
+So the solution is to use more hash functions.
+
+682
+00:38:58,130 --> 00:39:01,120
+And these hash functions are going to be independent.
+
+683
+00:39:01,120 --> 00:39:07,860
+So this part gets a bit technical, but we'll walk through it.
+
+684
+00:39:07,860 --> 00:39:10,600
+So you break the n hash functions
+
+685
+00:39:10,600 --> 00:39:14,380
+into b bands of r hash functions.
+
+686
+00:39:14,380 --> 00:39:18,560
+So if you have 12 hash functions, you have three bands,
+
+687
+00:39:18,560 --> 00:39:22,340
+each band has 4 hash functions.
+
+688
+00:39:22,340 --> 00:39:26,040
+So there's a band here, h1 through h4.
+
+689
+00:39:26,040 --> 00:39:29,040
+Here's a second band, h5 through h8.
+
+690
+00:39:29,040 --> 00:39:30,960
+Third band, h9 through h12.
+
+691
+00:39:33,760 --> 00:39:37,180
+And then so what we're going to try to do--
+
+692
+00:39:37,180 --> 00:39:40,560
+so each hash function gives us either a collision
+
+693
+00:39:40,560 --> 00:39:41,480
+or not collision.
+
+694
+00:39:44,080 --> 00:39:48,840
+And so every hash function, a probability of colliding.
+
+695
+00:39:48,840 --> 00:39:55,080
+So the key here is that we want to say, compute the probability
+
+696
+00:39:55,080 --> 00:39:57,640
+that A and B collide.
+
+697
+00:39:57,640 --> 00:40:02,160
+We say that A and B collide if for some band
+
+698
+00:40:02,160 --> 00:40:06,360
+all of its hash functions return the same value.
+
+699
+00:40:06,360 --> 00:40:17,560
+So if h5 and h6 and h7 and h8 all return the same value--
+
+700
+00:40:17,560 --> 00:40:27,720
+sorry-- if h5 of A equals h5 of B and h6 of A equals h6 of B
+
+701
+00:40:27,720 --> 00:40:31,720
+and so on, that means this band is triggered,
+
+702
+00:40:31,720 --> 00:40:33,460
+and then I would say they're colliding.
+
+703
+00:40:33,460 --> 00:40:38,740
+Or if this band, if all of these agree,
+
+704
+00:40:38,740 --> 00:40:41,920
+then I say it's collision, or these two.
+
+705
+00:40:41,920 --> 00:40:46,960
+But you don't have to have all the hash functions return
+
+706
+00:40:46,960 --> 00:40:49,280
+the same value.
+
+707
+00:40:49,280 --> 00:40:52,680
+So there's this and-or structure here
+
+708
+00:40:52,680 --> 00:40:57,430
+that is doing the lifting here.
+
+709
+00:40:57,430 --> 00:40:59,530
+And we'll see why this works.
+
+710
+00:41:03,640 --> 00:41:10,270
+So now let's say you have a particular Jaccard of A and B,
+
+711
+00:41:10,270 --> 00:41:12,790
+what is the probability that A and B collide
+
+712
+00:41:12,790 --> 00:41:15,790
+according to this definition?
+
+713
+00:41:15,790 --> 00:41:19,270
+So we can calculate this.
+
+714
+00:41:19,270 --> 00:41:27,430
+So let's say that this Jaccard similarity is 0.8.
+
+715
+00:41:27,430 --> 00:41:34,510
+And we have five bands, and each band has 10 hash functions.
+
+716
+00:41:34,510 --> 00:41:38,670
+So then we can say, what is the probability of a fixed band
+
+717
+00:41:38,670 --> 00:41:40,030
+matching?
+
+718
+00:41:40,030 --> 00:41:44,670
+So that's 0.8 to the r.
+
+719
+00:41:44,670 --> 00:41:49,790
+Because each band has r hash functions,
+
+720
+00:41:49,790 --> 00:41:54,630
+so the probability that they all have to match is 0.8 to the r.
+
+721
+00:41:54,630 --> 00:41:58,150
+So the probability of a fixed band matching
+
+722
+00:41:58,150 --> 00:42:00,450
+is generally quite low.
+
+723
+00:42:00,450 --> 00:42:04,370
+It's exponential in r.
+
+724
+00:42:04,370 --> 00:42:07,790
+And then now the probability of collision
+
+725
+00:42:07,790 --> 00:42:11,430
+is the probability that some band matches.
+
+726
+00:42:11,430 --> 00:42:13,590
+And that's going to be the probability of 1
+
+727
+00:42:13,590 --> 00:42:15,470
+minus the probability of--
+
+728
+00:42:15,470 --> 00:42:19,590
+so this is the probability of a band not matching.
+
+729
+00:42:19,590 --> 00:42:22,990
+And if you raise it to the b-- there's
+
+730
+00:42:22,990 --> 00:42:27,230
+b bands-- there's a probability that all of them don't match.
+
+731
+00:42:27,230 --> 00:42:32,110
+And then 1 minus that is the probability that some match.
+
+732
+00:42:32,110 --> 00:42:35,072
+So the probability of collision is 0.4.
+
+733
+00:42:35,072 --> 00:42:37,030
+And you're expected to be higher because you're
+
+734
+00:42:37,030 --> 00:42:40,370
+given B tries to get a match.
+
+735
+00:42:46,430 --> 00:42:53,280
+So if you plot this, this is what it looks like.
+
+736
+00:42:53,280 --> 00:42:59,980
+So you have on the x-axis the similarity here.
+
+737
+00:42:59,980 --> 00:43:03,980
+And we were looking at 0.8.
+
+738
+00:43:03,980 --> 00:43:09,133
+And you look at the probability of a collision here.
+
+739
+00:43:09,133 --> 00:43:11,300
+So we would expect that if the similarity is 0, then
+
+740
+00:43:11,300 --> 00:43:11,960
+it should be 0.
+
+741
+00:43:11,960 --> 00:43:13,500
+If it's 1, it's 1.
+
+742
+00:43:13,500 --> 00:43:17,980
+But notice that this is an interesting S-shaped, which
+
+743
+00:43:17,980 --> 00:43:22,000
+is nice because this is what we wanted to sharpen.
+
+744
+00:43:22,000 --> 00:43:24,980
+We wanted to basically say, if the similarity is
+
+745
+00:43:24,980 --> 00:43:28,060
+below some threshold, then we want the probability to match
+
+746
+00:43:28,060 --> 00:43:29,980
+to be as low as possible.
+
+747
+00:43:29,980 --> 00:43:32,400
+And if the similarity is above some threshold,
+
+748
+00:43:32,400 --> 00:43:34,320
+we want it to be as high as possible.
+
+749
+00:43:34,320 --> 00:43:39,720
+So we're trying to get this to be like a phase transition.
+
+750
+00:43:39,720 --> 00:43:45,260
+And if you plot this function as a function of similarity,
+
+751
+00:43:45,260 --> 00:43:47,440
+that's what you get.
+
+752
+00:43:57,260 --> 00:43:57,760
+OK.
+
+753
+00:44:00,600 --> 00:44:03,040
+So let's just look at some examples.
+
+754
+00:44:03,040 --> 00:44:12,540
+So concretely, we have similarity 0.7 to 0.98.
+
+755
+00:44:12,540 --> 00:44:18,740
+And we're going to look at how b equals 10, r equals 10.
+
+756
+00:44:18,740 --> 00:44:22,820
+So we look at the collision probability,
+
+757
+00:44:22,820 --> 00:44:24,620
+according to our definition.
+
+758
+00:44:24,620 --> 00:44:34,760
+And we see that this gives us a range of 0.25 to 1.
+
+759
+00:44:34,760 --> 00:44:39,820
+So if you were to set a threshold, this is not so bad.
+
+760
+00:44:39,820 --> 00:44:41,520
+We can set it here.
+
+761
+00:44:41,520 --> 00:44:48,100
+And these with some probability will--
+
+762
+00:44:48,100 --> 00:44:51,450
+they're still false positives because, even if these
+
+763
+00:44:51,450 --> 00:44:55,950
+are below a threshold, let's say 0.9, they might still collide.
+
+764
+00:44:55,950 --> 00:44:58,730
+But we can filter them out if we want.
+
+765
+00:44:58,730 --> 00:45:03,890
+But the ones above are mostly kept.
+
+766
+00:45:03,890 --> 00:45:09,850
+So what happens when you move--so increasing r.
+
+767
+00:45:09,850 --> 00:45:13,650
+So remember, r is the number of hash functions within a bucket.
+
+768
+00:45:13,650 --> 00:45:19,010
+So when you increase r, the threshold
+
+769
+00:45:19,010 --> 00:45:22,393
+sharpens and moves the curve to the right.
+
+770
+00:45:22,393 --> 00:45:23,810
+Everything becomes harder to match
+
+771
+00:45:23,810 --> 00:45:27,370
+because you have more hash functions inside a bucket that
+
+772
+00:45:27,370 --> 00:45:29,050
+sharpens that exponent.
+
+773
+00:45:29,050 --> 00:45:32,330
+So the probability you see are sharper here,
+
+774
+00:45:32,330 --> 00:45:36,250
+and now everything moves to the right.
+
+775
+00:45:36,250 --> 00:45:39,290
+And now it's fairly unlikely that if something
+
+776
+00:45:39,290 --> 00:45:43,450
+has a low Jaccard, you're going to match it.
+
+777
+00:45:43,450 --> 00:45:48,570
+So before it was 0.25, and now it's 0.008.
+
+778
+00:45:48,570 --> 00:45:51,530
+So we're sharpening the probabilities.
+
+779
+00:45:51,530 --> 00:45:54,850
+And then increasing b has the effect
+
+780
+00:45:54,850 --> 00:45:57,510
+of moving the curve to the left.
+
+781
+00:45:57,510 --> 00:46:00,490
+It makes it easier to match. b is the number of bands.
+
+782
+00:46:00,490 --> 00:46:01,830
+And some band has to match.
+
+783
+00:46:01,830 --> 00:46:03,330
+If you have more bands, then there's
+
+784
+00:46:03,330 --> 00:46:05,970
+more chances of matching.
+
+785
+00:46:05,970 --> 00:46:10,310
+So if you look at this, then before and after.
+
+786
+00:46:10,310 --> 00:46:14,370
+So now we're making-- before this, 0.9 was only 0.72,
+
+787
+00:46:14,370 --> 00:46:16,490
+and now it's 0.92.
+
+788
+00:46:16,490 --> 00:46:23,510
+And of course, this also increases, but not by that much.
+
+789
+00:46:23,510 --> 00:46:26,730
+And you can drive these phase transitions
+
+790
+00:46:26,730 --> 00:46:30,850
+to be as sharp as you want by increasing b and r.
+
+791
+00:46:30,850 --> 00:46:33,450
+But of course, if you can increase b and r too much,
+
+792
+00:46:33,450 --> 00:46:35,950
+then it can be more expensive.
+
+793
+00:46:38,790 --> 00:46:42,910
+So let's look at a more real-world setting.
+
+794
+00:46:42,910 --> 00:46:46,680
+So in this paper on de-duplication,
+
+795
+00:46:46,680 --> 00:46:52,900
+they had b, 20 bands, and r is 450.
+
+796
+00:46:52,900 --> 00:46:59,160
+So it give you an idea of the magnitude of these numbers.
+
+797
+00:46:59,160 --> 00:47:04,120
+And in general, the phase transition happens
+
+798
+00:47:04,120 --> 00:47:10,000
+at a threshold, which is 1/b b raised to the power of 1/r.
+
+799
+00:47:10,000 --> 00:47:18,280
+So if you want to filter based on Jaccard greater than 0.9,
+
+800
+00:47:18,280 --> 00:47:22,880
+then you basically have to set b and r such that this is 0.9.
+
+801
+00:47:22,880 --> 00:47:25,120
+And then by changing b and r, you
+
+802
+00:47:25,120 --> 00:47:29,360
+can make that phase transition sharper.
+
+803
+00:47:29,360 --> 00:47:33,640
+So remember the probability of the fixed band matches is 1/b.
+
+804
+00:47:33,640 --> 00:47:37,920
+If you are at this threshold, then the probability
+
+805
+00:47:37,920 --> 00:47:47,220
+that A and B collide is approximately--it's a constant.
+
+806
+00:47:47,220 --> 00:47:51,080
+So the probability of collision is 0.64.
+
+807
+00:47:51,080 --> 00:47:52,600
+And this makes sense.
+
+808
+00:47:52,600 --> 00:47:55,360
+So basically, if you have a phase transition,
+
+809
+00:47:55,360 --> 00:47:59,020
+the center of that phase transition is 0.64.
+
+810
+00:47:59,020 --> 00:48:02,840
+And everything below it should go to 0, as b and r increases,
+
+811
+00:48:02,840 --> 00:48:06,660
+and everything above, it should go to 1 as b and r increases.
+
+812
+00:48:10,040 --> 00:48:14,960
+Any questions about LSH?
+
+813
+00:48:14,960 --> 00:48:20,600
+So this method is called MinHash LSH because LSH really
+
+814
+00:48:20,600 --> 00:48:22,520
+works for any hash functions.
+
+815
+00:48:22,520 --> 00:48:25,320
+For de-duplication language model processing,
+
+816
+00:48:25,320 --> 00:48:29,560
+we're using the MinHash, which approximates Jaccard.
+
+817
+00:48:29,560 --> 00:48:36,180
+And so that basically is the one you should use here.
+
+818
+00:48:39,520 --> 00:48:43,210
+Questions about dedupe?
+
+819
+00:48:55,150 --> 00:49:01,610
+So one note about dedupe is that there's often, as we'll see,
+
+820
+00:49:01,610 --> 00:49:03,670
+data sets that are coming in.
+
+821
+00:49:03,670 --> 00:49:08,110
+And sometimes the de-duplication will happen within a data set.
+
+822
+00:49:08,110 --> 00:49:10,030
+But you actually have to do de-duplication
+
+823
+00:49:10,030 --> 00:49:13,670
+across your entire data set because often data sets can
+
+824
+00:49:13,670 --> 00:49:14,910
+be redundant.
+
+825
+00:49:14,910 --> 00:49:21,070
+So sometimes that's not done, but it should be.
+
+826
+00:49:21,070 --> 00:49:26,630
+Let's go on to the next topic, which is data mixing.
+
+827
+00:49:26,630 --> 00:49:32,430
+So far, we've transformed our data from really raw HTML
+
+828
+00:49:32,430 --> 00:49:34,330
+or PDFs into text.
+
+829
+00:49:34,330 --> 00:49:36,070
+We filtered for high-quality.
+
+830
+00:49:36,070 --> 00:49:42,776
+We deduped, so we have a smaller set of high-quality documents.
+
+831
+00:49:42,776 --> 00:49:49,930
+And this generally happens for a given data source.
+
+832
+00:49:49,930 --> 00:49:53,190
+But language models are trained on multiple data sources.
+
+833
+00:49:53,190 --> 00:49:59,790
+So in Marin, currently, this website
+
+834
+00:49:59,790 --> 00:50:03,270
+tracks the different data sources
+
+835
+00:50:03,270 --> 00:50:06,230
+that the next model will be trained on.
+
+836
+00:50:06,230 --> 00:50:10,450
+And you can see that there's a bunch of things.
+
+837
+00:50:10,450 --> 00:50:15,150
+There's Nemotron, there's FinePDFs, which we talked about.
+
+838
+00:50:15,150 --> 00:50:23,830
+There's some institutional books, and some code,
+
+839
+00:50:23,830 --> 00:50:24,810
+and all these things.
+
+840
+00:50:24,810 --> 00:50:29,150
+So you have all these different sources.
+
+841
+00:50:29,150 --> 00:50:34,990
+And the question is, how do you combine these?
+
+842
+00:50:34,990 --> 00:50:38,510
+So if you look at an older paper, The Pile,
+
+843
+00:50:38,510 --> 00:50:45,020
+this is the set of sources that they had at that time.
+
+844
+00:50:45,020 --> 00:50:50,860
+And they essentially assign a particular weight
+
+845
+00:50:50,860 --> 00:50:52,940
+to each component.
+
+846
+00:50:52,940 --> 00:50:55,360
+So basically, you have a distribution over sources.
+
+847
+00:50:58,020 --> 00:50:59,560
+So where does that weight come from?
+
+848
+00:51:02,580 --> 00:51:06,540
+So just cut and dry.
+
+849
+00:51:06,540 --> 00:51:08,500
+Let's say you have three sources.
+
+850
+00:51:08,500 --> 00:51:10,780
+You want to find a data mixture, and a data mixture
+
+851
+00:51:10,780 --> 00:51:15,780
+is just a distribution over your sources.
+
+852
+00:51:15,780 --> 00:51:18,500
+So if you're just thinking about this problem
+
+853
+00:51:18,500 --> 00:51:21,260
+from first principles--
+
+854
+00:51:21,260 --> 00:51:25,963
+well, not from first principles, but just from what you might do.
+
+855
+00:51:25,963 --> 00:51:28,380
+Vibes, which is, I guess, the opposite of first principles,
+
+856
+00:51:28,380 --> 00:51:31,580
+is you just manually set it based
+
+857
+00:51:31,580 --> 00:51:36,920
+on some intuition, which is more often than you might think,
+
+858
+00:51:36,920 --> 00:51:38,500
+what people do.
+
+859
+00:51:38,500 --> 00:51:44,380
+So I think this is definitely fairly vibes-based.
+
+860
+00:51:44,380 --> 00:51:49,680
+And even more recent papers, you just look at--
+
+861
+00:51:49,680 --> 00:51:54,180
+maybe you use some method and then you just tweak things.
+
+862
+00:51:54,180 --> 00:51:57,340
+You can also do uniform sampling, which
+
+863
+00:51:57,340 --> 00:52:01,540
+is you just put a uniform distribution over your sources,
+
+864
+00:52:01,540 --> 00:52:05,720
+and you sample every chunk.
+
+865
+00:52:05,720 --> 00:52:08,980
+You just sample a source.
+
+866
+00:52:08,980 --> 00:52:11,940
+You can also do proportional mixing,
+
+867
+00:52:11,940 --> 00:52:13,500
+which is that you sample proportional
+
+868
+00:52:13,500 --> 00:52:15,940
+to the number of tokens in a source.
+
+869
+00:52:15,940 --> 00:52:20,100
+So if you have a data set with more tokens,
+
+870
+00:52:20,100 --> 00:52:21,780
+then you put a higher weight.
+
+871
+00:52:21,780 --> 00:52:25,280
+So this is also generally a rational thing to do.
+
+872
+00:52:25,280 --> 00:52:29,020
+But you might worry that if you have a huge, low-quality data
+
+873
+00:52:29,020 --> 00:52:31,400
+set, that's going to eat up a lot of your tokens.
+
+874
+00:52:31,400 --> 00:52:35,340
+So it doesn't seem quite optimal either.
+
+875
+00:52:35,340 --> 00:52:39,730
+So intuitively, you should upweight your higher quality
+
+876
+00:52:39,730 --> 00:52:41,730
+sources.
+
+877
+00:52:41,730 --> 00:52:47,450
+But there's two things that are important to keep in mind.
+
+878
+00:52:47,450 --> 00:52:51,410
+One is that you do want to ensure some diversity.
+
+879
+00:52:51,410 --> 00:52:55,030
+So often, sources are incomparable for literature,
+
+880
+00:52:55,030 --> 00:52:57,250
+code, and papers.
+
+881
+00:52:57,250 --> 00:53:00,722
+You can't really say that this paper
+
+882
+00:53:00,722 --> 00:53:02,930
+is higher quality than this code because they're just
+
+883
+00:53:02,930 --> 00:53:05,010
+incomparable objects, maybe.
+
+884
+00:53:05,010 --> 00:53:07,710
+And if you want your language model to do well,
+
+885
+00:53:07,710 --> 00:53:14,170
+you don't want to just put all your mass on papers.
+
+886
+00:53:14,170 --> 00:53:17,170
+The second thing, which I will talk a bit more about,
+
+887
+00:53:17,170 --> 00:53:21,570
+is each source is actually finite.
+
+888
+00:53:21,570 --> 00:53:24,350
+So if you put too much weight on a small source,
+
+889
+00:53:24,350 --> 00:53:28,730
+then you essentially run out of that source,
+
+890
+00:53:28,730 --> 00:53:31,630
+and you need to just epoch over it,
+
+891
+00:53:31,630 --> 00:53:35,930
+meaning that you keep on training literally the same tokens.
+
+892
+00:53:35,930 --> 00:53:39,430
+And this is going to be bad for reasons we'll see.
+
+893
+00:53:39,430 --> 00:53:39,930
+OK.
+
+894
+00:53:39,930 --> 00:53:44,170
+So let's try to unpack this a little bit more concretely,
+
+895
+00:53:44,170 --> 00:53:45,490
+this last point.
+
+896
+00:53:45,490 --> 00:53:48,210
+So imagine you just have two sources--
+
+897
+00:53:48,210 --> 00:53:50,993
+a low-quality source, you have 10 trillion tokens,
+
+898
+00:53:50,993 --> 00:53:52,410
+and you have a high-quality source
+
+899
+00:53:52,410 --> 00:53:54,290
+that has 10 billion tokens.
+
+900
+00:53:54,290 --> 00:53:58,030
+Generally, high-quality sources are smaller.
+
+901
+00:53:58,030 --> 00:54:02,010
+So if you just do a naive data mixture.
+
+902
+00:54:02,010 --> 00:54:03,370
+Let's just do uniform.
+
+903
+00:54:03,370 --> 00:54:06,410
+So half on high, half on low.
+
+904
+00:54:06,410 --> 00:54:10,850
+And I'm going to train for 1 trillion tokens.
+
+905
+00:54:10,850 --> 00:54:12,810
+So when I say train for 1 trillion,
+
+906
+00:54:12,810 --> 00:54:14,190
+that doesn't mean unique tokens.
+
+907
+00:54:14,190 --> 00:54:18,730
+It just means train for that many steps divided
+
+908
+00:54:18,730 --> 00:54:23,050
+by batch size, essentially, or times batch size.
+
+909
+00:54:23,050 --> 00:54:26,850
+So then let's look at this, which
+
+910
+00:54:26,850 --> 00:54:31,970
+is the number of times a particular element
+
+911
+00:54:31,970 --> 00:54:34,300
+in the low-quality data set was trained on.
+
+912
+00:54:34,300 --> 00:54:37,720
+So that's the number of epochs a particular data
+
+913
+00:54:37,720 --> 00:54:39,320
+point was trained on.
+
+914
+00:54:39,320 --> 00:54:42,560
+So a p low times the trained tokens
+
+915
+00:54:42,560 --> 00:54:48,600
+is the number of times I want to request tokens
+
+916
+00:54:48,600 --> 00:54:53,720
+from this low-quality source, and divided by the total number
+
+917
+00:54:53,720 --> 00:54:54,860
+of low-quality sources.
+
+918
+00:54:54,860 --> 00:54:56,740
+So this is less than 1.
+
+919
+00:54:56,740 --> 00:55:01,520
+So basically, that means 5% of the tokens
+
+920
+00:55:01,520 --> 00:55:03,480
+in this low-quality data set, I'm
+
+921
+00:55:03,480 --> 00:55:05,420
+going to touch and train on once.
+
+922
+00:55:08,120 --> 00:55:11,720
+And then if you look at high quality,
+
+923
+00:55:11,720 --> 00:55:14,120
+you'll see that the number of epochs
+
+924
+00:55:14,120 --> 00:55:21,920
+is 50, because I only have 10 billion tokens here.
+
+925
+00:55:21,920 --> 00:55:26,920
+And if I'm half-half, that means 500 billion tokens--
+
+926
+00:55:26,920 --> 00:55:30,740
+I need to train up 500 billion tokens of high-quality data.
+
+927
+00:55:30,740 --> 00:55:32,780
+But I don't have 500 billion tokens of data,
+
+928
+00:55:32,780 --> 00:55:37,200
+so I have to repeat each data point 50 times.
+
+929
+00:55:37,200 --> 00:55:39,220
+So this is actually really important.
+
+930
+00:55:39,220 --> 00:55:45,240
+And some big model runs have messed this up.
+
+931
+00:55:45,240 --> 00:55:48,840
+You can't just naively look at the data sets
+
+932
+00:55:48,840 --> 00:55:50,360
+and define a distribution and then
+
+933
+00:55:50,360 --> 00:55:54,300
+you sample, because if you just look at the quality,
+
+934
+00:55:54,300 --> 00:55:57,600
+if you look at the data, you're missing
+
+935
+00:55:57,600 --> 00:56:00,080
+how many data points are there.
+
+936
+00:56:00,080 --> 00:56:01,460
+Does this make sense?
+
+937
+00:56:01,460 --> 00:56:02,860
+Maybe pause for questions.
+
+938
+00:56:02,860 --> 00:56:04,260
+This is an important point.
+
+939
+00:56:14,800 --> 00:56:16,440
+Yeah.
+
+940
+00:56:16,440 --> 00:56:22,880
+I guess, for the high-quality data, [INAUDIBLE]
+
+941
+00:56:22,880 --> 00:56:25,480
+as [INAUDIBLE] low quality.
+
+942
+00:56:29,240 --> 00:56:32,270
+Why do you need 50 epochs in the first place?
+
+943
+00:56:32,270 --> 00:56:34,510
+Doesn't it achieve comparable performance
+
+944
+00:56:34,510 --> 00:56:37,310
+at a level that is way fewer?
+
+945
+00:56:37,310 --> 00:56:37,830
+Yeah.
+
+946
+00:56:37,830 --> 00:56:40,210
+So the question is, why do you need 50 epochs?
+
+947
+00:56:40,210 --> 00:56:43,910
+And I guess the point is that you don't need 50 epochs.
+
+948
+00:56:43,910 --> 00:56:46,070
+Worst case, it's wasting compute.
+
+949
+00:56:46,070 --> 00:56:49,050
+Sorry, best case is wasting compute, and worst case,
+
+950
+00:56:49,050 --> 00:56:52,530
+you're overfitting.
+
+951
+00:56:52,530 --> 00:56:54,550
+The reason it's 50 is that if you just go in
+
+952
+00:56:54,550 --> 00:56:56,630
+and you define this data mixture,
+
+953
+00:56:56,630 --> 00:56:58,350
+then you're going to end up doing
+
+954
+00:56:58,350 --> 00:57:00,830
+50 epochs without realizing it, unless you're
+
+955
+00:57:00,830 --> 00:57:02,870
+paying close attention.
+
+956
+00:57:02,870 --> 00:57:04,902
+So this is basically--
+
+957
+00:57:04,902 --> 00:57:07,110
+the lesson is look at how many epochs you're actually
+
+958
+00:57:07,110 --> 00:57:10,030
+doing on your data.
+
+959
+00:57:10,030 --> 00:57:11,070
+Yeah.
+
+960
+00:57:11,070 --> 00:57:13,530
+How do the mixtures get expressed during training?
+
+961
+00:57:13,530 --> 00:57:17,690
+When you switch every step, you train steps of 10, saying,
+
+962
+00:57:17,690 --> 00:57:20,350
+oh, I want to do 10, Python code, 10 essays,
+
+963
+00:57:20,350 --> 00:57:24,350
+because I feel like-- is there also any intuition between what
+
+964
+00:57:24,350 --> 00:57:25,530
+decisions are made there?
+
+965
+00:57:25,530 --> 00:57:26,030
+Yeah.
+
+966
+00:57:26,030 --> 00:57:26,613
+Good question.
+
+967
+00:57:26,613 --> 00:57:29,010
+So the question is, when you train,
+
+968
+00:57:29,010 --> 00:57:32,390
+how do the mixtures get realized?
+
+969
+00:57:32,390 --> 00:57:39,670
+And so, in general, you just sample.
+
+970
+00:57:39,670 --> 00:57:42,190
+So you want to fill a batch.
+
+971
+00:57:42,190 --> 00:57:50,110
+So you can sample essentially for each element which mixture
+
+972
+00:57:50,110 --> 00:57:52,110
+component it comes from.
+
+973
+00:57:52,110 --> 00:57:55,710
+And you fill up a batch with sequences
+
+974
+00:57:55,710 --> 00:57:57,130
+from that mixture component.
+
+975
+00:57:57,130 --> 00:58:00,290
+Usually, every sequence comes from one mixture component.
+
+976
+00:58:00,290 --> 00:58:03,670
+You're not sampling per token.
+
+977
+00:58:03,670 --> 00:58:05,530
+So each batch should be mixed.
+
+978
+00:58:05,530 --> 00:58:07,230
+So I guess the mixture assumptions
+
+979
+00:58:07,230 --> 00:58:10,010
+are at the batch level, and then you train for that.
+
+980
+00:58:10,010 --> 00:58:13,990
+It's not like, oh, it's one step is-- the code in one step is--
+
+981
+00:58:13,990 --> 00:58:14,490
+Yeah.
+
+982
+00:58:14,490 --> 00:58:16,770
+In general, you want to reduce variance.
+
+983
+00:58:16,770 --> 00:58:19,750
+You want to train for multiple--
+
+984
+00:58:19,750 --> 00:58:21,770
+batch should have some mixture.
+
+985
+00:58:25,550 --> 00:58:26,050
+OK.
+
+986
+00:58:26,050 --> 00:58:33,540
+So this problem has been noticed quite a long time ago.
+
+987
+00:58:33,540 --> 00:58:36,480
+And so in this paper, they introduced the UniMax.
+
+988
+00:58:36,480 --> 00:58:41,660
+And in that case, they were training in multilingual models.
+
+989
+00:58:41,660 --> 00:58:45,380
+And it was very clear that some languages
+
+990
+00:58:45,380 --> 00:58:51,300
+were very low-resource, so you had to do something about this.
+
+991
+00:58:51,300 --> 00:58:56,340
+So, in this paper, they noticed that before some works
+
+992
+00:58:56,340 --> 00:59:01,460
+would essentially take the proportional mixing
+
+993
+00:59:01,460 --> 00:59:08,220
+and raise it to some power to flatten it out the distribution.
+
+994
+00:59:08,220 --> 00:59:12,380
+But the idea in this paper is that let's be
+
+995
+00:59:12,380 --> 00:59:14,680
+a bit more explicit about that.
+
+996
+00:59:14,680 --> 00:59:16,760
+Let's sample the sources uniformly,
+
+997
+00:59:16,760 --> 00:59:19,740
+but with a hard cap on the number of epochs.
+
+998
+00:59:19,740 --> 00:59:21,220
+So this is the key idea.
+
+999
+00:59:21,220 --> 00:59:25,180
+Here, you say I'm only going to take 20 epochs
+
+1000
+00:59:25,180 --> 00:59:28,540
+over a particular data source.
+
+1001
+00:59:28,540 --> 00:59:32,220
+So if you've done that, then too bad.
+
+1002
+00:59:32,220 --> 00:59:34,320
+You don't get any more tokens.
+
+1003
+00:59:34,320 --> 00:59:35,940
+You move on to the next thing.
+
+1004
+00:59:35,940 --> 00:59:40,580
+So this is like a safety net in some sense.
+
+1005
+00:59:40,580 --> 00:59:44,100
+So in particular, if you look at the number, the probability
+
+1006
+00:59:44,100 --> 00:59:47,060
+assigned to a source times the number of training tokens,
+
+1007
+00:59:47,060 --> 00:59:51,180
+that should be less than or equal to the cap.
+
+1008
+00:59:51,180 --> 00:59:54,540
+And there's a simple procedure for actually determining
+
+1009
+00:59:54,540 --> 01:00:00,460
+the mixture subject to this constraint.
+
+1010
+01:00:00,460 --> 01:00:04,140
+So let's switch gears a little bit and talk
+
+1011
+01:00:04,140 --> 01:00:08,480
+about how we define the mixture in the first place,
+
+1012
+01:00:08,480 --> 01:00:10,860
+because if you have 50 sources, there's
+
+1013
+01:00:10,860 --> 01:00:13,020
+50 numbers you have to fill.
+
+1014
+01:00:13,020 --> 01:00:16,940
+And we notice that proportional mixing isn't really enough.
+
+1015
+01:00:16,940 --> 01:00:20,460
+Maybe you can try to estimate some quality metric,
+
+1016
+01:00:20,460 --> 01:00:23,930
+and then you can sample proportional to that,
+
+1017
+01:00:23,930 --> 01:00:26,290
+but that is also heuristic.
+
+1018
+01:00:26,290 --> 01:00:30,970
+So the most principled methods and most
+
+1019
+01:00:30,970 --> 01:00:33,290
+easiest to understand what's happening
+
+1020
+01:00:33,290 --> 01:00:37,410
+is these regression-based mixing methods, or RegMix, Olmix,
+
+1021
+01:00:37,410 --> 01:00:39,850
+and other papers like this.
+
+1022
+01:00:39,850 --> 01:00:45,810
+And the idea here is relatively simple.
+
+1023
+01:00:45,810 --> 01:00:48,490
+So first, let's say you're trying
+
+1024
+01:00:48,490 --> 01:00:50,110
+to train a large-scale model.
+
+1025
+01:00:50,110 --> 01:00:55,010
+So you go to a small scale, let's say
+
+1026
+01:00:55,010 --> 01:01:01,530
+300 million parameters, and you try different data mixtures.
+
+1027
+01:01:01,530 --> 01:01:03,990
+So let's say you have three components.
+
+1028
+01:01:03,990 --> 01:01:06,050
+You try different mixtures.
+
+1029
+01:01:06,050 --> 01:01:07,990
+And then you train these small models.
+
+1030
+01:01:07,990 --> 01:01:10,350
+You train a swarm of small models.
+
+1031
+01:01:10,350 --> 01:01:14,652
+Each model gives you a loss on some target metric.
+
+1032
+01:01:14,652 --> 01:01:16,110
+It could be some downstream values.
+
+1033
+01:01:16,110 --> 01:01:18,970
+It could be perplexity, whatever you want.
+
+1034
+01:01:18,970 --> 01:01:23,730
+So then you use these data points to basically fit
+
+1035
+01:01:23,730 --> 01:01:27,250
+a regression where the regression model maps
+
+1036
+01:01:27,250 --> 01:01:33,970
+these inputs, which is the data mixture weights, to the loss.
+
+1037
+01:01:33,970 --> 01:01:39,330
+So now you have basically a very cheap model that tells you,
+
+1038
+01:01:39,330 --> 01:01:44,490
+if I were to train on this mixture, what loss do I get?
+
+1039
+01:01:44,490 --> 01:01:52,090
+Then you can essentially optimize that data mixture--
+
+1040
+01:01:52,090 --> 01:01:57,570
+sorry-- optimize that function for the optimal data mixture.
+
+1041
+01:01:57,570 --> 01:01:59,090
+And then that is the data mixture
+
+1042
+01:01:59,090 --> 01:02:03,210
+you use to train the large-scale model.
+
+1043
+01:02:03,210 --> 01:02:06,930
+So that's the simple procedure.
+
+1044
+01:02:06,930 --> 01:02:10,610
+And you notice some similarities with scaling laws,
+
+1045
+01:02:10,610 --> 01:02:13,730
+where you're trying to do some cheap computations to figure out
+
+1046
+01:02:13,730 --> 01:02:16,910
+some answers, and then scale up.
+
+1047
+01:02:16,910 --> 01:02:17,410
+OK.
+
+1048
+01:02:17,410 --> 01:02:22,520
+So there's a few design decisions here.
+
+1049
+01:02:22,520 --> 01:02:27,000
+One is, what are the mixtures that you're trying out here?
+
+1050
+01:02:27,000 --> 01:02:29,760
+You need a distribution over distributions here.
+
+1051
+01:02:29,760 --> 01:02:34,720
+So often, people use some Dirichlet distribution.
+
+1052
+01:02:34,720 --> 01:02:38,040
+You also have to define the regression method.
+
+1053
+01:02:38,040 --> 01:02:42,240
+People have tried linear models or boosted decision trees.
+
+1054
+01:02:42,240 --> 01:02:46,160
+You have to figure out the target here.
+
+1055
+01:02:46,160 --> 01:02:48,740
+Often this is based on downstream evals.
+
+1056
+01:02:48,740 --> 01:02:52,680
+But you have to be very careful not to overfit because we're
+
+1057
+01:02:52,680 --> 01:02:55,040
+doing pretraining.
+
+1058
+01:02:55,040 --> 01:02:57,640
+Supposedly, pretraining is supposed
+
+1059
+01:02:57,640 --> 01:02:59,620
+to be training this general-purpose model,
+
+1060
+01:02:59,620 --> 01:03:02,915
+and we're not trying to fit some downstream evals.
+
+1061
+01:03:02,915 --> 01:03:04,540
+And if you're not careful, for example,
+
+1062
+01:03:04,540 --> 01:03:07,860
+if you have a bunch of code evals, then, well, guess what?
+
+1063
+01:03:07,860 --> 01:03:09,720
+You're going to upweight all the code data.
+
+1064
+01:03:09,720 --> 01:03:12,140
+That's not rocket science.
+
+1065
+01:03:12,140 --> 01:03:15,820
+And if you then go and you say, I want to generate some poetry,
+
+1066
+01:03:15,820 --> 01:03:18,740
+you might realize that you've overfit.
+
+1067
+01:03:18,740 --> 01:03:20,740
+So you have to be very careful about that.
+
+1068
+01:03:20,740 --> 01:03:22,600
+So proportional mixing and uniform mixing
+
+1069
+01:03:22,600 --> 01:03:24,725
+don't have this problem because you're not looking.
+
+1070
+01:03:24,725 --> 01:03:27,240
+There's no downstream evals.
+
+1071
+01:03:27,240 --> 01:03:30,880
+And the final thing is, how much of a difference
+
+1072
+01:03:30,880 --> 01:03:34,640
+between small and large scale is there?
+
+1073
+01:03:34,640 --> 01:03:37,420
+And this is a cost and accuracy trade-off.
+
+1074
+01:03:37,420 --> 01:03:40,080
+Of course, if you train really, really small models,
+
+1075
+01:03:40,080 --> 01:03:42,040
+this might not be representative.
+
+1076
+01:03:42,040 --> 01:03:45,000
+But if you train large models to do this,
+
+1077
+01:03:45,000 --> 01:03:47,100
+well, there's no point in doing any of this.
+
+1078
+01:03:47,100 --> 01:03:48,287
+You just train.
+
+1079
+01:03:48,287 --> 01:03:50,120
+You're basically doing hyperparameter tuning.
+
+1080
+01:03:50,120 --> 01:03:54,160
+at the largest scale, which is too expensive.
+
+1081
+01:03:54,160 --> 01:03:58,240
+So this Olmix paper actually has this nice table,
+
+1082
+01:03:58,240 --> 01:04:01,960
+which shows you for a number of different methods
+
+1083
+01:04:01,960 --> 01:04:06,840
+that all fall into this framework.
+
+1084
+01:04:06,840 --> 01:04:08,740
+The size of the proxy models.
+
+1085
+01:04:08,740 --> 01:04:15,520
+They're generally fairly tens of millions of parameters.
+
+1086
+01:04:15,520 --> 01:04:21,150
+How many mixtures do you sample?
+
+1087
+01:04:21,150 --> 01:04:24,390
+m here being the number of parameters in your mixture--
+
+1088
+01:04:24,390 --> 01:04:27,790
+sorry-- the number of domains rather.
+
+1089
+01:04:27,790 --> 01:04:29,410
+And you can use Dirichlet.
+
+1090
+01:04:29,410 --> 01:04:32,670
+You can use exponential.
+
+1091
+01:04:32,670 --> 01:04:35,110
+And then the regression model, you
+
+1092
+01:04:35,110 --> 01:04:42,510
+can fit a log-linear model, which tends to work pretty well.
+
+1093
+01:04:42,510 --> 01:04:45,310
+And then you can use different ways
+
+1094
+01:04:45,310 --> 01:04:50,030
+to solve this optimization problem.
+
+1095
+01:04:50,030 --> 01:04:53,350
+So there's two leaps of faith here
+
+1096
+01:04:53,350 --> 01:04:56,230
+that you just have to be very careful of is
+
+1097
+01:04:56,230 --> 01:04:59,390
+that the regression model was trained
+
+1098
+01:04:59,390 --> 01:05:02,590
+on a bunch of these small proxy runs,
+
+1099
+01:05:02,590 --> 01:05:05,230
+and you're optimizing this.
+
+1100
+01:05:05,230 --> 01:05:10,350
+So the hope is that the minimizer, your optimal data
+
+1101
+01:05:10,350 --> 01:05:15,150
+mixture, that regression model is still accurate.
+
+1102
+01:05:15,150 --> 01:05:18,120
+And this is a little bit of-- you
+
+1103
+01:05:18,120 --> 01:05:21,310
+have to be very careful because if you, let's say,
+
+1104
+01:05:21,310 --> 01:05:26,470
+sample a random mixture, you'll probably be fine because
+
+1105
+01:05:26,470 --> 01:05:28,410
+of classic generalization.
+
+1106
+01:05:28,410 --> 01:05:32,010
+You sample a mixture, and you fit a function,
+
+1107
+01:05:32,010 --> 01:05:34,090
+it should be able to predict in distribution.
+
+1108
+01:05:34,090 --> 01:05:35,750
+But when you're optimizing, you're
+
+1109
+01:05:35,750 --> 01:05:38,910
+essentially trying to go to potentially the extremes
+
+1110
+01:05:38,910 --> 01:05:40,970
+where you might not have as much coverage.
+
+1111
+01:05:40,970 --> 01:05:43,150
+So that's one thing to be careful of.
+
+1112
+01:05:43,150 --> 01:05:49,790
+And the other thing is that optimal data mixtures,
+
+1113
+01:05:49,790 --> 01:05:55,070
+you just hope that they transfer from small scale to large scale.
+
+1114
+01:05:55,070 --> 01:05:59,230
+And this, in general, it seems like at least at the scales
+
+1115
+01:05:59,230 --> 01:06:01,990
+that open community works with, it
+
+1116
+01:06:01,990 --> 01:06:05,550
+tends to be true or not plainly false.
+
+1117
+01:06:05,550 --> 01:06:09,490
+But clearly, there are scale-dependent effects.
+
+1118
+01:06:09,490 --> 01:06:12,148
+If you just think about the previous slide
+
+1119
+01:06:12,148 --> 01:06:13,690
+when we were talking about filtering,
+
+1120
+01:06:13,690 --> 01:06:15,800
+if you're training for many more tokens,
+
+1121
+01:06:15,800 --> 01:06:18,160
+then probably low-quality data is OK.
+
+1122
+01:06:18,160 --> 01:06:20,480
+So clearly, the optimum is not the same,
+
+1123
+01:06:20,480 --> 01:06:23,640
+but you just hope for the best here.
+
+1124
+01:06:23,640 --> 01:06:24,140
+OK.
+
+1125
+01:06:24,140 --> 01:06:25,040
+So hold on.
+
+1126
+01:06:25,040 --> 01:06:27,460
+There's one scale-dependent effect
+
+1127
+01:06:27,460 --> 01:06:30,260
+that we already talked about that we
+
+1128
+01:06:30,260 --> 01:06:34,920
+need to address here, which is that, imagine,
+
+1129
+01:06:34,920 --> 01:06:38,660
+so we have a lot of low-quality data, 10 trillion tokens,
+
+1130
+01:06:38,660 --> 01:06:40,940
+10 billion tokens of high-quality data.
+
+1131
+01:06:40,940 --> 01:06:46,760
+And if we train a small model on low token counts,
+
+1132
+01:06:46,760 --> 01:06:48,620
+do you remember?
+
+1133
+01:06:48,620 --> 01:06:54,720
+What happens is that you might— this is a made-up example,
+
+1134
+01:06:54,720 --> 01:07:00,740
+but you might put a lot of mass on your high-quality data,
+
+1135
+01:07:00,740 --> 01:07:03,660
+because low token counts, you're not epoching.
+
+1136
+01:07:03,660 --> 01:07:06,520
+So it's like, oh, wow, Wikipedia is so great.
+
+1137
+01:07:06,520 --> 01:07:09,380
+Let's just train on Wikipedia.
+
+1138
+01:07:09,380 --> 01:07:14,120
+But if you then go and train this large model
+
+1139
+01:07:14,120 --> 01:07:17,100
+on this mixture, then you're going
+
+1140
+01:07:17,100 --> 01:07:19,340
+to end up epoching a lot on this high-quality data,
+
+1141
+01:07:19,340 --> 01:07:20,200
+and you'll overfit.
+
+1142
+01:07:20,200 --> 01:07:24,580
+And that's definitely bad.
+
+1143
+01:07:24,580 --> 01:07:31,780
+So one way to fix this, which is done in this Olmix paper,
+
+1144
+01:07:31,780 --> 01:07:36,900
+is you can just cap the number of epochs.
+
+1145
+01:07:36,900 --> 01:07:39,380
+So that is one solution.
+
+1146
+01:07:39,380 --> 01:07:42,620
+There's another solution here, which goes
+
+1147
+01:07:42,620 --> 01:07:44,480
+by probably multiple names.
+
+1148
+01:07:44,480 --> 01:07:47,140
+But one name for it is simulated epoching.
+
+1149
+01:07:47,140 --> 01:07:50,820
+And the principle here is that make your small scale
+
+1150
+01:07:50,820 --> 01:07:52,820
+look like your large scale.
+
+1151
+01:07:52,820 --> 01:07:54,720
+This is a general theme for the course.
+
+1152
+01:07:54,720 --> 01:07:57,800
+We saw it when we talked about muP.
+
+1153
+01:07:57,800 --> 01:08:01,660
+You parameterize your model so that your hyperparameters
+
+1154
+01:08:01,660 --> 01:08:02,580
+transfer.
+
+1155
+01:08:02,580 --> 01:08:06,060
+And so the same principle applies here.
+
+1156
+01:08:06,060 --> 01:08:10,500
+And the problem with doing this naive scaling
+
+1157
+01:08:10,500 --> 01:08:16,609
+is that you can't be not epoching out small scale then
+
+1158
+01:08:16,609 --> 01:08:18,930
+epoching at large scales, because then those
+
+1159
+01:08:18,930 --> 01:08:25,010
+are qualitatively different operations on your dataset.
+
+1160
+01:08:25,010 --> 01:08:30,689
+So the way you would handle this is you downstream your sources
+
+1161
+01:08:30,689 --> 01:08:32,810
+proportionally.
+
+1162
+01:08:32,810 --> 01:08:39,410
+So if you have your small runs, over 10 billion tokens,
+
+1163
+01:08:39,410 --> 01:08:42,529
+and your big run with one trillion tokens,
+
+1164
+01:08:42,529 --> 01:08:48,090
+then you have a 1 in 100 downsampling.
+
+1165
+01:08:48,090 --> 01:08:55,410
+And then you basically use the downsample mixture.
+
+1166
+01:08:55,410 --> 01:09:02,490
+And so the idea is that if you have the downsampled data, then
+
+1167
+01:09:02,490 --> 01:09:06,410
+this solution is not going to look good because you're not
+
+1168
+01:09:06,410 --> 01:09:10,227
+training on all--you don't get to just train on Wikipedia.
+
+1169
+01:09:10,227 --> 01:09:12,810
+You're going to train on some minuscule fraction of Wikipedia,
+
+1170
+01:09:12,810 --> 01:09:14,790
+and you'll realize, oh, actually,
+
+1171
+01:09:14,790 --> 01:09:16,569
+I'm going to be epoching a lot.
+
+1172
+01:09:16,569 --> 01:09:20,050
+And that's going to have a really bad loss, which
+
+1173
+01:09:20,050 --> 01:09:21,649
+means that in the optimization, you're
+
+1174
+01:09:21,649 --> 01:09:25,410
+going to look for more balanced approaches.
+
+1175
+01:09:25,410 --> 01:09:27,689
+So you're simulating the data scarcity
+
+1176
+01:09:27,689 --> 01:09:31,550
+that you would get in your high regime at low scale.
+
+1177
+01:09:36,750 --> 01:09:40,370
+So to summarize this section, the problem
+
+1178
+01:09:40,370 --> 01:09:42,569
+is how do you weight different sources?
+
+1179
+01:09:42,569 --> 01:09:45,370
+Wikipedia, you have your Common Crawl.
+
+1180
+01:09:45,370 --> 01:09:47,350
+You have your code.
+
+1181
+01:09:47,350 --> 01:09:51,210
+You have some math data that you scraped from somewhere.
+
+1182
+01:09:51,210 --> 01:09:53,450
+How do you balance them?
+
+1183
+01:09:53,450 --> 01:09:56,230
+Regression-based mixing is a nice framework,
+
+1184
+01:09:56,230 --> 01:09:57,630
+I think, to think about things.
+
+1185
+01:09:57,630 --> 01:10:03,410
+You estimate your function form that maps your mixture weights
+
+1186
+01:10:03,410 --> 01:10:06,490
+to a loss at small scale, optimize,
+
+1187
+01:10:06,490 --> 01:10:10,000
+and then you generalize to large scale.
+
+1188
+01:10:10,000 --> 01:10:14,480
+And you just have to be very careful with this
+
+1189
+01:10:14,480 --> 01:10:17,900
+because of epoching and overfitting issues.
+
+1190
+01:10:17,900 --> 01:10:22,600
+And you have to either use cap epoching or simulate epoching.
+
+1191
+01:10:22,600 --> 01:10:25,720
+So one lesson here is that if you're
+
+1192
+01:10:25,720 --> 01:10:28,160
+trying to optimize anything, you have
+
+1193
+01:10:28,160 --> 01:10:31,080
+to be very careful because you are in danger
+
+1194
+01:10:31,080 --> 01:10:36,120
+of optimizing the wrong thing.
+
+1195
+01:10:36,120 --> 01:10:39,180
+Any questions about data mixing before we move on?
+
+1196
+01:10:43,640 --> 01:10:45,480
+When you're done sampling, is there
+
+1197
+01:10:45,480 --> 01:10:52,720
+something too small that you can't really generalize as well?
+
+1198
+01:10:52,720 --> 01:10:57,000
+So the question is, if you're downsampling, is there a risk?
+
+1199
+01:10:57,000 --> 01:11:00,480
+Maybe you get too small of a data set.
+
+1200
+01:11:00,480 --> 01:11:02,480
+Yeah, absolutely.
+
+1201
+01:11:02,480 --> 01:11:08,040
+So I think you might get into a case
+
+1202
+01:11:08,040 --> 01:11:11,400
+where you just have so few tokens.
+
+1203
+01:11:11,400 --> 01:11:14,840
+I think then what will happen is that your optimum will just
+
+1204
+01:11:14,840 --> 01:11:17,640
+put a very small mass on that.
+
+1205
+01:11:17,640 --> 01:11:20,500
+And when you scale up, maybe you get the right set of tokens.
+
+1206
+01:11:20,500 --> 01:11:23,220
+So in principle, it should work out.
+
+1207
+01:11:23,220 --> 01:11:26,400
+But there might be rounding errors where you end up,
+
+1208
+01:11:26,400 --> 01:11:29,260
+instead of training once on this data set,
+
+1209
+01:11:29,260 --> 01:11:31,980
+you train like zero times by accident.
+
+1210
+01:11:31,980 --> 01:11:35,710
+But you can work around these by just--
+
+1211
+01:11:35,710 --> 01:11:38,540
+then you always train once on this data.
+
+1212
+01:11:43,880 --> 01:11:45,160
+OK.
+
+1213
+01:11:45,160 --> 01:11:45,820
+Yeah.
+
+1214
+01:11:45,820 --> 01:11:50,040
+In data mixing, I guess these sources just happen
+
+1215
+01:11:50,040 --> 01:11:52,480
+to align with different topics.
+
+1216
+01:11:52,480 --> 01:11:55,600
+But do you ever take a diverse data set
+
+1217
+01:11:55,600 --> 01:11:58,700
+and try to do data mixing within that?
+
+1218
+01:11:58,700 --> 01:11:59,360
+Yeah.
+
+1219
+01:11:59,360 --> 01:12:03,600
+So the question is, what do you apply data mixing to?
+
+1220
+01:12:03,600 --> 01:12:07,492
+Different domains or even within a data set?
+
+1221
+01:12:07,492 --> 01:12:08,950
+Actually, I forgot to mention that,
+
+1222
+01:12:08,950 --> 01:12:10,550
+so I'm glad you brought it up.
+
+1223
+01:12:10,550 --> 01:12:15,150
+So in Nemotron paper, they actually
+
+1224
+01:12:15,150 --> 01:12:17,430
+install the [INAUDIBLE] stuff as well.
+
+1225
+01:12:17,430 --> 01:12:19,190
+You basically think about-- let's say
+
+1226
+01:12:19,190 --> 01:12:22,270
+I give you just Common Crawl.
+
+1227
+01:12:22,270 --> 01:12:25,490
+You can actually break this up, so you can group by domain.
+
+1228
+01:12:25,490 --> 01:12:28,970
+So the IT folks have this web organizer,
+
+1229
+01:12:28,970 --> 01:12:30,710
+so you can group into topics.
+
+1230
+01:12:30,710 --> 01:12:34,190
+But you can also quality filter.
+
+1231
+01:12:34,190 --> 01:12:36,670
+So then you have this two-dimensional grid
+
+1232
+01:12:36,670 --> 01:12:39,190
+where you have domains, and you have quality.
+
+1233
+01:12:39,190 --> 01:12:45,470
+And each of these cells is something that you would data mix.
+
+1234
+01:12:45,470 --> 01:12:50,070
+So that's one automatic way to determine the domains.
+
+1235
+01:12:50,070 --> 01:12:53,190
+And then on top of that, you add extra sources
+
+1236
+01:12:53,190 --> 01:12:56,870
+that people hand you.
+
+1237
+01:12:56,870 --> 01:13:03,910
+So I'm going to quickly go through post-training data here.
+
+1238
+01:13:03,910 --> 01:13:08,910
+So up until now, this is basically pre-training or maybe
+
+1239
+01:13:08,910 --> 01:13:10,270
+mid-training data.
+
+1240
+01:13:10,270 --> 01:13:13,330
+It's generally fairly task agnostic,
+
+1241
+01:13:13,330 --> 01:13:15,390
+except for the RegMix stuff where you're
+
+1242
+01:13:15,390 --> 01:13:16,690
+trying to minimize the loss.
+
+1243
+01:13:16,690 --> 01:13:21,850
+But the data itself is still relatively task agnostic,
+
+1244
+01:13:21,850 --> 01:13:24,710
+and you're trying to develop basic skills.
+
+1245
+01:13:24,710 --> 01:13:27,750
+So when you look at post-training, a lot of the data
+
+1246
+01:13:27,750 --> 01:13:32,990
+becomes very task-dependent.
+
+1247
+01:13:32,990 --> 01:13:36,170
+And I'm not going to do a comprehensive review.
+
+1248
+01:13:36,170 --> 01:13:40,870
+I just want to point out some interesting post-training data
+
+1249
+01:13:40,870 --> 01:13:42,650
+sets that have been recently released,
+
+1250
+01:13:42,650 --> 01:13:46,470
+in particular, for coding, since that's of great interest
+
+1251
+01:13:46,470 --> 01:13:48,430
+these days.
+
+1252
+01:13:48,430 --> 01:13:55,750
+So the general recipe is you define a set of environments.
+
+1253
+01:13:55,750 --> 01:14:00,550
+In this case, think about code, which might be GitHub repos.
+
+1254
+01:14:00,550 --> 01:14:04,660
+You define a set of tasks or prompts,
+
+1255
+01:14:04,660 --> 01:14:09,940
+and then you collect responses from a strong model or teacher.
+
+1256
+01:14:09,940 --> 01:14:14,060
+So implicitly, at least in the open community,
+
+1257
+01:14:14,060 --> 01:14:17,100
+almost all the post-training data, most of it,
+
+1258
+01:14:17,100 --> 01:14:21,940
+is synthetically generated.
+
+1259
+01:14:21,940 --> 01:14:26,060
+You can also replace a strong model with a human,
+
+1260
+01:14:26,060 --> 01:14:29,400
+but that is slow and costs a lot of money.
+
+1261
+01:14:29,400 --> 01:14:31,300
+But, if you're at the frontier--
+
+1262
+01:14:34,060 --> 01:14:38,580
+a few years ago, you had to go and pay a lot of people a lot
+
+1263
+01:14:38,580 --> 01:14:41,540
+of money to give you responses.
+
+1264
+01:14:41,540 --> 01:14:43,880
+And nowadays, even at the frontier,
+
+1265
+01:14:43,880 --> 01:14:47,320
+you can do hybrid human-AI things.
+
+1266
+01:14:47,320 --> 01:14:49,820
+But anyway, the point is that there's some teacher out there
+
+1267
+01:14:49,820 --> 01:14:51,940
+that's giving you responses.
+
+1268
+01:14:51,940 --> 01:14:52,660
+OK.
+
+1269
+01:14:52,660 --> 01:14:58,600
+So I'm just going to talk to a few works here.
+
+1270
+01:14:58,600 --> 01:15:02,900
+So one is this work called OpenThoughts.
+
+1271
+01:15:02,900 --> 01:15:08,120
+And this idea here is--this came around.
+
+1272
+01:15:08,120 --> 01:15:11,120
+It was motivated by when o1 came out,
+
+1273
+01:15:11,120 --> 01:15:13,500
+and there was a lot of attention on reasoning, mostly
+
+1274
+01:15:13,500 --> 01:15:16,420
+for math and science.
+
+1275
+01:15:16,420 --> 01:15:20,060
+How do we get really good post-training data sets for this?
+
+1276
+01:15:20,060 --> 01:15:25,380
+And they eventually came out with 1.2 million examples
+
+1277
+01:15:25,380 --> 01:15:28,660
+using this teacher model.
+
+1278
+01:15:28,660 --> 01:15:34,260
+So the steps are, first of all, there are a bunch of--
+
+1279
+01:15:34,260 --> 01:15:38,620
+So what are the environments and the tasks and questions?
+
+1280
+01:15:38,620 --> 01:15:43,780
+There are a lot of different sources that they drew from.
+
+1281
+01:15:43,780 --> 01:15:49,200
+There are human sources like Stack Exchange, or NuminaMath,
+
+1282
+01:15:49,200 --> 01:15:51,840
+and then there's some synthetic sources as well.
+
+1283
+01:15:51,840 --> 01:15:54,685
+These are just a subset of the coding ones,
+
+1284
+01:15:54,685 --> 01:15:56,560
+but there's also more for math and chemistry.
+
+1285
+01:15:56,560 --> 01:15:58,460
+This is a big project that involved
+
+1286
+01:15:58,460 --> 01:16:04,410
+a lot of different contributions from many people.
+
+1287
+01:16:04,410 --> 01:16:09,310
+So you can see that some of these are coding exercises.
+
+1288
+01:16:09,310 --> 01:16:15,490
+Some of these are more realistic things that show up on--
+
+1289
+01:16:15,490 --> 01:16:17,350
+I guess, CodeGolf is not realistic,
+
+1290
+01:16:17,350 --> 01:16:22,330
+but there are some more realistic examples here.
+
+1291
+01:16:22,330 --> 01:16:26,010
+So code review, this is probably more realistic.
+
+1292
+01:16:26,010 --> 01:16:30,370
+And they did a fairly comprehensive analysis of,
+
+1293
+01:16:30,370 --> 01:16:34,410
+given this data set, how do you generate responses?
+
+1294
+01:16:34,410 --> 01:16:38,210
+They show that having a few sources
+
+1295
+01:16:38,210 --> 01:16:42,010
+was actually better than trying to do all sources.
+
+1296
+01:16:42,010 --> 01:16:46,290
+Sampling multiple generations is helpful, like 16.
+
+1297
+01:16:46,290 --> 01:16:51,290
+One thing that was interesting is that having better models
+
+1298
+01:16:51,290 --> 01:16:54,990
+aren't necessarily better teachers.
+
+1299
+01:16:54,990 --> 01:17:00,850
+So for example, QwQ-32B, which is now a very old and small
+
+1300
+01:17:00,850 --> 01:17:04,290
+model, was a better teacher than DeepSeek-R1,
+
+1301
+01:17:04,290 --> 01:17:05,770
+which was at the time probably one
+
+1302
+01:17:05,770 --> 01:17:08,130
+of the strongest open models.
+
+1303
+01:17:08,130 --> 01:17:13,090
+They also found that basic answer filtering wasn't helpful.
+
+1304
+01:17:13,090 --> 01:17:17,570
+And so the entire data pipeline looks something
+
+1305
+01:17:17,570 --> 01:17:23,050
+like this, where you have a bunch of these sources going in,
+
+1306
+01:17:23,050 --> 01:17:25,410
+and then you deduplicate.
+
+1307
+01:17:25,410 --> 01:17:27,950
+You randomly sample.
+
+1308
+01:17:27,950 --> 01:17:30,210
+I guess this downsamples the questions,
+
+1309
+01:17:30,210 --> 01:17:31,830
+and you generate multiple answers,
+
+1310
+01:17:31,830 --> 01:17:34,270
+and that gets into the final data set.
+
+1311
+01:17:34,270 --> 01:17:40,170
+So the 1.2 million is examples, but divided by 16
+
+1312
+01:17:40,170 --> 01:17:42,110
+gives you the number of actual questions.
+
+1313
+01:17:46,770 --> 01:17:53,410
+So that was for math and science and some code.
+
+1314
+01:17:53,410 --> 01:17:55,250
+I think more recently there's been
+
+1315
+01:17:55,250 --> 01:17:59,360
+a lot of interest in developing, in particular, agentic coding
+
+1316
+01:17:59,360 --> 01:18:01,880
+models-- so not just a model that can just
+
+1317
+01:18:01,880 --> 01:18:03,880
+generate some code, but actually a model that
+
+1318
+01:18:03,880 --> 01:18:06,960
+can do software development.
+
+1319
+01:18:06,960 --> 01:18:14,040
+So this SWE-smith paper had the idea of-- you're
+
+1320
+01:18:14,040 --> 01:18:18,280
+given a repository, you're using a language model
+
+1321
+01:18:18,280 --> 01:18:20,960
+to automatically generate tasks.
+
+1322
+01:18:20,960 --> 01:18:24,360
+So they have an agent that takes a repository
+
+1323
+01:18:24,360 --> 01:18:30,440
+and actually makes it usable for installing dependencies
+
+1324
+01:18:30,440 --> 01:18:31,640
+and so on.
+
+1325
+01:18:31,640 --> 01:18:36,420
+And then you generate tasks which are generally--
+
+1326
+01:18:36,420 --> 01:18:39,520
+you modify the code in some way and maybe introduce some bugs.
+
+1327
+01:18:39,520 --> 01:18:43,600
+And those get verified, and you get task instances.
+
+1328
+01:18:43,600 --> 01:18:47,900
+So these are synthetic tasks, but you get 50k of them,
+
+1329
+01:18:47,900 --> 01:18:51,800
+which is actually at the time, which was last year,
+
+1330
+01:18:51,800 --> 01:18:54,160
+quite large.
+
+1331
+01:18:54,160 --> 01:18:59,320
+So since then, there's been a bunch of other work, which
+
+1332
+01:18:59,320 --> 01:19:03,160
+I'll mention.
+
+1333
+01:19:03,160 --> 01:19:11,800
+So there's this SWE-Zero paper from NVIDIA, which had this--
+
+1334
+01:19:11,800 --> 01:19:14,620
+actually, OK, I'll also talk about that.
+
+1335
+01:19:14,620 --> 01:19:19,120
+So this is an interesting idea where the observation
+
+1336
+01:19:19,120 --> 01:19:23,120
+was that, unlike math, SWE tasks have
+
+1337
+01:19:23,120 --> 01:19:25,040
+a lot of heavy dependencies.
+
+1338
+01:19:25,040 --> 01:19:28,400
+Most GitHub repos like don't even run.
+
+1339
+01:19:28,400 --> 01:19:30,620
+And you have to install all these dependencies.
+
+1340
+01:19:30,620 --> 01:19:33,040
+They're out of date, especially if you roll back
+
+1341
+01:19:33,040 --> 01:19:36,760
+to when a PR was just a mess.
+
+1342
+01:19:36,760 --> 01:19:39,320
+And this is just a nightmare.
+
+1343
+01:19:39,320 --> 01:19:41,640
+And so they were thinking about, how can
+
+1344
+01:19:41,640 --> 01:19:48,760
+we actually get a data set on all the repos?
+
+1345
+01:19:48,760 --> 01:19:53,902
+And rather than having a repo-specific Docker image,
+
+1346
+01:19:53,902 --> 01:19:56,110
+they noticed that the models are actually good enough
+
+1347
+01:19:56,110 --> 01:19:58,270
+that they can solve a lot of these tasks
+
+1348
+01:19:58,270 --> 01:20:01,070
+without execution feedback.
+
+1349
+01:20:01,070 --> 01:20:04,930
+So if you look at some of these models,
+
+1350
+01:20:04,930 --> 01:20:08,550
+if you were allowing execution, you get 80.
+
+1351
+01:20:08,550 --> 01:20:14,430
+If you don't allow execution, you get almost 70,
+
+1352
+01:20:14,430 --> 01:20:19,070
+which is not bad for not being able to execute code.
+
+1353
+01:20:19,070 --> 01:20:25,230
+So somehow these models have some internal semantics of code.
+
+1354
+01:20:25,230 --> 01:20:29,670
+So they were able to generate 300,000 agent trajectories.
+
+1355
+01:20:29,670 --> 01:20:32,810
+All of these are real GitHub PRs,
+
+1356
+01:20:32,810 --> 01:20:38,270
+so they're realistic on the SWE-smith examples.
+
+1357
+01:20:38,270 --> 01:20:41,130
+They use the OpenHands scaffold.
+
+1358
+01:20:41,130 --> 01:20:45,190
+There's a lot of details how to prevent agent hacking.
+
+1359
+01:20:45,190 --> 01:20:50,270
+So normally, you hand an agent this instruction.
+
+1360
+01:20:50,270 --> 01:20:52,810
+You explore, you test, you implement.
+
+1361
+01:20:52,810 --> 01:20:57,670
+And SWE-Zero version was basically saying you cannot run
+
+1362
+01:20:57,670 --> 01:20:58,370
+Python code.
+
+1363
+01:20:58,370 --> 01:21:05,290
+You can only do set, grep, and all these basic operations.
+
+1364
+01:21:05,290 --> 01:21:05,790
+OK.
+
+1365
+01:21:05,790 --> 01:21:10,350
+So then they distilled from big Qwen model
+
+1366
+01:21:10,350 --> 01:21:13,390
+and filtered because sometimes the Qwen model
+
+1367
+01:21:13,390 --> 01:21:17,190
+will ignore these instructions and still try to execute anyway.
+
+1368
+01:21:17,190 --> 01:21:21,110
+And then they show that with this--
+
+1369
+01:21:21,110 --> 01:21:25,390
+oh, they also had a 13k agent trajectories that do require
+
+1370
+01:21:25,390 --> 01:21:26,970
+execution feedback.
+
+1371
+01:21:26,970 --> 01:21:29,870
+So they train models where they first
+
+1372
+01:21:29,870 --> 01:21:33,670
+fine-tune on these SWE-Zero examples,
+
+1373
+01:21:33,670 --> 01:21:37,250
+and then fine-tune again on these SWE-Zero examples.
+
+1374
+01:21:37,250 --> 01:21:38,790
+And they were able to--
+
+1375
+01:21:38,790 --> 01:21:41,850
+I guess the frontier is still pretty high up,
+
+1376
+01:21:41,850 --> 01:21:45,350
+but they were able to make some progress here.
+
+1377
+01:21:45,350 --> 01:21:47,770
+I'll quickly go through SWE-rebench,
+
+1378
+01:21:47,770 --> 01:21:50,340
+which is essentially another attempt
+
+1379
+01:21:50,340 --> 01:21:54,120
+to grab tons and tons of PRs.
+
+1380
+01:21:56,860 --> 01:22:00,820
+And all of these look, get a bunch of GitHub repos,
+
+1381
+01:22:00,820 --> 01:22:03,140
+try to install the repo.
+
+1382
+01:22:03,140 --> 01:22:06,600
+Most of them probably failed and try harder.
+
+1383
+01:22:06,600 --> 01:22:13,180
+And then you use a language model to give you the responses.
+
+1384
+01:22:13,180 --> 01:22:18,140
+And these actually just came out today.
+
+1385
+01:22:18,140 --> 01:22:21,340
+So you can take this SWE-Zero idea,
+
+1386
+01:22:21,340 --> 01:22:26,020
+and you can now scale up to 12 million agent trajectories.
+
+1387
+01:22:26,020 --> 01:22:32,220
+The nice benefit of SWE-Zero is that it's very lightweight.
+
+1388
+01:22:32,220 --> 01:22:36,460
+Here, they use the SWE-rebench tasks.
+
+1389
+01:22:36,460 --> 01:22:38,540
+So in this one, remember, they were trying
+
+1390
+01:22:38,540 --> 01:22:39,760
+to get things to execute.
+
+1391
+01:22:39,760 --> 01:22:42,840
+They only got 32,000 of them to execute,
+
+1392
+01:22:42,840 --> 01:22:45,660
+and 120 of them didn't execute.
+
+1393
+01:22:45,660 --> 01:22:46,840
+But SWE-Zero doesn't care.
+
+1394
+01:22:46,840 --> 01:22:49,500
+You can use all of them.
+
+1395
+01:22:49,500 --> 01:22:52,940
+This is a very small model because-- now this data set
+
+1396
+01:22:52,940 --> 01:22:55,780
+is quite large.
+
+1397
+01:22:55,780 --> 01:23:01,820
+And so I think, as you can see, the data sets
+
+1398
+01:23:01,820 --> 01:23:04,880
+are getting more and more sophisticated.
+
+1399
+01:23:04,880 --> 01:23:09,000
+You go from environment-free things like math to now coding.
+
+1400
+01:23:09,000 --> 01:23:13,140
+And now the coding data sets are growing quite a bit.
+
+1401
+01:23:13,140 --> 01:23:19,300
+But the general idea is that you have these prompts, which
+
+1402
+01:23:19,300 --> 01:23:21,800
+there's trade-offs.
+
+1403
+01:23:21,800 --> 01:23:24,003
+You can have fully synthetic.
+
+1404
+01:23:24,003 --> 01:23:25,420
+You can have semi-synthetic, where
+
+1405
+01:23:25,420 --> 01:23:27,880
+you have real environment and synthetic tasks,
+
+1406
+01:23:27,880 --> 01:23:30,180
+or you can have real.
+
+1407
+01:23:30,180 --> 01:23:35,560
+And the responses generally are coming from just capable models,
+
+1408
+01:23:35,560 --> 01:23:38,060
+but they also need to be good teachers.
+
+1409
+01:23:38,060 --> 01:23:39,800
+Code environments are a pain.
+
+1410
+01:23:39,800 --> 01:23:42,300
+And there's a lot of filtering and other details which
+
+1411
+01:23:42,300 --> 01:23:44,200
+we don't have time for.
+
+1412
+01:23:44,200 --> 01:23:44,700
+OK.
+
+1413
+01:23:44,700 --> 01:23:48,410
+To summarize this lecture, we talked about filtering.
+
+1414
+01:23:48,410 --> 01:23:50,810
+So define what good looks like, and then train
+
+1415
+01:23:50,810 --> 01:23:51,870
+a lightweight classifier.
+
+1416
+01:23:51,870 --> 01:23:54,090
+Go over your web crawl, and you can
+
+1417
+01:23:54,090 --> 01:23:58,090
+get a small subset that matches what you're looking for.
+
+1418
+01:23:58,090 --> 01:24:02,730
+De-duplication is important to avoid overfitting and saving
+
+1419
+01:24:02,730 --> 01:24:04,050
+flops.
+
+1420
+01:24:04,050 --> 01:24:05,270
+Mixing.
+
+1421
+01:24:05,270 --> 01:24:09,930
+Try a mixture at small scales, extrapolate to large scale.
+
+1422
+01:24:09,930 --> 01:24:13,570
+And then we looked at some posttraining data.
+
+1423
+01:24:13,570 --> 01:24:16,570
+I will say, though, that a lot of the data work
+
+1424
+01:24:16,570 --> 01:24:18,630
+can be very grungy.
+
+1425
+01:24:18,630 --> 01:24:21,810
+It's very domain-specific and requires
+
+1426
+01:24:21,810 --> 01:24:24,810
+looking at concrete examples to make these high-quality data
+
+1427
+01:24:24,810 --> 01:24:25,310
+sets.
+
+1428
+01:24:25,310 --> 01:24:28,330
+So this lecture is not really representative of what
+
+1429
+01:24:28,330 --> 01:24:30,530
+data work is like, but hopefully giving you
+
+1430
+01:24:30,530 --> 01:24:33,910
+an idea of the data landscape out there.
+
+1431
+01:24:33,910 --> 01:24:34,410
+OK.
+
+1432
+01:24:34,410 --> 01:24:36,830
+So that will be it for today.
+
+1433
+01:24:36,830 --> 01:24:40,180
+[APPLAUSE]

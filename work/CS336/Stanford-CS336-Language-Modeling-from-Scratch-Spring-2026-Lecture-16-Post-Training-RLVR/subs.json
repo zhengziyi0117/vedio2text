@@ -1,0 +1,8352 @@
+[
+ {
+  "start": 5.0,
+  "end": 5.9,
+  "text": "OK."
+ },
+ {
+  "start": 5.9,
+  "end": 8.4,
+  "text": "Maybe we shall get started."
+ },
+ {
+  "start": 8.4,
+  "end": 11.82,
+  "text": "This is the second of the post-training lectures,"
+ },
+ {
+  "start": 11.82,
+  "end": 15.68,
+  "text": "so we're going to talk about the exciting developments in RLVR"
+ },
+ {
+  "start": 15.68,
+  "end": 19.84,
+  "text": "or reinforcement learning from verifiable rewards."
+ },
+ {
+  "start": 19.84,
+  "end": 23.4,
+  "text": "And I think this is in some ways very timely."
+ },
+ {
+  "start": 23.4,
+  "end": 25.1,
+  "text": "I didn't get to update the slide,"
+ },
+ {
+  "start": 25.1,
+  "end": 28.36,
+  "text": "but there was just a announcement by OpenAI folks"
+ },
+ {
+  "start": 28.36,
+  "end": 32.8,
+  "text": "that they had solved one of the major problems."
+ },
+ {
+  "start": 32.8,
+  "end": 35.4,
+  "text": "So that's a MyOpenMath problem using"
+ },
+ {
+  "start": 35.4,
+  "end": 37.618,
+  "text": "one of their thinking models."
+ },
+ {
+  "start": 37.618,
+  "end": 38.66,
+  "text": "How does that thing work?"
+ },
+ {
+  "start": 38.66,
+  "end": 43.16,
+  "text": "That's exactly this thinking model stuff or RLVR stuff."
+ },
+ {
+  "start": 43.16,
+  "end": 48.76,
+  "text": "And so thus far, where we're at is we are at the left side here."
+ },
+ {
+  "start": 48.76,
+  "end": 52.58,
+  "text": "After we finished last lecture, we've got instruction tuning,"
+ },
+ {
+  "start": 52.58,
+  "end": 56.48,
+  "text": "we've got RLHF, we've got some good stuff that's ChatGPT."
+ },
+ {
+  "start": 56.48,
+  "end": 60.97,
+  "text": "And what remains is the modern developments in thinking models."
+ },
+ {
+  "start": 60.97,
+  "end": 64.79,
+  "text": "The model ability to do very long COT"
+ },
+ {
+  "start": 64.79,
+  "end": 67.15,
+  "text": "and solve these hard, verifiable problems"
+ },
+ {
+  "start": 67.15,
+  "end": 71.78999999999999,
+  "text": "like mathematics and coding in some cases as well."
+ },
+ {
+  "start": 71.78999999999999,
+  "end": 75.95,
+  "text": "And remember that I ended last lecture with this a little bit"
+ },
+ {
+  "start": 75.95,
+  "end": 77.71000000000001,
+  "text": "of a downer note."
+ },
+ {
+  "start": 77.71000000000001,
+  "end": 79.343,
+  "text": "The RLHF wasn't really going to get us"
+ },
+ {
+  "start": 79.343,
+  "end": 81.51,
+  "text": "where we wanted to go because of this problem called"
+ },
+ {
+  "start": 81.51,
+  "end": 82.71000000000001,
+  "text": "overoptimization."
+ },
+ {
+  "start": 82.71000000000001,
+  "end": 85.57,
+  "text": "So we're going to go and collect a bunch of preference data."
+ },
+ {
+  "start": 85.57,
+  "end": 87.39,
+  "text": "Preference data is very useful."
+ },
+ {
+  "start": 87.39,
+  "end": 89.15,
+  "text": "We will build some reward model and then"
+ },
+ {
+  "start": 89.15,
+  "end": 91.99,
+  "text": "we will RL against that reward model."
+ },
+ {
+  "start": 91.99,
+  "end": 95.97,
+  "text": "But this thing is fundamentally very annotation bottleneck"
+ },
+ {
+  "start": 95.97,
+  "end": 97.71000000000001,
+  "text": "because we have a reward model and you"
+ },
+ {
+  "start": 97.71000000000001,
+  "end": 100.33,
+  "text": "can't keep putting compute into the same reward model,"
+ },
+ {
+  "start": 100.33,
+  "end": 103.03,
+  "text": "eventually you're going to overfit your reward model."
+ },
+ {
+  "start": 103.03,
+  "end": 105.95,
+  "text": "And no matter how good of a job you do at regularizing,"
+ },
+ {
+  "start": 105.95,
+  "end": 107.95,
+  "text": "eventually you're going to run into this problem"
+ },
+ {
+  "start": 107.95,
+  "end": 109.99000000000001,
+  "text": "with overfitting."
+ },
+ {
+  "start": 109.99000000000001,
+  "end": 112.49000000000001,
+  "text": "And so really, this is very depressing."
+ },
+ {
+  "start": 112.49000000000001,
+  "end": 115.39,
+  "text": "And it's not really the potential of reinforcement learning."
+ },
+ {
+  "start": 115.39,
+  "end": 117.39,
+  "text": "If you're a big reinforcement learning believer,"
+ },
+ {
+  "start": 117.39,
+  "end": 120.22,
+  "text": "you're going to look at all things like AlphaGo"
+ },
+ {
+  "start": 120.22,
+  "end": 123.66,
+  "text": "and so on where you say, well, in these domains,"
+ },
+ {
+  "start": 123.66,
+  "end": 126.26,
+  "text": "RL really did an amazing job."
+ },
+ {
+  "start": 126.26,
+  "end": 128.82,
+  "text": "What is the difference between what we're doing in RLHF"
+ },
+ {
+  "start": 128.82,
+  "end": 132.54,
+  "text": "and what has been achieved in these more RL"
+ },
+ {
+  "start": 132.54,
+  "end": 135.38,
+  "text": "native or RL natural domains?"
+ },
+ {
+  "start": 135.38,
+  "end": 137.6,
+  "text": "And really the difference, I would say,"
+ },
+ {
+  "start": 137.6,
+  "end": 140.3,
+  "text": "or one major difference between something like AlphaGo"
+ },
+ {
+  "start": 140.3,
+  "end": 143.82,
+  "text": "and something like RLHF is that in AlphaGo, we are optimizing"
+ },
+ {
+  "start": 143.82,
+  "end": 145.5,
+  "text": "exactly what we want."
+ },
+ {
+  "start": 145.5,
+  "end": 148.26,
+  "text": "You get the win-loss conditions of the game of Go."
+ },
+ {
+  "start": 148.26,
+  "end": 151.12,
+  "text": "You don't have any sloppiness to that definition."
+ },
+ {
+  "start": 151.12,
+  "end": 153.56,
+  "text": "And so you can just put in as much compute as you want."
+ },
+ {
+  "start": 153.56,
+  "end": 157.57999999999998,
+  "text": "And as long as the objective improves, you're doing well."
+ },
+ {
+  "start": 157.57999999999998,
+  "end": 160.0,
+  "text": "In some sense, these are search problems."
+ },
+ {
+  "start": 160.0,
+  "end": 162.86,
+  "text": "Whereas the top one is much more of a learning problem."
+ },
+ {
+  "start": 162.86,
+  "end": 165.06,
+  "text": "Not quite a precise distinction, but that's"
+ },
+ {
+  "start": 165.06,
+  "end": 166.57999999999998,
+  "text": "one way of thinking about it."
+ },
+ {
+  "start": 166.57999999999998,
+  "end": 169.22,
+  "text": "So now there might be other domains like formal mathematics"
+ },
+ {
+  "start": 169.22,
+  "end": 171.22,
+  "text": "or even natural language mathematics,"
+ },
+ {
+  "start": 171.22,
+  "end": 174.94,
+  "text": "that have this flavor of being more verifiable and therefore"
+ },
+ {
+  "start": 174.94,
+  "end": 177.23,
+  "text": "much more amenable to reinforcement learning."
+ },
+ {
+  "start": 177.23,
+  "end": 179.77,
+  "text": "So that's going to be the motivation for why we're"
+ },
+ {
+  "start": 179.77,
+  "end": 181.11,
+  "text": "going to study some of these."
+ },
+ {
+  "start": 181.11,
+  "end": 183.89,
+  "text": "And the algorithms aren't going to be that different"
+ },
+ {
+  "start": 183.89,
+  "end": 186.49,
+  "text": "fundamentally, but where we will end up"
+ },
+ {
+  "start": 186.49,
+  "end": 189.89,
+  "text": "will actually be surprisingly different."
+ },
+ {
+  "start": 189.89,
+  "end": 192.75,
+  "text": "And so the lecture is going to be in two parts today."
+ },
+ {
+  "start": 192.75,
+  "end": 194.61,
+  "text": "This mirrors a lot of how we've structured"
+ },
+ {
+  "start": 194.61,
+  "end": 196.69,
+  "text": "the course in other parts."
+ },
+ {
+  "start": 196.69,
+  "end": 198.197,
+  "text": "So in the first part of the lecture,"
+ },
+ {
+  "start": 198.197,
+  "end": 200.03,
+  "text": "I'm going to talk about the core algorithms."
+ },
+ {
+  "start": 200.03,
+  "end": 202.37,
+  "text": "This is like basic knowledge for you all."
+ },
+ {
+  "start": 202.37,
+  "end": 205.02,
+  "text": "You will use some of this for your assignments."
+ },
+ {
+  "start": 205.02,
+  "end": 206.77,
+  "text": "And so I'm going to talk about things what"
+ },
+ {
+  "start": 206.77,
+  "end": 209.13,
+  "text": "is GRPO, how does PPO work."
+ },
+ {
+  "start": 209.13,
+  "end": 210.57,
+  "text": "And then after I've done that, I'm"
+ },
+ {
+  "start": 210.57,
+  "end": 214.09,
+  "text": "going to dig through a bunch of open source releases"
+ },
+ {
+  "start": 214.09,
+  "end": 215.85,
+  "text": "and show you how, what I've taught you"
+ },
+ {
+  "start": 215.85,
+  "end": 220.69,
+  "text": "in the first part of reflects in the technical reports of many"
+ },
+ {
+  "start": 220.69,
+  "end": 226.0,
+  "text": "of these major open source model releases."
+ },
+ {
+  "start": 226.0,
+  "end": 230.41,
+  "text": "So we're going to dive in to the methods and basic section."
+ },
+ {
+  "start": 230.41,
+  "end": 233.19,
+  "text": "And the first thing that I'm going to start with is PPO."
+ },
+ {
+  "start": 233.19,
+  "end": 236.56,
+  "text": "We can't really discuss RL for language models"
+ },
+ {
+  "start": 236.56,
+  "end": 238.642,
+  "text": "without discussing PPO."
+ },
+ {
+  "start": 238.642,
+  "end": 240.1,
+  "text": "And even though we've done it once,"
+ },
+ {
+  "start": 240.1,
+  "end": 242.12,
+  "text": "PPO is confusing enough that I think you will"
+ },
+ {
+  "start": 242.12,
+  "end": 244.96,
+  "text": "benefit from doing it twice."
+ },
+ {
+  "start": 244.96,
+  "end": 247.22,
+  "text": "The most important thing to identity,"
+ },
+ {
+  "start": 247.22,
+  "end": 250.88,
+  "text": "let's say to remember in RL for language modeling is"
+ },
+ {
+  "start": 250.88,
+  "end": 251.86,
+  "text": "policy gradients."
+ },
+ {
+  "start": 251.86,
+  "end": 255.18,
+  "text": "And in particular this reinforce gradient trick."
+ },
+ {
+  "start": 255.18,
+  "end": 259.56,
+  "text": "Well, we are always going to be doing is gradient descent"
+ },
+ {
+  "start": 259.56,
+  "end": 261.22,
+  "text": "on our rewards."
+ },
+ {
+  "start": 261.22,
+  "end": 265.8,
+  "text": "And we are going to do so by taking essentially weighted SFT"
+ },
+ {
+  "start": 265.8,
+  "end": 266.39,
+  "text": "updates."
+ },
+ {
+  "start": 266.39,
+  "end": 268.14,
+  "text": "The weights might be positive or negative."
+ },
+ {
+  "start": 268.14,
+  "end": 269.64,
+  "text": "We will define what R is."
+ },
+ {
+  "start": 269.64,
+  "end": 272.88,
+  "text": "But this equation is important because it will reappear"
+ },
+ {
+  "start": 272.88,
+  "end": 274.252,
+  "text": "throughout this lecture."
+ },
+ {
+  "start": 274.252,
+  "end": 275.96,
+  "text": "This is in some sense the core from which"
+ },
+ {
+  "start": 275.96,
+  "end": 278.12,
+  "text": "everything else is derived."
+ },
+ {
+  "start": 278.12,
+  "end": 280.36,
+  "text": "Now, building upon that, remember"
+ },
+ {
+  "start": 280.36,
+  "end": 281.88,
+  "text": "that the intuition from last lecture"
+ },
+ {
+  "start": 281.88,
+  "end": 284.38,
+  "text": "was we want to take more than one step at a time."
+ },
+ {
+  "start": 284.38,
+  "end": 287.32,
+  "text": "A policy gradient requires us to sample from our policy"
+ },
+ {
+  "start": 287.32,
+  "end": 289.44,
+  "text": "every time we want to take a gradient step."
+ },
+ {
+  "start": 289.44,
+  "end": 291.02,
+  "text": "Can we reuse our rollouts?"
+ },
+ {
+  "start": 291.02,
+  "end": 292.63,
+  "text": "Well, you can do TRPO."
+ },
+ {
+  "start": 292.63,
+  "end": 294.85,
+  "text": "You can do PPO and so on and so forth."
+ },
+ {
+  "start": 294.85,
+  "end": 296.69,
+  "text": "I'll talk about PPO in a minute."
+ },
+ {
+  "start": 296.69,
+  "end": 298.49,
+  "text": "And I've already talked about TRPO."
+ },
+ {
+  "start": 298.49,
+  "end": 301.07,
+  "text": "I won't really get too much into this."
+ },
+ {
+  "start": 301.07,
+  "end": 304.19,
+  "text": "If you've taken RL course, PPO is, of course,"
+ },
+ {
+  "start": 304.19,
+  "end": 307.99,
+  "text": "well understood to you, like you understand this algorithm,"
+ },
+ {
+  "start": 307.99,
+  "end": 311.11,
+  "text": "but I don't assume that all of you have taken RL class"
+ },
+ {
+  "start": 311.11,
+  "end": 313.87,
+  "text": "and/or understand RL."
+ },
+ {
+  "start": 313.87,
+  "end": 316.43,
+  "text": "And so PPO, in case you're not familiar,"
+ },
+ {
+  "start": 316.43,
+  "end": 320.45,
+  "text": "is a real workhorse of RL."
+ },
+ {
+  "start": 320.45,
+  "end": 324.39,
+  "text": "It's been used in a variety of very difficult RL settings."
+ },
+ {
+  "start": 324.39,
+  "end": 328.23,
+  "text": "OpenAI has done quite a few of these in their early days"
+ },
+ {
+  "start": 328.23,
+  "end": 331.35,
+  "text": "of being very RL pilled."
+ },
+ {
+  "start": 331.35,
+  "end": 333.71,
+  "text": "They had, this was I think, OpenAI"
+ },
+ {
+  "start": 333.71,
+  "end": 337.015,
+  "text": "gym where they were talking about the PPO algorithm"
+ },
+ {
+  "start": 337.015,
+  "end": 338.39,
+  "text": "and they're like, hey, we can get"
+ },
+ {
+  "start": 338.39,
+  "end": 342.05,
+  "text": "these people to walk around using reinforcement learning."
+ },
+ {
+  "start": 342.05,
+  "end": 343.99,
+  "text": "In a much more dramatic demonstration of this"
+ },
+ {
+  "start": 343.99,
+  "end": 347.43,
+  "text": "was their OpenAI bot, which they trained using PPO."
+ },
+ {
+  "start": 347.43,
+  "end": 350.39,
+  "text": "And so this can excel with deep RL"
+ },
+ {
+  "start": 350.39,
+  "end": 353.72,
+  "text": "in high-dimensional action and state spaces,"
+ },
+ {
+  "start": 353.72,
+  "end": 358.74,
+  "text": "where it's much more complicated to do RL than it is usually."
+ },
+ {
+  "start": 358.74,
+  "end": 359.52,
+  "text": "Oh, yeah."
+ },
+ {
+  "start": 359.52,
+  "end": 362.28,
+  "text": "And there's the OpenAI man running around."
+ },
+ {
+  "start": 362.28,
+  "end": 364.38,
+  "text": "All right."
+ },
+ {
+  "start": 364.38,
+  "end": 368.3,
+  "text": "So at a conceptual level, PPO is actually very simple."
+ },
+ {
+  "start": 368.3,
+  "end": 374.4,
+  "text": "Remember that I told you, an important part of all of this getting rid of PPO."
+ },
+ {
+  "start": 374.4,
+  "end": 376.64,
+  "text": "That's been a motivating factor for a lot of people."
+ },
+ {
+  "start": 376.64,
+  "end": 378.9,
+  "text": "But if you look at the pseudocode of PPO,"
+ },
+ {
+  "start": 378.9,
+  "end": 383.555,
+  "text": "this is from the OpenAI's like spinning up on RL documentation."
+ },
+ {
+  "start": 383.555,
+  "end": 385.68,
+  "text": "You look at this and you say, this is not that bad."
+ },
+ {
+  "start": 385.68,
+  "end": 386.88,
+  "text": "This is actually pretty easy."
+ },
+ {
+  "start": 386.88,
+  "end": 388.255,
+  "text": "I could implement this in one go."
+ },
+ {
+  "start": 388.255,
+  "end": 390.12,
+  "text": "You sample some trajectories."
+ },
+ {
+  "start": 390.12,
+  "end": 392.86,
+  "text": "I compute something called an advantage using any method"
+ },
+ {
+  "start": 392.86,
+  "end": 394.48,
+  "text": "of advantage estimation."
+ },
+ {
+  "start": 394.48,
+  "end": 398.78,
+  "text": "I clip the advantage in this slightly strange but OK way."
+ },
+ {
+  "start": 398.78,
+  "end": 402.2,
+  "text": "And then I update the policy under this clipped advantage."
+ },
+ {
+  "start": 402.2,
+  "end": 402.867,
+  "text": "And that's fine."
+ },
+ {
+  "start": 402.867,
+  "end": 405.408,
+  "text": "And then I can fit something called a value function as well."
+ },
+ {
+  "start": 405.408,
+  "end": 406.04,
+  "text": "OK, fine."
+ },
+ {
+  "start": 406.04,
+  "end": 410.01,
+  "text": "This is all relatively easy looking in practice."
+ },
+ {
+  "start": 410.01,
+  "end": 414.11,
+  "text": "And so I think because of this, people are like, oh, it's OK."
+ },
+ {
+  "start": 414.11,
+  "end": 415.55,
+  "text": "PPO is totally fine."
+ },
+ {
+  "start": 415.55,
+  "end": 417.55,
+  "text": "But then you see blog posts that look like this,"
+ },
+ {
+  "start": 417.55,
+  "end": 419.69,
+  "text": "and this should strike fear into your heart."
+ },
+ {
+  "start": 419.69,
+  "end": 423.25,
+  "text": "Because if you see a blog post that says the 37 implementation"
+ },
+ {
+  "start": 423.25,
+  "end": 428.73,
+  "text": "details of PPO, you know that this an algorithm that is very sensitive to your implementation"
+ },
+ {
+  "start": 428.73,
+  "end": 430.73,
+  "text": "decisions."
+ },
+ {
+  "start": 430.73,
+  "end": 433.735,
+  "text": "And there's all sorts of things that you can do"
+ },
+ {
+  "start": 433.735,
+  "end": 436.11,
+  "text": "and all sorts of different libraries and implementations,"
+ },
+ {
+  "start": 436.11,
+  "end": 438.21,
+  "text": "and they give totally different numbers"
+ },
+ {
+  "start": 438.21,
+  "end": 440.73,
+  "text": "based on which ones you use."
+ },
+ {
+  "start": 440.73,
+  "end": 443.09,
+  "text": "And it turns out that many people"
+ },
+ {
+  "start": 443.09,
+  "end": 444.27,
+  "text": "have implemented this wrong."
+ },
+ {
+  "start": 444.27,
+  "end": 446.02,
+  "text": "And so there's paper saying, like actually"
+ },
+ {
+  "start": 446.02,
+  "end": 448.222,
+  "text": "the baselines that some people use in PPO"
+ },
+ {
+  "start": 448.222,
+  "end": 449.43,
+  "text": "aren't even baselines at all."
+ },
+ {
+  "start": 449.43,
+  "end": 452.81,
+  "text": "They fundamentally change the optimization problem."
+ },
+ {
+  "start": 452.81,
+  "end": 456.13,
+  "text": "And so basically because of this, I"
+ },
+ {
+  "start": 456.13,
+  "end": 459.61,
+  "text": "think I would not be able to get through the rest of the lecture"
+ },
+ {
+  "start": 459.61,
+  "end": 461.40999999999997,
+  "text": "without telling you, well, we actually"
+ },
+ {
+  "start": 461.40999999999997,
+  "end": 464.73,
+  "text": "maybe need to start looking at some implementations of PPO."
+ },
+ {
+  "start": 464.73,
+  "end": 467.94,
+  "text": "And the implementations of PPO, let me tell you,"
+ },
+ {
+  "start": 467.94,
+  "end": 471.12,
+  "text": "for language models are not particularly pleasant."
+ },
+ {
+  "start": 471.12,
+  "end": 474.1,
+  "text": "This is, I mean, a very good representative slide."
+ },
+ {
+  "start": 474.1,
+  "end": 476.08,
+  "text": "If anything, this is a very good description"
+ },
+ {
+  "start": 476.08,
+  "end": 477.84000000000003,
+  "text": "of what PPO looks like."
+ },
+ {
+  "start": 477.84000000000003,
+  "end": 480.163,
+  "text": "You've got advantage estimation."
+ },
+ {
+  "start": 480.163,
+  "end": 482.58,
+  "text": "This big block in the middle, that's this advantage thing."
+ },
+ {
+  "start": 482.58,
+  "end": 484.4,
+  "text": "You've got an experienced buffer because you're going"
+ },
+ {
+  "start": 484.4,
+  "end": 485.828,
+  "text": "to keep some of the old stuff."
+ },
+ {
+  "start": 485.828,
+  "end": 487.62,
+  "text": "It's going to be training this value model."
+ },
+ {
+  "start": 487.62,
+  "end": 490.64,
+  "text": "And the value models are being used in the advantage estimation"
+ },
+ {
+  "start": 490.64,
+  "end": 491.3,
+  "text": "calculation."
+ },
+ {
+  "start": 491.3,
+  "end": 494.48,
+  "text": "Notice how the green box appears twice."
+ },
+ {
+  "start": 494.48,
+  "end": 498.36,
+  "text": "And importantly, some parts of my objective, the KL term,"
+ },
+ {
+  "start": 498.36,
+  "end": 500.5,
+  "text": "actually operates token by token."
+ },
+ {
+  "start": 500.5,
+  "end": 502.42,
+  "text": "So it's not actually just a bandit problem."
+ },
+ {
+  "start": 502.42,
+  "end": 504.94,
+  "text": "It's like a whole multi-step RL problem."
+ },
+ {
+  "start": 504.94,
+  "end": 508.96,
+  "text": "And this is all very difficult and complicated."
+ },
+ {
+  "start": 508.96,
+  "end": 513.28,
+  "text": "And so this has led to a variety of really tricky implementation"
+ },
+ {
+  "start": 513.28,
+  "end": 514.78,
+  "text": "things that you have to do."
+ },
+ {
+  "start": 514.78,
+  "end": 517.799,
+  "text": "And if you look at a variety of implementations,"
+ },
+ {
+  "start": 517.799,
+  "end": 520.32,
+  "text": "you find often that there are things"
+ },
+ {
+  "start": 520.32,
+  "end": 524.84,
+  "text": "that people do for PPO that are a little bit strange and tricky"
+ },
+ {
+  "start": 524.84,
+  "end": 525.71,
+  "text": "at times."
+ },
+ {
+  "start": 525.71,
+  "end": 528.71,
+  "text": "Let me see if I can find."
+ },
+ {
+  "start": 528.71,
+  "end": 530.43,
+  "text": "So one of my students implemented"
+ },
+ {
+  "start": 530.43,
+  "end": 533.55,
+  "text": "a PPO for a project a while back doing RLHF."
+ },
+ {
+  "start": 533.55,
+  "end": 536.07,
+  "text": "So PPO, if you remember, was used in RLHF."
+ },
+ {
+  "start": 536.07,
+  "end": 540.225,
+  "text": "And so we had this nice robust reference implementation of PPO"
+ },
+ {
+  "start": 540.225,
+  "end": 541.85,
+  "text": "and it took a long time to get working."
+ },
+ {
+  "start": 541.85,
+  "end": 543.91,
+  "text": "So I looked into the details, like what did we actually"
+ },
+ {
+  "start": 543.91,
+  "end": 545.29,
+  "text": "do to get this thing to work."
+ },
+ {
+  "start": 545.29,
+  "end": 546.248,
+  "text": "The outer loop is fine."
+ },
+ {
+  "start": 546.248,
+  "end": 548.79,
+  "text": "The outer loop is something like you go through your rollouts"
+ },
+ {
+  "start": 548.79,
+  "end": 550.57,
+  "text": "and you're going to take some PPO steps,"
+ },
+ {
+  "start": 550.57,
+  "end": 552.43,
+  "text": "you're going to compute some loss and clip some gradients"
+ },
+ {
+  "start": 552.43,
+  "end": 553.29,
+  "text": "and take some steps."
+ },
+ {
+  "start": 553.29,
+  "end": 555.59,
+  "text": "Totally reasonable outer loop."
+ },
+ {
+  "start": 555.59,
+  "end": 558.83,
+  "text": "But then you start of looking into it."
+ },
+ {
+  "start": 558.83,
+  "end": 562.03,
+  "text": "For now, the actual inner compute loss part"
+ },
+ {
+  "start": 562.03,
+  "end": 564.89,
+  "text": "follows almost exactly the PPO update."
+ },
+ {
+  "start": 564.89,
+  "end": 566.77,
+  "text": "So this also looks mostly good."
+ },
+ {
+  "start": 566.77,
+  "end": 569.51,
+  "text": "We're computing things like the advantages"
+ },
+ {
+  "start": 569.51,
+  "end": 572.17,
+  "text": "and we're computing the clipping ratios."
+ },
+ {
+  "start": 572.17,
+  "end": 574.41,
+  "text": "And then we're updating the model based on that."
+ },
+ {
+  "start": 574.41,
+  "end": 576.59,
+  "text": "So this is all good."
+ },
+ {
+  "start": 576.59,
+  "end": 580.39,
+  "text": "But then you get to some of the messier parts."
+ },
+ {
+  "start": 580.39,
+  "end": 582.59,
+  "text": "Actually, I'll skip the rollouts,"
+ },
+ {
+  "start": 582.59,
+  "end": 584.41,
+  "text": "where you have things like well, maybe we"
+ },
+ {
+  "start": 584.41,
+  "end": 589.05,
+  "text": "need KL penalties to keep the original model"
+ },
+ {
+  "start": 589.05,
+  "end": 591.13,
+  "text": "close to the reference, but actually this"
+ },
+ {
+  "start": 591.13,
+  "end": 593.95,
+  "text": "only works if you clip the KL off at 0, which of course,"
+ },
+ {
+  "start": 593.95,
+  "end": 596.73,
+  "text": "if you know anything about KL divergences, that totally ruins"
+ },
+ {
+  "start": 596.73,
+  "end": 598.09,
+  "text": "the point of a KL divergence."
+ },
+ {
+  "start": 598.09,
+  "end": 600.85,
+  "text": "You have both positive and negative values being summed."
+ },
+ {
+  "start": 600.85,
+  "end": 603.33,
+  "text": "If you remove this, it blows up immediately."
+ },
+ {
+  "start": 603.33,
+  "end": 604.863,
+  "text": "All things like this can happen."
+ },
+ {
+  "start": 604.863,
+  "end": 607.53,
+  "text": "This is not to say that this is the way you should implement PPO"
+ },
+ {
+  "start": 607.53,
+  "end": 608.67,
+  "text": "if you were doing it."
+ },
+ {
+  "start": 608.67,
+  "end": 610.49,
+  "text": "I think the reason why I'm bringing this up"
+ },
+ {
+  "start": 610.49,
+  "end": 613.53,
+  "text": "is to say implementations for RL algorithms can"
+ },
+ {
+  "start": 613.53,
+  "end": 616.21,
+  "text": "be somewhat tricky and somewhat sensitive because of all"
+ },
+ {
+  "start": 616.21,
+  "end": 618.01,
+  "text": "the moving pieces in PPO, and because"
+ },
+ {
+  "start": 618.01,
+  "end": 620.61,
+  "text": "of the high variance in the gradient estimates."
+ },
+ {
+  "start": 620.61,
+  "end": 625.29,
+  "text": "These are all very, very tricky things that are happening."
+ },
+ {
+  "start": 625.29,
+  "end": 627.71,
+  "text": "And, another thing that you often see,"
+ },
+ {
+  "start": 627.71,
+  "end": 629.55,
+  "text": "this one is not just RL implementation."
+ },
+ {
+  "start": 629.55,
+  "end": 631.053,
+  "text": "It's very common."
+ },
+ {
+  "start": 631.053,
+  "end": 632.97,
+  "text": "In the original PPO paper, you have this thing"
+ },
+ {
+  "start": 632.97,
+  "end": 635.93,
+  "text": "called a generalized advantage estimator that's basically"
+ },
+ {
+  "start": 635.93,
+  "end": 639.77,
+  "text": "looking at this gamma discounted reward, where you have"
+ },
+ {
+  "start": 639.77,
+  "end": 641.69,
+  "text": "this value function that's estimating"
+ },
+ {
+  "start": 641.69,
+  "end": 644.8,
+  "text": "the reward at of every token generation step."
+ },
+ {
+  "start": 644.8,
+  "end": 648.04,
+  "text": "But it turns out that people often just"
+ },
+ {
+  "start": 648.04,
+  "end": 650.24,
+  "text": "use gamma equals lambda equals 1, which is just"
+ },
+ {
+  "start": 650.24,
+  "end": 653.3,
+  "text": "a degenerate setting that turns this back into a bandit problem."
+ },
+ {
+  "start": 653.3,
+  "end": 655.48,
+  "text": "So you've thrown away a lot of the structure"
+ },
+ {
+  "start": 655.48,
+  "end": 658.14,
+  "text": "that you get from PPO."
+ },
+ {
+  "start": 658.14,
+  "end": 661.74,
+  "text": "And so if you run this algorithm after a bunch of engineering,"
+ },
+ {
+  "start": 661.74,
+  "end": 663.3,
+  "text": "you will get what you expect."
+ },
+ {
+  "start": 663.3,
+  "end": 666.78,
+  "text": "And when you run your RL algorithms for the assignment,"
+ },
+ {
+  "start": 666.78,
+  "end": 669.86,
+  "text": "you should expect to see similar things like the rewards go up."
+ },
+ {
+  "start": 669.86,
+  "end": 672.88,
+  "text": "The reward model rewards go up if you're doing RLHF,"
+ },
+ {
+  "start": 672.88,
+  "end": 675.98,
+  "text": "and then the negative KL regularizers go down."
+ },
+ {
+  "start": 675.98,
+  "end": 679.08,
+  "text": "This is a reasonable thing to expect to see."
+ },
+ {
+  "start": 679.08,
+  "end": 684.96,
+  "text": "But anyway, the point of all of this to say implementation of PPO can be quite painful."
+ },
+ {
+  "start": 684.96,
+  "end": 688.66,
+  "text": "Depending on the environment, it can require hacks to stabilize."
+ },
+ {
+  "start": 688.66,
+  "end": 691.083,
+  "text": "All of this is painful."
+ },
+ {
+  "start": 691.083,
+  "end": 692.5,
+  "text": "Not to say that it's not possible."
+ },
+ {
+  "start": 692.5,
+  "end": 696.64,
+  "text": "Lots of people have trained very good models on PPO."
+ },
+ {
+  "start": 696.64,
+  "end": 699.84,
+  "text": "Many of the labs have very turnkey solutions"
+ },
+ {
+  "start": 699.84,
+  "end": 702.71,
+  "text": "for getting PPOs to work at scale."
+ },
+ {
+  "start": 702.71,
+  "end": 704.79,
+  "text": "So this is not impossible."
+ },
+ {
+  "start": 704.79,
+  "end": 707.79,
+  "text": "But for people like researchers who are implementing this"
+ },
+ {
+  "start": 707.79,
+  "end": 711.87,
+  "text": "from scratch, PPO can just be really finicky and complicated."
+ },
+ {
+  "start": 711.87,
+  "end": 715.31,
+  "text": "Another reason why PPO is disfavored in many cases"
+ },
+ {
+  "start": 715.31,
+  "end": 718.71,
+  "text": "is that it requires a value model to estimate the value"
+ },
+ {
+  "start": 718.71,
+  "end": 720.59,
+  "text": "at each token as you go."
+ },
+ {
+  "start": 720.59,
+  "end": 722.17,
+  "text": "And how big is the value model?"
+ },
+ {
+  "start": 722.17,
+  "end": 724.41,
+  "text": "Well, it's as big as the original model,"
+ },
+ {
+  "start": 724.41,
+  "end": 726.71,
+  "text": "so this consumes some memory that you would rather"
+ },
+ {
+  "start": 726.71,
+  "end": 731.99,
+  "text": "be using for other stuff like models or inference servers."
+ },
+ {
+  "start": 731.99,
+  "end": 734.59,
+  "text": "So now you might say, well, in last lecture,"
+ },
+ {
+  "start": 734.59,
+  "end": 738.63,
+  "text": "you told us about this DPO thing, and DPO seems pretty good."
+ },
+ {
+  "start": 738.63,
+  "end": 740.41,
+  "text": "Why don't we just use DPO for everything?"
+ },
+ {
+  "start": 740.41,
+  "end": 743.59,
+  "text": "Well, the problem is DPO is a very specific solution"
+ },
+ {
+  "start": 743.59,
+  "end": 745.13,
+  "text": "to a very specific problem."
+ },
+ {
+  "start": 745.13,
+  "end": 748.03,
+  "text": "DPO is good for pairwise feedback in the form"
+ },
+ {
+  "start": 748.03,
+  "end": 749.61,
+  "text": "of Bradley-Terry comparisons."
+ },
+ {
+  "start": 749.61,
+  "end": 751.23,
+  "text": "That is very specific."
+ },
+ {
+  "start": 751.23,
+  "end": 753.59,
+  "text": "And if I want to solve math problems,"
+ },
+ {
+  "start": 753.59,
+  "end": 756.47,
+  "text": "my math problems don't come in the form of inherently pairwise"
+ },
+ {
+  "start": 756.47,
+  "end": 757.21,
+  "text": "comparisons."
+ },
+ {
+  "start": 757.21,
+  "end": 759.14,
+  "text": "There are other DPO variants that"
+ },
+ {
+  "start": 759.14,
+  "end": 761.64,
+  "text": "are designed to break that pairwise structure,"
+ },
+ {
+  "start": 761.64,
+  "end": 764.9,
+  "text": "but really you're just using the wrong hammer for the job."
+ },
+ {
+  "start": 764.9,
+  "end": 767.46,
+  "text": "You do not want to use DPO necessarily"
+ },
+ {
+  "start": 767.46,
+  "end": 769.66,
+  "text": "for what you would normally use PPO for."
+ },
+ {
+  "start": 769.66,
+  "end": 772.46,
+  "text": "PPO is the more general hammer that you can hit everything"
+ },
+ {
+  "start": 772.46,
+  "end": 773.66,
+  "text": "with."
+ },
+ {
+  "start": 773.66,
+  "end": 775.08,
+  "text": "DPO is generally offline."
+ },
+ {
+  "start": 775.08,
+  "end": 777.1,
+  "text": "Although I think this distinction"
+ },
+ {
+  "start": 777.1,
+  "end": 779.02,
+  "text": "is very overstated because it can"
+ },
+ {
+  "start": 779.02,
+  "end": 781.52,
+  "text": "be made online by just iterating DPO repeatedly."
+ },
+ {
+  "start": 781.52,
+  "end": 784.98,
+  "text": "So I don't think this is necessarily a big difference."
+ },
+ {
+  "start": 784.98,
+  "end": 789.98,
+  "text": "So that's the context for all of this."
+ },
+ {
+  "start": 789.98,
+  "end": 793.08,
+  "text": "And then so that similarly to DPO,"
+ },
+ {
+  "start": 793.08,
+  "end": 796.06,
+  "text": "there's just an enormous desire by the research community"
+ },
+ {
+  "start": 796.06,
+  "end": 798.5,
+  "text": "to not have to use PPO."
+ },
+ {
+  "start": 798.5,
+  "end": 802.3,
+  "text": "Hopefully, the fact that DPO and GRPO have gotten adoption"
+ },
+ {
+  "start": 802.3,
+  "end": 806.22,
+  "text": "tells you how painful it was to get this to work in many cases."
+ },
+ {
+  "start": 806.22,
+  "end": 809.24,
+  "text": "And so GRPO much like DPO, is the alternative,"
+ },
+ {
+  "start": 809.24,
+  "end": 813.32,
+  "text": "it is the simpler way to do RL for verifiable task."
+ },
+ {
+  "start": 813.32,
+  "end": 815.82,
+  "text": "It has taken over for the most part"
+ },
+ {
+  "start": 815.82,
+  "end": 819.47,
+  "text": "RLVR in the open source, open knowledge,"
+ },
+ {
+  "start": 819.47,
+  "end": 821.45,
+  "text": "let's call it community."
+ },
+ {
+  "start": 821.45,
+  "end": 824.11,
+  "text": "And it is very, very similar to PPO in spirit."
+ },
+ {
+  "start": 824.11,
+  "end": 827.27,
+  "text": "It just strips out a couple of the most complicated parts,"
+ },
+ {
+  "start": 827.27,
+  "end": 831.13,
+  "text": "and by doing so, allows us to have a much simpler algorithm."
+ },
+ {
+  "start": 831.13,
+  "end": 835.41,
+  "text": "So GRPO is by DeepSeek paper."
+ },
+ {
+  "start": 835.41,
+  "end": 837.97,
+  "text": "I think it was there like DeepSeek math paper,"
+ },
+ {
+  "start": 837.97,
+  "end": 839.69,
+  "text": "where you start with PPO."
+ },
+ {
+  "start": 839.69,
+  "end": 842.27,
+  "text": "It conceptually it says PPO is a good idea,"
+ },
+ {
+  "start": 842.27,
+  "end": 844.11,
+  "text": "but we want to change just a few things."
+ },
+ {
+  "start": 844.11,
+  "end": 845.11,
+  "text": "And what does it change?"
+ },
+ {
+  "start": 845.11,
+  "end": 848.29,
+  "text": "It changes arguably the most complicated and annoying part"
+ },
+ {
+  "start": 848.29,
+  "end": 850.17,
+  "text": "of PPO, which is the value function."
+ },
+ {
+  "start": 850.17,
+  "end": 851.89,
+  "text": "So the value function is the thing"
+ },
+ {
+  "start": 851.89,
+  "end": 854.93,
+  "text": "that you subtract as a baseline to reduce variance"
+ },
+ {
+  "start": 854.93,
+  "end": 857.035,
+  "text": "of your gradient updates."
+ },
+ {
+  "start": 857.035,
+  "end": 858.91,
+  "text": "The value function is a whole neural network."
+ },
+ {
+  "start": 858.91,
+  "end": 860.11,
+  "text": "It destabilizes training."
+ },
+ {
+  "start": 860.11,
+  "end": 861.93,
+  "text": "We don't want the value network."
+ },
+ {
+  "start": 861.93,
+  "end": 863.167,
+  "text": "So what do we do?"
+ },
+ {
+  "start": 863.167,
+  "end": 864.75,
+  "text": "Well, we get rid of the value network,"
+ },
+ {
+  "start": 864.75,
+  "end": 866.23,
+  "text": "but we still need an advantage."
+ },
+ {
+  "start": 866.23,
+  "end": 868.133,
+  "text": "I don't want to do reinforce--"
+ },
+ {
+  "start": 868.133,
+  "end": 870.05,
+  "text": "vanilla reinforce because the variance of that"
+ },
+ {
+  "start": 870.05,
+  "end": 872.05,
+  "text": "is going to be really, really high."
+ },
+ {
+  "start": 872.05,
+  "end": 873.93,
+  "text": "So instead, what we're going to do"
+ },
+ {
+  "start": 873.93,
+  "end": 876.0,
+  "text": "is I'm going to compute you advantage"
+ },
+ {
+  "start": 876.0,
+  "end": 878.84,
+  "text": "as a z-score within a group, and I'll explain"
+ },
+ {
+  "start": 878.84,
+  "end": 880.64,
+  "text": "what that means in a moment."
+ },
+ {
+  "start": 880.64,
+  "end": 883.08,
+  "text": "But basically, the idea is the following."
+ },
+ {
+  "start": 883.08,
+  "end": 885.392,
+  "text": "Normally, you look at a reward that you get"
+ },
+ {
+  "start": 885.392,
+  "end": 887.6,
+  "text": "and if you had a value function, you would compare it"
+ },
+ {
+  "start": 887.6,
+  "end": 889.197,
+  "text": "to your predicted value."
+ },
+ {
+  "start": 889.197,
+  "end": 890.78,
+  "text": "You would say, my neural network says,"
+ },
+ {
+  "start": 890.78,
+  "end": 892.46,
+  "text": "I should have gotten a score of 5."
+ },
+ {
+  "start": 892.46,
+  "end": 893.5,
+  "text": "I got a score of 6."
+ },
+ {
+  "start": 893.5,
+  "end": 894.76,
+  "text": "So this is a good rollout."
+ },
+ {
+  "start": 894.76,
+  "end": 896.36,
+  "text": "That's usually what you do."
+ },
+ {
+  "start": 896.36,
+  "end": 898.72,
+  "text": "Instead, what you would do is you"
+ },
+ {
+  "start": 898.72,
+  "end": 901.42,
+  "text": "would let's say your rollout with a score of 5."
+ },
+ {
+  "start": 901.42,
+  "end": 903.12,
+  "text": "You would now sample 10 other rollouts"
+ },
+ {
+  "start": 903.12,
+  "end": 904.96,
+  "text": "and you would say, how good was I compared"
+ },
+ {
+  "start": 904.96,
+  "end": 906.14,
+  "text": "to my 10 other rollouts."
+ },
+ {
+  "start": 906.14,
+  "end": 908.24,
+  "text": "If I'm doing better than my mean,"
+ },
+ {
+  "start": 908.24,
+  "end": 910.44,
+  "text": "then I have a high advantage."
+ },
+ {
+  "start": 910.44,
+  "end": 914.4,
+  "text": "In some ways, a very natural way of computing advantage"
+ },
+ {
+  "start": 914.4,
+  "end": 916.52,
+  "text": "in contexts where you can multiple sample"
+ },
+ {
+  "start": 916.52,
+  "end": 919.08,
+  "text": "from the same prompt or something like that."
+ },
+ {
+  "start": 919.08,
+  "end": 921.14,
+  "text": "So GRPO is exactly this idea."
+ },
+ {
+  "start": 921.14,
+  "end": 924.68,
+  "text": "If you look at the initial definition of GRPO that"
+ },
+ {
+  "start": 924.68,
+  "end": 927.42,
+  "text": "appeared in the DeepSeek paper, you see,"
+ },
+ {
+  "start": 927.42,
+  "end": 930.86,
+  "text": "this is the objective that's being optimized."
+ },
+ {
+  "start": 930.86,
+  "end": 934.59,
+  "text": "They're going to do exactly the PPO update, where they have"
+ },
+ {
+  "start": 934.59,
+  "end": 937.55,
+  "text": "this min clipped advantage, plus a KL term"
+ },
+ {
+  "start": 937.55,
+  "end": 940.59,
+  "text": "to keep yourself close to the reference."
+ },
+ {
+  "start": 940.59,
+  "end": 942.65,
+  "text": "And then KL is computed in a particular way."
+ },
+ {
+  "start": 942.65,
+  "end": 944.61,
+  "text": "That detail is not particularly important."
+ },
+ {
+  "start": 944.61,
+  "end": 946.63,
+  "text": "And importantly, this advantage is"
+ },
+ {
+  "start": 946.63,
+  "end": 949.91,
+  "text": "computed as a z-score over samples of a group of outputs,"
+ },
+ {
+  "start": 949.91,
+  "end": 951.71,
+  "text": "o of 1 through o of g."
+ },
+ {
+  "start": 951.71,
+  "end": 954.437,
+  "text": "So that's-- or within each group, you have-- oh, sorry."
+ },
+ {
+  "start": 954.437,
+  "end": 956.27,
+  "text": "This advantage of i, this is the place where"
+ },
+ {
+  "start": 956.27,
+  "end": 957.353,
+  "text": "you compute the advantage."
+ },
+ {
+  "start": 957.353,
+  "end": 960.15,
+  "text": "What you do is you take the reward over your rollouts"
+ },
+ {
+  "start": 960.15,
+  "end": 964.71,
+  "text": "within each group, you subtract the mean d you divide by the standard deviation."
+ },
+ {
+  "start": 964.71,
+  "end": 968.23,
+  "text": "So you get a z-score for each group."
+ },
+ {
+  "start": 968.23,
+  "end": 971.045,
+  "text": "So in the online case and this is an important distinction"
+ },
+ {
+  "start": 971.045,
+  "end": 972.67,
+  "text": "because in many cases, you may actually"
+ },
+ {
+  "start": 972.67,
+  "end": 975.79,
+  "text": "end up running this online rather than offline."
+ },
+ {
+  "start": 975.79,
+  "end": 978.03,
+  "text": "In the online case, the clipping just"
+ },
+ {
+  "start": 978.03,
+  "end": 982.19,
+  "text": "disappears because the ratio between pi theta old and pi"
+ },
+ {
+  "start": 982.19,
+  "end": 985.71,
+  "text": "theta is 1, this clipping operator never does anything"
+ },
+ {
+  "start": 985.71,
+  "end": 988.27,
+  "text": "and you just get min a of i, a of i."
+ },
+ {
+  "start": 988.27,
+  "end": 991.05,
+  "text": "So this is just advantage minus a KL penalty."
+ },
+ {
+  "start": 991.05,
+  "end": 992.94,
+  "text": "So I'm going to do RL on my advantage, which"
+ },
+ {
+  "start": 992.94,
+  "end": 993.92,
+  "text": "is defined by this."
+ },
+ {
+  "start": 993.92,
+  "end": 995.58,
+  "text": "So in the online rollout case, it"
+ },
+ {
+  "start": 995.58,
+  "end": 1001.84,
+  "text": "is a very, very simple object that makes sense as RL target."
+ },
+ {
+  "start": 1001.84,
+  "end": 1003.86,
+  "text": "So I can pause here for a moment in case"
+ },
+ {
+  "start": 1003.86,
+  "end": 1006.28,
+  "text": "any of the conceptual bits of GRPO are not clear."
+ },
+ {
+  "start": 1006.28,
+  "end": 1008.447,
+  "text": "I mean, in some sense, this is the foundation of all"
+ },
+ {
+  "start": 1008.447,
+  "end": 1010.28,
+  "text": "of the exciting math stuff."
+ },
+ {
+  "start": 1010.28,
+  "end": 1014.132,
+  "text": "Or you can replicate all of the exciting math stuff using GRPO."
+ },
+ {
+  "start": 1014.132,
+  "end": 1016.34,
+  "text": "So it's worth understanding in a little bit of detail"
+ },
+ {
+  "start": 1016.34,
+  "end": 1019.64,
+  "text": "before we move on to some of the nitty-gritty details."
+ },
+ {
+  "start": 1025.94,
+  "end": 1026.54,
+  "text": "OK."
+ },
+ {
+  "start": 1026.54,
+  "end": 1027.2,
+  "text": "Good."
+ },
+ {
+  "start": 1027.2,
+  "end": 1029.359,
+  "text": "Simple enough that everyone understands in one go."
+ },
+ {
+  "start": 1029.359,
+  "end": 1031.54,
+  "text": "I will take it."
+ },
+ {
+  "start": 1031.54,
+  "end": 1036.14,
+  "text": "And GRPO is very, very simple because of the lack of value"
+ },
+ {
+  "start": 1036.14,
+  "end": 1039.78,
+  "text": "function, you can basically write down all of GRPO"
+ },
+ {
+  "start": 1039.78,
+  "end": 1042.839,
+  "text": "in a very simple block of code, where you just say,"
+ },
+ {
+  "start": 1042.839,
+  "end": 1045.26,
+  "text": "I'm going to roll out k times, I'm"
+ },
+ {
+  "start": 1045.26,
+  "end": 1049.76,
+  "text": "going to compare my observed rollout to those k references,"
+ },
+ {
+  "start": 1049.76,
+  "end": 1052.21,
+  "text": "z-score it and then just take a reinforced gradient"
+ },
+ {
+  "start": 1052.21,
+  "end": 1053.39,
+  "text": "against those weights."
+ },
+ {
+  "start": 1053.39,
+  "end": 1057.89,
+  "text": "So you will write this in your assignment."
+ },
+ {
+  "start": 1057.89,
+  "end": 1060.41,
+  "text": "And it's going to involve a very simple set of steps."
+ },
+ {
+  "start": 1060.41,
+  "end": 1063.57,
+  "text": "Compute a reward for each of your k rollouts."
+ },
+ {
+  "start": 1063.57,
+  "end": 1067.232,
+  "text": "Normalize your rollouts, compute the KL term."
+ },
+ {
+  "start": 1067.232,
+  "end": 1068.69,
+  "text": "And then just take gradient updates"
+ },
+ {
+  "start": 1068.69,
+  "end": 1071.832,
+  "text": "on the combination of your KL term and these rollouts."
+ },
+ {
+  "start": 1071.832,
+  "end": 1074.29,
+  "text": "You'll have to do a little bit of thinking because in order"
+ },
+ {
+  "start": 1074.29,
+  "end": 1076.81,
+  "text": "to do this using autodiff, you will have"
+ },
+ {
+  "start": 1076.81,
+  "end": 1078.59,
+  "text": "to do a stop grad somewhere."
+ },
+ {
+  "start": 1078.59,
+  "end": 1080.35,
+  "text": "But it's actually not that complicated."
+ },
+ {
+  "start": 1080.35,
+  "end": 1083.61,
+  "text": "And you can see that you can do a one-page implementation"
+ },
+ {
+  "start": 1083.61,
+  "end": 1087.09,
+  "text": "of this basic idea."
+ },
+ {
+  "start": 1087.09,
+  "end": 1089.45,
+  "text": "And this is a reference implementation of GRPO"
+ },
+ {
+  "start": 1089.45,
+  "end": 1092.99,
+  "text": "that I took from some folks at McGill,"
+ },
+ {
+  "start": 1092.99,
+  "end": 1097.25,
+  "text": "which has a really nice little toy version of this whole thing."
+ },
+ {
+  "start": 1097.25,
+  "end": 1100.27,
+  "text": "And the computation of the group indices,"
+ },
+ {
+  "start": 1100.27,
+  "end": 1102.57,
+  "text": "and the standard deviation calculation and all of that"
+ },
+ {
+  "start": 1102.57,
+  "end": 1104.985,
+  "text": "just fits in one half of a slide."
+ },
+ {
+  "start": 1104.985,
+  "end": 1106.61,
+  "text": "The only thing that they do differently"
+ },
+ {
+  "start": 1106.61,
+  "end": 1109.0,
+  "text": "than the literal paper write up of GRPO"
+ },
+ {
+  "start": 1109.0,
+  "end": 1111.88,
+  "text": "here is they add a little tiny weeny negative 4"
+ },
+ {
+  "start": 1111.88,
+  "end": 1113.56,
+  "text": "to the standard deviation calculation"
+ },
+ {
+  "start": 1113.56,
+  "end": 1115.48,
+  "text": "to prevent it from blowing up when you only"
+ },
+ {
+  "start": 1115.48,
+  "end": 1117.64,
+  "text": "have a single sample, or if your samples happen"
+ },
+ {
+  "start": 1117.64,
+  "end": 1121.04,
+  "text": "to have the exact same rewards, which does happen if you're"
+ },
+ {
+  "start": 1121.04,
+  "end": 1123.92,
+  "text": "in a domain where you can get exactly numerically 0 rewards,"
+ },
+ {
+  "start": 1123.92,
+  "end": 1127.36,
+  "text": "like you failed to solve a math problem."
+ },
+ {
+  "start": 1127.36,
+  "end": 1129.8,
+  "text": "But hopefully, this emphasizes to you"
+ },
+ {
+  "start": 1129.8,
+  "end": 1134.88,
+  "text": "how straightforward GRPO is, and why almost all open source"
+ },
+ {
+  "start": 1134.88,
+  "end": 1136.78,
+  "text": "work has been built on this algorithm."
+ },
+ {
+  "start": 1136.78,
+  "end": 1139.2,
+  "text": "It's easy to implement, easy to understand."
+ },
+ {
+  "start": 1139.2,
+  "end": 1141.54,
+  "text": "And if you, as we'll see in the results,"
+ },
+ {
+  "start": 1141.54,
+  "end": 1143.6,
+  "text": "it provides fairly compelling results"
+ },
+ {
+  "start": 1143.6,
+  "end": 1148.36,
+  "text": "in terms of emulating a lot of what the closed source labs have"
+ },
+ {
+  "start": 1148.36,
+  "end": 1152.24,
+  "text": "done using potentially PPO."
+ },
+ {
+  "start": 1152.24,
+  "end": 1154.44,
+  "text": "So how well does it work?"
+ },
+ {
+  "start": 1154.44,
+  "end": 1156.94,
+  "text": "In the original DeepSeek math paper,"
+ },
+ {
+  "start": 1156.94,
+  "end": 1159.3,
+  "text": "which if you're into math AI stuff,"
+ },
+ {
+  "start": 1159.3,
+  "end": 1160.8,
+  "text": "I would encourage you to read, it's"
+ },
+ {
+  "start": 1160.8,
+  "end": 1164.2,
+  "text": "a nice and really interesting set of results."
+ },
+ {
+  "start": 1164.2,
+  "end": 1168.27,
+  "text": "They show that GRPO, the yellow and the blue lines,"
+ },
+ {
+  "start": 1168.27,
+  "end": 1171.097,
+  "text": "does much better than RFT, like rejection fine tuning."
+ },
+ {
+  "start": 1171.097,
+  "end": 1172.93,
+  "text": "You'll implement this as a baseline as well."
+ },
+ {
+  "start": 1172.93,
+  "end": 1174.99,
+  "text": "That's just taking the correct answers"
+ },
+ {
+  "start": 1174.99,
+  "end": 1176.95,
+  "text": "that your model generates and training on them"
+ },
+ {
+  "start": 1176.95,
+  "end": 1178.53,
+  "text": "and throwing away everything else."
+ },
+ {
+  "start": 1178.53,
+  "end": 1182.83,
+  "text": "And they seem to show process supervision, which"
+ },
+ {
+  "start": 1182.83,
+  "end": 1184.73,
+  "text": "is grading not just the final answer,"
+ },
+ {
+  "start": 1184.73,
+  "end": 1187.29,
+  "text": "but grading the intermediates give you some gains."
+ },
+ {
+  "start": 1187.29,
+  "end": 1188.69,
+  "text": "I'll talk more about that later."
+ },
+ {
+  "start": 1188.69,
+  "end": 1191.63,
+  "text": "That is an important thing to discuss and cover"
+ },
+ {
+  "start": 1191.63,
+  "end": 1195.19,
+  "text": "because that's one of the big design decisions"
+ },
+ {
+  "start": 1195.19,
+  "end": 1196.81,
+  "text": "for these kinds of RL problems."
+ },
+ {
+  "start": 1196.81,
+  "end": 1199.55,
+  "text": "But for now, you can just internalize the fact"
+ },
+ {
+  "start": 1199.55,
+  "end": 1200.65,
+  "text": "that GRPO works."
+ },
+ {
+  "start": 1200.65,
+  "end": 1205.07,
+  "text": "The blue and yellow lines are above the others."
+ },
+ {
+  "start": 1205.07,
+  "end": 1206.51,
+  "text": "OK."
+ },
+ {
+  "start": 1206.51,
+  "end": 1210.05,
+  "text": "So now let's think a little bit more about the GRPO objective."
+ },
+ {
+  "start": 1210.05,
+  "end": 1211.93,
+  "text": "What is happening in this objective?"
+ },
+ {
+  "start": 1211.93,
+  "end": 1214.05,
+  "text": "Are we actually taking policy gradients?"
+ },
+ {
+  "start": 1214.05,
+  "end": 1217.47,
+  "text": "There are important conceptual questions that we should really"
+ },
+ {
+  "start": 1217.47,
+  "end": 1219.23,
+  "text": "think through."
+ },
+ {
+  "start": 1219.23,
+  "end": 1223.21,
+  "text": "And so if we think about the difference between GRPO and PPO,"
+ },
+ {
+  "start": 1223.21,
+  "end": 1226.22,
+  "text": "remember that PPO had this value function thing which"
+ },
+ {
+  "start": 1226.22,
+  "end": 1227.58,
+  "text": "feeds into the advantage."
+ },
+ {
+  "start": 1227.58,
+  "end": 1229.9,
+  "text": "And in GRPO, we strip that out and we replace"
+ },
+ {
+  "start": 1229.9,
+  "end": 1231.28,
+  "text": "that with the z-score guy."
+ },
+ {
+  "start": 1231.28,
+  "end": 1233.94,
+  "text": "This a of i, ratio of r minus mean"
+ },
+ {
+  "start": 1233.94,
+  "end": 1236.18,
+  "text": "divided by standard deviation."
+ },
+ {
+  "start": 1236.18,
+  "end": 1238.9,
+  "text": "So is this a good advantage?"
+ },
+ {
+  "start": 1238.9,
+  "end": 1241.64,
+  "text": "I think for those of you that have been in an RL class,"
+ },
+ {
+  "start": 1241.64,
+  "end": 1243.84,
+  "text": "you already know the answer to this question."
+ },
+ {
+  "start": 1243.84,
+  "end": 1245.72,
+  "text": "Is this a good advantage function?"
+ },
+ {
+  "start": 1248.153,
+  "end": 1249.32,
+  "text": "What makes a good advantage?"
+ },
+ {
+  "start": 1249.32,
+  "end": 1251.3,
+  "text": "What makes a valid advantage function?"
+ },
+ {
+  "start": 1251.3,
+  "end": 1255.98,
+  "text": "Well, if you look at Sutton and Barto, the big classic book"
+ },
+ {
+  "start": 1255.98,
+  "end": 1258.4,
+  "text": "for reinforcement learning they will say,"
+ },
+ {
+  "start": 1258.4,
+  "end": 1261.32,
+  "text": "well, there's this algorithm called reinforce with baseline."
+ },
+ {
+  "start": 1261.32,
+  "end": 1263.02,
+  "text": "And the things you're allowed to do"
+ },
+ {
+  "start": 1263.02,
+  "end": 1266.14,
+  "text": "is that if you're doing policy gradients, which"
+ },
+ {
+  "start": 1266.14,
+  "end": 1268.76,
+  "text": "is this line over here, this very first equation."
+ },
+ {
+  "start": 1268.76,
+  "end": 1273.6,
+  "text": "I want to take my gradient step on the direction of my rewards."
+ },
+ {
+  "start": 1273.6,
+  "end": 1275.94,
+  "text": "And the thing you can do is you can take your rewards"
+ },
+ {
+  "start": 1275.94,
+  "end": 1277.7,
+  "text": "and I can subtract any-- what they"
+ },
+ {
+  "start": 1277.7,
+  "end": 1280.8,
+  "text": "call state-dependent baseline, in this case, our state."
+ },
+ {
+  "start": 1280.8,
+  "end": 1283.14,
+  "text": "If we're in the bandit world, it's just the prompt."
+ },
+ {
+  "start": 1283.14,
+  "end": 1285.73,
+  "text": "So you can have a prompt-dependent baseline"
+ },
+ {
+  "start": 1285.73,
+  "end": 1286.91,
+  "text": "that you can subtract."
+ },
+ {
+  "start": 1286.91,
+  "end": 1290.77,
+  "text": "And anything that does just this is a valid form"
+ },
+ {
+  "start": 1290.77,
+  "end": 1291.76,
+  "text": "of a policy gradient."
+ },
+ {
+  "start": 1291.76,
+  "end": 1294.01,
+  "text": "So you're still going to descend in the same direction"
+ },
+ {
+  "start": 1294.01,
+  "end": 1295.03,
+  "text": "as long as you do this."
+ },
+ {
+  "start": 1295.03,
+  "end": 1296.93,
+  "text": "And depending on your choice of b,"
+ },
+ {
+  "start": 1296.93,
+  "end": 1300.49,
+  "text": "you will either have lower or higher variance"
+ },
+ {
+  "start": 1300.49,
+  "end": 1303.57,
+  "text": "in doing this gradient descent process."
+ },
+ {
+  "start": 1303.57,
+  "end": 1307.49,
+  "text": "Now, you should probably notice that what we're doing"
+ },
+ {
+  "start": 1307.49,
+  "end": 1308.79,
+  "text": "is not this."
+ },
+ {
+  "start": 1308.79,
+  "end": 1311.43,
+  "text": "We are not just subtracting a constant value,"
+ },
+ {
+  "start": 1311.43,
+  "end": 1315.49,
+  "text": "we are also dividing by the standard deviation."
+ },
+ {
+  "start": 1315.49,
+  "end": 1318.15,
+  "text": "And so that is a problem."
+ },
+ {
+  "start": 1318.15,
+  "end": 1321.67,
+  "text": "It turns out well, it's in some ways a problem."
+ },
+ {
+  "start": 1321.67,
+  "end": 1322.91,
+  "text": "In other ways, it's not."
+ },
+ {
+  "start": 1322.91,
+  "end": 1326.09,
+  "text": "If you really want a conceptually clear algorithm"
+ },
+ {
+  "start": 1326.09,
+  "end": 1328.45,
+  "text": "that really does what's written on the tin,"
+ },
+ {
+  "start": 1328.45,
+  "end": 1330.07,
+  "text": "it actually descends the reward."
+ },
+ {
+  "start": 1330.07,
+  "end": 1331.39,
+  "text": "GRPO does not do that."
+ },
+ {
+  "start": 1331.39,
+  "end": 1334.29,
+  "text": "Because as I've highlighted in red here,"
+ },
+ {
+  "start": 1334.29,
+  "end": 1337.25,
+  "text": "GRPO divides by the standard deviation, which"
+ },
+ {
+  "start": 1337.25,
+  "end": 1340.63,
+  "text": "breaks this baseline contract."
+ },
+ {
+  "start": 1340.63,
+  "end": 1343.54,
+  "text": "We're not just dividing or subtracting a baseline."
+ },
+ {
+  "start": 1343.54,
+  "end": 1347.0,
+  "text": "We're also normalizing by the standard deviation"
+ },
+ {
+  "start": 1347.0,
+  "end": 1349.74,
+  "text": "of my rewards."
+ },
+ {
+  "start": 1349.74,
+  "end": 1353.42,
+  "text": "Of course, there's another thing that GRPO does,"
+ },
+ {
+  "start": 1353.42,
+  "end": 1356.12,
+  "text": "which I didn't mention earlier."
+ },
+ {
+  "start": 1356.12,
+  "end": 1359.92,
+  "text": "As an implementation detail that is tricky, which is GRPO"
+ },
+ {
+  "start": 1359.92,
+  "end": 1361.9,
+  "text": "does this almost per token."
+ },
+ {
+  "start": 1361.9,
+  "end": 1366.32,
+  "text": "So they'll divide by the total length of the sequence"
+ },
+ {
+  "start": 1366.32,
+  "end": 1368.3,
+  "text": "as a normalization factor."
+ },
+ {
+  "start": 1368.3,
+  "end": 1371.94,
+  "text": "But if you try to derive GRPO from first principles,"
+ },
+ {
+  "start": 1371.94,
+  "end": 1374.355,
+  "text": "following the policy gradient and baseline theorems,"
+ },
+ {
+  "start": 1374.355,
+  "end": 1375.98,
+  "text": "you'll end up with something different."
+ },
+ {
+  "start": 1375.98,
+  "end": 1377.64,
+  "text": "You won't have a length normalizer"
+ },
+ {
+  "start": 1377.64,
+  "end": 1380.78,
+  "text": "and you won't have the standard deviation normalization."
+ },
+ {
+  "start": 1380.78,
+  "end": 1385.56,
+  "text": "And some folks soon after GRPO came out noticed this,"
+ },
+ {
+  "start": 1385.56,
+  "end": 1387.8,
+  "text": "and they wrote a paper basically saying, well,"
+ },
+ {
+  "start": 1387.8,
+  "end": 1391.58,
+  "text": "if you don't do these two things that are different,"
+ },
+ {
+  "start": 1391.58,
+  "end": 1393.56,
+  "text": "then you get very different potentially very"
+ },
+ {
+  "start": 1393.56,
+  "end": 1394.7,
+  "text": "positive behavior."
+ },
+ {
+  "start": 1394.7,
+  "end": 1395.66,
+  "text": "I will talk about that."
+ },
+ {
+  "start": 1395.66,
+  "end": 1398.48,
+  "text": "Also, when we get to the--"
+ },
+ {
+  "start": 1398.48,
+  "end": 1402.89,
+  "text": "not OpenAI, sorry DeepSeek R1 paper."
+ },
+ {
+  "start": 1402.89,
+  "end": 1404.87,
+  "text": "But the main thing here is to say"
+ },
+ {
+  "start": 1404.87,
+  "end": 1408.73,
+  "text": "GRPO is not the first principles derivation of this idea."
+ },
+ {
+  "start": 1408.73,
+  "end": 1410.83,
+  "text": "It is actually doing something slightly different"
+ },
+ {
+  "start": 1410.83,
+  "end": 1414.15,
+  "text": "with both pros and cons."
+ },
+ {
+  "start": 1414.15,
+  "end": 1416.65,
+  "text": "So what are these two terms doing?"
+ },
+ {
+  "start": 1416.65,
+  "end": 1420.59,
+  "text": "We now that GRPO is not actually directly descending"
+ },
+ {
+  "start": 1420.59,
+  "end": 1421.99,
+  "text": "on the reward objective."
+ },
+ {
+  "start": 1421.99,
+  "end": 1425.45,
+  "text": "We know that it has these two correction factors."
+ },
+ {
+  "start": 1425.45,
+  "end": 1426.43,
+  "text": "What do they do?"
+ },
+ {
+  "start": 1426.43,
+  "end": 1429.29,
+  "text": "Well, the length normalization is easier to see."
+ },
+ {
+  "start": 1429.29,
+  "end": 1430.41,
+  "text": "So what are we doing?"
+ },
+ {
+  "start": 1430.41,
+  "end": 1435.11,
+  "text": "We are dividing longer sequences with a bigger number."
+ },
+ {
+  "start": 1435.11,
+  "end": 1437.67,
+  "text": "And so what this will do is that it's"
+ },
+ {
+  "start": 1437.67,
+  "end": 1440.63,
+  "text": "going to encourage the model to generate"
+ },
+ {
+  "start": 1440.63,
+  "end": 1443.59,
+  "text": "long outputs because-- or sorry when you're wrong"
+ },
+ {
+  "start": 1443.59,
+  "end": 1446.002,
+  "text": "it will encourage you to generate wrong outputs."
+ },
+ {
+  "start": 1446.002,
+  "end": 1447.71,
+  "text": "Because let's say-- I know that I'm going"
+ },
+ {
+  "start": 1447.71,
+  "end": 1448.793,
+  "text": "to get a math proof wrong."
+ },
+ {
+  "start": 1448.793,
+  "end": 1451.75,
+  "text": "I'm going to incur my negative reward of let's say, negative 1."
+ },
+ {
+  "start": 1451.75,
+  "end": 1454.37,
+  "text": "I'm just going to generate an infinitely long string."
+ },
+ {
+  "start": 1454.37,
+  "end": 1457.07,
+  "text": "If I do that, I'll get to divide by infinity,"
+ },
+ {
+  "start": 1457.07,
+  "end": 1459.9,
+  "text": "and I'll get to totally get rid of my negative penalty."
+ },
+ {
+  "start": 1459.9,
+  "end": 1461.24,
+  "text": "That's an extreme case."
+ },
+ {
+  "start": 1461.24,
+  "end": 1464.0,
+  "text": "But you understand that if you divide by the output,"
+ },
+ {
+  "start": 1464.0,
+  "end": 1467.7,
+  "text": "you encourage the model to blab on once it realizes that it"
+ },
+ {
+  "start": 1467.7,
+  "end": 1469.16,
+  "text": "cannot actually solve the problem."
+ },
+ {
+  "start": 1469.16,
+  "end": 1473.54,
+  "text": "So this is a length problem that you end up getting."
+ },
+ {
+  "start": 1473.54,
+  "end": 1477.14,
+  "text": "If you fix that, you'll find that often"
+ },
+ {
+  "start": 1477.14,
+  "end": 1481.4,
+  "text": "what people have observed in GRPO COT, like chain of thought,"
+ },
+ {
+  "start": 1481.4,
+  "end": 1483.8,
+  "text": "thinking length growing and growing and growing,"
+ },
+ {
+  "start": 1483.8,
+  "end": 1486.82,
+  "text": "that actually turns out to just cap off at a constant"
+ },
+ {
+  "start": 1486.82,
+  "end": 1489.04,
+  "text": "rather than just continually and forever grow."
+ },
+ {
+  "start": 1489.04,
+  "end": 1491.94,
+  "text": "So this seems like a potentially good thing."
+ },
+ {
+  "start": 1491.94,
+  "end": 1493.905,
+  "text": "And especially on the incorrect cases,"
+ },
+ {
+  "start": 1493.905,
+  "end": 1495.78,
+  "text": "you really don't want to be generating longer"
+ },
+ {
+  "start": 1495.78,
+  "end": 1499.02,
+  "text": "and longer and longer outputs."
+ },
+ {
+  "start": 1499.02,
+  "end": 1501.16,
+  "text": "So the standard deviation normalization,"
+ },
+ {
+  "start": 1501.16,
+  "end": 1503.28,
+  "text": "this one's a little bit more complicated."
+ },
+ {
+  "start": 1503.28,
+  "end": 1505.42,
+  "text": "But if you think about it, what I'm doing"
+ },
+ {
+  "start": 1505.42,
+  "end": 1508.48,
+  "text": "is I'm dividing by the standard deviation."
+ },
+ {
+  "start": 1508.48,
+  "end": 1511.26,
+  "text": "And so this can be thought of as emphasizing"
+ },
+ {
+  "start": 1511.26,
+  "end": 1515.32,
+  "text": "problems where the standard deviation is small."
+ },
+ {
+  "start": 1515.32,
+  "end": 1517.33,
+  "text": "And when is my standard deviation"
+ },
+ {
+  "start": 1517.33,
+  "end": 1519.61,
+  "text": "small for a binary reward problem?"
+ },
+ {
+  "start": 1519.61,
+  "end": 1522.81,
+  "text": "Well, that's when the problems are too easy or too hard."
+ },
+ {
+  "start": 1522.81,
+  "end": 1526.85,
+  "text": "If my problem is really easy and I get 100% all the time,"
+ },
+ {
+  "start": 1526.85,
+  "end": 1530.89,
+  "text": "I'm going to divide by 1 over or the number--"
+ },
+ {
+  "start": 1530.89,
+  "end": 1532.77,
+  "text": "I'm going to divide by basically 0"
+ },
+ {
+  "start": 1532.77,
+  "end": 1536.55,
+  "text": "because there's 0 variation if I always get a question correct."
+ },
+ {
+  "start": 1536.55,
+  "end": 1538.87,
+  "text": "Similarly, if I always get a question wrong,"
+ },
+ {
+  "start": 1538.87,
+  "end": 1541.17,
+  "text": "I have 0 variation in my rewards."
+ },
+ {
+  "start": 1541.17,
+  "end": 1543.21,
+  "text": "I'm going to upweight that significantly."
+ },
+ {
+  "start": 1543.21,
+  "end": 1546.19,
+  "text": "So the standard deviation term is upweighting the two sides,"
+ },
+ {
+  "start": 1546.19,
+  "end": 1548.01,
+  "text": "both easy and hard questions."
+ },
+ {
+  "start": 1548.01,
+  "end": 1550.09,
+  "text": "That seems like clearly a thing that maybe we"
+ },
+ {
+  "start": 1550.09,
+  "end": 1552.53,
+  "text": "don't want because we want our models to potentially learn"
+ },
+ {
+  "start": 1552.53,
+  "end": 1556.93,
+  "text": "on things that are within its solvability range."
+ },
+ {
+  "start": 1556.93,
+  "end": 1561.85,
+  "text": "So that's the algorithmic components of RLVR."
+ },
+ {
+  "start": 1561.85,
+  "end": 1563.97,
+  "text": "And I'm going to go through several"
+ },
+ {
+  "start": 1563.97,
+  "end": 1566.41,
+  "text": "of the different recent model releases"
+ },
+ {
+  "start": 1566.41,
+  "end": 1570.25,
+  "text": "and talk through all the algorithmic components"
+ },
+ {
+  "start": 1570.25,
+  "end": 1573.535,
+  "text": "that I think are quite important, including some"
+ },
+ {
+  "start": 1573.535,
+  "end": 1576.16,
+  "text": "of the stuff that I added this year that's new, which is really"
+ },
+ {
+  "start": 1576.16,
+  "end": 1578.68,
+  "text": "the agentic stuff that I think has been catching on"
+ },
+ {
+  "start": 1578.68,
+  "end": 1582.64,
+  "text": "and is increasingly important for using and deploying"
+ },
+ {
+  "start": 1582.64,
+  "end": 1583.182,
+  "text": "these models."
+ },
+ {
+  "start": 1583.182,
+  "end": 1584.765,
+  "text": "But before I do that, I can pause here"
+ },
+ {
+  "start": 1584.765,
+  "end": 1586.46,
+  "text": "and if anyone has algorithmic questions,"
+ },
+ {
+  "start": 1586.46,
+  "end": 1588.22,
+  "text": "I'll take them before I move on."
+ },
+ {
+  "start": 1592.5,
+  "end": 1593.0,
+  "text": "OK."
+ },
+ {
+  "start": 1593.0,
+  "end": 1594.44,
+  "text": "Good."
+ },
+ {
+  "start": 1594.44,
+  "end": 1595.84,
+  "text": "All right."
+ },
+ {
+  "start": 1595.84,
+  "end": 1597.8,
+  "text": "So we're going to start with DeepSeek R1"
+ },
+ {
+  "start": 1597.8,
+  "end": 1601.34,
+  "text": "because I think this is a bit of a social phenomenon."
+ },
+ {
+  "start": 1601.34,
+  "end": 1604.66,
+  "text": "I think everyone should know a bunch about DeepSeek R1."
+ },
+ {
+  "start": 1604.66,
+  "end": 1606.84,
+  "text": "I think it's a lovely paper kicked off"
+ },
+ {
+  "start": 1606.84,
+  "end": 1610.88,
+  "text": "the wave of open source RLVR models."
+ },
+ {
+  "start": 1610.88,
+  "end": 1612.4,
+  "text": "And what's remarkable about it, I"
+ },
+ {
+  "start": 1612.4,
+  "end": 1615.12,
+  "text": "think it was really the first thing"
+ },
+ {
+  "start": 1615.12,
+  "end": 1618.66,
+  "text": "to have matched OpenAI O1's behavior."
+ },
+ {
+  "start": 1618.66,
+  "end": 1621.56,
+  "text": "So the key things about OpenAI O1"
+ },
+ {
+  "start": 1621.56,
+  "end": 1623.78,
+  "text": "was you have very long chains of thought."
+ },
+ {
+  "start": 1623.78,
+  "end": 1628.08,
+  "text": "It's clearly RL, and you have really good performance"
+ },
+ {
+  "start": 1628.08,
+  "end": 1629.74,
+  "text": "on hard math problems."
+ },
+ {
+  "start": 1629.74,
+  "end": 1634.57,
+  "text": "And they also provided RL recipe that anyone could do."
+ },
+ {
+  "start": 1634.57,
+  "end": 1637.99,
+  "text": "And I think from the perspective of R&amp;D, this is very important."
+ },
+ {
+  "start": 1637.99,
+  "end": 1640.27,
+  "text": "If your solution was like you have this horrible PPO"
+ },
+ {
+  "start": 1640.27,
+  "end": 1643.07,
+  "text": "thing that no one but DeepSeek can run,"
+ },
+ {
+  "start": 1643.07,
+  "end": 1645.95,
+  "text": "then that is much less of an impact, at least for us"
+ },
+ {
+  "start": 1645.95,
+  "end": 1649.01,
+  "text": "researchers than this kind of GRPO thing,"
+ },
+ {
+  "start": 1649.01,
+  "end": 1651.55,
+  "text": "which anyone can really play with, even you"
+ },
+ {
+  "start": 1651.55,
+  "end": 1652.612,
+  "text": "in your assignments."
+ },
+ {
+  "start": 1652.612,
+  "end": 1655.07,
+  "text": "And finally, they have some really interesting distillation"
+ },
+ {
+  "start": 1655.07,
+  "end": 1660.75,
+  "text": "insights that I think have held up even now."
+ },
+ {
+  "start": 1660.75,
+  "end": 1663.51,
+  "text": "So the starting point of DeepSeek R1, and I"
+ },
+ {
+  "start": 1663.51,
+  "end": 1666.71,
+  "text": "think you can see how a lot of DeepSeek's expertise"
+ },
+ {
+  "start": 1666.71,
+  "end": 1667.69,
+  "text": "build on each other."
+ },
+ {
+  "start": 1667.69,
+  "end": 1669.87,
+  "text": "So they had this DeepSeek math paper,"
+ },
+ {
+  "start": 1669.87,
+  "end": 1671.23,
+  "text": "where they were doing GRPO."
+ },
+ {
+  "start": 1671.23,
+  "end": 1674.63,
+  "text": "They had already understood a lot of the nuances of RL"
+ },
+ {
+  "start": 1674.63,
+  "end": 1676.43,
+  "text": "on math problems."
+ },
+ {
+  "start": 1676.43,
+  "end": 1679.47,
+  "text": "And so because of this, they started off"
+ },
+ {
+  "start": 1679.47,
+  "end": 1682.47,
+  "text": "with a lot of the components of DeepSeek math."
+ },
+ {
+  "start": 1682.47,
+  "end": 1685.23,
+  "text": "But one of the really important differences, and I'll"
+ },
+ {
+  "start": 1685.23,
+  "end": 1687.15,
+  "text": "highlight an expert just because I"
+ },
+ {
+  "start": 1687.15,
+  "end": 1689.722,
+  "text": "think it's particularly important is they abandon"
+ },
+ {
+  "start": 1689.722,
+  "end": 1692.18,
+  "text": "process supervision, which was the thing that worked really"
+ },
+ {
+  "start": 1692.18,
+  "end": 1694.42,
+  "text": "well in DeepSeekMath, and they go only"
+ },
+ {
+  "start": 1694.42,
+  "end": 1695.68,
+  "text": "with outcome supervision."
+ },
+ {
+  "start": 1695.68,
+  "end": 1697.44,
+  "text": "And just to be clear, outcome supervision"
+ },
+ {
+  "start": 1697.44,
+  "end": 1699.94,
+  "text": "is when you have reward only for whether the final answer is"
+ },
+ {
+  "start": 1699.94,
+  "end": 1701.26,
+  "text": "correct or incorrect."
+ },
+ {
+  "start": 1701.26,
+  "end": 1705.5,
+  "text": "And process supervision is when you have a grading rubric, let's"
+ },
+ {
+  "start": 1705.5,
+  "end": 1711.18,
+  "text": "say, to check the validity of intermediate steps in a proof."
+ },
+ {
+  "start": 1711.18,
+  "end": 1713.76,
+  "text": "A lot of people thought process supervision was important."
+ },
+ {
+  "start": 1713.76,
+  "end": 1716.5,
+  "text": "Turned out it wasn't critical for a lot of things."
+ },
+ {
+  "start": 1716.5,
+  "end": 1720.34,
+  "text": "So R1 was interesting in that it has"
+ },
+ {
+  "start": 1720.34,
+  "end": 1721.8,
+  "text": "a lot of different components."
+ },
+ {
+  "start": 1721.8,
+  "end": 1724.18,
+  "text": "But one of the very interesting components"
+ },
+ {
+  "start": 1724.18,
+  "end": 1727.02,
+  "text": "is R1 zero, where they don't really"
+ },
+ {
+  "start": 1727.02,
+  "end": 1730.02,
+  "text": "do that much post training, so they have a base model."
+ },
+ {
+  "start": 1730.02,
+  "end": 1732.26,
+  "text": "Of course, the base model, as we all now"
+ },
+ {
+  "start": 1732.26,
+  "end": 1733.88,
+  "text": "is also [? MIT ?] trained."
+ },
+ {
+  "start": 1733.88,
+  "end": 1737.38,
+  "text": "And so this guy can do some amount of instruction following."
+ },
+ {
+  "start": 1737.38,
+  "end": 1739.56,
+  "text": "And then on top of this base model,"
+ },
+ {
+  "start": 1739.56,
+  "end": 1744.22,
+  "text": "they do basically RLVR, where the rewards for their GRPO"
+ },
+ {
+  "start": 1744.22,
+  "end": 1747.78,
+  "text": "algorithm is accuracy, rewards for whether they correctly"
+ },
+ {
+  "start": 1747.78,
+  "end": 1751.54,
+  "text": "solve a collection of math problems and format rewards."
+ },
+ {
+  "start": 1751.54,
+  "end": 1754.0,
+  "text": "And this one is important because the format rewards"
+ },
+ {
+  "start": 1754.0,
+  "end": 1756.98,
+  "text": "basically allow them to strip out the chain of thought later."
+ },
+ {
+  "start": 1756.98,
+  "end": 1758.84,
+  "text": "They want the model to properly use"
+ },
+ {
+  "start": 1758.84,
+  "end": 1761.92,
+  "text": "thinking tags to enclose their COT."
+ },
+ {
+  "start": 1761.92,
+  "end": 1764.02,
+  "text": "But this is a very simple recipe."
+ },
+ {
+  "start": 1764.02,
+  "end": 1765.34,
+  "text": "GRPO is very simple."
+ },
+ {
+  "start": 1765.34,
+  "end": 1767.4,
+  "text": "Accuracy rewards are very simple."
+ },
+ {
+  "start": 1767.4,
+  "end": 1769.4,
+  "text": "In fact, you will implement and replicate"
+ },
+ {
+  "start": 1769.4,
+  "end": 1772.36,
+  "text": "essentially the set of results in some ways,"
+ },
+ {
+  "start": 1772.36,
+  "end": 1774.22,
+  "text": "and you do just this very simple recipe."
+ },
+ {
+  "start": 1774.22,
+  "end": 1775.22,
+  "text": "And where do you end up?"
+ },
+ {
+  "start": 1775.22,
+  "end": 1778.52,
+  "text": "Well, you end up something that is only a little bit worse"
+ },
+ {
+  "start": 1778.52,
+  "end": 1780.1,
+  "text": "than OpenAI O1."
+ },
+ {
+  "start": 1780.1,
+  "end": 1783.105,
+  "text": "So this is really, really, really clean."
+ },
+ {
+  "start": 1783.105,
+  "end": 1784.48,
+  "text": "And I like this result because it"
+ },
+ {
+  "start": 1784.48,
+  "end": 1789.32,
+  "text": "has none of the messes of a real production post-training"
+ },
+ {
+  "start": 1789.32,
+  "end": 1790.18,
+  "text": "pipeline thrown in."
+ },
+ {
+  "start": 1790.18,
+  "end": 1792.58,
+  "text": "You don't really question whether oh,"
+ },
+ {
+  "start": 1792.58,
+  "end": 1795.1,
+  "text": "was it because of the RLHF helping or this or that."
+ },
+ {
+  "start": 1795.1,
+  "end": 1797.84,
+  "text": "It's a very simple base model plus GRPO."
+ },
+ {
+  "start": 1797.84,
+  "end": 1800.88,
+  "text": "Your math abilities are quite good."
+ },
+ {
+  "start": 1800.88,
+  "end": 1804.08,
+  "text": "And I think R1 also took off, partially"
+ },
+ {
+  "start": 1804.08,
+  "end": 1806.04,
+  "text": "because of the interesting phenomena"
+ },
+ {
+  "start": 1806.04,
+  "end": 1807.78,
+  "text": "they claim to have observed in the paper."
+ },
+ {
+  "start": 1807.78,
+  "end": 1809.78,
+  "text": "So one of the things they claim to have observed"
+ },
+ {
+  "start": 1809.78,
+  "end": 1812.11,
+  "text": "is as we go longer and longer and longer"
+ },
+ {
+  "start": 1812.11,
+  "end": 1814.653,
+  "text": "during training, the model is able to think for longer"
+ },
+ {
+  "start": 1814.653,
+  "end": 1815.57,
+  "text": "and longer and longer."
+ },
+ {
+  "start": 1815.57,
+  "end": 1817.95,
+  "text": "Their COT get longer and longer and longer."
+ },
+ {
+  "start": 1817.95,
+  "end": 1820.59,
+  "text": "And they also highlighted this thing that I believe"
+ },
+ {
+  "start": 1820.59,
+  "end": 1824.11,
+  "text": "went viral on social media, which is like the aha moment,"
+ },
+ {
+  "start": 1824.11,
+  "end": 1826.85,
+  "text": "where the model is if you train it for enough,"
+ },
+ {
+  "start": 1826.85,
+  "end": 1828.81,
+  "text": "its COT is able to do things like,"
+ },
+ {
+  "start": 1828.81,
+  "end": 1831.99,
+  "text": "oh, there's an aha moment that I can flag here."
+ },
+ {
+  "start": 1831.99,
+  "end": 1834.43,
+  "text": "And they thought this was really interesting."
+ },
+ {
+  "start": 1834.43,
+  "end": 1837.35,
+  "text": "It is unclear to me whether either of these phenomena"
+ },
+ {
+  "start": 1837.35,
+  "end": 1841.33,
+  "text": "are really particularly impressive in many ways."
+ },
+ {
+  "start": 1841.33,
+  "end": 1845.63,
+  "text": "We now know that longer CoTs is arguably a natural side"
+ },
+ {
+  "start": 1845.63,
+  "end": 1849.63,
+  "text": "effect of the length normalization of the GRPO algorithm."
+ },
+ {
+  "start": 1849.63,
+  "end": 1854.11,
+  "text": "And the aha moment others have showed"
+ },
+ {
+  "start": 1854.11,
+  "end": 1858.81,
+  "text": "is actually appears in even the base model."
+ },
+ {
+  "start": 1858.81,
+  "end": 1863.17,
+  "text": "And so clearly, it can't just be a result of the RL algorithm."
+ },
+ {
+  "start": 1863.17,
+  "end": 1866.86,
+  "text": "Lots of people say aha, I can use this"
+ },
+ {
+  "start": 1866.86,
+  "end": 1868.72,
+  "text": "as part of solving the math problem."
+ },
+ {
+  "start": 1868.72,
+  "end": 1870.9,
+  "text": "The model has learned it during pre-training."
+ },
+ {
+  "start": 1870.9,
+  "end": 1873.38,
+  "text": "It's not surprising at all that somehow during RL"
+ },
+ {
+  "start": 1873.38,
+  "end": 1876.1,
+  "text": "just happens to get extracted because it's"
+ },
+ {
+  "start": 1876.1,
+  "end": 1878.98,
+  "text": "emitting a lot of math tokens."
+ },
+ {
+  "start": 1878.98,
+  "end": 1881.26,
+  "text": "So I think the phenomena that was highlighted"
+ },
+ {
+  "start": 1881.26,
+  "end": 1884.72,
+  "text": "is not particularly salient or exciting,"
+ },
+ {
+  "start": 1884.72,
+  "end": 1889.14,
+  "text": "but I do think R1 was a really important milestone in that it"
+ },
+ {
+  "start": 1889.14,
+  "end": 1892.5,
+  "text": "highlighted just how simple RLVR could be."
+ },
+ {
+  "start": 1892.5,
+  "end": 1895.54,
+  "text": "This is very, in some sense clean as an algorithm"
+ },
+ {
+  "start": 1895.54,
+  "end": 1898.9,
+  "text": "and as a way of solving these really difficult problems."
+ },
+ {
+  "start": 1898.9,
+  "end": 1902.72,
+  "text": "And so R1 zero was this very nice, clean controlled setting."
+ },
+ {
+  "start": 1902.72,
+  "end": 1907.04,
+  "text": "And then R1 was their attempt to productionize this system."
+ },
+ {
+  "start": 1907.04,
+  "end": 1908.86,
+  "text": "And I think one thing that's nice about R1"
+ },
+ {
+  "start": 1908.86,
+  "end": 1910.86,
+  "text": "and I'll show you the Qwen equivalent"
+ },
+ {
+  "start": 1910.86,
+  "end": 1915.7,
+  "text": "later, is you can see how you stack all the pieces together."
+ },
+ {
+  "start": 1915.7,
+  "end": 1917.893,
+  "text": "I think we've studied all the pieces in isolation."
+ },
+ {
+  "start": 1917.893,
+  "end": 1919.62,
+  "text": "We know where pre-training is."
+ },
+ {
+  "start": 1919.62,
+  "end": 1922.42,
+  "text": "We know that there's RLHF, we know SFT,"
+ },
+ {
+  "start": 1922.42,
+  "end": 1924.18,
+  "text": "but how do we compose all of the pieces"
+ },
+ {
+  "start": 1924.18,
+  "end": 1926.73,
+  "text": "to actually get a system at the end?"
+ },
+ {
+  "start": 1926.73,
+  "end": 1929.27,
+  "text": "Well, usually the thing that you do is something like,"
+ },
+ {
+  "start": 1929.27,
+  "end": 1930.92,
+  "text": "well, we have our mid-trained model,"
+ },
+ {
+  "start": 1930.92,
+  "end": 1933.17,
+  "text": "we're going to do a bunch of reasoning training, maybe"
+ },
+ {
+  "start": 1933.17,
+  "end": 1935.39,
+  "text": "some long context extension somewhere too."
+ },
+ {
+  "start": 1935.39,
+  "end": 1937.23,
+  "text": "And then we're going to do RLHF at the end,"
+ },
+ {
+  "start": 1937.23,
+  "end": 1939.87,
+  "text": "because that's in some sense, the most user-facing object."
+ },
+ {
+  "start": 1939.87,
+  "end": 1943.27,
+  "text": "We want to make sure that the formatting and all of this nice."
+ },
+ {
+  "start": 1943.27,
+  "end": 1947.41,
+  "text": "RLHF can very much help with that process."
+ },
+ {
+  "start": 1947.41,
+  "end": 1950.77,
+  "text": "One of the other things that they did was they"
+ },
+ {
+  "start": 1950.77,
+  "end": 1953.49,
+  "text": "added a language consistency reward for the chain of thought"
+ },
+ {
+  "start": 1953.49,
+  "end": 1955.33,
+  "text": "for their production model."
+ },
+ {
+  "start": 1955.33,
+  "end": 1957.11,
+  "text": "I think if I remember the report right,"
+ },
+ {
+  "start": 1957.11,
+  "end": 1960.09,
+  "text": "this was because the R1 zero style"
+ },
+ {
+  "start": 1960.09,
+  "end": 1961.89,
+  "text": "training without a consistency reward"
+ },
+ {
+  "start": 1961.89,
+  "end": 1964.97,
+  "text": "would language switch in COT, and they"
+ },
+ {
+  "start": 1964.97,
+  "end": 1967.17,
+  "text": "thought this was very uninterpretable and slightly"
+ },
+ {
+  "start": 1967.17,
+  "end": 1968.05,
+  "text": "disturbing."
+ },
+ {
+  "start": 1968.05,
+  "end": 1969.85,
+  "text": "And so they wanted to just have it output"
+ },
+ {
+  "start": 1969.85,
+  "end": 1971.59,
+  "text": "a single consistent language."
+ },
+ {
+  "start": 1971.59,
+  "end": 1976.93,
+  "text": "And so they do this just for interpretability reasons."
+ },
+ {
+  "start": 1976.93,
+  "end": 1979.29,
+  "text": "And then they have some of the non-verifiable rewards"
+ },
+ {
+  "start": 1979.29,
+  "end": 1982.57,
+  "text": "as well, thrown in to GRPO, almost"
+ },
+ {
+  "start": 1982.57,
+  "end": 1985.02,
+  "text": "as blending into the RLHF process,"
+ },
+ {
+  "start": 1985.02,
+  "end": 1987.58,
+  "text": "but otherwise it's a very, very similar thing."
+ },
+ {
+  "start": 1987.58,
+  "end": 1992.84,
+  "text": "And the whole pipeline, I think, is very straightforward."
+ },
+ {
+  "start": 1992.84,
+  "end": 1997.42,
+  "text": "So for SFT, what they do is pretty simple."
+ },
+ {
+  "start": 1997.42,
+  "end": 2001.18,
+  "text": "So in R1 zero, they don't want to do any SFT at all."
+ },
+ {
+  "start": 2001.18,
+  "end": 2004.22,
+  "text": "But in R1, they're willing to do long COT data."
+ },
+ {
+  "start": 2004.22,
+  "end": 2006.58,
+  "text": "And when you're reading these open source tech reports,"
+ },
+ {
+  "start": 2006.58,
+  "end": 2008.69,
+  "text": "it's fun to try to read between the lines."
+ },
+ {
+  "start": 2008.69,
+  "end": 2010.44,
+  "text": "When they say something like, we construct"
+ },
+ {
+  "start": 2010.44,
+  "end": 2012.81,
+  "text": "and collect a small amount of long COT data,"
+ },
+ {
+  "start": 2012.81,
+  "end": 2013.56,
+  "text": "you might wonder--"
+ },
+ {
+  "start": 2013.56,
+  "end": 2016.66,
+  "text": "I wonder if that was distilled from some other models."
+ },
+ {
+  "start": 2016.66,
+  "end": 2020.44,
+  "text": "That is a particularly like negative thing"
+ },
+ {
+  "start": 2020.44,
+  "end": 2022.32,
+  "text": "for open source models."
+ },
+ {
+  "start": 2022.32,
+  "end": 2025.24,
+  "text": "Everyone is nowadays doing this, but I just find it funny"
+ },
+ {
+  "start": 2025.24,
+  "end": 2028.36,
+  "text": "that it's very carefully written collect a small amount"
+ },
+ {
+  "start": 2028.36,
+  "end": 2030.12,
+  "text": "of long COT data."
+ },
+ {
+  "start": 2030.12,
+  "end": 2032.46,
+  "text": "And so this is used to fine tune the model."
+ },
+ {
+  "start": 2032.46,
+  "end": 2036.4,
+  "text": "We know that for a very good base model, just SFT on long COT"
+ },
+ {
+  "start": 2036.4,
+  "end": 2040.12,
+  "text": "can unlock a lot of O1 style capabilities."
+ },
+ {
+  "start": 2040.12,
+  "end": 2042.85,
+  "text": "And that's a great starting point for RL."
+ },
+ {
+  "start": 2042.85,
+  "end": 2045.87,
+  "text": "So they start there and then they add some verification"
+ },
+ {
+  "start": 2045.87,
+  "end": 2048.03,
+  "text": "to filter out the CoTs."
+ },
+ {
+  "start": 2048.03,
+  "end": 2053.03,
+  "text": "And then they continue on with processing."
+ },
+ {
+  "start": 2053.03,
+  "end": 2056.03,
+  "text": "And I think many papers since then,"
+ },
+ {
+  "start": 2056.03,
+  "end": 2058.15,
+  "text": "some including some from my students"
+ },
+ {
+  "start": 2058.15,
+  "end": 2060.11,
+  "text": "have shown things that if you have"
+ },
+ {
+  "start": 2060.11,
+  "end": 2061.83,
+  "text": "the right kind of distillation procedure"
+ },
+ {
+  "start": 2061.83,
+  "end": 2063.77,
+  "text": "and you have the right kinds of base model,"
+ },
+ {
+  "start": 2063.77,
+  "end": 2068.03,
+  "text": "you can basically get a lot of the long COT reasoning juice"
+ },
+ {
+  "start": 2068.03,
+  "end": 2069.35,
+  "text": "just from SFT."
+ },
+ {
+  "start": 2069.35,
+  "end": 2071.35,
+  "text": "And I think this is maybe interesting"
+ },
+ {
+  "start": 2071.35,
+  "end": 2073.03,
+  "text": "because one of the things that I think"
+ },
+ {
+  "start": 2073.03,
+  "end": 2075.83,
+  "text": "is still an open question is, do you really"
+ },
+ {
+  "start": 2075.83,
+  "end": 2077.77,
+  "text": "need RL for some of this."
+ },
+ {
+  "start": 2077.77,
+  "end": 2080.35,
+  "text": "And I think maybe one way of thinking about the role of RL"
+ },
+ {
+  "start": 2080.35,
+  "end": 2082.35,
+  "text": "in language modeling is that RL is"
+ },
+ {
+  "start": 2082.35,
+  "end": 2083.83,
+  "text": "a great source of supervision."
+ },
+ {
+  "start": 2083.83,
+  "end": 2085.852,
+  "text": "If you're solving frontier math problems,"
+ },
+ {
+  "start": 2085.852,
+  "end": 2087.31,
+  "text": "you just don't have the supervision"
+ },
+ {
+  "start": 2087.31,
+  "end": 2089.63,
+  "text": "to get detailed long CoTs, and RL allows"
+ },
+ {
+  "start": 2089.63,
+  "end": 2091.05,
+  "text": "you to self-generate that."
+ },
+ {
+  "start": 2091.05,
+  "end": 2093.53,
+  "text": "But once someone has generated these long CoTs,"
+ },
+ {
+  "start": 2093.53,
+  "end": 2096.449,
+  "text": "you could potentially also learn from imitation."
+ },
+ {
+  "start": 2096.449,
+  "end": 2099.98,
+  "text": "And that seems to be what a lot of these distillation results"
+ },
+ {
+  "start": 2099.98,
+  "end": 2103.18,
+  "text": "partially show."
+ },
+ {
+  "start": 2103.18,
+  "end": 2107.34,
+  "text": "So the RL part for R1 is basically the same as R1 zero."
+ },
+ {
+  "start": 2107.34,
+  "end": 2110.12,
+  "text": "Minus the language consistency loss that I mentioned,"
+ },
+ {
+  "start": 2110.12,
+  "end": 2114.14,
+  "text": "it's basically just we run the RL training using GRPO."
+ },
+ {
+  "start": 2114.14,
+  "end": 2118.38,
+  "text": "And that leads to essentially the final phase,"
+ },
+ {
+  "start": 2118.38,
+  "end": 2121.0,
+  "text": "which is what we learned about last lecture."
+ },
+ {
+  "start": 2121.0,
+  "end": 2125.82,
+  "text": "So we do some basic instruction tuning style SFT and then RLHF."
+ },
+ {
+  "start": 2125.82,
+  "end": 2129.38,
+  "text": "For non-verifiable tasks, they basically use the same thing"
+ },
+ {
+  "start": 2129.38,
+  "end": 2130.84,
+  "text": "as DeepSeek V3."
+ },
+ {
+  "start": 2130.84,
+  "end": 2134.3,
+  "text": "So there's really no surprises at all here."
+ },
+ {
+  "start": 2134.3,
+  "end": 2135.46,
+  "text": "How well does it work?"
+ },
+ {
+  "start": 2135.46,
+  "end": 2137.94,
+  "text": "It's really, really good."
+ },
+ {
+  "start": 2137.94,
+  "end": 2140.18,
+  "text": "And I think this is the reason why there was all"
+ },
+ {
+  "start": 2140.18,
+  "end": 2145.46,
+  "text": "that panic or big noticing of DeepSeek"
+ },
+ {
+  "start": 2145.46,
+  "end": 2148.38,
+  "text": "because R1 was genuinely a very good model."
+ },
+ {
+  "start": 2148.38,
+  "end": 2152.297,
+  "text": "It beat O1 on many of the categories."
+ },
+ {
+  "start": 2152.297,
+  "end": 2154.38,
+  "text": "It matched a lot of the test time scaling behavior"
+ },
+ {
+  "start": 2154.38,
+  "end": 2155.9,
+  "text": "that people expected."
+ },
+ {
+  "start": 2155.9,
+  "end": 2158.09,
+  "text": "And it came from a very simple recipe."
+ },
+ {
+  "start": 2158.09,
+  "end": 2160.29,
+  "text": "So it was very easy to understand where"
+ },
+ {
+  "start": 2160.29,
+  "end": 2164.16,
+  "text": "the gains were coming from."
+ },
+ {
+  "start": 2164.16,
+  "end": 2166.41,
+  "text": "And the last thing related to some of the distillation"
+ },
+ {
+  "start": 2166.41,
+  "end": 2171.65,
+  "text": "discussions that I was saying is you can then take R1's CoTs"
+ },
+ {
+  "start": 2171.65,
+  "end": 2174.21,
+  "text": "and you could put it into Qwen 2.5,"
+ },
+ {
+  "start": 2174.21,
+  "end": 2177.53,
+  "text": "and if you did so, you could really significantly boost"
+ },
+ {
+  "start": 2177.53,
+  "end": 2179.03,
+  "text": "the performance of these models."
+ },
+ {
+  "start": 2179.03,
+  "end": 2182.85,
+  "text": "In some cases, matching a lot of these specialized thinking"
+ },
+ {
+  "start": 2182.85,
+  "end": 2183.79,
+  "text": "models."
+ },
+ {
+  "start": 2183.79,
+  "end": 2186.05,
+  "text": "And so in other words, really, if you"
+ },
+ {
+  "start": 2186.05,
+  "end": 2188.65,
+  "text": "can get the right kinds of long CoTs"
+ },
+ {
+  "start": 2188.65,
+  "end": 2190.89,
+  "text": "that are legible to these models,"
+ },
+ {
+  "start": 2190.89,
+  "end": 2193.49,
+  "text": "often it is possible to get them to reason"
+ },
+ {
+  "start": 2193.49,
+  "end": 2196.81,
+  "text": "for long periods of time, like the base models are already"
+ },
+ {
+  "start": 2196.81,
+  "end": 2200.09,
+  "text": "surprisingly good, and this works even for Llama models"
+ },
+ {
+  "start": 2200.09,
+  "end": 2205.07,
+  "text": "as well, which I think is quite fascinating."
+ },
+ {
+  "start": 2205.07,
+  "end": 2210.89,
+  "text": "So to close out the DeepSeek saga,"
+ },
+ {
+  "start": 2210.89,
+  "end": 2213.51,
+  "text": "I quite liked a lot of the DeepSeek tech reports,"
+ },
+ {
+  "start": 2213.51,
+  "end": 2216.33,
+  "text": "because they often do both ablations"
+ },
+ {
+  "start": 2216.33,
+  "end": 2219.68,
+  "text": "and they also tell you failed things that didn't work."
+ },
+ {
+  "start": 2219.68,
+  "end": 2222.36,
+  "text": "And if you've been following what they've been doing,"
+ },
+ {
+  "start": 2222.36,
+  "end": 2225.38,
+  "text": "DeepSeekMath has all of this process reward model stuff."
+ },
+ {
+  "start": 2225.38,
+  "end": 2227.28,
+  "text": "It's like we got to verify all the steps"
+ },
+ {
+  "start": 2227.28,
+  "end": 2230.0,
+  "text": "and then you read R1 and you say where did the process reward"
+ },
+ {
+  "start": 2230.0,
+  "end": 2230.54,
+  "text": "models go."
+ },
+ {
+  "start": 2230.54,
+  "end": 2233.22,
+  "text": "Well, they tell you where the process reward models go,"
+ },
+ {
+  "start": 2233.22,
+  "end": 2236.9,
+  "text": "which is we tried to get process reward models to work."
+ },
+ {
+  "start": 2236.9,
+  "end": 2239.38,
+  "text": "They just didn't do very much for us."
+ },
+ {
+  "start": 2239.38,
+  "end": 2243.04,
+  "text": "It turns out that outcome reward models are great"
+ },
+ {
+  "start": 2243.04,
+  "end": 2244.26,
+  "text": "and they're good enough."
+ },
+ {
+  "start": 2244.26,
+  "end": 2246.96,
+  "text": "And you can scale the data for those a lot better."
+ },
+ {
+  "start": 2246.96,
+  "end": 2249.38,
+  "text": "I think a big debate for PRMs was,"
+ },
+ {
+  "start": 2249.38,
+  "end": 2252.2,
+  "text": "where are you going to get these step-by-step rubrics."
+ },
+ {
+  "start": 2252.2,
+  "end": 2254.4,
+  "text": "And it's very hard to scale that up."
+ },
+ {
+  "start": 2254.4,
+  "end": 2256.24,
+  "text": "I think at this point, it's quite clear now"
+ },
+ {
+  "start": 2256.24,
+  "end": 2258.94,
+  "text": "that outcome reward models are very, very good."
+ },
+ {
+  "start": 2258.94,
+  "end": 2262.24,
+  "text": "And that's the bulk of where the action is happening."
+ },
+ {
+  "start": 2262.24,
+  "end": 2267.42,
+  "text": "Similarly, if you were around for the initial O1 release,"
+ },
+ {
+  "start": 2267.42,
+  "end": 2270.44,
+  "text": "a lot of people speculated about what was going on"
+ },
+ {
+  "start": 2270.44,
+  "end": 2272.42,
+  "text": "inside OpenAI's O1."
+ },
+ {
+  "start": 2272.42,
+  "end": 2274.4,
+  "text": "They were like, oh, are they doing PRMs?"
+ },
+ {
+  "start": 2274.4,
+  "end": 2277.55,
+  "text": "Are they doing tree search like AlphaGo?"
+ },
+ {
+  "start": 2277.55,
+  "end": 2280.67,
+  "text": "They to tried a lot of MCTS and they"
+ },
+ {
+  "start": 2280.67,
+  "end": 2284.27,
+  "text": "describe we couldn't get it to work very well."
+ },
+ {
+  "start": 2284.27,
+  "end": 2286.07,
+  "text": "I just very much want to highlight"
+ },
+ {
+  "start": 2286.07,
+  "end": 2288.99,
+  "text": "and the fact that they're very open about all"
+ },
+ {
+  "start": 2288.99,
+  "end": 2291.11,
+  "text": "these explorations and the things that they tried"
+ },
+ {
+  "start": 2291.11,
+  "end": 2295.67,
+  "text": "and didn't work, rather than to say they didn't try it at all."
+ },
+ {
+  "start": 2295.67,
+  "end": 2297.55,
+  "text": "Cool."
+ },
+ {
+  "start": 2297.55,
+  "end": 2298.91,
+  "text": "All right."
+ },
+ {
+  "start": 2298.91,
+  "end": 2301.478,
+  "text": "And if I talk about--"
+ },
+ {
+  "start": 2301.478,
+  "end": 2303.27,
+  "text": "or actually, I'll pause here in case anyone"
+ },
+ {
+  "start": 2303.27,
+  "end": 2305.37,
+  "text": "has questions, although I don't know if-- yeah."
+ },
+ {
+  "start": 2305.37,
+  "end": 2310.51,
+  "text": "[INAUDIBLE] you should explain the positive reward basis"
+ },
+ {
+  "start": 2310.51,
+  "end": 2316.83,
+  "text": "by [INAUDIBLE] Because I thought you said for negative,"
+ },
+ {
+  "start": 2316.83,
+  "end": 2320.51,
+  "text": "like we encourage to divide by infinity and [INAUDIBLE] 0"
+ },
+ {
+  "start": 2320.51,
+  "end": 2321.37,
+  "text": "for positive."
+ },
+ {
+  "start": 2321.37,
+  "end": 2321.87,
+  "text": "Yeah."
+ },
+ {
+  "start": 2321.87,
+  "end": 2323.75,
+  "text": "So the question was like for positive cases"
+ },
+ {
+  "start": 2323.75,
+  "end": 2325.463,
+  "text": "what the length normalizer do."
+ },
+ {
+  "start": 2325.463,
+  "end": 2327.63,
+  "text": "And of course, in those cases, the length normalizer"
+ },
+ {
+  "start": 2327.63,
+  "end": 2330.525,
+  "text": "encourages you to shorten the COT, which is good"
+ },
+ {
+  "start": 2330.525,
+  "end": 2332.15,
+  "text": "if you want to save on inference costs,"
+ },
+ {
+  "start": 2332.15,
+  "end": 2335.14,
+  "text": "bad if that degrades your accuracy."
+ },
+ {
+  "start": 2335.14,
+  "end": 2338.42,
+  "text": "But I think the main issue is that for the long--"
+ },
+ {
+  "start": 2338.42,
+  "end": 2341.95,
+  "text": "for the negative ones, you get some really long responses"
+ },
+ {
+  "start": 2341.95,
+  "end": 2343.7,
+  "text": "and the positive cases, it can't shrink it"
+ },
+ {
+  "start": 2343.7,
+  "end": 2345.867,
+  "text": "that much because there's a lower bound to how small"
+ },
+ {
+  "start": 2345.867,
+  "end": 2349.82,
+  "text": "your COT can go to solve a particular problem."
+ },
+ {
+  "start": 2349.82,
+  "end": 2353.66,
+  "text": "I guess I'm trying to understand that explanation"
+ },
+ {
+  "start": 2353.66,
+  "end": 2356.48,
+  "text": "for the diagram."
+ },
+ {
+  "start": 2356.48,
+  "end": 2361.16,
+  "text": "Is that--I think doctor GRPO has a cleaner diagram of this."
+ },
+ {
+  "start": 2361.16,
+  "end": 2364.6,
+  "text": "So in the R1 diagram, this is all aggregated."
+ },
+ {
+  "start": 2364.6,
+  "end": 2368.4,
+  "text": "This is all of the responses across their evals."
+ },
+ {
+  "start": 2368.4,
+  "end": 2370.66,
+  "text": "It's not just the positive ones."
+ },
+ {
+  "start": 2370.66,
+  "end": 2376.94,
+  "text": "But if we look at the doctor GRPO plot over here."
+ },
+ {
+  "start": 2376.94,
+  "end": 2381.72,
+  "text": "So this is like the average output length and this the incorrect output length."
+ },
+ {
+  "start": 2381.72,
+  "end": 2385.0,
+  "text": "And so you see that in the correct output length is here."
+ },
+ {
+  "start": 2385.0,
+  "end": 2389.1,
+  "text": "So you see somewhat that this is really"
+ },
+ {
+  "start": 2389.1,
+  "end": 2390.66,
+  "text": "being driven by the incorrect ones"
+ },
+ {
+  "start": 2390.66,
+  "end": 2392.91,
+  "text": "as we would expect from the explanation."
+ },
+ {
+  "start": 2392.91,
+  "end": 2396.47,
+  "text": "So the story, at least in these sets of controlled comparisons,"
+ },
+ {
+  "start": 2396.47,
+  "end": 2398.25,
+  "text": "is quite clean and clear."
+ },
+ {
+  "start": 2398.25,
+  "end": 2400.25,
+  "text": "Yeah."
+ },
+ {
+  "start": 2400.25,
+  "end": 2402.65,
+  "text": "Cool."
+ },
+ {
+  "start": 2402.65,
+  "end": 2406.61,
+  "text": "So now, I'm also going to talk about an alternative method,"
+ },
+ {
+  "start": 2406.61,
+  "end": 2411.21,
+  "text": "Kimi K1.5 or alternative paper and approach."
+ },
+ {
+  "start": 2411.21,
+  "end": 2414.45,
+  "text": "And I always feel like when I talk about R1,"
+ },
+ {
+  "start": 2414.45,
+  "end": 2418.81,
+  "text": "I'm obligated to talk about Kimi K1.5 because they came out"
+ },
+ {
+  "start": 2418.81,
+  "end": 2420.57,
+  "text": "at the same time as R1."
+ },
+ {
+  "start": 2420.57,
+  "end": 2424.91,
+  "text": "They also beat R1, and yet everyone is all about DeepSeek,"
+ },
+ {
+  "start": 2424.91,
+  "end": 2429.03,
+  "text": "and Kimi is not quite as often brought up in the conversation,"
+ },
+ {
+  "start": 2429.03,
+  "end": 2431.49,
+  "text": "even though their models are extremely good."
+ },
+ {
+  "start": 2431.49,
+  "end": 2436.21,
+  "text": "And I'm not just talking about them out of pity, per se."
+ },
+ {
+  "start": 2436.21,
+  "end": 2439.07,
+  "text": "I think Kimi has this nice thing that they do something--"
+ },
+ {
+  "start": 2439.07,
+  "end": 2442.53,
+  "text": "some sets of things, quite differently than DeepSeek,"
+ },
+ {
+  "start": 2442.53,
+  "end": 2445.53,
+  "text": "and we can learn quite a bit from the fact that both"
+ },
+ {
+  "start": 2445.53,
+  "end": 2446.27,
+  "text": "of these work."
+ },
+ {
+  "start": 2446.27,
+  "end": 2448.73,
+  "text": "I think this is part of the theme of this class, which"
+ },
+ {
+  "start": 2448.73,
+  "end": 2451.04,
+  "text": "is by reading all of these tech reports"
+ },
+ {
+  "start": 2451.04,
+  "end": 2452.5,
+  "text": "and by looking at broader patterns,"
+ },
+ {
+  "start": 2452.5,
+  "end": 2454.28,
+  "text": "we can roughly start to understand"
+ },
+ {
+  "start": 2454.28,
+  "end": 2458.48,
+  "text": "what are the valid or easy spaces to get"
+ },
+ {
+  "start": 2458.48,
+  "end": 2460.0,
+  "text": "these algorithms to work."
+ },
+ {
+  "start": 2460.0,
+  "end": 2462.32,
+  "text": "So they do actually quite a bit more"
+ },
+ {
+  "start": 2462.32,
+  "end": 2465.48,
+  "text": "detail in talking about the data set construction and curriculum"
+ },
+ {
+  "start": 2465.48,
+  "end": 2468.44,
+  "text": "generation for the RL process, which many have said"
+ },
+ {
+  "start": 2468.44,
+  "end": 2470.12,
+  "text": "is quite important."
+ },
+ {
+  "start": 2470.12,
+  "end": 2472.26,
+  "text": "And they also have a different RL algorithm,"
+ },
+ {
+  "start": 2472.26,
+  "end": 2475.08,
+  "text": "which in some ways, has similar intuitions"
+ },
+ {
+  "start": 2475.08,
+  "end": 2476.98,
+  "text": "but is not exactly GRPO."
+ },
+ {
+  "start": 2476.98,
+  "end": 2480.32,
+  "text": "And so this is another nice validation that technically"
+ },
+ {
+  "start": 2480.32,
+  "end": 2483.0,
+  "text": "speaking, I don't think you necessarily"
+ },
+ {
+  "start": 2483.0,
+  "end": 2489.6,
+  "text": "need something like GRPO to get these guys to work."
+ },
+ {
+  "start": 2489.6,
+  "end": 2493.56,
+  "text": "So the first part I want to talk about is the data."
+ },
+ {
+  "start": 2493.56,
+  "end": 2497.68,
+  "text": "The data remains very important for all of these processes."
+ },
+ {
+  "start": 2497.68,
+  "end": 2500.0,
+  "text": "And for RL, there's an additional wrinkle"
+ },
+ {
+  "start": 2500.0,
+  "end": 2503.44,
+  "text": "of curriculum, what difficulties of problems"
+ },
+ {
+  "start": 2503.44,
+  "end": 2504.68,
+  "text": "do you want to throw in?"
+ },
+ {
+  "start": 2504.68,
+  "end": 2507.28,
+  "text": "In SFT, you don't really think about difficulty"
+ },
+ {
+  "start": 2507.28,
+  "end": 2509.79,
+  "text": "very much because you just jam the data in there."
+ },
+ {
+  "start": 2509.79,
+  "end": 2511.71,
+  "text": "For whatever data that you want, you just"
+ },
+ {
+  "start": 2511.71,
+  "end": 2513.31,
+  "text": "do pre-training losses and the model"
+ },
+ {
+  "start": 2513.31,
+  "end": 2514.73,
+  "text": "is forced to learn from these."
+ },
+ {
+  "start": 2514.73,
+  "end": 2516.73,
+  "text": "In SFT, there's a little bit more of a subtlety."
+ },
+ {
+  "start": 2516.73,
+  "end": 2519.173,
+  "text": "We talked quite a bit about the hallucination issues,"
+ },
+ {
+  "start": 2519.173,
+  "end": 2520.59,
+  "text": "and maybe sometimes you don't want"
+ },
+ {
+  "start": 2520.59,
+  "end": 2522.83,
+  "text": "to train on some of this data."
+ },
+ {
+  "start": 2522.83,
+  "end": 2525.91,
+  "text": "But for RL, there's this additional wrinkle"
+ },
+ {
+  "start": 2525.91,
+  "end": 2528.853,
+  "text": "that if your problems are too hard, you get no rewards."
+ },
+ {
+  "start": 2528.853,
+  "end": 2530.77,
+  "text": "And if you get no rewards, you have no signal."
+ },
+ {
+  "start": 2530.77,
+  "end": 2532.71,
+  "text": "And if you have no signal, you can't learn."
+ },
+ {
+  "start": 2532.71,
+  "end": 2535.95,
+  "text": "So it's very important to have broad coverage"
+ },
+ {
+  "start": 2535.95,
+  "end": 2539.51,
+  "text": "of the right kinds of examples."
+ },
+ {
+  "start": 2539.51,
+  "end": 2543.13,
+  "text": "And so what the Kimi folks do is first of all,"
+ },
+ {
+  "start": 2543.13,
+  "end": 2546.49,
+  "text": "they try to get a whole big, broad range of coverage of data."
+ },
+ {
+  "start": 2546.49,
+  "end": 2549.23,
+  "text": "Unsurprising, they exclude multiple choice"
+ },
+ {
+  "start": 2549.23,
+  "end": 2551.69,
+  "text": "because that's covered in lots of different domains."
+ },
+ {
+  "start": 2551.69,
+  "end": 2553.838,
+  "text": "They want things that require long, deep thought."
+ },
+ {
+  "start": 2553.838,
+  "end": 2555.63,
+  "text": "And their argument is maybe multiple choice"
+ },
+ {
+  "start": 2555.63,
+  "end": 2556.73,
+  "text": "doesn't have that."
+ },
+ {
+  "start": 2556.73,
+  "end": 2558.87,
+  "text": "But maybe this last one I think is maybe"
+ },
+ {
+  "start": 2558.87,
+  "end": 2560.09,
+  "text": "the most important idea."
+ },
+ {
+  "start": 2560.09,
+  "end": 2563.87,
+  "text": "This appears in a lot of different RL papers."
+ },
+ {
+  "start": 2563.87,
+  "end": 2566.86,
+  "text": "You basically filter all the examples for things"
+ },
+ {
+  "start": 2566.86,
+  "end": 2570.78,
+  "text": "that either pass or sorry, you filter them"
+ },
+ {
+  "start": 2570.78,
+  "end": 2572.8,
+  "text": "based on a best of k filter."
+ },
+ {
+  "start": 2572.8,
+  "end": 2575.74,
+  "text": "So here you take examples."
+ },
+ {
+  "start": 2575.74,
+  "end": 2578.56,
+  "text": "And if they succeed on best of 8,"
+ },
+ {
+  "start": 2578.56,
+  "end": 2580.7,
+  "text": "if you sample eight times and the model"
+ },
+ {
+  "start": 2580.7,
+  "end": 2584.6,
+  "text": "can do it at least once, then that's not a great RL example,"
+ },
+ {
+  "start": 2584.6,
+  "end": 2587.6,
+  "text": "because it's already at the edge of the model's capabilities."
+ },
+ {
+  "start": 2587.6,
+  "end": 2590.22,
+  "text": "You're not going to teach it anything particularly new."
+ },
+ {
+  "start": 2590.22,
+  "end": 2596.02,
+  "text": "And so you only look at examples that basically fail this test,"
+ },
+ {
+  "start": 2596.02,
+  "end": 2599.98,
+  "text": "because that allows us to essentially pick"
+ },
+ {
+  "start": 2599.98,
+  "end": 2602.4,
+  "text": "the right kinds of problems."
+ },
+ {
+  "start": 2602.4,
+  "end": 2604.34,
+  "text": "And so this saves compute."
+ },
+ {
+  "start": 2604.34,
+  "end": 2606.74,
+  "text": "It allows you to skip problems entirely."
+ },
+ {
+  "start": 2606.74,
+  "end": 2609.1,
+  "text": "You can also filter on both sides"
+ },
+ {
+  "start": 2609.1,
+  "end": 2611.82,
+  "text": "to get problems that are neither too hard nor too easy."
+ },
+ {
+  "start": 2611.82,
+  "end": 2614.26,
+  "text": "I think the general consensus in the research community"
+ },
+ {
+  "start": 2614.26,
+  "end": 2617.9,
+  "text": "is that doing this medium range difficulty filtering"
+ },
+ {
+  "start": 2617.9,
+  "end": 2619.94,
+  "text": "is very good if really what you want"
+ },
+ {
+  "start": 2619.94,
+  "end": 2624.5,
+  "text": "is for RL to progress at a steady pace."
+ },
+ {
+  "start": 2624.5,
+  "end": 2627.19,
+  "text": "As with DeepSeek no description about SFT."
+ },
+ {
+  "start": 2627.19,
+  "end": 2629.17,
+  "text": "We can speculate about what that is,"
+ },
+ {
+  "start": 2629.17,
+  "end": 2633.098,
+  "text": "but we have no concrete information."
+ },
+ {
+  "start": 2633.098,
+  "end": 2634.89,
+  "text": "So I think the interesting thing about Kimi"
+ },
+ {
+  "start": 2634.89,
+  "end": 2638.66,
+  "text": "is that they have a DPO inspired argument,"
+ },
+ {
+  "start": 2638.66,
+  "end": 2640.41,
+  "text": "but they end up actually in a place that's"
+ },
+ {
+  "start": 2640.41,
+  "end": 2643.01,
+  "text": "very similar as GRPO."
+ },
+ {
+  "start": 2643.01,
+  "end": 2645.69,
+  "text": "And I think the fact that they end up in similar places"
+ },
+ {
+  "start": 2645.69,
+  "end": 2648.25,
+  "text": "is suggestive of which of these components"
+ },
+ {
+  "start": 2648.25,
+  "end": 2652.47,
+  "text": "are potentially useful if you're designing a new RL algorithm,"
+ },
+ {
+  "start": 2652.47,
+  "end": 2653.17,
+  "text": "for example."
+ },
+ {
+  "start": 2653.17,
+  "end": 2655.97,
+  "text": "So they start at the exact same place as everyone else."
+ },
+ {
+  "start": 2655.97,
+  "end": 2659.19,
+  "text": "So this should now look very familiar to all of you."
+ },
+ {
+  "start": 2659.19,
+  "end": 2662.79,
+  "text": "It's just maximize the expected reward under my policy."
+ },
+ {
+  "start": 2662.79,
+  "end": 2665.33,
+  "text": "And I've got this KL regularizer on the right that"
+ },
+ {
+  "start": 2665.33,
+  "end": 2669.25,
+  "text": "keeps me close to my base policy, or maybe"
+ },
+ {
+  "start": 2669.25,
+  "end": 2670.91,
+  "text": "even the previous iterations policy,"
+ },
+ {
+  "start": 2670.91,
+  "end": 2674.45,
+  "text": "depending on how you're going to do this-- do this RL."
+ },
+ {
+  "start": 2674.45,
+  "end": 2678.17,
+  "text": "So they're going to follow the same DPO style derivation, where"
+ },
+ {
+  "start": 2678.17,
+  "end": 2682.01,
+  "text": "they say assume that I can maximize analytically"
+ },
+ {
+  "start": 2682.01,
+  "end": 2683.92,
+  "text": "and I solve for the reward model that"
+ },
+ {
+  "start": 2683.92,
+  "end": 2687.3,
+  "text": "does that maximization or corresponding to that maximization."
+ },
+ {
+  "start": 2687.3,
+  "end": 2691.36,
+  "text": "And that's going to give me this ratio of policies."
+ },
+ {
+  "start": 2691.36,
+  "end": 2694.8,
+  "text": "And I'm going to plug that back in to my objective up there"
+ },
+ {
+  "start": 2694.8,
+  "end": 2698.52,
+  "text": "and try to solve for what is happening."
+ },
+ {
+  "start": 2698.52,
+  "end": 2700.92,
+  "text": "Well, what they're now saying is they"
+ },
+ {
+  "start": 2700.92,
+  "end": 2704.32,
+  "text": "want to try to match the reward model."
+ },
+ {
+  "start": 2704.32,
+  "end": 2705.8,
+  "text": "And for this equality to be-- they"
+ },
+ {
+  "start": 2705.8,
+  "end": 2709.22,
+  "text": "want this equality to be true, which is true at the minimizer."
+ },
+ {
+  "start": 2709.22,
+  "end": 2711.68,
+  "text": "And therefore, this is a big heuristic."
+ },
+ {
+  "start": 2711.68,
+  "end": 2713.7,
+  "text": "If something's equal at the minimizer,"
+ },
+ {
+  "start": 2713.7,
+  "end": 2715.96,
+  "text": "why don't we just put a squared loss on that thing"
+ },
+ {
+  "start": 2715.96,
+  "end": 2718.24,
+  "text": "and minimize the squared loss?"
+ },
+ {
+  "start": 2718.24,
+  "end": 2720.12,
+  "text": "I think optimization people looking at this"
+ },
+ {
+  "start": 2720.12,
+  "end": 2722.127,
+  "text": "would be horrified at this, but I"
+ },
+ {
+  "start": 2722.127,
+  "end": 2724.502,
+  "text": "think this is a totally reasonable intuition in some ways."
+ },
+ {
+  "start": 2724.502,
+  "end": 2726.64,
+  "text": "We know that these two things should be close"
+ },
+ {
+  "start": 2726.64,
+  "end": 2728.02,
+  "text": "when the model is good."
+ },
+ {
+  "start": 2728.02,
+  "end": 2730.76,
+  "text": "So it is also maybe OK to treat making those two"
+ },
+ {
+  "start": 2730.76,
+  "end": 2734.8,
+  "text": "things explicitly close as a surrogate."
+ },
+ {
+  "start": 2734.8,
+  "end": 2738.52,
+  "text": "This derivation, as you can see, is very, very different"
+ },
+ {
+  "start": 2738.52,
+  "end": 2739.7,
+  "text": "from GRPO."
+ },
+ {
+  "start": 2739.7,
+  "end": 2745.03,
+  "text": "We're not going through the PPO path to derive this update."
+ },
+ {
+  "start": 2745.03,
+  "end": 2746.81,
+  "text": "But now, actually, lo and behold,"
+ },
+ {
+  "start": 2746.81,
+  "end": 2748.87,
+  "text": "you take a gradient of this L, you"
+ },
+ {
+  "start": 2748.87,
+  "end": 2753.41,
+  "text": "end up with something that looks surprisingly like GRPO"
+ },
+ {
+  "start": 2753.41,
+  "end": 2755.83,
+  "text": "with an added regularizer term."
+ },
+ {
+  "start": 2755.83,
+  "end": 2758.59,
+  "text": "What you end up with is this thing"
+ },
+ {
+  "start": 2758.59,
+  "end": 2762.87,
+  "text": "that is a policy gradient with a baseline R bar."
+ },
+ {
+  "start": 2762.87,
+  "end": 2767.45,
+  "text": "And that R bar is actually the mean of each condition,"
+ },
+ {
+  "start": 2767.45,
+  "end": 2768.83,
+  "text": "these x's."
+ },
+ {
+  "start": 2768.83,
+  "end": 2771.81,
+  "text": "And you have this additional regularizer term,"
+ },
+ {
+  "start": 2771.81,
+  "end": 2775.65,
+  "text": "which is essentially the KL term that would appear in GRPO."
+ },
+ {
+  "start": 2775.65,
+  "end": 2778.27,
+  "text": "So in some sense, we've reinvented"
+ },
+ {
+  "start": 2778.27,
+  "end": 2781.07,
+  "text": "the group mean normalized baseline"
+ },
+ {
+  "start": 2781.07,
+  "end": 2783.25,
+  "text": "through quite different means."
+ },
+ {
+  "start": 2785.87,
+  "end": 2791.59,
+  "text": "And so the Kimi folks I think in some ways"
+ },
+ {
+  "start": 2791.59,
+  "end": 2796.13,
+  "text": "had a nicer or better view of the length problem."
+ },
+ {
+  "start": 2796.13,
+  "end": 2797.77,
+  "text": "I think the GRPO folks were like,"
+ },
+ {
+  "start": 2797.77,
+  "end": 2801.08,
+  "text": "isn't it great that the length is growing uncontrollably."
+ },
+ {
+  "start": 2801.08,
+  "end": 2802.647,
+  "text": "I'm sure our model is being smarter."
+ },
+ {
+  "start": 2802.647,
+  "end": 2804.48,
+  "text": "That's a little bit of an uncharitable take,"
+ },
+ {
+  "start": 2804.48,
+  "end": 2807.232,
+  "text": "but when you present this plot as a positive thing,"
+ },
+ {
+  "start": 2807.232,
+  "end": 2808.94,
+  "text": "the implied statement is like, it's great"
+ },
+ {
+  "start": 2808.94,
+  "end": 2811.54,
+  "text": "that our model is thinking for longer."
+ },
+ {
+  "start": 2811.54,
+  "end": 2815.66,
+  "text": "But the Kimi folks look at this long COT problem"
+ },
+ {
+  "start": 2815.66,
+  "end": 2820.84,
+  "text": "and they say, well, if we're making long CoTs potentially,"
+ },
+ {
+  "start": 2820.84,
+  "end": 2822.06,
+  "text": "that's very wasteful."
+ },
+ {
+  "start": 2822.06,
+  "end": 2826.1,
+  "text": "We don't really want long CoTs because CoTs cost inference."
+ },
+ {
+  "start": 2826.1,
+  "end": 2830.217,
+  "text": "So not only do they not have a length problem,"
+ },
+ {
+  "start": 2830.217,
+  "end": 2831.8,
+  "text": "because if you look at this objective,"
+ },
+ {
+  "start": 2831.8,
+  "end": 2834.14,
+  "text": "they don't normalize by sequence length,"
+ },
+ {
+  "start": 2834.14,
+  "end": 2836.66,
+  "text": "but they actually want to go even further"
+ },
+ {
+  "start": 2836.66,
+  "end": 2839.16,
+  "text": "and they want to compress the length of the response."
+ },
+ {
+  "start": 2839.16,
+  "end": 2841.94,
+  "text": "And this is another important feature"
+ },
+ {
+  "start": 2841.94,
+  "end": 2846.12,
+  "text": "that we see generally occurring in language model development."
+ },
+ {
+  "start": 2846.12,
+  "end": 2848.56,
+  "text": "We want the CoTs to be as short as possible."
+ },
+ {
+  "start": 2848.56,
+  "end": 2850.04,
+  "text": "We want to solve hard problems."
+ },
+ {
+  "start": 2850.04,
+  "end": 2851.9,
+  "text": "We don't want to think for very long,"
+ },
+ {
+  "start": 2851.9,
+  "end": 2853.4,
+  "text": "because when we think for very long,"
+ },
+ {
+  "start": 2853.4,
+  "end": 2856.4,
+  "text": "we have to essentially subsidize the user."
+ },
+ {
+  "start": 2856.4,
+  "end": 2861.173,
+  "text": "If you're OpenAI and your users have the $200 Pro Plan,"
+ },
+ {
+  "start": 2861.173,
+  "end": 2862.84,
+  "text": "and your models are thinking for an hour"
+ },
+ {
+  "start": 2862.84,
+  "end": 2865.102,
+  "text": "at a time, that's not a very good place to be in."
+ },
+ {
+  "start": 2865.102,
+  "end": 2866.56,
+  "text": "Whereas if your models are thinking"
+ },
+ {
+  "start": 2866.56,
+  "end": 2869.88,
+  "text": "for five minutes at a time, that is a great place to be in."
+ },
+ {
+  "start": 2869.88,
+  "end": 2872.4,
+  "text": "And so for all of these reasons, Kimi"
+ },
+ {
+  "start": 2872.4,
+  "end": 2874.6,
+  "text": "wants to go and compress the CoTs."
+ },
+ {
+  "start": 2874.6,
+  "end": 2875.82,
+  "text": "How do you do that?"
+ },
+ {
+  "start": 2875.82,
+  "end": 2878.36,
+  "text": "Well, the simplest are all thing to do"
+ },
+ {
+  "start": 2878.36,
+  "end": 2882.32,
+  "text": "is you come up with a heuristic length reward"
+ },
+ {
+  "start": 2882.32,
+  "end": 2887.2,
+  "text": "and you just tack it on to the RL process."
+ },
+ {
+  "start": 2887.2,
+  "end": 2891.72,
+  "text": "This reward is surprisingly complicated."
+ },
+ {
+  "start": 2891.72,
+  "end": 2894.48,
+  "text": "And the thing that they're doing is"
+ },
+ {
+  "start": 2894.48,
+  "end": 2898.48,
+  "text": "you're trying to make longer sequences shorter and shorter."
+ },
+ {
+  "start": 2898.48,
+  "end": 2902.12,
+  "text": "Correct answers also should be short."
+ },
+ {
+  "start": 2902.12,
+  "end": 2904.16,
+  "text": "The interesting balance here is if you"
+ },
+ {
+  "start": 2904.16,
+  "end": 2906.26,
+  "text": "make the incorrect answers too short,"
+ },
+ {
+  "start": 2906.26,
+  "end": 2908.23,
+  "text": "they no longer have a way to recover."
+ },
+ {
+  "start": 2908.23,
+  "end": 2909.48,
+  "text": "So let me give you an example."
+ },
+ {
+  "start": 2909.48,
+  "end": 2912.8,
+  "text": "Imagine I'm bad at geometry."
+ },
+ {
+  "start": 2912.8,
+  "end": 2916.81,
+  "text": "AI bad at geometry, I get lots of incorrect answers,"
+ },
+ {
+  "start": 2916.81,
+  "end": 2919.89,
+  "text": "and the penalty makes my geometry CoTs really short."
+ },
+ {
+  "start": 2919.89,
+  "end": 2922.21,
+  "text": "Now, my geometry CoTs are 0."
+ },
+ {
+  "start": 2922.21,
+  "end": 2923.77,
+  "text": "I'm really bad at geometry."
+ },
+ {
+  "start": 2923.77,
+  "end": 2925.07,
+  "text": "I will never recover from this."
+ },
+ {
+  "start": 2925.07,
+  "end": 2927.85,
+  "text": "I will never get a positive geometry reward ever again."
+ },
+ {
+  "start": 2927.85,
+  "end": 2928.79,
+  "text": "And I'm stuck."
+ },
+ {
+  "start": 2928.79,
+  "end": 2932.07,
+  "text": "And so what you do is you don't force the incorrect answers"
+ },
+ {
+  "start": 2932.07,
+  "end": 2933.87,
+  "text": "to be super short."
+ },
+ {
+  "start": 2933.87,
+  "end": 2936.31,
+  "text": "You incentivize them to be just a little bit shorter"
+ },
+ {
+  "start": 2936.31,
+  "end": 2938.91,
+  "text": "than the average, so that the incorrect stuff"
+ },
+ {
+  "start": 2938.91,
+  "end": 2942.19,
+  "text": "doesn't grow unboundedly."
+ },
+ {
+  "start": 2942.19,
+  "end": 2947.27,
+  "text": "And so this has, in the end, a surprisingly reasonable set"
+ },
+ {
+  "start": 2947.27,
+  "end": 2950.19,
+  "text": "of outcomes."
+ },
+ {
+  "start": 2950.19,
+  "end": 2955.15,
+  "text": "And so as I said before, they have a really nice RL set"
+ },
+ {
+  "start": 2955.15,
+  "end": 2958.29,
+  "text": "of views on how they do their data set curation."
+ },
+ {
+  "start": 2958.29,
+  "end": 2961.01,
+  "text": "So not only do they have this data set that they filter,"
+ },
+ {
+  "start": 2961.01,
+  "end": 2962.99,
+  "text": "they also look at the success rates"
+ },
+ {
+  "start": 2962.99,
+  "end": 2965.93,
+  "text": "of how often they're able to solve particular problems."
+ },
+ {
+  "start": 2965.93,
+  "end": 2968.09,
+  "text": "And once the model masters a particular problem,"
+ },
+ {
+  "start": 2968.09,
+  "end": 2970.01,
+  "text": "it gets taken out of the problem set."
+ },
+ {
+  "start": 2970.01,
+  "end": 2971.77,
+  "text": "So you save some compute doing that."
+ },
+ {
+  "start": 2971.77,
+  "end": 2975.94,
+  "text": "I think basically everyone doing RL does these success rate"
+ },
+ {
+  "start": 2975.94,
+  "end": 2978.18,
+  "text": "filtering to avoid both wasting compute"
+ },
+ {
+  "start": 2978.18,
+  "end": 2983.38,
+  "text": "or working on problems that are way too hard for the model."
+ },
+ {
+  "start": 2983.38,
+  "end": 2987.722,
+  "text": "And they basically have rewards that, for code, they"
+ },
+ {
+  "start": 2987.722,
+  "end": 2990.18,
+  "text": "take ground truth solutions and they generate some new test"
+ },
+ {
+  "start": 2990.18,
+  "end": 2991.0,
+  "text": "cases."
+ },
+ {
+  "start": 2991.0,
+  "end": 2993.74,
+  "text": "And for math, they actually have a reward model"
+ },
+ {
+  "start": 2993.74,
+  "end": 2995.9,
+  "text": "to check for answer equivalence checks."
+ },
+ {
+  "start": 2995.9,
+  "end": 2998.4,
+  "text": "And this is a really funny thing in some ways,"
+ },
+ {
+  "start": 2998.4,
+  "end": 3000.18,
+  "text": "because we started out this lecture"
+ },
+ {
+  "start": 3000.18,
+  "end": 3004.16,
+  "text": "by saying we want to work on formal math or something,"
+ },
+ {
+  "start": 3004.16,
+  "end": 3007.18,
+  "text": "something truly verifiable, where you can--"
+ },
+ {
+  "start": 3007.18,
+  "end": 3009.46,
+  "text": "a compiler can check the correctness of your math."
+ },
+ {
+  "start": 3009.46,
+  "end": 3012.16,
+  "text": "And then we've gone through most of the lecture."
+ },
+ {
+  "start": 3012.16,
+  "end": 3014.32,
+  "text": "And then in the end, where we ended up?"
+ },
+ {
+  "start": 3014.32,
+  "end": 3016.48,
+  "text": "Well, we ended up with a reward model,"
+ },
+ {
+  "start": 3016.48,
+  "end": 3020.58,
+  "text": "a reward model that checks the correctness of math answers."
+ },
+ {
+  "start": 3020.58,
+  "end": 3024.6,
+  "text": "Once again, you'll see why in the assignment"
+ },
+ {
+  "start": 3024.6,
+  "end": 3027.54,
+  "text": "or maybe if you play with the assignment, you'll see why."
+ },
+ {
+  "start": 3027.54,
+  "end": 3030.82,
+  "text": "You'll quickly find out that answer equivalence checking"
+ },
+ {
+  "start": 3030.82,
+  "end": 3032.7,
+  "text": "is a very difficult problem."
+ },
+ {
+  "start": 3032.7,
+  "end": 3036.91,
+  "text": "Because in math, you can write equivalent things in many ways."
+ },
+ {
+  "start": 3036.91,
+  "end": 3038.37,
+  "text": "And not only that, a language model"
+ },
+ {
+  "start": 3038.37,
+  "end": 3040.55,
+  "text": "can give the answer back in many ways."
+ },
+ {
+  "start": 3040.55,
+  "end": 3043.13,
+  "text": "Even if you prompt it to say give the answer back"
+ },
+ {
+  "start": 3043.13,
+  "end": 3046.75,
+  "text": "in latex boxed, maybe sometimes it skips the boxed,"
+ },
+ {
+  "start": 3046.75,
+  "end": 3049.01,
+  "text": "maybe add some extra stuff to the box."
+ },
+ {
+  "start": 3049.01,
+  "end": 3051.53,
+  "text": "There are lots of ways that the model can just"
+ },
+ {
+  "start": 3051.53,
+  "end": 3055.35,
+  "text": "fail to get the right answer by a strict correctness checker,"
+ },
+ {
+  "start": 3055.35,
+  "end": 3057.09,
+  "text": "even though it has the right idea."
+ },
+ {
+  "start": 3057.09,
+  "end": 3063.09,
+  "text": "And so for these reasons, basically, most RL projects"
+ },
+ {
+  "start": 3063.09,
+  "end": 3066.81,
+  "text": "have a very complicated answer checker, either a regex"
+ },
+ {
+  "start": 3066.81,
+  "end": 3068.85,
+  "text": "or a model, or who knows what in order"
+ },
+ {
+  "start": 3068.85,
+  "end": 3070.47,
+  "text": "to avoid these kinds of problems."
+ },
+ {
+  "start": 3070.47,
+  "end": 3078.57,
+  "text": "It's a real rabbit hole getting the verified part of RLVR."
+ },
+ {
+  "start": 3078.57,
+  "end": 3080.57,
+  "text": "Cool."
+ },
+ {
+  "start": 3080.57,
+  "end": 3085.01,
+  "text": "The last thing which connects to some of the systems bits"
+ },
+ {
+  "start": 3085.01,
+  "end": 3087.65,
+  "text": "that we had talked about earlier and the inference bits"
+ },
+ {
+  "start": 3087.65,
+  "end": 3090.19,
+  "text": "is RL optimization."
+ },
+ {
+  "start": 3090.19,
+  "end": 3093.68,
+  "text": "And RL infra is really quite hard."
+ },
+ {
+  "start": 3093.68,
+  "end": 3096.26,
+  "text": "Training is hard and inference is hard."
+ },
+ {
+  "start": 3096.26,
+  "end": 3097.86,
+  "text": "And RL puts the two together."
+ },
+ {
+  "start": 3097.86,
+  "end": 3102.4,
+  "text": "So in some ways, no wonder is it really horrible and difficult."
+ },
+ {
+  "start": 3102.4,
+  "end": 3105.36,
+  "text": "Even worse, I think one of the things that you don't initially"
+ },
+ {
+  "start": 3105.36,
+  "end": 3109.32,
+  "text": "appreciate about how hard it is to make RL efficient"
+ },
+ {
+  "start": 3109.32,
+  "end": 3112.08,
+  "text": "is think of the following scenario."
+ },
+ {
+  "start": 3112.08,
+  "end": 3114.66,
+  "text": "Now, imagine you've got your rollouts,"
+ },
+ {
+  "start": 3114.66,
+  "end": 3116.64,
+  "text": "but you've got one really hard math problem,"
+ },
+ {
+  "start": 3116.64,
+  "end": 3119.34,
+  "text": "let's say one of them is like the Riemann hypothesis."
+ },
+ {
+  "start": 3119.34,
+  "end": 3121.12,
+  "text": "And your model is really chugging along"
+ },
+ {
+  "start": 3121.12,
+  "end": 3122.26,
+  "text": "on the Riemann hypothesis."
+ },
+ {
+  "start": 3122.26,
+  "end": 3124.48,
+  "text": "It's got this gigantic COT."
+ },
+ {
+  "start": 3124.48,
+  "end": 3125.498,
+  "text": "Now, what's happening?"
+ },
+ {
+  "start": 3125.498,
+  "end": 3127.54,
+  "text": "In the meantime, if you're doing naive inference,"
+ },
+ {
+  "start": 3127.54,
+  "end": 3129.373,
+  "text": "everyone else is waiting on this one rollout"
+ },
+ {
+  "start": 3129.373,
+  "end": 3132.34,
+  "text": "to complete in order to move on to the next phase."
+ },
+ {
+  "start": 3132.34,
+  "end": 3134.44,
+  "text": "So if you're doing these batch things,"
+ },
+ {
+  "start": 3134.44,
+  "end": 3137.36,
+  "text": "long rollouts can really hurt you."
+ },
+ {
+  "start": 3137.36,
+  "end": 3142.28,
+  "text": "And so RL really needs to deal with all of these really"
+ },
+ {
+  "start": 3142.28,
+  "end": 3144.065,
+  "text": "tricky low-level details."
+ },
+ {
+  "start": 3144.065,
+  "end": 3145.44,
+  "text": "So you need to deal with the fact"
+ },
+ {
+  "start": 3145.44,
+  "end": 3147.82,
+  "text": "that some CoTs can get really long."
+ },
+ {
+  "start": 3147.82,
+  "end": 3150.39,
+  "text": "Do you need to truncate them, do you somehow"
+ },
+ {
+  "start": 3150.39,
+  "end": 3152.43,
+  "text": "set them into a different machine, who knows?"
+ },
+ {
+  "start": 3152.43,
+  "end": 3154.95,
+  "text": "These are all decisions that you can make."
+ },
+ {
+  "start": 3154.95,
+  "end": 3157.71,
+  "text": "If you switch from training to rollouts, you roll out once"
+ },
+ {
+  "start": 3157.71,
+  "end": 3159.93,
+  "text": "and then you train and you roll out and you train,"
+ },
+ {
+  "start": 3159.93,
+  "end": 3162.09,
+  "text": "you have to somehow deal with this."
+ },
+ {
+  "start": 3162.09,
+  "end": 3164.41,
+  "text": "Either some of your machines are pure rollout machines,"
+ },
+ {
+  "start": 3164.41,
+  "end": 3167.21,
+  "text": "and some of them are training machines,"
+ },
+ {
+  "start": 3167.21,
+  "end": 3169.37,
+  "text": "or you're switching out frameworks all the time."
+ },
+ {
+  "start": 3169.37,
+  "end": 3171.63,
+  "text": "Both of them are very costly."
+ },
+ {
+  "start": 3171.63,
+  "end": 3174.71,
+  "text": "And then finally, you have this really difficult and horrible"
+ },
+ {
+  "start": 3174.71,
+  "end": 3178.35,
+  "text": "trade off, which is on policy stuff is mathematically"
+ },
+ {
+  "start": 3178.35,
+  "end": 3180.71,
+  "text": "and training dynamics wise very nice."
+ },
+ {
+  "start": 3180.71,
+  "end": 3185.49,
+  "text": "So GRPO in its simple on policy form behaves very nicely."
+ },
+ {
+  "start": 3185.49,
+  "end": 3187.79,
+  "text": "You will experience this in your assignments"
+ },
+ {
+  "start": 3187.79,
+  "end": 3189.77,
+  "text": "and then you will get greedy."
+ },
+ {
+  "start": 3189.77,
+  "end": 3193.49,
+  "text": "You will say but my systems utilization is so low."
+ },
+ {
+  "start": 3193.49,
+  "end": 3197.13,
+  "text": "I could do so much better if only I could reuse my rollouts,"
+ },
+ {
+  "start": 3197.13,
+  "end": 3199.59,
+  "text": "then I can overlap my inference and computation"
+ },
+ {
+  "start": 3199.59,
+  "end": 3201.33,
+  "text": "and do all clever things."
+ },
+ {
+  "start": 3201.33,
+  "end": 3203.91,
+  "text": "And so you will attempt to reuse these rollouts."
+ },
+ {
+  "start": 3203.91,
+  "end": 3206.27,
+  "text": "And that will lead to off-policy problems which"
+ },
+ {
+  "start": 3206.27,
+  "end": 3208.9,
+  "text": "then lead to destabilizing your training"
+ },
+ {
+  "start": 3208.9,
+  "end": 3211.26,
+  "text": "and all sorts of things that are very difficult."
+ },
+ {
+  "start": 3211.26,
+  "end": 3214.18,
+  "text": "So these are all sorts of things that end up"
+ },
+ {
+  "start": 3214.18,
+  "end": 3217.7,
+  "text": "getting very, very tricky."
+ },
+ {
+  "start": 3217.7,
+  "end": 3221.38,
+  "text": "And so I think most open source technical reports will"
+ },
+ {
+  "start": 3221.38,
+  "end": 3226.1,
+  "text": "have these days a section talking about their RL infra,"
+ },
+ {
+  "start": 3226.1,
+  "end": 3230.36,
+  "text": "and their RL infra is going to have both a training part."
+ },
+ {
+  "start": 3230.36,
+  "end": 3233.26,
+  "text": "That's the blue boxes over here and an inference part, which"
+ },
+ {
+  "start": 3233.26,
+  "end": 3235.34,
+  "text": "is the green part on the right."
+ },
+ {
+  "start": 3235.34,
+  "end": 3238.26,
+  "text": "And you're going to have to move weights from the training part"
+ },
+ {
+  "start": 3238.26,
+  "end": 3239.2,
+  "text": "to the inference part."
+ },
+ {
+  "start": 3239.2,
+  "end": 3242.54,
+  "text": "So you need some of story for how to move those around."
+ },
+ {
+  "start": 3242.54,
+  "end": 3245.1,
+  "text": "And you need to coordinate them closely."
+ },
+ {
+  "start": 3245.1,
+  "end": 3246.98,
+  "text": "And in some cases, maybe they even"
+ },
+ {
+  "start": 3246.98,
+  "end": 3249.98,
+  "text": "share the same machines because as inference is running,"
+ },
+ {
+  "start": 3249.98,
+  "end": 3251.66,
+  "text": "the training one might be idle."
+ },
+ {
+  "start": 3251.66,
+  "end": 3253.4,
+  "text": "So all of these are complexities."
+ },
+ {
+  "start": 3253.4,
+  "end": 3259.62,
+  "text": "And you have lots of very complicated systems things to do."
+ },
+ {
+  "start": 3259.62,
+  "end": 3265.06,
+  "text": "So we already know that Kimi beats OpenAI O1,"
+ },
+ {
+  "start": 3265.06,
+  "end": 3267.79,
+  "text": "but we also see some really nice things"
+ },
+ {
+  "start": 3267.79,
+  "end": 3271.29,
+  "text": "showing that as RL proceeds, you're able to think longer"
+ },
+ {
+  "start": 3271.29,
+  "end": 3272.83,
+  "text": "and performance goes up."
+ },
+ {
+  "start": 3272.83,
+  "end": 3274.89,
+  "text": "But in some cases, it's not that we're just"
+ },
+ {
+  "start": 3274.89,
+  "end": 3276.93,
+  "text": "unboundedly increasing tokens."
+ },
+ {
+  "start": 3276.93,
+  "end": 3278.57,
+  "text": "We end up getting cases where I think"
+ },
+ {
+  "start": 3278.57,
+  "end": 3280.15,
+  "text": "OmniMath is a good example."
+ },
+ {
+  "start": 3280.15,
+  "end": 3281.95,
+  "text": "You're not thinking for that much longer,"
+ },
+ {
+  "start": 3281.95,
+  "end": 3283.63,
+  "text": "but your performance continues to go up."
+ },
+ {
+  "start": 3283.63,
+  "end": 3287.89,
+  "text": "So maybe this is a good example of this length control kicking"
+ },
+ {
+  "start": 3287.89,
+  "end": 3291.41,
+  "text": "in and doing good things."
+ },
+ {
+  "start": 3291.41,
+  "end": 3295.13,
+  "text": "The final thing I want to talk about is you might wonder,"
+ },
+ {
+  "start": 3295.13,
+  "end": 3297.57,
+  "text": "is this actual RL stuff much better"
+ },
+ {
+  "start": 3297.57,
+  "end": 3300.45,
+  "text": "than just training on correct answers."
+ },
+ {
+  "start": 3300.45,
+  "end": 3302.27,
+  "text": "This is called expert iteration."
+ },
+ {
+  "start": 3302.27,
+  "end": 3305.45,
+  "text": "It worked very well in a number of past papers."
+ },
+ {
+  "start": 3305.45,
+  "end": 3307.75,
+  "text": "In cases where you're dealing with very unstable stuff,"
+ },
+ {
+  "start": 3307.75,
+  "end": 3310.93,
+  "text": "you may actually want to do expert iteration instead."
+ },
+ {
+  "start": 3310.93,
+  "end": 3313.65,
+  "text": "Kimi K1 has very large scale ablations"
+ },
+ {
+  "start": 3313.65,
+  "end": 3317.65,
+  "text": "showing that these kinds of RL methods"
+ },
+ {
+  "start": 3317.65,
+  "end": 3320.11,
+  "text": "work consistently better than expert iteration."
+ },
+ {
+  "start": 3320.11,
+  "end": 3322.91,
+  "text": "So that's the orange beating the blue over here."
+ },
+ {
+  "start": 3322.91,
+  "end": 3326.6,
+  "text": "So you can't really avoid RL if you want to squeeze out"
+ },
+ {
+  "start": 3326.6,
+  "end": 3329.38,
+  "text": "all of your performance."
+ },
+ {
+  "start": 3329.38,
+  "end": 3331.44,
+  "text": "I can pause here in case anyone has"
+ },
+ {
+  "start": 3331.44,
+  "end": 3332.82,
+  "text": "questions about the Kimi stuff."
+ },
+ {
+  "start": 3332.82,
+  "end": 3335.88,
+  "text": "And then I'll move on to the last of the three"
+ },
+ {
+  "start": 3335.88,
+  "end": 3337.14,
+  "text": "which is Qwen 3."
+ },
+ {
+  "start": 3340.14,
+  "end": 3340.64,
+  "text": "Great."
+ },
+ {
+  "start": 3340.64,
+  "end": 3342.48,
+  "text": "OK."
+ },
+ {
+  "start": 3342.48,
+  "end": 3346.36,
+  "text": "So the last one that I want to talk about is Qwen 3 and also"
+ },
+ {
+  "start": 3346.36,
+  "end": 3348.94,
+  "text": "Qwen 3.5-Next-Coder."
+ },
+ {
+  "start": 3348.94,
+  "end": 3351.68,
+  "text": "The names are getting complicated."
+ },
+ {
+  "start": 3351.68,
+  "end": 3353.3,
+  "text": "And Qwen 3 is later."
+ },
+ {
+  "start": 3353.3,
+  "end": 3356.0,
+  "text": "But they have actually really interesting scaling and data"
+ },
+ {
+  "start": 3356.0,
+  "end": 3356.74,
+  "text": "results."
+ },
+ {
+  "start": 3356.74,
+  "end": 3358.44,
+  "text": "So I want to talk about those."
+ },
+ {
+  "start": 3358.44,
+  "end": 3362.52,
+  "text": "And the successor to this, which is Qwen 3.5-Next-Coder is"
+ },
+ {
+  "start": 3362.52,
+  "end": 3366.4,
+  "text": "interesting because I think has the most details of I would say"
+ },
+ {
+  "start": 3366.4,
+  "end": 3372.32,
+  "text": "agentic RLVR training out of the major tech reports and they do"
+ },
+ {
+  "start": 3372.32,
+  "end": 3374.76,
+  "text": "lots of cool things."
+ },
+ {
+  "start": 3374.76,
+  "end": 3378.6,
+  "text": "So once again, as with DeepSeek, one"
+ },
+ {
+  "start": 3378.6,
+  "end": 3381.2,
+  "text": "of the nice things that we see with the Qwen report"
+ },
+ {
+  "start": 3381.2,
+  "end": 3384.25,
+  "text": "is the full way that all of these are organized."
+ },
+ {
+  "start": 3384.25,
+  "end": 3387.63,
+  "text": "And this is very similar to the DeepSeek structure."
+ },
+ {
+  "start": 3387.63,
+  "end": 3392.99,
+  "text": "We do base model to basically SFT, then reasoning RL."
+ },
+ {
+  "start": 3392.99,
+  "end": 3395.41,
+  "text": "And then they have this thinking mode fusion."
+ },
+ {
+  "start": 3395.41,
+  "end": 3397.29,
+  "text": "I'll talk about that later."
+ },
+ {
+  "start": 3397.29,
+  "end": 3398.87,
+  "text": "And then they do RLHF and then they"
+ },
+ {
+  "start": 3398.87,
+  "end": 3400.24,
+  "text": "have a model that gets shipped."
+ },
+ {
+  "start": 3400.24,
+  "end": 3402.49,
+  "text": "But of course, they don't want to serve that directly."
+ },
+ {
+  "start": 3402.49,
+  "end": 3405.89,
+  "text": "So they do distillation to get their smaller models."
+ },
+ {
+  "start": 3405.89,
+  "end": 3410.45,
+  "text": "I mean, Qwen 3 is quite a respectable open source model."
+ },
+ {
+  "start": 3410.45,
+  "end": 3413.95,
+  "text": "You can basically have this be your mental picture of how"
+ },
+ {
+  "start": 3413.95,
+  "end": 3418.59,
+  "text": "frontier-ish language models are built putting"
+ },
+ {
+  "start": 3418.59,
+  "end": 3419.85,
+  "text": "all the components together."
+ },
+ {
+  "start": 3419.85,
+  "end": 3422.1,
+  "text": "And I think you would have a pretty reasonable picture"
+ },
+ {
+  "start": 3422.1,
+  "end": 3423.05,
+  "text": "of what is happening."
+ },
+ {
+  "start": 3425.84,
+  "end": 3429.23,
+  "text": "And Qwen uses basically, at this point, tried and tested"
+ },
+ {
+  "start": 3429.23,
+  "end": 3431.59,
+  "text": "playbook for RLVR."
+ },
+ {
+  "start": 3431.59,
+  "end": 3434.89,
+  "text": "I think they take lots of the best parts of Kimi and DeepSeek,"
+ },
+ {
+  "start": 3434.89,
+  "end": 3436.289,
+  "text": "and they get it right."
+ },
+ {
+  "start": 3436.289,
+  "end": 3438.456,
+  "text": "They do a lot of filtering for difficulty because we"
+ },
+ {
+  "start": 3438.456,
+  "end": 3439.77,
+  "text": "know that saves compute."
+ },
+ {
+  "start": 3439.77,
+  "end": 3442.54,
+  "text": "That's a good way to get good data."
+ },
+ {
+  "start": 3442.54,
+  "end": 3446.06,
+  "text": "They also do other things, like they remove things"
+ },
+ {
+  "start": 3446.06,
+  "end": 3447.86,
+  "text": "that the model can get right without COT"
+ },
+ {
+  "start": 3447.86,
+  "end": 3450.34,
+  "text": "because we know that's not a thinking problem."
+ },
+ {
+  "start": 3450.34,
+  "end": 3453.1,
+  "text": "They remove things that are too similar to validation data"
+ },
+ {
+  "start": 3453.1,
+  "end": 3455.58,
+  "text": "to try to decontaminate things."
+ },
+ {
+  "start": 3455.58,
+  "end": 3458.98,
+  "text": "And then they do a little bit of manual filtering"
+ },
+ {
+  "start": 3458.98,
+  "end": 3461.82,
+  "text": "on reference CoTs."
+ },
+ {
+  "start": 3461.82,
+  "end": 3466.18,
+  "text": "Maybe most remarkably about Qwen 3 is they actually do their RL"
+ },
+ {
+  "start": 3466.18,
+  "end": 3470.18,
+  "text": "on very few examples, just 4,000 examples."
+ },
+ {
+  "start": 3470.18,
+  "end": 3473.44,
+  "text": "But once again, if you have the rest of the pipeline right,"
+ },
+ {
+  "start": 3473.44,
+  "end": 3477.78,
+  "text": "you can actually get surprisingly far."
+ },
+ {
+  "start": 3477.78,
+  "end": 3480.3,
+  "text": "So the core of the RLVR components"
+ },
+ {
+  "start": 3480.3,
+  "end": 3484.1,
+  "text": "are maybe not super surprising because they are really"
+ },
+ {
+  "start": 3484.1,
+  "end": 3488.58,
+  "text": "building off of DeepSeek R1 and also Kimi."
+ },
+ {
+  "start": 3488.58,
+  "end": 3492.86,
+  "text": "There are some interesting Qwen 3 specific things, some of which"
+ },
+ {
+  "start": 3492.86,
+  "end": 3495.5,
+  "text": "they've ended up getting rid of, but I think some of the ideas"
+ },
+ {
+  "start": 3495.5,
+  "end": 3497.78,
+  "text": "are actually quite interesting."
+ },
+ {
+  "start": 3497.78,
+  "end": 3500.25,
+  "text": "So one of the things that they do"
+ },
+ {
+  "start": 3500.25,
+  "end": 3504.33,
+  "text": "is they mix thinking and non-thinking things with tags."
+ },
+ {
+  "start": 3504.33,
+  "end": 3508.13,
+  "text": "And that's how they end up having a thinking mode, where"
+ },
+ {
+  "start": 3508.13,
+  "end": 3510.53,
+  "text": "the model has a long COT and they can mix"
+ },
+ {
+  "start": 3510.53,
+  "end": 3511.95,
+  "text": "that with a non-thinking mode."
+ },
+ {
+  "start": 3511.95,
+  "end": 3515.315,
+  "text": "So both the instant response model and the long COT model"
+ },
+ {
+  "start": 3515.315,
+  "end": 3516.69,
+  "text": "basically live in the same model."
+ },
+ {
+  "start": 3516.69,
+  "end": 3519.41,
+  "text": "This was not true in many cases."
+ },
+ {
+  "start": 3519.41,
+  "end": 3522.61,
+  "text": "There was often a thinking mode and a non-thinking model,"
+ },
+ {
+  "start": 3522.61,
+  "end": 3524.37,
+  "text": "even at OpenAI."
+ },
+ {
+  "start": 3524.37,
+  "end": 3528.81,
+  "text": "They also have--I thought this was quite interesting,"
+ },
+ {
+  "start": 3528.81,
+  "end": 3532.21,
+  "text": "which is they have this way of early exiting thinking where"
+ },
+ {
+  "start": 3532.21,
+  "end": 3536.25,
+  "text": "if they append a special string, they'll immediately stop the COT"
+ },
+ {
+  "start": 3536.25,
+  "end": 3539.65,
+  "text": "and the model is forced to give an answer to whatever prompt"
+ },
+ {
+  "start": 3539.65,
+  "end": 3540.89,
+  "text": "is given."
+ },
+ {
+  "start": 3540.89,
+  "end": 3545.13,
+  "text": "We see this even in-- we see this affordance in interfaces"
+ },
+ {
+  "start": 3545.13,
+  "end": 3548.57,
+  "text": "like ChatGPT, where you're able to terminate the thinking early"
+ },
+ {
+  "start": 3548.57,
+  "end": 3551.65,
+  "text": "and try to get an immediate answer, for example."
+ },
+ {
+  "start": 3551.65,
+  "end": 3555.57,
+  "text": "But what we see with this and I've always"
+ },
+ {
+  "start": 3555.57,
+  "end": 3559.2,
+  "text": "thought this was a surprising an interesting thing, which"
+ },
+ {
+  "start": 3559.2,
+  "end": 3562.32,
+  "text": "is that as you vary the thinking budget, doing"
+ },
+ {
+  "start": 3562.32,
+  "end": 3565.0,
+  "text": "this early termination trick, you end up"
+ },
+ {
+  "start": 3565.0,
+  "end": 3568.92,
+  "text": "finding that the performance of the model"
+ },
+ {
+  "start": 3568.92,
+  "end": 3572.8,
+  "text": "degrades gracefully, even though at the lower-thinking budgets,"
+ },
+ {
+  "start": 3572.8,
+  "end": 3575.14,
+  "text": "these models are kind of getting truncated mid-thought,"
+ },
+ {
+  "start": 3575.14,
+  "end": 3577.96,
+  "text": "they're able to give surprisingly reasonable"
+ },
+ {
+  "start": 3577.96,
+  "end": 3580.62,
+  "text": "responses even at that point."
+ },
+ {
+  "start": 3580.62,
+  "end": 3582.12,
+  "text": "And we see that consistently, even"
+ },
+ {
+  "start": 3582.12,
+  "end": 3584.24,
+  "text": "with very small-thinking budgets, the thinking"
+ },
+ {
+  "start": 3584.24,
+  "end": 3586.12,
+  "text": "mode models are much better on all"
+ },
+ {
+  "start": 3586.12,
+  "end": 3589.2,
+  "text": "of these mathematical or coding tasks"
+ },
+ {
+  "start": 3589.2,
+  "end": 3592.28,
+  "text": "compared to the instant response mode, which"
+ },
+ {
+  "start": 3592.28,
+  "end": 3597.28,
+  "text": "is much more of the classic instruction following plus RLHF"
+ },
+ {
+  "start": 3597.28,
+  "end": 3598.02,
+  "text": "models."
+ },
+ {
+  "start": 3600.84,
+  "end": 3604.68,
+  "text": "And so you can-- one of the nice things they do for us is look"
+ },
+ {
+  "start": 3604.68,
+  "end": 3607.76,
+  "text": "at the contribution of all of the different components"
+ },
+ {
+  "start": 3607.76,
+  "end": 3609.04,
+  "text": "to performance."
+ },
+ {
+  "start": 3609.04,
+  "end": 3611.24,
+  "text": "And in many ways, this is not something that"
+ },
+ {
+  "start": 3611.24,
+  "end": 3613.6,
+  "text": "should surprise you too much."
+ },
+ {
+  "start": 3613.6,
+  "end": 3619.07,
+  "text": "If you do this reasoning RL and then general RL,"
+ },
+ {
+  "start": 3619.07,
+  "end": 3621.79,
+  "text": "you're able to slowly get improvements"
+ },
+ {
+  "start": 3621.79,
+  "end": 3625.07,
+  "text": "in all of the different tasks, things like Arena-Hard"
+ },
+ {
+  "start": 3625.07,
+  "end": 3626.05,
+  "text": "or CounterFactQA."
+ },
+ {
+  "start": 3626.05,
+  "end": 3630.05,
+  "text": "These are general tasks for which you want more normal RF,"
+ },
+ {
+  "start": 3630.05,
+  "end": 3632.51,
+  "text": "and we see significant boosts to that performance"
+ },
+ {
+  "start": 3632.51,
+  "end": 3634.35,
+  "text": "across the board."
+ },
+ {
+  "start": 3634.35,
+  "end": 3637.27,
+  "text": "There are some degradations that we see in math and coding"
+ },
+ {
+  "start": 3637.27,
+  "end": 3640.57,
+  "text": "because we fuse together non-thinking components,"
+ },
+ {
+  "start": 3640.57,
+  "end": 3643.67,
+  "text": "but the degradation is not so bad."
+ },
+ {
+  "start": 3643.67,
+  "end": 3646.43,
+  "text": "I think, actually, even though these numbers"
+ },
+ {
+  "start": 3646.43,
+  "end": 3650.01,
+  "text": "in an absolute sense are small in later releases,"
+ },
+ {
+  "start": 3650.01,
+  "end": 3652.67,
+  "text": "I think in some of the Qwen 3.5, they've"
+ },
+ {
+  "start": 3652.67,
+  "end": 3654.43,
+  "text": "gone back on fusing both thinking"
+ },
+ {
+  "start": 3654.43,
+  "end": 3656.75,
+  "text": "and non-thinking into a single model."
+ },
+ {
+  "start": 3656.75,
+  "end": 3659.87,
+  "text": "I think what-- they used to call this hybrid models because they"
+ },
+ {
+  "start": 3659.87,
+  "end": 3662.483,
+  "text": "found this drop unacceptable."
+ },
+ {
+  "start": 3662.483,
+  "end": 3664.15,
+  "text": "They wanted to squeeze out all the juice"
+ },
+ {
+  "start": 3664.15,
+  "end": 3665.69,
+  "text": "possible on thinking modes."
+ },
+ {
+  "start": 3665.69,
+  "end": 3667.95,
+  "text": "And so they've now, I think, separated"
+ },
+ {
+  "start": 3667.95,
+  "end": 3670.87,
+  "text": "these models from each other."
+ },
+ {
+  "start": 3670.87,
+  "end": 3679.5,
+  "text": "The very last topic and paper that I want to cover is Qwen 3--"
+ },
+ {
+  "start": 3679.5,
+  "end": 3680.76,
+  "text": "or sorry, I flipped the two."
+ },
+ {
+  "start": 3680.76,
+  "end": 3685.78,
+  "text": "It's Coder-Next not Next-Coder, which is one of the newer models"
+ },
+ {
+  "start": 3685.78,
+  "end": 3686.68,
+  "text": "to come out."
+ },
+ {
+  "start": 3686.68,
+  "end": 3689.425,
+  "text": "And I think if you're interested in general agent"
+ },
+ {
+  "start": 3689.425,
+  "end": 3691.3,
+  "text": "stuff, of course, there's other agents things"
+ },
+ {
+  "start": 3691.3,
+  "end": 3692.655,
+  "text": "to think about harnesses."
+ },
+ {
+  "start": 3692.655,
+  "end": 3695.28,
+  "text": "But if you're interested in how do you actually build an agent."
+ },
+ {
+  "start": 3695.28,
+  "end": 3697.5,
+  "text": "This is probably a good report to go read."
+ },
+ {
+  "start": 3697.5,
+  "end": 3703.78,
+  "text": "Qwen3-Coder-Next great agent post-training paper."
+ },
+ {
+  "start": 3703.78,
+  "end": 3706.02,
+  "text": "But in some ways, post-training for an agent"
+ },
+ {
+  "start": 3706.02,
+  "end": 3708.64,
+  "text": "is not very different from everything that we've described."
+ },
+ {
+  "start": 3708.64,
+  "end": 3712.1,
+  "text": "It's not like there's a new agent training algorithm."
+ },
+ {
+  "start": 3712.1,
+  "end": 3714.98,
+  "text": "Really, you should internalize this lesson"
+ },
+ {
+  "start": 3714.98,
+  "end": 3716.2,
+  "text": "throughout the entire class."
+ },
+ {
+  "start": 3716.2,
+  "end": 3718.02,
+  "text": "Data is the important thing."
+ },
+ {
+  "start": 3718.02,
+  "end": 3720.76,
+  "text": "So if you're going to train an agent or post-training an agent,"
+ },
+ {
+  "start": 3720.76,
+  "end": 3721.82,
+  "text": "what are you going to do?"
+ },
+ {
+  "start": 3721.82,
+  "end": 3723.82,
+  "text": "You're going to get the data together."
+ },
+ {
+  "start": 3723.82,
+  "end": 3726.1,
+  "text": "So there's two parts to the data."
+ },
+ {
+  "start": 3726.1,
+  "end": 3728.4,
+  "text": "To get a lot of the capabilities,"
+ },
+ {
+  "start": 3728.4,
+  "end": 3730.7,
+  "text": "you can't just inject them at the end."
+ },
+ {
+  "start": 3730.7,
+  "end": 3733.05,
+  "text": "You have to probably start a little bit earlier."
+ },
+ {
+  "start": 3733.05,
+  "end": 3735.29,
+  "text": "And so there's an extensive mid-training phase"
+ },
+ {
+  "start": 3735.29,
+  "end": 3737.89,
+  "text": "that happens to try to get as much coding"
+ },
+ {
+  "start": 3737.89,
+  "end": 3741.595,
+  "text": "and agent like capabilities into the model as possible."
+ },
+ {
+  "start": 3741.595,
+  "end": 3742.97,
+  "text": "So they'll do things like they'll"
+ },
+ {
+  "start": 3742.97,
+  "end": 3745.89,
+  "text": "take repositories and concatenate the files"
+ },
+ {
+  "start": 3745.89,
+  "end": 3748.97,
+  "text": "in the repository to generate these very long context data"
+ },
+ {
+  "start": 3748.97,
+  "end": 3750.17,
+  "text": "and put it into the model."
+ },
+ {
+  "start": 3750.17,
+  "end": 3751.81,
+  "text": "We know that the model is eventually"
+ },
+ {
+  "start": 3751.81,
+  "end": 3754.41,
+  "text": "going to see these very long COT traces, where"
+ },
+ {
+  "start": 3754.41,
+  "end": 3757.05,
+  "text": "maybe the agent has opened a bunch of files, very"
+ },
+ {
+  "start": 3757.05,
+  "end": 3760.17,
+  "text": "useful pre-training style data."
+ },
+ {
+  "start": 3760.17,
+  "end": 3762.57,
+  "text": "They take pull requests and then they"
+ },
+ {
+  "start": 3762.57,
+  "end": 3765.07,
+  "text": "try to construct synthetic context for it,"
+ },
+ {
+  "start": 3765.07,
+  "end": 3768.21,
+  "text": "using RAG that is potentially helpful for understanding"
+ },
+ {
+  "start": 3768.21,
+  "end": 3769.31,
+  "text": "the pull request."
+ },
+ {
+  "start": 3769.31,
+  "end": 3771.77,
+  "text": "That all goes in the mid training."
+ },
+ {
+  "start": 3771.77,
+  "end": 3775.97,
+  "text": "They will take documents that they detect using an automated"
+ },
+ {
+  "start": 3775.97,
+  "end": 3778.13,
+  "text": "method to have text and code, and then they'll"
+ },
+ {
+  "start": 3778.13,
+  "end": 3781.79,
+  "text": "use an LLM to transform this to a nice markdown format."
+ },
+ {
+  "start": 3781.79,
+  "end": 3783.81,
+  "text": "Throw that all in as well."
+ },
+ {
+  "start": 3783.81,
+  "end": 3788.53,
+  "text": "And then finally, they're going to have a language model, talk"
+ },
+ {
+  "start": 3788.53,
+  "end": 3791.72,
+  "text": "about coding on web documents that are coding related"
+ },
+ {
+  "start": 3791.72,
+  "end": 3794.44,
+  "text": "to generate coding-ish synthetic data,"
+ },
+ {
+  "start": 3794.44,
+  "end": 3796.96,
+  "text": "and then they'll take publicly-available coding"
+ },
+ {
+  "start": 3796.96,
+  "end": 3799.18,
+  "text": "agents, run them on various environments,"
+ },
+ {
+  "start": 3799.18,
+  "end": 3800.42,
+  "text": "which I'll describe later."
+ },
+ {
+  "start": 3800.42,
+  "end": 3804.023,
+  "text": "And the traces of those runs all go into mid training."
+ },
+ {
+  "start": 3804.023,
+  "end": 3805.94,
+  "text": "They'll do some fairly standard stuff as well,"
+ },
+ {
+  "start": 3805.94,
+  "end": 3807.565,
+  "text": "like instruction following, and they'll"
+ },
+ {
+  "start": 3807.565,
+  "end": 3809.28,
+  "text": "have an additional task, which I think"
+ },
+ {
+  "start": 3809.28,
+  "end": 3813.1,
+  "text": "is not super relevant for us for filling in the middle."
+ },
+ {
+  "start": 3813.1,
+  "end": 3815.765,
+  "text": "If you're coding and you want to fill in the middle of a span,"
+ },
+ {
+  "start": 3815.765,
+  "end": 3817.14,
+  "text": "it's useful to have that ability."
+ },
+ {
+  "start": 3817.14,
+  "end": 3820.16,
+  "text": "So they throw some of that data into mid training."
+ },
+ {
+  "start": 3820.16,
+  "end": 3825.32,
+  "text": "But otherwise, this is a very standard but in-depth data"
+ },
+ {
+  "start": 3825.32,
+  "end": 3826.88,
+  "text": "collection procedure to try to get"
+ },
+ {
+  "start": 3826.88,
+  "end": 3830.36,
+  "text": "some of these agentic abilities into mid training."
+ },
+ {
+  "start": 3830.36,
+  "end": 3832.64,
+  "text": "And then the Qwen folks do something"
+ },
+ {
+  "start": 3832.64,
+  "end": 3835.22,
+  "text": "that I don't know if I've seen before."
+ },
+ {
+  "start": 3835.22,
+  "end": 3837.64,
+  "text": "It's actually quite interesting."
+ },
+ {
+  "start": 3837.64,
+  "end": 3841.332,
+  "text": "They'll take the mid-trained Qwen3 next model,"
+ },
+ {
+  "start": 3841.332,
+  "end": 3843.04,
+  "text": "and they are actually just going to train"
+ },
+ {
+  "start": 3843.04,
+  "end": 3844.72,
+  "text": "a whole bunch of different expert models"
+ },
+ {
+  "start": 3844.72,
+  "end": 3848.4,
+  "text": "for different kinds of coding adjacent tasks."
+ },
+ {
+  "start": 3848.4,
+  "end": 3852.878,
+  "text": "And they will end up with four different agent experts,"
+ },
+ {
+  "start": 3852.878,
+  "end": 3854.67,
+  "text": "and then they're just going to distill them"
+ },
+ {
+  "start": 3854.67,
+  "end": 3857.03,
+  "text": "all back into the same model."
+ },
+ {
+  "start": 3857.03,
+  "end": 3859.77,
+  "text": "I can only speculate as to why they do this."
+ },
+ {
+  "start": 3859.77,
+  "end": 3862.09,
+  "text": "I don't think I've seen it in other works."
+ },
+ {
+  "start": 3862.09,
+  "end": 3867.07,
+  "text": "The closest one I know of is DeepSeek V3 or was it V3?"
+ },
+ {
+  "start": 3867.07,
+  "end": 3871.73,
+  "text": "V3.5, sorry, DeepSeek V3.5 or 3.2."
+ },
+ {
+  "start": 3871.73,
+  "end": 3872.37,
+  "text": "Maybe 3.2."
+ },
+ {
+  "start": 3872.37,
+  "end": 3874.35,
+  "text": "Sorry, 3.2, I think, did this thing"
+ },
+ {
+  "start": 3874.35,
+  "end": 3877.15,
+  "text": "where they have different experts whose only job it"
+ },
+ {
+  "start": 3877.15,
+  "end": 3879.63,
+  "text": "is to format and process data, so they"
+ },
+ {
+  "start": 3879.63,
+  "end": 3881.99,
+  "text": "have data processing experts which generate"
+ },
+ {
+  "start": 3881.99,
+  "end": 3883.89,
+  "text": "the data for the full training."
+ },
+ {
+  "start": 3883.89,
+  "end": 3886.19,
+  "text": "But I don't think I've seen this thing"
+ },
+ {
+  "start": 3886.19,
+  "end": 3888.24,
+  "text": "of generating different model experts"
+ },
+ {
+  "start": 3888.24,
+  "end": 3889.49,
+  "text": "and then distilling them back."
+ },
+ {
+  "start": 3889.49,
+  "end": 3892.23,
+  "text": "That's actually closer to some academic work like branch train"
+ },
+ {
+  "start": 3892.23,
+  "end": 3893.547,
+  "text": "merge and so on."
+ },
+ {
+  "start": 3893.547,
+  "end": 3895.13,
+  "text": "Those are definitely things people do."
+ },
+ {
+  "start": 3895.13,
+  "end": 3898.39,
+  "text": "I haven't seen it much in frontier model training."
+ },
+ {
+  "start": 3898.39,
+  "end": 3901.653,
+  "text": "That said, each of these experts is actually interesting,"
+ },
+ {
+  "start": 3901.653,
+  "end": 3903.07,
+  "text": "and what they do is they basically"
+ },
+ {
+  "start": 3903.07,
+  "end": 3907.54,
+  "text": "do full on RL or and/or SFT training"
+ },
+ {
+  "start": 3907.54,
+  "end": 3910.8,
+  "text": "on a whole bunch of different subtasks that they've defined."
+ },
+ {
+  "start": 3910.8,
+  "end": 3913.46,
+  "text": "So they have a web dev expert, where"
+ },
+ {
+  "start": 3913.46,
+  "end": 3918.08,
+  "text": "they SFT on valid web code based on different kinds of checks."
+ },
+ {
+  "start": 3918.08,
+  "end": 3921.18,
+  "text": "They'll do things build UX experts"
+ },
+ {
+  "start": 3921.18,
+  "end": 3925.52,
+  "text": "trained on many different tool formats, and they'll have QA."
+ },
+ {
+  "start": 3925.52,
+  "end": 3931.86,
+  "text": "So the QA agent is just trained on more synthetic data for code."
+ },
+ {
+  "start": 3931.86,
+  "end": 3934.7,
+  "text": "But then maybe the most interesting for us"
+ },
+ {
+  "start": 3934.7,
+  "end": 3940.1,
+  "text": "and the most involved is their software engineering agent."
+ },
+ {
+  "start": 3940.1,
+  "end": 3943.46,
+  "text": "And what they do is they construct agent environments"
+ },
+ {
+  "start": 3943.46,
+  "end": 3944.78,
+  "text": "at scale."
+ },
+ {
+  "start": 3944.78,
+  "end": 3947.94,
+  "text": "So three benches is the gold standard"
+ },
+ {
+  "start": 3947.94,
+  "end": 3949.16,
+  "text": "of these kinds of things."
+ },
+ {
+  "start": 3949.16,
+  "end": 3952.06,
+  "text": "And so what they want to do is they want three bench but more."
+ },
+ {
+  "start": 3952.06,
+  "end": 3954.9,
+  "text": "They go out and they have various automated ways"
+ },
+ {
+  "start": 3954.9,
+  "end": 3959.36,
+  "text": "based on GitHub to generate a ton of different issues."
+ },
+ {
+  "start": 3959.36,
+  "end": 3962.5,
+  "text": "And given this, they want to basically do"
+ },
+ {
+  "start": 3962.5,
+  "end": 3967.45,
+  "text": "RL on these environments in some ways very unsurprising."
+ },
+ {
+  "start": 3967.45,
+  "end": 3968.67,
+  "text": "And what do they get?"
+ },
+ {
+  "start": 3968.67,
+  "end": 3971.81,
+  "text": "They can get RL performance to go up."
+ },
+ {
+  "start": 3971.81,
+  "end": 3977.01,
+  "text": "One thing I will say here, and this very important through the broader context of what we're"
+ },
+ {
+  "start": 3977.01,
+  "end": 3980.53,
+  "text": "talking about, the reason why we can put more and more compute"
+ },
+ {
+  "start": 3980.53,
+  "end": 3983.21,
+  "text": "into RL is because we believe that our reward"
+ },
+ {
+  "start": 3983.21,
+  "end": 3986.53,
+  "text": "models are unhackable or difficult to hack."
+ },
+ {
+  "start": 3986.53,
+  "end": 3989.53,
+  "text": "If that assumption breaks down, your RL method"
+ },
+ {
+  "start": 3989.53,
+  "end": 3993.73,
+  "text": "will find increasingly obscure ways of cheating you out"
+ },
+ {
+  "start": 3993.73,
+  "end": 3995.45,
+  "text": "of your performance."
+ },
+ {
+  "start": 3995.45,
+  "end": 4000.99,
+  "text": "And so they have this great plot of basically, in Git,"
+ },
+ {
+  "start": 4000.99,
+  "end": 4004.37,
+  "text": "you can look at future commits or different commits."
+ },
+ {
+  "start": 4004.37,
+  "end": 4006.99,
+  "text": "And if you have an issue and there's future commits,"
+ },
+ {
+  "start": 4006.99,
+  "end": 4009.45,
+  "text": "you can just look up what the fix was."
+ },
+ {
+  "start": 4009.45,
+  "end": 4013.37,
+  "text": "And this is a very easy hack for models to learn."
+ },
+ {
+  "start": 4013.37,
+  "end": 4016.05,
+  "text": "And so they basically have a whole reward"
+ },
+ {
+  "start": 4016.05,
+  "end": 4019.89,
+  "text": "whose entire purpose it is to prevent the agent from messing"
+ },
+ {
+  "start": 4019.89,
+  "end": 4021.25,
+  "text": "with the Git history."
+ },
+ {
+  "start": 4021.25,
+  "end": 4023.05,
+  "text": "And if you don't do this, you end up"
+ },
+ {
+  "start": 4023.05,
+  "end": 4025.71,
+  "text": "with a plot that looks like the right,"
+ },
+ {
+  "start": 4025.71,
+  "end": 4028.21,
+  "text": "where it's learning, learning, learning, learning, learning."
+ },
+ {
+  "start": 4028.21,
+  "end": 4031.19,
+  "text": "And suddenly, you get this emergent jump, where"
+ },
+ {
+  "start": 4031.19,
+  "end": 4032.99,
+  "text": "the emergent jump was actually, it"
+ },
+ {
+  "start": 4032.99,
+  "end": 4037.27,
+  "text": "learned how to manipulate the Git calls to get the history."
+ },
+ {
+  "start": 4037.27,
+  "end": 4041.47,
+  "text": "And in some cases, it can even hack around certain constraints"
+ },
+ {
+  "start": 4041.47,
+  "end": 4041.97,
+  "text": "you give it."
+ },
+ {
+  "start": 4041.97,
+  "end": 4044.47,
+  "text": "If you tell it, you can't use Git log,"
+ },
+ {
+  "start": 4044.47,
+  "end": 4047.43,
+  "text": "it might add an origin like a remote and then query"
+ },
+ {
+  "start": 4047.43,
+  "end": 4050.478,
+  "text": "the remote for what happened in certain commits."
+ },
+ {
+  "start": 4050.478,
+  "end": 4052.27,
+  "text": "So there's all sorts of hacking you can do."
+ },
+ {
+  "start": 4052.27,
+  "end": 4056.75,
+  "text": "RLVR is only as robust as your reward,"
+ },
+ {
+  "start": 4056.75,
+  "end": 4061.75,
+  "text": "and your rewards can sometimes be not very robust at all."
+ },
+ {
+  "start": 4061.75,
+  "end": 4064.91,
+  "text": "As a side comment, one of my students and I"
+ },
+ {
+  "start": 4064.91,
+  "end": 4068.69,
+  "text": "were working on a project that was like RL on lean."
+ },
+ {
+  "start": 4068.69,
+  "end": 4071.95,
+  "text": "Lean is this formal math, verifiable language."
+ },
+ {
+  "start": 4071.95,
+  "end": 4074.05,
+  "text": "And we naively thought at the time,"
+ },
+ {
+  "start": 4074.05,
+  "end": 4075.75,
+  "text": "there's no way this can go wrong."
+ },
+ {
+  "start": 4075.75,
+  "end": 4077.33,
+  "text": "Lots of people have worked on Lean."
+ },
+ {
+  "start": 4077.33,
+  "end": 4079.39,
+  "text": "The Lean compiler is bulletproof."
+ },
+ {
+  "start": 4079.39,
+  "end": 4082.49,
+  "text": "Turns out the lean compiler is not adversarially robust."
+ },
+ {
+  "start": 4082.49,
+  "end": 4083.98,
+  "text": "There are strings that you can put"
+ },
+ {
+  "start": 4083.98,
+  "end": 4085.743,
+  "text": "in it that will allow you to verify"
+ },
+ {
+  "start": 4085.743,
+  "end": 4088.16,
+  "text": "proofs that are not meant to be verified in certain modes."
+ },
+ {
+  "start": 4088.16,
+  "end": 4091.42,
+  "text": "So I think the notion of verifiable rewards"
+ },
+ {
+  "start": 4091.42,
+  "end": 4093.66,
+  "text": "is actually much trickier than many of you"
+ },
+ {
+  "start": 4093.66,
+  "end": 4095.58,
+  "text": "might initially think."
+ },
+ {
+  "start": 4095.58,
+  "end": 4098.979,
+  "text": "Regardless, you do this process of constructing these GitHub"
+ },
+ {
+  "start": 4098.979,
+  "end": 4100.3,
+  "text": "repos at scale."
+ },
+ {
+  "start": 4100.3,
+  "end": 4102.899,
+  "text": "You go through this process of doing RL,"
+ },
+ {
+  "start": 4102.899,
+  "end": 4107.88,
+  "text": "you see your scores go up slow but steady, and in the end,"
+ },
+ {
+  "start": 4107.88,
+  "end": 4111.38,
+  "text": "you will actually end up getting a system that is surprisingly"
+ },
+ {
+  "start": 4111.38,
+  "end": 4114.74,
+  "text": "good, a model that achieves something"
+ },
+ {
+  "start": 4114.74,
+  "end": 4118.899,
+  "text": "like 70.6% on SWE-bench, even though you have"
+ },
+ {
+  "start": 4118.899,
+  "end": 4122.3,
+  "text": "what is basically a really tiny model, a three billion"
+ },
+ {
+  "start": 4122.3,
+  "end": 4125.46,
+  "text": "active parameter model, you're able to do surprisingly"
+ },
+ {
+  "start": 4125.46,
+  "end": 4127.46,
+  "text": "well on these tasks."
+ },
+ {
+  "start": 4127.46,
+  "end": 4129.3,
+  "text": "In some ways, though, I don't know"
+ },
+ {
+  "start": 4129.3,
+  "end": 4131.12,
+  "text": "if this is super surprising."
+ },
+ {
+  "start": 4131.12,
+  "end": 4132.58,
+  "text": "RL, of course, you're going to be"
+ },
+ {
+  "start": 4132.58,
+  "end": 4135.885,
+  "text": "able to do well on the environments for which you've trained."
+ },
+ {
+  "start": 4135.885,
+  "end": 4137.26,
+  "text": "You might even get generalization"
+ },
+ {
+  "start": 4137.26,
+  "end": 4139.973,
+  "text": "to your validation set as you do here."
+ },
+ {
+  "start": 4139.973,
+  "end": 4141.89,
+  "text": "But you always want to be a little bit careful"
+ },
+ {
+  "start": 4141.89,
+  "end": 4143.689,
+  "text": "about comparing performances."
+ },
+ {
+  "start": 4143.689,
+  "end": 4146.09,
+  "text": "Task specific performance doesn't necessarily"
+ },
+ {
+  "start": 4146.09,
+  "end": 4151.09,
+  "text": "mean it'll generalize to broader domains."
+ },
+ {
+  "start": 4151.09,
+  "end": 4152.529,
+  "text": "OK."
+ },
+ {
+  "start": 4152.529,
+  "end": 4156.609,
+  "text": "So that's basically all I've got for the RLVR lecture."
+ },
+ {
+  "start": 4156.609,
+  "end": 4159.97,
+  "text": "Remember the core takeaways of this lecture"
+ },
+ {
+  "start": 4159.97,
+  "end": 4162.99,
+  "text": "is it's really all about the reward for RL."
+ },
+ {
+  "start": 4162.99,
+  "end": 4167.569,
+  "text": "RLHF and RLVR arguably they're very similar problems."
+ },
+ {
+  "start": 4167.569,
+  "end": 4171.13,
+  "text": "But with the difference being really just"
+ },
+ {
+  "start": 4171.13,
+  "end": 4175.33,
+  "text": "we want more unhackable rewards so that we can actually"
+ },
+ {
+  "start": 4175.33,
+  "end": 4179.33,
+  "text": "put in much more compute and get these systems to be much better."
+ },
+ {
+  "start": 4179.33,
+  "end": 4182.029,
+  "text": "GRPO, at least for the research community,"
+ },
+ {
+  "start": 4182.029,
+  "end": 4184.79,
+  "text": "is something that really enabled a lot of this."
+ },
+ {
+  "start": 4184.79,
+  "end": 4186.729,
+  "text": "And you should all know GRPO very well."
+ },
+ {
+  "start": 4186.729,
+  "end": 4188.81,
+  "text": "You should know what the functional form is"
+ },
+ {
+  "start": 4188.81,
+  "end": 4190.13,
+  "text": "and how the updates are."
+ },
+ {
+  "start": 4190.13,
+  "end": 4191.713,
+  "text": "This is something that you should know"
+ },
+ {
+  "start": 4191.713,
+  "end": 4195.41,
+  "text": "as well just pre-training losses."
+ },
+ {
+  "start": 4195.41,
+  "end": 4198.27,
+  "text": "And then finally, at this point, I think lots of people"
+ },
+ {
+  "start": 4198.27,
+  "end": 4200.76,
+  "text": "know how to do RLVR."
+ },
+ {
+  "start": 4200.76,
+  "end": 4202.88,
+  "text": "As you will find out, unfortunately, RL"
+ },
+ {
+  "start": 4202.88,
+  "end": 4206.32,
+  "text": "remains very finicky and noisy and it's painful to work with."
+ },
+ {
+  "start": 4206.32,
+  "end": 4207.74,
+  "text": "But it's not that hard."
+ },
+ {
+  "start": 4207.74,
+  "end": 4212.44,
+  "text": "It's not like the old days of doing PPO on various really"
+ },
+ {
+  "start": 4212.44,
+  "end": 4213.66,
+  "text": "tricky environments."
+ },
+ {
+  "start": 4213.66,
+  "end": 4218.82,
+  "text": "It's actually a lot smoother than you might think."
+ },
+ {
+  "start": 4218.82,
+  "end": 4221.16,
+  "text": "I'll stop here for a moment and take any final questions"
+ },
+ {
+  "start": 4221.16,
+  "end": 4224.6,
+  "text": "before I let you all go, in case anyone has questions."
+ },
+ {
+  "start": 4224.6,
+  "end": 4226.52,
+  "text": "A really quick question-- when you"
+ },
+ {
+  "start": 4226.52,
+  "end": 4230.1,
+  "text": "mention about the models being in thinking mode on and off,"
+ },
+ {
+  "start": 4230.1,
+  "end": 4233.14,
+  "text": "is the wait on the model or [INAUDIBLE] the same?"
+ },
+ {
+  "start": 4233.14,
+  "end": 4236.44,
+  "text": "Or do they play prompting or do they have different underlying"
+ },
+ {
+  "start": 4236.44,
+  "end": 4238.9,
+  "text": "models that they call back?"
+ },
+ {
+  "start": 4238.9,
+  "end": 4239.4,
+  "text": "Yeah."
+ },
+ {
+  "start": 4239.4,
+  "end": 4241.025,
+  "text": "So the question was about thinking mode"
+ },
+ {
+  "start": 4241.025,
+  "end": 4242.52,
+  "text": "and what's happening on the back."
+ },
+ {
+  "start": 4242.52,
+  "end": 4245.24,
+  "text": "So the interesting thing about thinking mode really"
+ },
+ {
+  "start": 4245.24,
+  "end": 4246.74,
+  "text": "is that it's actually one model."
+ },
+ {
+  "start": 4246.74,
+  "end": 4248.32,
+  "text": "And there's just a little prompt tag"
+ },
+ {
+  "start": 4248.32,
+  "end": 4251.16,
+  "text": "that switches them between long and short, like long COT"
+ },
+ {
+  "start": 4251.16,
+  "end": 4253.36,
+  "text": "and no coat almost mode."
+ },
+ {
+  "start": 4253.36,
+  "end": 4256.92,
+  "text": "Whereas if you just had an API flag or something, that's"
+ },
+ {
+  "start": 4256.92,
+  "end": 4258.72,
+  "text": "not very difficult. The fact that"
+ },
+ {
+  "start": 4258.72,
+  "end": 4260.47,
+  "text": "they were putting both of them in together"
+ },
+ {
+  "start": 4260.47,
+  "end": 4262.03,
+  "text": "is the interesting bit there."
+ },
+ {
+  "start": 4262.03,
+  "end": 4263.99,
+  "text": "So you can actually choose, [INAUDIBLE]"
+ },
+ {
+  "start": 4263.99,
+  "end": 4267.19,
+  "text": "but then you add extra prompt yourself to do COT?"
+ },
+ {
+  "start": 4267.19,
+  "end": 4270.27,
+  "text": "Yeah, or the control mechanism in this case is in the prompt"
+ },
+ {
+  "start": 4270.27,
+  "end": 4272.63,
+  "text": "rather than at the API or serving layer or something"
+ },
+ {
+  "start": 4272.63,
+  "end": 4273.27,
+  "text": "like that."
+ },
+ {
+  "start": 4273.27,
+  "end": 4273.83,
+  "text": "Yeah."
+ },
+ {
+  "start": 4273.83,
+  "end": 4275.03,
+  "text": "Great."
+ },
+ {
+  "start": 4275.03,
+  "end": 4276.71,
+  "text": "Oh, yeah."
+ },
+ {
+  "start": 4276.71,
+  "end": 4278.73,
+  "text": "So you mentioned the phase of the mid training."
+ },
+ {
+  "start": 4278.73,
+  "end": 4281.75,
+  "text": "I was wondering how much of the formatting that"
+ },
+ {
+  "start": 4281.75,
+  "end": 4283.91,
+  "text": "goes into the mid training process,"
+ },
+ {
+  "start": 4283.91,
+  "end": 4287.27,
+  "text": "informs what is able to be learned during the RLVR post"
+ },
+ {
+  "start": 4287.27,
+  "end": 4291.23,
+  "text": "training and then as a secondary to that question of if you don't"
+ },
+ {
+  "start": 4291.23,
+  "end": 4293.81,
+  "text": "have the correct data in mid-training,"
+ },
+ {
+  "start": 4293.81,
+  "end": 4297.31,
+  "text": "then is it safe to assume that the reinforcement learning can't"
+ },
+ {
+  "start": 4297.31,
+  "end": 4299.95,
+  "text": "sample a correct solution and therefore you can't learn it?"
+ },
+ {
+  "start": 4299.95,
+  "end": 4300.45,
+  "text": "Yeah."
+ },
+ {
+  "start": 4300.45,
+  "end": 4303.99,
+  "text": "So the question was about the role of mid-training in RL."
+ },
+ {
+  "start": 4303.99,
+  "end": 4308.45,
+  "text": "I think there are a lot of empirical subtleties here."
+ },
+ {
+  "start": 4308.45,
+  "end": 4310.53,
+  "text": "I don't have a one size fits all."
+ },
+ {
+  "start": 4310.53,
+  "end": 4312.29,
+  "text": "It will definitely not work an answer,"
+ },
+ {
+  "start": 4312.29,
+  "end": 4314.07,
+  "text": "but to give a little bit of the nuance,"
+ },
+ {
+  "start": 4314.07,
+  "end": 4316.82,
+  "text": "I think pre-training and SFT are doing"
+ },
+ {
+  "start": 4316.82,
+  "end": 4318.0,
+  "text": "a lot of the heavy lifting."
+ },
+ {
+  "start": 4318.0,
+  "end": 4319.74,
+  "text": "As long as you have coverage, if pre-training just"
+ },
+ {
+  "start": 4319.74,
+  "end": 4321.865,
+  "text": "doesn't have any code data, then you're in trouble."
+ },
+ {
+  "start": 4321.865,
+  "end": 4322.825,
+  "text": "You need training."
+ },
+ {
+  "start": 4322.825,
+  "end": 4325.2,
+  "text": "But if your pre-training was very diverse and it covered,"
+ },
+ {
+  "start": 4325.2,
+  "end": 4327.62,
+  "text": "let's go back to the mid-training slide."
+ },
+ {
+  "start": 4327.62,
+  "end": 4330.7,
+  "text": "If it covered a lot of stuff like text code data"
+ },
+ {
+  "start": 4330.7,
+  "end": 4333.78,
+  "text": "and it covered a bunch of GitHub data,"
+ },
+ {
+  "start": 4333.78,
+  "end": 4337.82,
+  "text": "then this is very nice to have, but maybe not critical"
+ },
+ {
+  "start": 4337.82,
+  "end": 4339.82,
+  "text": "because you're going to SFT anyway,"
+ },
+ {
+  "start": 4339.82,
+  "end": 4342.62,
+  "text": "and the SFT will allow you to get close enough to start"
+ },
+ {
+  "start": 4342.62,
+  "end": 4344.12,
+  "text": "getting some rewards for RL."
+ },
+ {
+  "start": 4344.12,
+  "end": 4346.88,
+  "text": "If you didn't have SFT, then you're in DeepSeek trouble."
+ },
+ {
+  "start": 4346.88,
+  "end": 4348.38,
+  "text": "But the fact that we're always going"
+ },
+ {
+  "start": 4348.38,
+  "end": 4351.62,
+  "text": "to be doing some amount of SFT pre RL really helps you,"
+ },
+ {
+  "start": 4351.62,
+  "end": 4353.28,
+  "text": "and pre-training has enough coverage,"
+ },
+ {
+  "start": 4353.28,
+  "end": 4354.94,
+  "text": "hopefully that you're able to get"
+ },
+ {
+  "start": 4354.94,
+  "end": 4356.56,
+  "text": "some reasonable generalization."
+ },
+ {
+  "start": 4356.56,
+  "end": 4358.42,
+  "text": "So mid-training is very nice to have."
+ },
+ {
+  "start": 4358.42,
+  "end": 4362.54,
+  "text": "Very important in order to get slightly better generalization"
+ },
+ {
+  "start": 4362.54,
+  "end": 4364.84,
+  "text": "but not necessarily make or break, I think."
+ },
+ {
+  "start": 4368.54,
+  "end": 4369.5,
+  "text": "Yeah."
+ },
+ {
+  "start": 4369.5,
+  "end": 4373.52,
+  "text": "[INAUDIBLE] there is a step after train your transfer model."
+ },
+ {
+  "start": 4373.52,
+  "end": 4377.37,
+  "text": "We're going to be still jumping into a single model at the end."
+ },
+ {
+  "start": 4377.37,
+  "end": 4380.95,
+  "text": "So does that-- how does this kind of distillation work?"
+ },
+ {
+  "start": 4380.95,
+  "end": 4386.53,
+  "text": "Do you have to design a mixed procedure?"
+ },
+ {
+  "start": 4386.53,
+  "end": 4387.25,
+  "text": "Yeah."
+ },
+ {
+  "start": 4387.25,
+  "end": 4388.05,
+  "text": "So that's right."
+ },
+ {
+  "start": 4388.05,
+  "end": 4389.65,
+  "text": "So distillation procedure is going"
+ },
+ {
+  "start": 4389.65,
+  "end": 4392.17,
+  "text": "to require you to write down a sequence of prompts"
+ },
+ {
+  "start": 4392.17,
+  "end": 4395.11,
+  "text": "on which the experts will be distilled into the final model."
+ },
+ {
+  "start": 4395.11,
+  "end": 4396.37,
+  "text": "Yeah."
+ },
+ {
+  "start": 4396.37,
+  "end": 4398.17,
+  "text": "I can definitely see the advantages"
+ },
+ {
+  "start": 4398.17,
+  "end": 4399.99,
+  "text": "of this approach, which is that you"
+ },
+ {
+  "start": 4399.99,
+  "end": 4401.99,
+  "text": "can have a separate team working on each expert."
+ },
+ {
+  "start": 4401.99,
+  "end": 4405.37,
+  "text": "It's much easier to have teams work on this."
+ },
+ {
+  "start": 4405.37,
+  "end": 4407.87,
+  "text": "And then the aggregation could potentially be simple as well"
+ },
+ {
+  "start": 4407.87,
+  "end": 4409.69,
+  "text": "if you have enough compute."
+ },
+ {
+  "start": 4409.69,
+  "end": 4413.012,
+  "text": "It's just that this-- if you have all the objectives,"
+ },
+ {
+  "start": 4413.012,
+  "end": 4415.47,
+  "text": "you might as well just throw it into the big training loop."
+ },
+ {
+  "start": 4415.47,
+  "end": 4417.43,
+  "text": "Usually, I think that's how you would prefer to do things."
+ },
+ {
+  "start": 4417.43,
+  "end": 4419.53,
+  "text": "That way, you don't have to deal with this distillation"
+ },
+ {
+  "start": 4419.53,
+  "end": 4420.11,
+  "text": "complication."
+ },
+ {
+  "start": 4420.11,
+  "end": 4422.61,
+  "text": "You could just have one big training objective that you then"
+ },
+ {
+  "start": 4422.61,
+  "end": 4426.33,
+  "text": "do one training loop."
+ },
+ {
+  "start": 4426.33,
+  "end": 4427.23,
+  "text": "Yeah."
+ },
+ {
+  "start": 4427.23,
+  "end": 4429.376,
+  "text": "Is the long reasoning training also part"
+ },
+ {
+  "start": 4429.376,
+  "end": 4432.195,
+  "text": "of the training, that mid-training?"
+ },
+ {
+  "start": 4432.195,
+  "end": 4434.32,
+  "text": "So the question was, is the long reasoning training"
+ },
+ {
+  "start": 4434.32,
+  "end": 4436.12,
+  "text": "part of mid-training."
+ },
+ {
+  "start": 4436.12,
+  "end": 4445.44,
+  "text": "So I think so there's long COT SFT in both R1 and Kimi K5.1."
+ },
+ {
+  "start": 4445.44,
+  "end": 4449.1,
+  "text": "Long COT is not traditionally part of mid-training, per se,"
+ },
+ {
+  "start": 4449.1,
+  "end": 4450.56,
+  "text": "but it is often--"
+ },
+ {
+  "start": 4450.56,
+  "end": 4453.605,
+  "text": "long COT like data is used in long context extension."
+ },
+ {
+  "start": 4453.605,
+  "end": 4454.98,
+  "text": "So it's a little bit more subtle."
+ },
+ {
+  "start": 4454.98,
+  "end": 4457.64,
+  "text": "I didn't talk about long context extension at all"
+ },
+ {
+  "start": 4457.64,
+  "end": 4459.68,
+  "text": "and I regret that."
+ },
+ {
+  "start": 4459.68,
+  "end": 4462.08,
+  "text": "But usually, that's an additional phase right"
+ },
+ {
+  "start": 4462.08,
+  "end": 4465.22,
+  "text": "before RLHF or other things, in this case,"
+ },
+ {
+  "start": 4465.22,
+  "end": 4468.6,
+  "text": "also long COT where you extend the context using"
+ },
+ {
+  "start": 4468.6,
+  "end": 4470.14,
+  "text": "any long context data you have."
+ },
+ {
+  "start": 4470.14,
+  "end": 4473.358,
+  "text": "Usually, it's a combination of books, code, synthetic data,"
+ },
+ {
+  "start": 4473.358,
+  "end": 4475.4,
+  "text": "because those are the things that are long enough"
+ },
+ {
+  "start": 4475.4,
+  "end": 4478.52,
+  "text": "to do extension on."
+ },
+ {
+  "start": 4478.52,
+  "end": 4480.28,
+  "text": "Yeah."
+ },
+ {
+  "start": 4480.28,
+  "end": 4483.64,
+  "text": "So like I guess related to this diagram that's currently up,"
+ },
+ {
+  "start": 4483.64,
+  "end": 4485.5,
+  "text": "when you're doing this [INAUDIBLE] process,"
+ },
+ {
+  "start": 4485.5,
+  "end": 4488.88,
+  "text": "let's say how much math, chemistry, many other domains."
+ },
+ {
+  "start": 4488.88,
+  "end": 4492.63,
+  "text": "Is it common to do it in parallel, with one,"
+ },
+ {
+  "start": 4492.63,
+  "end": 4498.39,
+  "text": "I guess, like reinforcement learning training run?"
+ },
+ {
+  "start": 4498.39,
+  "end": 4500.65,
+  "text": "Or you do it sequentially?"
+ },
+ {
+  "start": 4500.65,
+  "end": 4502.39,
+  "text": "And if you do it sequentially, how"
+ },
+ {
+  "start": 4502.39,
+  "end": 4505.828,
+  "text": "do you avoid forgetting earlier parts of the learning?"
+ },
+ {
+  "start": 4505.828,
+  "end": 4507.87,
+  "text": "Yeah, I think the closest answer to this question"
+ },
+ {
+  "start": 4507.87,
+  "end": 4510.39,
+  "text": "do you do things sequentially or in parallel"
+ },
+ {
+  "start": 4510.39,
+  "end": 4514.83,
+  "text": "is these diagrams, where the two splits that you"
+ },
+ {
+  "start": 4514.83,
+  "end": 4516.91,
+  "text": "do is you split amongst like reasoning"
+ },
+ {
+  "start": 4516.91,
+  "end": 4518.912,
+  "text": "problems and non-reasoning problems,"
+ },
+ {
+  "start": 4518.912,
+  "end": 4520.87,
+  "text": "and the reasoning problems all go in one bucket"
+ },
+ {
+  "start": 4520.87,
+  "end": 4523.31,
+  "text": "and they get executed at stage II."
+ },
+ {
+  "start": 4523.31,
+  "end": 4525.83,
+  "text": "And then the non reasoning problems"
+ },
+ {
+  "start": 4525.83,
+  "end": 4528.125,
+  "text": "happen at the final RLHF phase."
+ },
+ {
+  "start": 4528.125,
+  "end": 4529.75,
+  "text": "And this includes stuff like chattiness"
+ },
+ {
+  "start": 4529.75,
+  "end": 4530.708,
+  "text": "and so on and so forth."
+ },
+ {
+  "start": 4530.708,
+  "end": 4532.85,
+  "text": "And those all go into the one later bit,"
+ },
+ {
+  "start": 4532.85,
+  "end": 4534.13,
+  "text": "which is the stage IV."
+ },
+ {
+  "start": 4538.85,
+  "end": 4539.35,
+  "text": "OK."
+ },
+ {
+  "start": 4539.35,
+  "end": 4540.35,
+  "text": "Great."
+ },
+ {
+  "start": 4540.35,
+  "end": 4541.55,
+  "text": "Thanks a lot."
+ },
+ {
+  "start": 4541.55,
+  "end": 4542.33,
+  "text": "See you next week."
+ },
+ {
+  "start": 4542.33,
+  "end": 4545.08,
+  "text": "[APPLAUSE]"
+ }
+]
