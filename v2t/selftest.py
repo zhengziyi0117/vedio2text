@@ -2,7 +2,8 @@
 import asyncio
 from pathlib import Path
 
-from .doc import PARA_RE, _mmss, _shot_pick, _time_link, _to_sec, finish_doc, thin_cuts
+from .doc import (PARA_RE, _mad, _mmss, _settled_index, _shot_pick, _time_link,
+                  _to_sec, finish_doc, thin_cuts)
 from .llm import _openai_input, _sdk_prompt, json_array
 from .media import LANG_PREF, _lang_rank, slugify
 from .subs import _fmt_ts, _parse_ts, fix_cjk_punct, merge_segments, parse_subs, to_srt
@@ -171,12 +172,25 @@ world
     assert _shot_pick({"n": "x"}, 9) is None
     assert _shot_pick("3", 9) is None
 
-    # 场景分压到 0.01 后动画会给出成串等距检测，只留每簇最早那个
-    assert thin_cuts([1.0, 1.2, 3.0, 12.0, 12.5, 30.0], gap=10) == [1.0, 12.0, 30.0]
-    assert thin_cuts([], gap=10) == []
-    assert thin_cuts([5.0], gap=10) == [5.0]
-    # 平移不动：后面簇的取舍只跟已接受的最后一个比，不受中间被丢掉的干扰
-    assert thin_cuts([0.0, 9.0, 11.0, 25.0], gap=10) == [0.0, 11.0, 25.0]
+    # 密集检测只留每簇最早那个，判据是**跟上一个检测点**比：
+    # 一次淡入会连着好几帧越过阈值，机位每 3 秒重取景也是一串，都得收成一簇。
+    assert thin_cuts([1.0, 1.2, 1.5, 12.0, 12.2, 12.4, 30.0], gap=4) == [1.0, 12.0, 30.0]
+    assert thin_cuts([], gap=4) == []
+    assert thin_cuts([5.0], gap=4) == [5.0]
+    # 跟"上一个保留点"比会退化成每 4 个留一个：3 秒一串的机位周期会凑出精确
+    # 12.00 秒间隔活下来（实测就有 58 个），整串都留 = 没瘦身
+    assert thin_cuts([0.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0], gap=4) == [0.0]
+    # 被丢掉的那个会顶替基准：9.0 之后 2 秒的 11.0 算同一簇、只留 9.0。
+    # 好处是机位那种 3 秒等距串整串收成一帧，代价是紧跟在一串之后的真切换会被吞。
+    assert thin_cuts([0.0, 9.0, 11.0, 25.0], gap=4) == [0.0, 9.0, 25.0]
+
+    # 抽帧挑"画面已经静止"的那一帧。窗口末尾是淡入中段（帧间差大），往前扫到
+    # 第一对没动的帧为止 —— 实测 Lecture-4 的 648.83 那个窗口就是这个形状
+    assert _settled_index([0.0, 0.0, 0.006, 0.194, 1.59, 9.4]) == 3
+    assert _settled_index([9.4, 4.5, 1.2, 0.8]) is None   # 整段都在动（机位跟拍）→ 退回固定偏移
+    assert _settled_index([]) is None
+    assert _settled_index([0.0]) == 1                     # 只有两帧且没动
+    assert _mad(b"\x00\x10", b"\x00\x20") == 8.0
 
     # 兜底走 Agent SDK：纯文本直接透传，图文块得包成流式输入的信封才收
     assert _sdk_prompt("hi") == "hi"

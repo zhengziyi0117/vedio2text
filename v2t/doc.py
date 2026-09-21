@@ -3,6 +3,7 @@ import base64
 import os
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -17,8 +18,14 @@ ASSETS_DIR = "assets"   # 配图目录（相对 course.md）
 # 固定在 0.1 会让整堂 86 分钟只抽到 20 帧、最后配图个位数。压到 0.01，
 # 再用 MIN_GAP 去掉动画/播放视频那种等距密集检测。
 SCENE_THRESHOLD = 0.01
-MIN_GAP = 10.0          # 两个候选帧之间至少隔这么久（见 thin_cuts）
-SETTLE_BEFORE = 0.5     # 取切换点前多少秒的帧（切换点那帧多半在过渡动画中间）
+MIN_GAP = 4.0           # 相邻两个检测点隔不到这么久就算同一簇（见 thin_cuts）
+# 抽哪一帧：切换点那帧多半在过渡动画中间，得往前找一帧静止的。
+# 回退 0.5 秒是兜底，正常走 settle_time 的帧间差判据。
+SETTLE_BEFORE = 0.5
+SETTLE_LOOKBACK = 3.4   # 往前找静止帧的窗口长度
+SETTLE_FPS = 2.5        # 窗口内的采样频率
+SETTLE_EPS = 0.1        # 灰度帧间差小于它就算"画面没动"（实测静止 ≤0.08、淡入 ≥0.2）
+SETTLE_SIZE = (160, 90)
 SHEET = 9               # 每张拼图放几帧（3x3）
 SHOT_BATCH = SHEET * 3  # 每批送审的帧数
 
@@ -89,22 +96,75 @@ def _time_link(sec: float, url: str | None) -> str:
 def thin_cuts(cuts: list[float], gap: float = MIN_GAP) -> list[float]:
     """去掉间隔小于 gap 的密集检测，每个簇只留最早那个。
 
-    阈值压低后，讲者出镜的小动作、幻灯片里的动画、课上播放的视频会给出成串
-    等距"切换"（实测有 5~6 秒一串连着一分钟的），留着只会占满候选名额、
-    把真正的幻灯片切换挤掉。留最早那个：它前面 0.5 秒那帧是上一张完整幻灯片。
+    跟**上一个检测点**比，不是跟上一个保留点比 —— 后者在等距串上会一直通过：
+    3 秒一串的检测每 4 个就凑够 12 秒 ≥ gap，于是整串全留下（实测追拍机位每
+    3.0 秒重新取景一次，一堂课 1043 个检测点里近四成是它，候选池被这些只差裁切
+    的近重复帧占掉，只是一直没突破 gap）。
+    gap=4.0 卡在实测的 3.0 秒机位周期和真实切换之间：Lecture-5 的原始间隔里
+    3.0s 有 302 个、3.1s 19 个，而 3.2~5.6s 之间几乎为空，落这儿最稳。
+    同一簇里连续的检测点同理（一次淡入会有好几帧越过阈值）。
+    留最早那个：它前面那帧是上一张完整幻灯片（具体取哪一帧见 settle_time）。
     """
     out: list[float] = []
+    prev: float | None = None
     for t in cuts:
-        if not out or t - out[-1] >= gap:
+        if prev is None or t - prev >= gap:
             out.append(t)
+        prev = t
     return out
+
+
+def _gray_strip(video: Path, t0: float, dur: float) -> list[bytes]:
+    """把 [t0, t0+dur] 抽成低分辨率灰度帧，专门用来判断画面有没有在动。
+
+    低分辨率就够：淡入是整帧在变，缩到 160x90 之后帧间差照样是量级上的差别。
+    """
+    w, h = SETTLE_SIZE
+    r = subprocess.run(
+        ["ffmpeg", "-v", "error", "-ss", f"{t0:.2f}", "-t", f"{dur:.2f}", "-i", str(video),
+         "-vf", f"fps={SETTLE_FPS},scale={w}:{h},format=gray", "-f", "rawvideo", "-"],
+        capture_output=True)
+    n = w * h
+    return [r.stdout[i:i + n] for i in range(0, len(r.stdout) - n + 1, n)]
+
+
+def _mad(a: bytes, b: bytes) -> float:
+    return sum(abs(x - y) for x, y in zip(a, b)) / len(a)
+
+
+def _settled_index(diffs: list[float], eps: float = SETTLE_EPS) -> int | None:
+    """从后往前找第一对"没动"的相邻帧，返回靠后那帧的下标；全在动返回 None。
+
+    diffs[i] 是第 i 帧和第 i+1 帧的帧间差。
+    """
+    for i in range(len(diffs) - 1, -1, -1):
+        if diffs[i] < eps:
+            return i + 1
+    return None
+
+
+def settle_time(video: Path, t: float) -> float:
+    """切换点之前最近的一个"画面已经静止"的时刻。
+
+    淡入/翻页把一次变化摊到几十帧上：ffmpeg 要等淡到中段才越过阈值报切换点，
+    所以切换点那帧、以及它前面那个固定的 0.5 秒，都还在半透明叠加态 —— 存下来
+    就是两页叠着的鬼影（实测进过成品）。而静止画面的帧间差是 0，所以从 t 往前扫，
+    第一对帧间差 ≈0 的后面那帧就是完整画面，不用猜淡入有多长。
+    整段都在动（机位在跟拍）就找不到，退回固定偏移。
+    """
+    t0 = max(0.0, t - SETTLE_LOOKBACK)
+    if t - t0 < 1.0 / SETTLE_FPS:
+        return max(0.0, t - SETTLE_BEFORE)
+    strip = _gray_strip(video, t0, t - t0)
+    i = _settled_index([_mad(a, b) for a, b in zip(strip, strip[1:])])
+    return t0 + i / SETTLE_FPS if i is not None else max(0.0, t - SETTLE_BEFORE)
 
 
 def extract_frames(video: Path, work: Path, threshold: float = SCENE_THRESHOLD) -> list[dict]:
     """在场景切换处抽帧。返回 [{t, path}] 按时间升序。
 
     切换点本身是淡入/翻页的中间态（半透明、两页叠着），干净的画面在切换**前**，
-    所以取切换点前 SETTLE 秒那一帧。
+    具体取哪一帧由 settle_time 判。
     """
     out = work / "frames"
     if (work / "frames.txt").exists():
@@ -118,7 +178,7 @@ def extract_frames(video: Path, work: Path, threshold: float = SCENE_THRESHOLD) 
     # 逐个 -ss 取帧：webm 快进够快，比再整段解码一遍便宜
     times = []
     for t in cuts:
-        at = max(0.0, t - SETTLE_BEFORE)
+        at = settle_time(video, t)
         dst = out / f"f{len(times) + 1:04d}.jpg"
         run(["ffmpeg", "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(video),
              "-frames:v", "1", "-q:v", "3", str(dst)], check=False)
