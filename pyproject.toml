@@ -9,6 +9,8 @@ dependencies = [
     "openai",
     # Apple Silicon 专用，别的平台直接跳过（转写走 MLX）
     "mlx-whisper; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    # 别的平台走 CPU/CUDA 转写（CTranslate2 后端，无 mlx 依赖）
+    "faster-whisper; sys_platform != 'darwin' or platform_machine != 'arm64'",
 ]
 
 # 就是个脚本，不用打包安装

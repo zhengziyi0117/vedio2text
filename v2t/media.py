@@ -204,17 +204,76 @@ def extract_audio(video: Path, out: Path):
          "-c:a", "pcm_s16le", str(out)])
 
 
+def _is_apple_silicon() -> bool:
+    import platform
+    return platform.system() == "Darwin" and platform.machine() == "arm64"
+
+
+# whisper.cpp 编译好的 whisper-cli 路径：本机装的是 Vulkan 构建（AMD 核显跑不了 CUDA/ROCm，
+# 走 Vulkan 通用后端），非 Apple Silicon 时优先用它，没有再退回纯 CPU 的 faster-whisper。
+WHISPER_CPP_BIN = os.getenv("V2T_WHISPER_CPP_BIN") or str(
+    ROOT / ".tools" / "whisper.cpp" / "build" / "bin" / "whisper-cli"
+)
+WHISPER_CPP_MODEL = os.getenv("V2T_WHISPER_CPP_MODEL") or str(
+    ROOT / ".tools" / "whisper.cpp" / "models" / "ggml-large-v3-turbo.bin"
+)
+
+
 def asr(audio: Path) -> list[dict]:
+    if _is_apple_silicon():
+        return _asr_mlx(audio)
+    if Path(WHISPER_CPP_BIN).exists() and Path(WHISPER_CPP_MODEL).exists():
+        return _asr_whisper_cpp(audio)
+    return _asr_faster_whisper(audio)
+
+
+def _asr_mlx(audio: Path) -> list[dict]:
     import mlx_whisper
     # models/<名字>/ 优先：huggingface_hub 在本机下 safetensors 会卡死在 0 字节
     # （hf-xet 1.6.0 + huggingface-hub 1.31.0），curl 手动放到这里更可靠。
     local = ROOT / "models" / ASR_MODEL.split("/")[-1]
     repo = str(local) if (local / "config.json").exists() else ASR_MODEL
-    print(f"[ASR] {repo}（走 HF 首次要下 ~1.6GB）…")
+    print(f"[ASR] mlx-whisper {repo}（走 HF 首次要下 ~1.6GB）…")
     r = mlx_whisper.transcribe(str(audio), path_or_hf_repo=repo,
                                language=LANG, verbose=False)
     return [{"start": s["start"], "end": s["end"], "text": s["text"].strip()}
             for s in r["segments"]]
+
+
+def _asr_whisper_cpp(audio: Path) -> list[dict]:
+    import json
+    import tempfile
+
+    print(f"[ASR] whisper.cpp（Vulkan，{WHISPER_CPP_MODEL.split('/')[-1]}）…")
+    with tempfile.TemporaryDirectory() as tmp:
+        wav16 = Path(tmp) / "audio16k.wav"
+        # whisper.cpp 只吃 16k 单声道 wav；audio 已经是 16k wav（extract_audio 产出的），
+        # 但直接喂路径更省一次转码，这里留后手用 ffmpeg 兜底非标准输入。
+        run(["ffmpeg", "-y", "-i", str(audio), "-ac", "1", "-ar", "16000", str(wav16)])
+        out_prefix = Path(tmp) / "out"
+        cmd = [WHISPER_CPP_BIN, "-m", WHISPER_CPP_MODEL, "-f", str(wav16),
+               "-oj", "--no-prints", "-of", str(out_prefix)]
+        if LANG:
+            cmd += ["-l", LANG]
+        run(cmd)
+        data = json.loads((Path(tmp) / "out.json").read_text())
+    return [{"start": seg["offsets"]["from"] / 1000, "end": seg["offsets"]["to"] / 1000,
+              "text": seg["text"].strip()} for seg in data["transcription"]]
+
+
+def _asr_faster_whisper(audio: Path) -> list[dict]:
+    from faster_whisper import WhisperModel
+    # 非 Apple Silicon（Linux/Windows，CPU 或 CUDA）：CTranslate2 后端，不依赖 mlx。
+    # mlx 专用的模型名（mlx-community/...）在这里不适用，退回标准 faster-whisper 模型名。
+    model_name = os.getenv("V2T_FW_MODEL") or (
+        "large-v3-turbo" if "large-v3-turbo" in ASR_MODEL else "large-v3"
+    )
+    device = os.getenv("V2T_FW_DEVICE", "cpu")
+    compute_type = os.getenv("V2T_FW_COMPUTE", "int8" if device == "cpu" else "float16")
+    print(f"[ASR] faster-whisper {model_name}（{device}/{compute_type}，首次要下模型）…")
+    model = WhisperModel(model_name, device=device, compute_type=compute_type)
+    segments, _ = model.transcribe(str(audio), language=LANG, vad_filter=True)
+    return [{"start": s.start, "end": s.end, "text": s.text.strip()} for s in segments]
 
 
 def build_subs(video: Path, work: Path) -> list[dict]:

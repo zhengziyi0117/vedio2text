@@ -25,3 +25,7 @@ work/**/*.vtt
 # mdBook 生成物（推 main 时 Actions 自己重建）
 book_src/
 book/
+
+
+cookies.txt
+
