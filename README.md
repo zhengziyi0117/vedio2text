@@ -23,7 +23,7 @@
 faster-whisper，见下面的「转写后端」。
 
 ```bash
-uv tool install yt-dlp             # 需确保 ~/.local/bin 在 PATH 中
+uv tool install 'yt-dlp[default]'  # 含 YouTube 所需的 yt-dlp-ejs；确保 ~/.local/bin 在 PATH 中
 brew install ffmpeg                # Linux 用 apt/dnf 装 ffmpeg
 
 uv sync && source .venv/bin/activate
@@ -120,6 +120,15 @@ uv run -m v2t render "work/CS336/<讲名>"
 
 `yt-dlp` 下载媒体失败但能取到字幕时，`prepare` 会只用字幕继续；带 `--shots` 也会
 跳过抽帧。媒体与字幕都不可用时才中止。要强制 ASR，仍需先取得音视频文件。
+
+YouTube 媒体下载还需要 JavaScript 运行时：装好 Node 后，给 `yt-dlp` 加
+`--js-runtimes node`（可写入本机的 yt-dlp 配置文件）。如果媒体请求返回
+`text/html`、内容是 `Site Unavailable`，而非视频字节，说明当前网络无法访问
+YouTube 的 `googlevideo.com` 媒体地址；这时升级 yt-dlp、换 cookies 或重试
+`ffmpeg` 都无法从该响应抽帧。可在能访问媒体地址的本机先下载视频，再将本地视频
+交给 `prepare --shots`；字幕模式仍可继续生成无配图课程。若安装了 `certifi` 后
+仅出现证书链校验错误，且系统证书可信，可让 yt-dlp 使用系统证书：
+`--compat-options no-certifi`。
 
 Work 根据 `manifest.json` 逐块读取 `chunks/chunk-NNN.json`，把写稿结果放进对应的
 `draft/chunk-NNN.json`；课程标题和一句导语填写到 `draft/metadata.json`。每块草稿的
