@@ -6,7 +6,8 @@ from pathlib import Path
 
 from .doc import extract_frames, finish_doc, make_doc
 from .llm import LLMConfigError, clean_subs, llm, selected_model, selected_provider
-from .media import YTDLP, build_subs, fetch_video, has_video_stream, playlist_entries, run, slugify
+from .media import (YTDLP, FORCE_ASR, build_subs, download_subtitles, existing_subs,
+                    fetch_video, has_video_stream, playlist_entries, run, slugify)
 from .selftest import run_selftest
 from .subs import to_srt
 from .workflow import DraftError, prepare_bundle, render_bundle
@@ -59,15 +60,25 @@ def _prepare(argv):
     if a.input == "clean" and not input_path.exists():
         ap.error(f"{input_path} 不存在；--input clean 只复用已有校对结果")
     need_video = (not input_path.exists() or a.refresh_subs or a.shots)
-    video = fetch_video(src, work, want_video=a.shots) if need_video else None
+    video = None
+    if need_video:
+        try:
+            video = fetch_video(src, work, want_video=a.shots)
+        except SystemExit:
+            if not src.startswith(("http://", "https://")) or FORCE_ASR:
+                raise
+            download_subtitles(src, work)
+            if not (input_path.exists() and not a.refresh_subs) and not existing_subs(None, work):
+                raise
+            print("[下载] 媒体不可用，复用字幕继续准备素材")
     subs_path = work / "subs.json"
     if a.refresh_subs or (a.input == "subs" and not subs_path.exists()):
         subs_path.write_text(json.dumps(build_subs(video, work), ensure_ascii=False, indent=1),
                              encoding="utf-8")
     if not input_path.exists():
         ap.error(f"{input_path} 不存在；--input clean 只复用已有校对结果")
-    if a.shots and not has_video_stream(video):
-        print("[配图] 源文件不含视频流，跳过抽帧", file=sys.stderr)
+    if a.shots and (video is None or not has_video_stream(video)):
+        print("[配图] 视频流不可用，跳过抽帧", file=sys.stderr)
         a.shots = False
     try:
         raw = json.loads(input_path.read_text(encoding="utf-8"))
