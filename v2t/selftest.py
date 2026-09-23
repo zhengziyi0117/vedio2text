@@ -1,12 +1,17 @@
 """纯函数自检：解析、时间戳、标点、段落标记、模型输出的清洗。不联网。"""
 import asyncio
+import json
+import tempfile
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 from .doc import (PARA_RE, _mad, _mmss, _settled_index, _shot_pick, _time_link,
                   _to_sec, finish_doc, thin_cuts)
 from .llm import _openai_input, _sdk_prompt, json_array
 from .media import LANG_PREF, _lang_rank, slugify
 from .subs import _fmt_ts, _parse_ts, fix_cjk_punct, merge_segments, parse_subs, to_srt
+from .workflow import DraftError, prepare_bundle, render_bundle
 
 
 def run_selftest():
@@ -201,5 +206,97 @@ world
     blocks = [{"type": "text", "text": "挑图"}]
     env = asyncio.run(_drain(_sdk_prompt(blocks)))
     assert env == [{"type": "user", "message": {"role": "user", "content": blocks}}], env
+
+    # Work 接力：分块素材 → 分块草稿 → 校验 → 成稿，不能漏字幕或复用旧草稿。
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        (work / "frames").mkdir()
+        frame = work / "frames" / "f0001.jpg"
+        frame.write_bytes(b"jpeg fixture")
+        raw = [
+            {"start": 0, "end": 2, "text": "开头"},
+            {"start": 2, "end": 4, "text": "第一节"},
+            {"start": 12, "end": 14, "text": "第二节"},
+            {"start": 14, "end": 16, "text": "结束"},
+        ]
+        manifest = prepare_bundle(work, "测试课程", "https://youtu.be/test", raw,
+                                  [{"t": 3, "path": frame}], max_seconds=8)
+        assert len(manifest["chunks"]) == 2, manifest
+        meta = work / "draft" / "metadata.json"
+        meta.write_text(json.dumps({"title": "测试课程", "intro": "这是导语。"}))
+        for i, entry in enumerate(manifest["chunks"]):
+            path = work / entry["draft"]
+            draft = json.loads(path.read_text())
+            draft["paragraphs"] = [{"start_id": entry["first_id"],
+                                    "end_id": entry["last_id"],
+                                    "text": f"这是第 {i + 1} 节完整内容。",
+                                    **({"heading": "第一节", "frame_id": "f0001"}
+                                       if i == 0 else {})}]
+            path.write_text(json.dumps(draft, ensure_ascii=False))
+        assert render_bundle(work, check=True) == {
+            "chunks": 2, "segments": 4, "paragraphs": 2, "images": 1}
+        assert not (work / "course.md").exists()  # --check 无副作用
+        render_bundle(work)
+        course = (work / "course.md").read_text()
+        assert "*[00:04](https://youtu.be/test?t=4)*" in course, course
+        assert "![](assets/work-p001-f0001.jpg)" in course, course
+        try:
+            render_bundle(work)
+            assert False, "不应该覆盖现有成稿"
+        except DraftError:
+            pass
+        draft_path = work / manifest["chunks"][1]["draft"]
+        draft = json.loads(draft_path.read_text())
+        draft["paragraphs"][0]["start_id"] = "s000004"  # 漏掉 s000003
+        draft_path.write_text(json.dumps(draft))
+        try:
+            render_bundle(work, check=True)
+            assert False, "漏字幕不能通过校验"
+        except DraftError:
+            pass
+        draft["paragraphs"][0]["start_id"] = "s000003"
+        draft_path.write_text(json.dumps(draft))
+        raw[0]["text"] = "改过的素材"
+        prepare_bundle(work, "测试课程", "https://youtu.be/test", raw,
+                       [{"t": 3, "path": frame}], max_seconds=8)
+        try:
+            render_bundle(work, check=True)
+            assert False, "素材变了后不能继续用旧草稿"
+        except DraftError:
+            pass
+
+    # URL 的媒体被拒绝时，prepare 仍能用 yt-dlp 单独取回的字幕继续；
+    # 没有媒体也没有字幕则必须明确失败，不能产出空课程。
+    from . import cli
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        source = "https://youtu.be/test"
+        episode = root / "测试视频"
+        raw = [{"start": i * 2, "end": i * 2 + 1,
+                "text": f"第 {i} 条字幕。"} for i in range(12)]
+
+        def write_captions(_src, work):
+            work.mkdir(parents=True, exist_ok=True)
+            (work / "source.zh.srt").write_text(to_srt(raw), encoding="utf-8")
+
+        common = (mock.patch.object(cli, "run", return_value=SimpleNamespace(stdout="测试视频\n")),
+                  mock.patch.object(cli, "fetch_video", side_effect=SystemExit("媒体不可用")),
+                  mock.patch.object(cli, "FORCE_ASR", False))
+        with common[0], common[1], common[2], \
+                mock.patch.object(cli, "download_subtitles", side_effect=write_captions):
+            cli._prepare([source, "--work", str(root), "--shots"])
+        assert (episode / "manifest.json").is_file()
+        assert json.loads((episode / "manifest.json").read_text())["frames"] == []
+        assert len(json.loads((episode / "subs.json").read_text())) > 0
+
+        empty_root = root / "empty"
+        with common[0], common[1], common[2], \
+                mock.patch.object(cli, "download_subtitles"):
+            try:
+                cli._prepare([source, "--work", str(empty_root)])
+                assert False, "无媒体与字幕时不能继续"
+            except SystemExit:
+                pass
+        assert not (empty_root / "测试视频" / "manifest.json").exists()
 
     print("selftest ok")

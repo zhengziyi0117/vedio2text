@@ -19,6 +19,12 @@ work/**/frames/
 work/**/frames.txt
 work/**/sheets/
 
+# Work 接力的可再生素材和未审校草稿；最终 course.md 仍可提交发布
+work/**/chunks/
+work/**/draft/
+work/**/manifest.json
+work/**/transcript.input.srt
+
 # 下载的字幕轨：subs.json 就是它的解析结果，需要时 yt-dlp 会重新拉
 work/**/*.vtt
 
@@ -28,4 +34,3 @@ book/
 
 
 cookies.txt
-

@@ -6,14 +6,113 @@ from pathlib import Path
 
 from .doc import extract_frames, finish_doc, make_doc
 from .llm import LLMConfigError, clean_subs, llm, selected_model, selected_provider
-from .media import YTDLP, build_subs, fetch_video, has_video_stream, playlist_entries, run, slugify
+from .media import (YTDLP, FORCE_ASR, build_subs, download_subtitles, existing_subs,
+                    fetch_video, has_video_stream, playlist_entries, run, slugify)
 from .selftest import run_selftest
 from .subs import to_srt
+from .workflow import DraftError, prepare_bundle, render_bundle
 
 STEPS = ["subs", "clean", "doc"]
 
 
+def _prepare(argv):
+    ap = argparse.ArgumentParser(prog="v2t prepare", description="只准备 Work 写稿所需的素材")
+    ap.add_argument("src", help="本地视频文件或 URL")
+    ap.add_argument("--ep", type=int, metavar="N", help="播放列表第 N 集")
+    ap.add_argument("--series", metavar="NAME", help="课程系列目录")
+    ap.add_argument("--work", default="work", help="产物根目录")
+    ap.add_argument("--shots", action="store_true", help="抽取候选画面供 Work 挑选")
+    ap.add_argument("--input", choices=["subs", "clean"], default="subs",
+                    help="给 Work 的字幕来源；clean 复用已有 clean.json，不调用模型")
+    ap.add_argument("--refresh-subs", action="store_true", help="重新生成 subs.json")
+    ap.add_argument("--chunk-seconds", type=int, default=600, help="单块最长秒数")
+    ap.add_argument("--chunk-chars", type=int, default=9000, help="单块最大字符数")
+    a = ap.parse_args(argv)
+    if a.chunk_seconds <= 0 or a.chunk_chars <= 0:
+        ap.error("分块时长和字符数必须大于 0")
+    if a.refresh_subs and a.input == "clean":
+        ap.error("--refresh-subs 与 --input clean 不能同时使用，避免复用过期校对结果")
+
+    src = a.src
+    if a.ep:
+        eps = playlist_entries(src)
+        hit = next((e for e in eps if e["index"] == a.ep), None)
+        if not hit:
+            ap.error(f"播放列表中没有第 {a.ep} 集")
+        src = hit["url"]
+    if src.startswith(("http://", "https://")):
+        r = run([*YTDLP, "--print", "%(title)s", "--skip-download", src], check=False)
+        title = r.stdout.strip() or src
+    else:
+        p = Path(src).expanduser()
+        if not p.exists():
+            ap.error(f"文件不存在：{p}")
+        title = p.stem
+    work = Path(a.work).expanduser()
+    if a.series:
+        work /= slugify(a.series)
+    work /= slugify(title)
+    work.mkdir(parents=True, exist_ok=True)
+
+    # --input clean can reuse old clean.json without fetching media again.
+    input_name = "clean.json" if a.input == "clean" else "subs.json"
+    input_path = work / input_name
+    if a.input == "clean" and not input_path.exists():
+        ap.error(f"{input_path} 不存在；--input clean 只复用已有校对结果")
+    need_video = (not input_path.exists() or a.refresh_subs or a.shots)
+    video = None
+    if need_video:
+        try:
+            video = fetch_video(src, work, want_video=a.shots)
+        except SystemExit:
+            if not src.startswith(("http://", "https://")) or FORCE_ASR:
+                raise
+            download_subtitles(src, work)
+            if not (input_path.exists() and not a.refresh_subs) and not existing_subs(None, work):
+                raise
+            print("[下载] 媒体不可用，复用字幕继续准备素材")
+    subs_path = work / "subs.json"
+    if a.refresh_subs or (a.input == "subs" and not subs_path.exists()):
+        subs_path.write_text(json.dumps(build_subs(video, work), ensure_ascii=False, indent=1),
+                             encoding="utf-8")
+    if not input_path.exists():
+        ap.error(f"{input_path} 不存在；--input clean 只复用已有校对结果")
+    if a.shots and (video is None or not has_video_stream(video)):
+        print("[配图] 视频流不可用，跳过抽帧", file=sys.stderr)
+        a.shots = False
+    try:
+        raw = json.loads(input_path.read_text(encoding="utf-8"))
+        frames = extract_frames(video, work) if a.shots else []
+        manifest = prepare_bundle(work, title, src, raw, frames, input_name,
+                                  a.chunk_seconds, a.chunk_chars)
+    except (DraftError, ValueError) as exc:
+        ap.error(str(exc))
+    print(f"[Work 素材] {manifest['segments']} 条字幕 / "
+          f"{len(manifest['chunks'])} 块 / {len(manifest['frames'])} 张候选帧 → {work}")
+    print(f"[下一步] 填写 {work / 'draft' / 'metadata.json'} 和各块草稿，再运行 "
+          f"uv run -m v2t render '{work}' --check")
+
+
+def _render(argv):
+    ap = argparse.ArgumentParser(prog="v2t render", description="校验 Work 草稿并生成 course.md")
+    ap.add_argument("episode_dir", type=Path, help="prepare 输出的单讲目录")
+    ap.add_argument("--check", action="store_true", help="只校验，不写入文件")
+    ap.add_argument("--force", action="store_true", help="允许覆盖已有 course.md")
+    a = ap.parse_args(argv)
+    try:
+        result = render_bundle(a.episode_dir.expanduser(), a.force, a.check)
+    except (DraftError, OSError, ValueError, KeyError, TypeError) as exc:
+        ap.error(str(exc))
+    print(f"[Work 稿件] {result['chunks']} 块 / {result['segments']} 条字幕 / "
+          f"{result['paragraphs']} 段 / {result['images']} 张图："
+          f"{'校验通过' if a.check else a.episode_dir / 'course.md'}")
+
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "prepare":
+        return _prepare(sys.argv[2:])
+    if len(sys.argv) > 1 and sys.argv[1] == "render":
+        return _render(sys.argv[2:])
     ap = argparse.ArgumentParser(description="课程视频 → 字幕 + 文案")
     ap.add_argument("src", nargs="?", help="本地视频文件或 URL")
     ap.add_argument("--from", dest="from_step", choices=STEPS, help="从该步重跑")

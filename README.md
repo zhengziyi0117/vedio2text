@@ -23,7 +23,8 @@
 faster-whisper，见下面的「转写后端」。
 
 ```bash
-brew install ffmpeg yt-dlp        # Linux 用 apt/dnf 装同名包
+uv tool install 'yt-dlp[default]'  # 含 YouTube 所需的 yt-dlp-ejs；确保 ~/.local/bin 在 PATH 中
+brew install ffmpeg                # Linux 用 apt/dnf 装 ffmpeg
 
 uv sync && source .venv/bin/activate
 ```
@@ -102,6 +103,66 @@ export V2T_FW_MODEL=large-v3     # 默认跟着 V2T_ASR_MODEL 里有没有 turbo
 uv run -m v2t ~/Downloads/讲座.mp4
 uv run -m v2t "https://www.youtube.com/watch?v=xxxxxxxx"
 ```
+
+### 交给 ChatGPT Work 分开处理
+
+本地 Work 可以按 `prepare → 分块写稿 → render` 接力。`prepare` 只调用取材、字幕解析和
+可选抽帧，**不调用模型**；`render` 只校验并拼装 Work 写回的内容，也不调用模型。
+原来 `uv run -m v2t <src>` 的自动流程照常可用。
+
+```bash
+uv run -m v2t prepare "<单集链接或本地视频>" --series CS336 --shots
+# 已有 clean.json 时可选 --input clean；不写该参数则使用 subs.json
+# 素材在 work/CS336/<讲名>/manifest.json 和 chunks/chunk-001.json 等文件
+uv run -m v2t render "work/CS336/<讲名>" --check
+uv run -m v2t render "work/CS336/<讲名>"
+```
+
+`yt-dlp` 下载媒体失败但能取到字幕时，`prepare` 会只用字幕继续；带 `--shots` 也会
+跳过抽帧。媒体与字幕都不可用时才中止。要强制 ASR，仍需先取得音视频文件。
+
+YouTube 媒体下载还需要 JavaScript 运行时：装好 Node 后，给 `yt-dlp` 加
+`--js-runtimes node`（可写入本机的 yt-dlp 配置文件）。如果媒体请求返回
+`text/html`、内容是 `Site Unavailable`，而非视频字节，说明当前网络无法访问
+YouTube 的 `googlevideo.com` 媒体地址；这时升级 yt-dlp、换 cookies 或重试
+`ffmpeg` 都无法从该响应抽帧。可在能访问媒体地址的本机先下载视频，再将本地视频
+交给 `prepare --shots`；字幕模式仍可继续生成无配图课程。若安装了 `certifi` 后
+仅出现证书链校验错误，且系统证书可信，可让 yt-dlp 使用系统证书：
+`--compat-options no-certifi`。
+
+Work 根据 `manifest.json` 逐块读取 `chunks/chunk-NNN.json`，把写稿结果放进对应的
+`draft/chunk-NNN.json`；课程标题和一句导语填写到 `draft/metadata.json`。每块草稿的
+`source_sha256` 是 `prepare` 自动生成的，保留原值。正文段落例如：
+
+```json
+{
+  "chunk_id": "chunk-001",
+  "source_sha256": "<保留 prepare 生成的值>",
+  "paragraphs": [
+    {
+      "start_id": "s000001",
+      "end_id": "s000008",
+      "heading": "这一节的具体主题",
+      "text": "忠实整理后的正文，保留例子和演示步骤。",
+      "frame_id": "f0001"
+    }
+  ]
+}
+```
+
+每段的字幕 ID 范围须在本块内连续，第一段从本块第一条开始，最后一段覆盖到最后一条。
+`heading` 和 `frame_id` 可省略；图片只选本段时间内、真正补充正文的候选画面。
+Work 可按 `chunks/` 里的相对路径查看 `frames/` 下的图。`render --check` 会拦住漏条、
+重复条、过期草稿和错位图片；通过后再生成 `course.md`。已有 `course.md` 时默认拒绝覆盖，
+确认替换再加 `--force`。`prepare` 会从选定字幕生成 `transcript.input.srt`，不覆盖旧的
+`transcript.srt`。若修改了字幕后重新运行 `prepare`，旧草稿会因摘要不匹配而被拒绝。
+
+单块默认最多 10 分钟且最多 9000 字，可用 `--chunk-seconds`、`--chunk-chars` 调整。
+准备已存在的课程可指定 `--input clean` 复用旧校对字幕，不需要模型后端或视频文件；
+如果还要 `--shots`，则需要本地视频或让下载步骤取得视频画面。
+要重新做 ASR 则用 `--refresh-subs`（与 `--input clean` 不同时使用）。建议在
+ChatGPT Work 本地模式调用本机这套命令；使用 Work 模型写稿时无需把它当作
+`V2T_PROVIDER` 接入 Python 的 `llm()`。
 
 整个播放列表也吃，用 `--list` 看编号、`--ep` 挑一集（一个 work 目录只装一集，别整个列表丢进去）：
 
@@ -192,6 +253,7 @@ v2t/
   doc.py       文稿：写讲稿、回填时间链接、抽帧挑图挂进段落
   cli.py       命令行：参数、选集、按步骤跑
   selftest.py  --selftest 的纯函数自检
+  workflow.py Work 接力：素材分块、草稿校验、无模型调用的成稿
 ```
 
 数据一路向上走：`media` 出 `[{start, end, text}]` → `llm` 校对 → `doc` 出 markdown。
