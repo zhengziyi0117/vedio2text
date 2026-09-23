@@ -102,6 +102,16 @@ def fetch_video(src: str, work: Path, want_video: bool = False) -> Path:
         print(f"[下载] yt-dlp（{'720p 视频' if want_video else '仅音轨'}，限速 {RATE_LIMIT or '关'}）…")
         run([*YTDLP, "-f", fmt, *_limit_rate(), "-o", str(out), src])
 
+    download_subtitles(src, work)
+
+    got = _pick_source(work, want_video)
+    if not got:
+        sys.exit("yt-dlp 没产出可用的媒体文件")
+    return got
+
+
+def download_subtitles(src: str, work: Path) -> None:
+    """从链接获取字幕；媒体下载失败时 prepare 也可单独调用。"""
     # 字幕是「有则省事、无则 ASR」的降级路径，拿不到不能拖垮主流程。
     # 本地已有字幕文件就不再联网请求一次（YouTube 对这个接口限流很凶）。
     if not _sub_files(work):
@@ -127,11 +137,6 @@ def fetch_video(src: str, work: Path, want_video: bool = False) -> Path:
             last = next((l for l in reversed((r.stderr or r.stdout).strip().splitlines())
                          if l.strip()), "")
             print(f"[下载] 字幕拿不到，走 ASR。原因：{last[:140]}")
-
-    got = _pick_source(work, want_video)
-    if not got:
-        sys.exit("yt-dlp 没产出可用的媒体文件")
-    return got
 
 
 def playlist_entries(url: str) -> list[dict]:
@@ -189,7 +194,7 @@ def _lang_rank(p: Path) -> int:
     return len(LANG_PREF)
 
 
-def existing_subs(video: Path, work: Path) -> list[dict] | None:
+def existing_subs(video: Path | None, work: Path) -> list[dict] | None:
     """按优先级找现成字幕：yt-dlp 下载的 → 同名外挂 → 内嵌。都没有返回 None。
 
     V2T_LANG 指定了源语言时它排最前；但指定语种一条都没有时不会回去跑 ASR
@@ -202,6 +207,8 @@ def existing_subs(video: Path, work: Path) -> list[dict] | None:
             print(f"[字幕] 用 yt-dlp 字幕 {p.name}")
             return segs
 
+    if video is None:
+        return None
     base = str(video).rsplit(".", 1)[0]
     for ext in ("srt", "vtt", "ass"):
         p = Path(f"{base}.{ext}")
@@ -305,7 +312,7 @@ def _asr_faster_whisper(audio: Path) -> list[dict]:
     return [{"start": s.start, "end": s.end, "text": s.text.strip()} for s in segments]
 
 
-def build_subs(video: Path, work: Path) -> list[dict]:
+def build_subs(video: Path | None, work: Path) -> list[dict]:
     # 字幕源只影响转写这一步，ASR 是不是更准见 AGENTS.md
     segs = None if FORCE_ASR else existing_subs(video, work)
     if FORCE_ASR and _sub_files(work):
@@ -313,6 +320,8 @@ def build_subs(video: Path, work: Path) -> list[dict]:
     if segs:
         print(f"[字幕] 复用已有字幕 {len(segs)} 条 cue")
     else:
+        if video is None:
+            sys.exit("媒体不可用且没有可解析字幕，无法转写")
         print("[字幕] 无现成字幕 → 转写")
         audio = work / "audio.wav"
         if not audio.exists():
