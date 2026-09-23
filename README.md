@@ -23,7 +23,8 @@
 faster-whisper，见下面的「转写后端」。
 
 ```bash
-brew install ffmpeg yt-dlp        # Linux 用 apt/dnf 装同名包
+uv tool install yt-dlp             # 需确保 ~/.local/bin 在 PATH 中
+brew install ffmpeg                # Linux 用 apt/dnf 装 ffmpeg
 
 uv sync && source .venv/bin/activate
 ```
@@ -116,6 +117,9 @@ uv run -m v2t prepare "<单集链接或本地视频>" --series CS336 --shots
 uv run -m v2t render "work/CS336/<讲名>" --check
 uv run -m v2t render "work/CS336/<讲名>"
 ```
+
+`yt-dlp` 下载媒体失败但能取到字幕时，`prepare` 会只用字幕继续；带 `--shots` 也会
+跳过抽帧。媒体与字幕都不可用时才中止。要强制 ASR，仍需先取得音视频文件。
 
 Work 根据 `manifest.json` 逐块读取 `chunks/chunk-NNN.json`，把写稿结果放进对应的
 `draft/chunk-NNN.json`；课程标题和一句导语填写到 `draft/metadata.json`。每块草稿的
