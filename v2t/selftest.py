@@ -3,6 +3,8 @@ import asyncio
 import json
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 from .doc import (PARA_RE, _mad, _mmss, _settled_index, _shot_pick, _time_link,
                   _to_sec, finish_doc, thin_cuts)
@@ -262,5 +264,39 @@ world
             assert False, "素材变了后不能继续用旧草稿"
         except DraftError:
             pass
+
+    # URL 的媒体被拒绝时，prepare 仍能用 yt-dlp 单独取回的字幕继续；
+    # 没有媒体也没有字幕则必须明确失败，不能产出空课程。
+    from . import cli
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        source = "https://youtu.be/test"
+        episode = root / "测试视频"
+        raw = [{"start": i * 2, "end": i * 2 + 1,
+                "text": f"第 {i} 条字幕。"} for i in range(12)]
+
+        def write_captions(_src, work):
+            work.mkdir(parents=True, exist_ok=True)
+            (work / "source.zh.srt").write_text(to_srt(raw), encoding="utf-8")
+
+        common = (mock.patch.object(cli, "run", return_value=SimpleNamespace(stdout="测试视频\n")),
+                  mock.patch.object(cli, "fetch_video", side_effect=SystemExit("媒体不可用")),
+                  mock.patch.object(cli, "FORCE_ASR", False))
+        with common[0], common[1], common[2], \
+                mock.patch.object(cli, "download_subtitles", side_effect=write_captions):
+            cli._prepare([source, "--work", str(root), "--shots"])
+        assert (episode / "manifest.json").is_file()
+        assert json.loads((episode / "manifest.json").read_text())["frames"] == []
+        assert len(json.loads((episode / "subs.json").read_text())) > 0
+
+        empty_root = root / "empty"
+        with common[0], common[1], common[2], \
+                mock.patch.object(cli, "download_subtitles"):
+            try:
+                cli._prepare([source, "--work", str(empty_root)])
+                assert False, "无媒体与字幕时不能继续"
+            except SystemExit:
+                pass
+        assert not (empty_root / "测试视频" / "manifest.json").exists()
 
     print("selftest ok")
