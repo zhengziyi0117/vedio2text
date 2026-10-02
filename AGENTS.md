@@ -90,6 +90,10 @@ uv run -m v2t <src> --from doc     # 只重跑写稿
 
 - 不引新依赖：标准库、已装的 `yt-dlp` / `ffmpeg` 优先。
 - 模型后端不写死，一律走 `llm.py` 的 `llm()`；不要在新代码里直接调某个厂商 SDK。
+- 默认后端是 Claude Code（`claude-sdk`）。`auto` 的顺序是「同一家优先本机 agent」：Agent SDK → Codex CLI → Anthropic API
+  → OpenAI API，环境里恰好有 API key 也不会抢先。
+- 书里的朗读条（`theme/tts.js`）是浏览器现场合成，`build_book.sh` 按 `subs.json` 汉字占比决定挂不挂。
+  文稿里的时间链接格式（`*[mm:ss](...)*`）一改，`textOf()` 里的 `STAMP` 要跟着改，否则会把时间念出来。
 - 外部输入（模型输出、字幕文件、yt-dlp 结果）都要当成不可信：越界、缺字段、空值一律丢，
   别让它脏到主流程。
 

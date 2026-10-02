@@ -1,0 +1,34 @@
+/* 朗读条：跟着 mdBook 主题变量走，亮/暗主题都能看 */
+.v2t-tts:empty { display: none; }
+.v2t-tts {
+  position: sticky;
+  top: var(--menu-bar-height, 50px);
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5em 1em;
+  margin: 1em 0;
+  padding: .5em .8em;
+  border: 1px solid var(--quote-border, #ccc);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: .9em;
+}
+.v2t-tts button,
+.v2t-tts select {
+  font: inherit;
+  color: var(--fg);
+  background: var(--quote-bg, transparent);
+  border: 1px solid var(--quote-border, #ccc);
+  border-radius: 4px;
+  padding: .15em .6em;
+}
+.v2t-tts button:disabled { opacity: .4; }
+.v2t-tts .v2t-status { color: var(--icons, #777); }
+.v2t-reading {
+  background: var(--quote-bg, #ffeb3b33);
+  outline: 2px solid var(--links, #4183c4);
+  outline-offset: 4px;
+  border-radius: 2px;
+}

@@ -48,6 +48,12 @@ def _has_codex() -> bool:
     return shutil.which(_codex_binary()) is not None
 
 
+def _has_claude_sdk() -> bool:
+    # SDK 自带打包好的 claude CLI，装上就能起；登没登录要到调用时才知道
+    import importlib.util
+    return importlib.util.find_spec("claude_agent_sdk") is not None
+
+
 def _configured_provider() -> str:
     raw = (os.getenv("V2T_PROVIDER") or
            os.getenv("V2T_LLM_PROVIDER") or "auto").strip().lower()
@@ -63,16 +69,20 @@ def selected_provider() -> str:
     configured = _configured_provider()
     if configured != "auto":
         return configured
-    if os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_AUTH_TOKEN"):
-        return "openai"
-    if os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN"):
-        return "anthropic"
+    # 默认 Claude Code；同一家优先走本机已登录的 agent（Claude Agent SDK / Codex CLI），
+    # 都没有才退到直连 API。显式配置的 API key 不会抢在 agent 前面。
+    if _has_claude_sdk():
+        return "claude-sdk"
     if _has_codex():
         return "codex"
+    if os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN"):
+        return "anthropic"
+    if os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_AUTH_TOKEN"):
+        return "openai"
     raise LLMConfigError(
-        "没有检测到可用的模型后端。请设置 OPENAI_API_KEY 并使用 "
-        "V2T_PROVIDER=openai，或安装/登录 Codex CLI 后使用 V2T_PROVIDER=codex；"
-        "如需旧的 Claude SDK，请显式设置 V2T_PROVIDER=claude-sdk"
+        "没有检测到可用的模型后端。默认用 Claude Code：先 uv sync 装 claude-agent-sdk，"
+        "再运行 claude 完成 /login；也可以 V2T_PROVIDER=codex 用本机 Codex CLI，"
+        "或设置 ANTHROPIC_API_KEY / OPENAI_API_KEY 直连 API"
     )
 
 
@@ -387,21 +397,21 @@ def _sdk_prompt(user):
 
 
 def _llm_sdk(system: str, user, think: bool = True) -> str:
-    """兼容旧配置：使用本机已登录的 Claude Agent SDK。"""
+    """默认后端：使用本机已登录的 Claude Code（Claude Agent SDK）。"""
     try:
         from claude_agent_sdk import (
             ClaudeAgentOptions, ClaudeSDKError, ResultMessage, query,
         )
     except ImportError as e:
         _fail(
-            "没有可用的模型后端。请设置 OPENAI_API_KEY 并使用 V2T_PROVIDER=openai，"
-            "或安装/登录 Codex CLI 后使用 V2T_PROVIDER=codex"
+            "当前后端需要 claude-agent-sdk：请先运行 uv sync，"
+            "或设置 V2T_PROVIDER=codex/anthropic/openai"
         )
         raise AssertionError from e
 
     opts = ClaudeAgentOptions(
         system_prompt=system,
-        model=os.getenv("V2T_MODEL"),
+        model=selected_model("claude-sdk"),
         disallowed_tools=["*"],
         setting_sources=[],
         max_turns=1,

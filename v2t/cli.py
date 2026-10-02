@@ -38,7 +38,7 @@ def main():
             provider = selected_provider()
         except LLMConfigError as e:
             ap.error(str(e))
-        model = selected_model(provider) or "Codex 本地配置"
+        model = selected_model(provider) or "后端本地配置"
         print(f"[LLM] 后端={provider} 模型={model}")
         print(llm("只返回字符串 OK，不要解释。",
                   "请严格回复 OK。", max_tokens=16, think=False))

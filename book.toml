@@ -5,3 +5,5 @@ src = "book_src"
 
 [output.html]
 git-repository-url = "https://github.com/zhengziyi0117/vedio2text"
+additional-js = ["theme/tts.js"]
+additional-css = ["theme/tts.css"]

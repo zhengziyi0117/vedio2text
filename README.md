@@ -1,23 +1,22 @@
 # video-2-text
 
-课程视频 → 字幕 + 可读文稿。本地 whisper/现成字幕转写，支持 Anthropic、OpenAI GPT、Codex CLI 等模型后端，可选抽帧配图。
+课程视频 → 字幕 + 可读文稿。本地 whisper/现成字幕转写，默认用 Claude Code（Agent SDK）写稿，也支持 Codex CLI、Anthropic / OpenAI API，可选抽帧配图。外语课的中文文稿在书里可以直接朗读。
 
 产出的文稿自动汇总成在线书：<https://zhengziyi0117.github.io/vedio2text/>
 
 ## 装环境
 
-模型后端不是写死的。最简单的 GPT API 配置：
+模型后端不是写死的，默认用本机已登录的 Claude Code（走 Claude Agent SDK，不直连 API）。
+`uv sync` 会装好 SDK（自带 claude CLI），登录一次就能跑：
 
-    export V2T_PROVIDER=openai
-    export OPENAI_API_KEY=sk-...
-    export OPENAI_MODEL=gpt-4o-mini
-
-如果本机已经登录 Codex CLI，可以不配置 API key：
-
-    export V2T_PROVIDER=codex
+    claude            # 进去执行 /login
     uv run -m v2t --llm-test
 
-没有设置 V2T_PROVIDER 时，auto 会按 OpenAI API、Anthropic API、Codex CLI 的顺序选择；都没有时明确报错，不会暗中调用 Claude。
+不设 `V2T_PROVIDER` 时，`auto` 按 Claude Agent SDK → Codex CLI → Anthropic API → OpenAI API
+的顺序挑：同一家优先走本机 agent，都没有才退到直连 API。想换就显式指定：
+
+    export V2T_PROVIDER=codex                 # 本机已登录的 Codex CLI
+    export V2T_PROVIDER=openai OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-4o-mini
 
 需要 Python 3.10+。转写按平台自动挑后端，Apple Silicon 走 MLX，别的平台走 whisper.cpp 或
 faster-whisper，见下面的「转写后端」。
@@ -34,12 +33,12 @@ uv sync && source .venv/bin/activate
 
 模型后端通过统一的 `llm()` 接口选择：
 
-1. 设置 `V2T_PROVIDER=openai`，通过 OpenAI Responses API 调用 GPT；支持 `OPENAI_BASE_URL`，也支持当前抽帧挑图使用的 base64 图片输入。
-2. 设置 `V2T_PROVIDER=codex`，调用本机 `codex exec` 非交互模式；文本和图片都会转成 Codex CLI 可接收的输入。
-3. `V2T_PROVIDER=anthropic` 保留原来的 Anthropic API；`claude-sdk` 仍可显式使用本机 Claude Code。
-4. 默认 `auto` 根据已配置的 key/CLI 自动选择；如果都没有，必须显式配置后端。想先验证配置，运行 `uv run -m v2t --llm-test`。
+1. 默认 `claude-sdk`：通过 Claude Agent SDK 调本机 Claude Code，禁用全部工具、单轮问答；图文块走流式输入。
+2. `V2T_PROVIDER=codex`，调用本机 `codex exec` 非交互模式；文本和图片都会转成 Codex CLI 可接收的输入。
+3. `V2T_PROVIDER=anthropic` 直连 Anthropic API；`openai` 走 OpenAI Responses API，支持 `OPENAI_BASE_URL` 和 base64 图片输入。
+4. 想先验证配置，运行 `uv run -m v2t --llm-test`。
 
-模型名优先取 `V2T_MODEL`，然后按后端取 `OPENAI_MODEL`、`CODEX_MODEL` 或 `ANTHROPIC_MODEL`。
+模型名优先取 `V2T_MODEL`，然后按后端取 `ANTHROPIC_MODEL`（claude-sdk / anthropic）、`CODEX_MODEL` 或 `OPENAI_MODEL`；claude-sdk / codex 不指定就用各自 CLI 的本地配置。
 
 MLX 的模型权重可选（Apple Silicon）：不手动拉的话，第一次转写会自动从 HuggingFace 下 ~1.6GB（本机 hf-xet 会卡死，见下）。
 
@@ -148,7 +147,7 @@ uv run -m v2t --llm-test             # 用当前后端发送一次真实最小�
 
 | 变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `V2T_PROVIDER` / `V2T_LLM_PROVIDER` | `auto` | `auto`、`openai`、`codex`、`anthropic` 或 `claude-sdk` |
+| `V2T_PROVIDER` / `V2T_LLM_PROVIDER` | `auto`（= `claude-sdk`） | `auto`、`claude-sdk`、`codex`、`anthropic` 或 `openai` |
 | `OPENAI_API_KEY` | — | 使用 OpenAI GPT API 时必填 |
 | `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI 后端默认模型 |
 | `OPENAI_BASE_URL` | OpenAI 默认地址 | 可选的 OpenAI 兼容网关地址 |
@@ -181,6 +180,15 @@ mdbook build              # → book/，开 book/index.html
 ```
 
 `scripts/build_book.sh` 每次重新扫 `work/`，新存的课程自动进目录。`work/<课程>/` 单独成章；`work/<系列>/<课程>/` 收成子目录，系列名当目录名（想写课程简介就在 `work/<系列>/` 放个 `README.md`，没有就自动生成一张标题页）。章节名取正文第一个一级标题，没有就用目录名；同一系列内按目录名排序，所以 `...Lecture 2...` 排在 `...Lecture 10...` 前面。想本地装 mdBook：`brew install mdbook`。
+
+### 中文朗读
+
+源语言不是中文的课（`subs.json` 里汉字占比 < 30%），出书时会在标题下挂一条朗读条，用浏览器自带的 Web Speech API
+现场念中文文稿（`theme/tts.js`），不预先生成音频、不进仓库。中文课直接听原视频，不挂。
+
+- 从屏幕上第一段可见的地方念起，双击某段从那段开始；当前段高亮并跟着滚动；时间链接和配图不念。
+- 声音靠浏览器/系统：Edge（晓晓等神经网络音色）和 Chrome（Google 普通话）效果最好，macOS/iOS 用系统中文语音，
+  Linux 的 Firefox 往往没有中文语音。语速和声音选择存在 localStorage。
 
 ## 代码结构
 

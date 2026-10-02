@@ -21,6 +21,20 @@ dirs() {
   done | sort | cut -f2-
 }
 
+# 原始字幕里汉字占比 < 30% 就算外语课（实测英文课 0%、中文课 86%）。没有/坏的 subs.json 一律当中文，不挂。
+foreign() {
+  [ -f "$1" ] && python3 - "$1" <<'PY'
+import json, re, sys
+try:
+    segs = json.load(open(sys.argv[1], encoding="utf-8"))
+    text = "".join(str(s.get("text", "")) for s in segs if isinstance(s, dict))
+except (OSError, ValueError, AttributeError, TypeError):
+    sys.exit(1)
+chars = re.sub(r"\s", "", text)
+sys.exit(0 if chars and len(re.findall(r"[\u4e00-\u9fff]", chars)) / len(chars) < 0.3 else 1)
+PY
+}
+
 # 收一章：$1 源目录，$2 book_src 里的相对路径，$3 缩进
 chapter() {
   local title
@@ -28,6 +42,12 @@ chapter() {
   cp "$1/course.md" "$src/$2/"
   # course.md 里配图写的是 assets/xxx.jpg 这种相对路径，得跟着搬
   [ -d "$1/assets" ] && cp -R "$1/assets" "$src/$2/"
+
+  # 源语言不是中文（文稿是翻过来的）才挂朗读条，theme/tts.js 认这个 div；中文课直接听原视频
+  if foreign "$1/subs.json"; then
+    awk '!done && /^# / { print; print ""; print "<div class=\"v2t-tts\"></div>"; print ""; done=1; next } 1' \
+      "$1/course.md" > "$src/$2/course.md"
+  fi
 
   # 章节名取正文第一个 H1，没有就用目录名
   title=$(grep -m1 '^# ' "$1/course.md" || true)
@@ -66,4 +86,4 @@ for d in $(dirs work); do
   done
 done
 
-echo "book_src/ 就绪：$(grep -c '^- \[' "$src/SUMMARY.md") 章"
+echo "book_src/ 就绪：$(grep -c '^- \[' "$src/SUMMARY.md") 章，其中 $(grep -rl 'class="v2t-tts"' "$src" | wc -l) 章带朗读"
