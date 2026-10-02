@@ -80,8 +80,8 @@ def selected_provider() -> str:
     if os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_AUTH_TOKEN"):
         return "openai"
     raise LLMConfigError(
-        "没有检测到可用的模型后端。默认用 Claude Code：先 uv sync 装 claude-agent-sdk，"
-        "再运行 claude 完成 /login；也可以 V2T_PROVIDER=codex 用本机 Codex CLI，"
+        "没有检测到可用的模型后端。默认用 Claude Code：先 uv sync 装 claude-agent-sdk"
+        "（沿用 ~/.claude/settings.json 的配置）；也可以 V2T_PROVIDER=codex 用本机 Codex CLI，"
         "或设置 ANTHROPIC_API_KEY / OPENAI_API_KEY 直连 API"
     )
 
@@ -413,7 +413,9 @@ def _llm_sdk(system: str, user, think: bool = True) -> str:
         system_prompt=system,
         model=selected_model("claude-sdk"),
         disallowed_tools=["*"],
-        setting_sources=[],
+        # 读 ~/.claude/settings.json：网关地址、token、默认模型都配在那儿，跟平时用 claude 一致。
+        # 不读项目级设置，免得仓库里的 .claude/ 改了工具/钩子行为
+        setting_sources=["user"],
         max_turns=1,
         thinking={"type": "adaptive" if think else "disabled"},
     )

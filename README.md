@@ -6,10 +6,9 @@
 
 ## 装环境
 
-模型后端不是写死的，默认用本机已登录的 Claude Code（走 Claude Agent SDK，不直连 API）。
-`uv sync` 会装好 SDK（自带 claude CLI），登录一次就能跑：
+模型后端不是写死的，默认用本机的 Claude Code（走 Claude Agent SDK，不直连 API），
+直接沿用 `~/.claude/settings.json` 里的配置（网关地址、token、默认模型都从那儿来），平时 `claude` 能用这里就能用：
 
-    claude            # 进去执行 /login
     uv run -m v2t --llm-test
 
 不设 `V2T_PROVIDER` 时，`auto` 按 Claude Agent SDK → Codex CLI → Anthropic API → OpenAI API
