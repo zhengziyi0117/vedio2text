@@ -8,6 +8,8 @@
 uv run -m v2t "<视频文件或链接>"        # 下载 → 转写 → 校对 → 写稿
 uv run -m v2t --selftest               # 纯函数自检，不联网
 uv run -m v2t --llm-test               # 用当前后端发一次最小请求
+python -m v2t prepare <src>             # 只产出 Work 素材，不调模型
+python -m v2t render <单讲目录> --check  # 校验 Work 草稿，不生成文稿
 ```
 
 改了 `subs.py` / `media.py` / `doc.py` 里的纯函数（解析、时间戳、归并、标点、段落标记）就
@@ -19,6 +21,11 @@ uv run -m v2t <src> --from doc     # 只重跑写稿
 ```
 
 产物在 `work/<课程>/`，已存在的步骤产物会自动跳过，删掉对应文件即可强制重跑。
+
+Work 接力使用 `workflow.py`：`prepare` 生成 manifest/chunks 和草稿模板，Work 写回
+`draft/metadata.json` 及逐块草稿，`render --check` 验证字幕 ID 连续覆盖、素材哈希、图片
+时间归属；通过后 `render` 生成 `course.md`。改动其 schema 或校验规则时，在
+`selftest.py` 保留一条真正的分块→成稿→拒绝脏稿的回归检查。原一条龙命令不要改语义。
 
 `.tools/whisper.cpp` 是 submodule，主仓库里只有一个指针，内容得 `git submodule update --init`
 自己拉（Apple Silicon 走 MLX，用不到它）。
